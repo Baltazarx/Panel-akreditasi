@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
 import { Button, Container, SectionTitle, Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh } from '../ui';
-import { MataKuliahForm } from "../forms/MataKuliahForm";
+import MataKuliahForm from "../forms/MataKuliahForm";
 import { Tabel2B3Form } from "../forms/Tabel2B3Form";
 import { CplPlForm } from "../forms/CplPlForm"; // Import the new form
 import { ProfilLulusanForm } from "../forms/ProfilLulusanForm"; // Import the new form
@@ -122,10 +122,6 @@ function Tabel2B1Content() {
         api.get("/unit-kerja"), // Fetch unit kerja
       ]);
 
-      console.log("Tabel 2B1 - fetched CPL for prodi", selectedProdi, ":", cpl?.length || 0, "items");
-      console.log("Tabel 2B1 - fetched PL for prodi", selectedProdi, ":", pl?.length || 0, "items");
-      console.log("Tabel 2B1 - fetched CPL-MK mapping for prodi", selectedProdi, ":", cplMkMapping?.length || 0, "items");
-      console.log("Tabel 2B1 - fetched CPL-PL mapping for prodi", selectedProdi, ":", cplPlMapping?.length || 0, "items");
 
       let currentCpl = Array.isArray(cpl) ? cpl : [];
       let currentPls = Array.isArray(pl) ? pl : [];
@@ -152,6 +148,9 @@ function Tabel2B1Content() {
     console.log("Edit MataKuliah: item data:", item);
     console.log("Edit MataKuliah: selectedPls:", item.selectedPls);
     console.log("Edit MataKuliah: current selectedProdi:", selectedProdi);
+    console.log("Edit MataKuliah: item keys:", Object.keys(item));
+    console.log("Edit MataKuliah: item kode_mk:", item.kode_mk);
+    console.log("Edit MataKuliah: item nama_mk:", item.mata_kuliah);
 
     // Ensure the item has the correct prodi information
     const itemWithProdi = {
@@ -159,6 +158,8 @@ function Tabel2B1Content() {
       // Make sure id_unit_prodi is included for the form
       id_unit_prodi: item.id_unit_prodi || selectedProdi
     };
+
+    console.log("Edit MataKuliah: itemWithProdi:", itemWithProdi);
 
     setEditingItem(itemWithProdi);
     setShowForm(true);
@@ -241,8 +242,7 @@ function Tabel2B1Content() {
 
     return [
       { key: "no", label: "No" },
-      { key: "kode_mk", label: "Kode MK" },
-      { key: "nama_mk", label: "Mata Kuliah" },
+      { key: "mata_kuliah", label: "Mata Kuliah" },
       { key: "sks", label: "SKS" },
       { key: "semester", label: "Semester" },
       {
@@ -291,8 +291,9 @@ function Tabel2B1Content() {
         grouped[key] = {
           no: Object.keys(grouped).length + 1,
           id_mk: item.id_mk,
-          kode_mk: item.kode_mk,
+          kode_mk: item.kode_mk || "", // Handle missing kode_mk
           nama_mk: item.nama_mk,
+          mata_kuliah: item.nama_mk, // Keep for display in table
           sks: item.sks,
           semester: item.semester,
           id_unit_prodi: item.id_unit_prodi,
@@ -309,62 +310,46 @@ function Tabel2B1Content() {
         .filter(pl => Number(pl.id_unit_prodi) === Number(selectedProdi))
         .sort((a, b) => a.id_pl - b.id_pl);
 
-      console.log(`Prodi ${selectedProdi} - Total PL in profilLulusanList: ${profilLulusanList.length}`);
-      console.log(`Prodi ${selectedProdi} - Filtered prodiSpecificPls: ${prodiSpecificPls.length}`);
-      prodiSpecificPls.forEach((pl, index) => {
-        console.log(`PL${index + 1}: id=${pl.id_pl}, kode=${pl.kode_pl}, prodi=${pl.id_unit_prodi}`);
-      });
-
-      // Initialize selectedPls as empty array for this mata kuliah
-      grouped[key].selectedPls = [];
-
       // Determine selected PLs based on CPL-MK and CPL-PL mappings
       // Filter cplList to only include CPL for the current prodi
       const prodiCplList = cplList.filter(cpl => Number(cpl.id_unit_prodi) === Number(selectedProdi));
 
-      // Filter cplMkMapping to only include mappings for the current prodi and mata kuliah
+      // Filter cplMkMapping to only include mappings for the current prodi
       const prodiCplMkMapping = cplMkMapping.filter(mapping => {
         // Check if this mapping is for the current prodi
         const cpl = prodiCplList.find(c => c.id_cpl === mapping.id_cpl);
-        return cpl !== undefined && mapping.id_mk === item.id_mk;
+        return cpl !== undefined;
       });
 
-      const cplIdsForMk = prodiCplMkMapping.map(mapping => mapping.id_cpl);
+      const cplIdsForMk = prodiCplMkMapping
+        .filter(mapping => mapping.id_mk === item.id_mk)
+        .map(mapping => mapping.id_cpl);
 
-      console.log(`MataKuliah ${item.nama_mk} (${item.id_mk}): ditemukan ${cplIdsForMk.length} CPL terkait`);
+      // Debug logging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`MataKuliah ${item.mata_kuliah}: prodiCplList=${prodiCplList.length}, prodiCplMkMapping=${prodiCplMkMapping.length}, cplIdsForMk=${cplIdsForMk.length}`);
+      }
+
 
       cplIdsForMk.forEach(cplId => {
-        const cpl = prodiCplList.find(c => c.id_cpl === cplId);
-        if (!cpl) {
-          console.warn(`MataKuliah ${item.nama_mk}: CPL dengan id ${cplId} tidak ditemukan di prodi ${selectedProdi}`);
-          return;
-        }
-
-        // Filter cplPlMapping to only include mappings for the current prodi
+        // Filter cplPlMapping to only include mappings for the current prodi (similar to Tabel 2.B.2 logic)
         const prodiCplPlMapping = cplPlMapping.filter(mapping => {
           // Check if this mapping is for the current prodi
-          const cplForPl = cplList.find(c => c.id_cpl === mapping.id_cpl);
-          const pl = profilLulusanList.find(p => p.id_pl === mapping.id_pl);
-          return cplForPl && pl && cplForPl.id_unit_prodi === selectedProdi && pl.id_unit_prodi === selectedProdi;
+          const cpl = prodiCplList.find(c => c.id_cpl === mapping.id_cpl);
+          const pl = prodiSpecificPls.find(p => p.id_pl === mapping.id_pl);
+          return cpl && pl; // Since both are already filtered by prodi, just check if they exist
         });
 
         const plIdsForCpl = prodiCplPlMapping
           .filter(mapping => mapping.id_cpl === cplId)
           .map(mapping => mapping.id_pl);
 
-        console.log(`MataKuliah ${item.nama_mk}: cplId=${cplId} (${cpl.kode_cpl}), plIdsForCpl=${plIdsForCpl}`);
-
         plIdsForCpl.forEach(linkedPlId => {
           // Find the index of this linked PL within the prodi-specific ordered PLs
           const plIndex = prodiSpecificPls.findIndex(pl => pl.id_pl === linkedPlId);
-          console.log(`MataKuliah ${item.nama_mk}: linkedPlId=${linkedPlId}, plIndex=${plIndex}`);
 
           if (plIndex !== -1 && (plIndex + 1) <= maxPlCount) {
-            const linkedPl = prodiSpecificPls[plIndex];
             grouped[key][`pl_slot_${plIndex + 1}`] = true;
-            console.log(`MataKuliah ${item.nama_mk}: menandai slot ${plIndex + 1} sebagai aktif untuk PL ${linkedPl?.kode_pl || 'unknown'}`);
-          } else {
-            console.warn(`MataKuliah ${item.nama_mk}: plIndex=${plIndex} tidak valid untuk linkedPlId=${linkedPlId}`);
           }
           // Also add the actual linkedPlId to selectedPls for editing purposes
           if (!grouped[key].selectedPls.includes(linkedPlId)) {
@@ -372,9 +357,6 @@ function Tabel2B1Content() {
           }
         });
       });
-
-      // Log final selected PLs for this mata kuliah
-      console.log(`MataKuliah ${item.nama_mk}: selectedPls final = [${grouped[key].selectedPls.join(', ')}]`);
     });
 
     return Object.values(grouped);
@@ -382,7 +364,7 @@ function Tabel2B1Content() {
 
   const renderBody = (rows, leaves) =>
     rows.map((item, rowIndex) => {
-      const rowKey = `row-${item.nama_mk}-${item.semester}-${rowIndex}`;
+      const rowKey = `row-${item.mata_kuliah}-${item.semester}-${rowIndex}`;
       return (
         <TableRow
           key={rowKey}
@@ -412,7 +394,7 @@ function Tabel2B1Content() {
             return (
               <TableCell
                 key={cellKey}
-                className={`border align-middle ${leaf.key === "nama_mk" || leaf.key === "kode_mk" ? "text-left pl-4 font-medium text-gray-900 dark:text-white" : "text-center"}`}
+                className={`border align-middle ${leaf.key === "mata_kuliah" ? "text-left pl-4 font-medium text-gray-900 dark:text-white" : "text-center"}`}
               >
                 {content}
               </TableCell>
@@ -432,28 +414,25 @@ function Tabel2B1Content() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingItem ? "Edit Mata Kuliah" : "Tambah Mata Kuliah Baru"}
+                {editingItem ? "Edit Mata Kuliah" : "Tambah Mata Kuliah"}
               </h3>
               <Button onClick={() => setShowForm(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                 &times;
               </Button>
             </div>
             <MataKuliahForm
-              onSubmit={() => {
+              onComplete={() => {
                 setShowForm(false);
                 setEditingItem(null);
+                refresh();
               }}
               onClose={() => {
                 setShowForm(false);
                 setEditingItem(null);
               }}
-              initialData={editingItem || { id_unit_prodi: selectedProdi }}
+              initialData={editingItem}
               isEditing={!!editingItem}
-              onUpdate={() => {
-                setShowForm(false);
-                setEditingItem(null);
-                refresh();
-              }}
+              initialProdi={selectedProdi || user?.unit_id || user?.id_unit_prodi || 3}
             />
           </div>
         </div>
@@ -520,7 +499,13 @@ function Tabel2B1Content() {
               </select>
             </div>
           )}
-          <Button onClick={() => setShowForm(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">Tambah Data</Button>
+          <Button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition"
+            disabled={!selectedProdi}
+          >
+            Tambah Data
+          </Button>
           <Button onClick={() => setShowProfilLulusanForm(true)} className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition">Tambah PL</Button>
         </div>
       </div>
@@ -768,12 +753,12 @@ function Tabel2B2Content() {
     // Filter cplList to only include CPL for the current prodi
     const prodiCplList = cplList.filter(cpl => Number(cpl.id_unit_prodi) === Number(currentProdiId));
 
-    // Filter cplPlMapping to only include mappings for the current prodi
+    // Filter cplPlMapping to only include mappings for the current prodi (consistent filtering)
     const prodiCplPlMapping = cplPlMapping.filter(map => {
       // Check if this mapping is for the current prodi
       const cpl = prodiCplList.find(c => c.id_cpl === map.id_cpl);
-      const pl = profilLulusanList.find(p => p.id_pl === map.id_pl);
-      return cpl && pl && cpl.id_unit_prodi === currentProdiId && pl.id_unit_prodi === currentProdiId;
+      const pl = prodiSpecificPls.find(p => p.id_pl === map.id_pl);
+      return cpl && pl; // Since both are already filtered by prodi, just check if they exist
     });
 
     const filteredCplList = prodiCplList;
@@ -803,33 +788,24 @@ function Tabel2B2Content() {
         .filter(pl => Number(pl.id_unit_prodi) === Number(currentProdiId))
         .sort((a, b) => a.id_pl - b.id_pl);
 
-      console.log(`Tabel2B2 - Prodi ${currentProdiId} - Total PL in profilLulusanList: ${profilLulusanList.length}`);
-      console.log(`Tabel2B2 - Filtered prodiSpecificPls: ${prodiSpecificPls.length}`);
-      prodiSpecificPls.forEach((pl, index) => {
-        console.log(`Tabel2B2 - PL${index + 1}: id=${pl.id_pl}, kode=${pl.kode_pl}, prodi=${pl.id_unit_prodi}`);
-      });
 
       for (let i = 1; i <= maxPlCount; i++) {
         row[`pl_slot_${i}`] = false;
       }
 
-      // Filter mappings to only include those for the current prodi
+      // Filter mappings to only include those for the current prodi (consistent with Tabel 2.B.1 logic)
       const prodiFilteredMapping = filteredMapping.filter(map => {
         // Check if this mapping is for the current prodi
-        const cpl = cplList.find(c => c.id_cpl === map.id_cpl);
-        const pl = profilLulusanList.find(p => p.id_pl === map.id_pl);
-        return cpl && pl && cpl.id_unit_prodi === currentProdiId && pl.id_unit_prodi === currentProdiId;
+        const cpl = prodiCplList.find(c => c.id_cpl === map.id_cpl);
+        const pl = prodiSpecificPls.find(p => p.id_pl === map.id_pl);
+        return cpl && pl; // Since both are already filtered by prodi, just check if they exist
       });
 
       prodiFilteredMapping.filter(map => map.id_cpl === cpl.id_cpl).forEach(map => {
         const plIndex = prodiSpecificPls.findIndex(pl => pl.id_pl === map.id_pl);
-        console.log(`Tabel2B2 - CPL ${cpl.kode_cpl}: mapping to PL id=${map.id_pl}, index=${plIndex}`);
 
         if (plIndex !== -1 && (plIndex + 1) <= maxPlCount) {
           row[`pl_slot_${plIndex + 1}`] = true;
-          console.log(`Tabel2B2 - Menandai slot ${plIndex + 1} aktif untuk PL ${map.id_pl}`);
-        } else {
-          console.warn(`Tabel2B2 - plIndex=${plIndex} tidak valid untuk PL id=${map.id_pl}`);
         }
       });
       return row;
