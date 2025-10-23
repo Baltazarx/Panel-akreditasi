@@ -1,113 +1,112 @@
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
-import { pool } from '../db.js';
+import {
+  listTabel2b5KesesuaianKerja,
+  getTabel2b5KesesuaianKerjaById,
+  createTabel2b5KesesuaianKerja,
+  updateTabel2b5KesesuaianKerja,
+  softDeleteTabel2b5KesesuaianKerja,
+  restoreTabel2b5KesesuaianKerja,
+  hardDeleteTabel2b5KesesuaianKerja,
+  summaryTabel2b5KesesuaianKerja,
+  validateJumlahTabel2b5
+} from '../controllers/tabel2b5KesesuaianKerja.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
-export const tabel2b5KesesuaianKerjaRouter = Router();
+const router = express.Router();
 
-const listTabel2b5KesesuaianKerja = async (req, res) => {
-  const q = req.query || {};
-  const idUnitProdiParam = q.id_unit_prodi ?? null;
-  const idTahunLulusParam = q.id_tahun_lulus ?? q.tahun_lulus ?? null; 
+/**
+ * ======================
+ * ====== CRUD =========
+ * ======================
+ */
 
-  let sql = `
-    SELECT
-      kk.*,
-      uk.nama_unit AS nama_unit_prodi,
-      ta.tahun AS tahun_akademik
-    FROM tabel_2b5_kesesuaian_kerja kk
-    LEFT JOIN unit_kerja uk ON kk.id_unit_prodi = uk.id_unit
-    LEFT JOIN tahun_akademik ta ON kk.id_tahun_lulus = ta.id_tahun
-  `;
-  const where = [];
-  const params = [];
+// List all Tabel 2B5 Kesesuaian Kerja
+router.get('/', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), listTabel2b5KesesuaianKerja);
 
-  if (idUnitProdiParam) {
-    where.push('kk.id_unit_prodi = ?');
-    params.push(idUnitProdiParam);
-  }
-  if (idTahunLulusParam) {
-    where.push('kk.id_tahun_lulus = ?');
-    params.push(idTahunLulusParam);
-  }
+// Detail per ID
+router.get('/:id', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), getTabel2b5KesesuaianKerjaById);
 
-  if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-  sql += ` ORDER BY kk.id ASC`;
+// Create
+router.post('/', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'C'), createTabel2b5KesesuaianKerja);
 
-  try {
-    const [rows] = await pool.query(sql, params);
-    res.json(rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Gagal memuat data kesesuaian kerja' });
-  }
-};
+// Update
+router.put('/:id', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'U'), updateTabel2b5KesesuaianKerja);
 
-const crud = crudFactory({
-  table: 'tabel_2b5_kesesuaian_kerja',
-  idCol: 'id',
-  allowedCols: [
-    'id_unit_prodi',
-    'id_tahun_lulus',
-    'jml_infokom',
-    'jml_non_infokom',
-    'jml_internasional',
-    'jml_nasional',
-    'jml_wirausaha',
-  ],
-  resourceKey: 'tabel_2b5_kesesuaian_kerja',
-  list: listTabel2b5KesesuaianKerja,
-});
+// Soft delete 
+router.delete('/:id', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'D'), softDeleteTabel2b5KesesuaianKerja);
 
-// ---- CRUD ----
-tabel2b5KesesuaianKerjaRouter.get('/', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.list);
-tabel2b5KesesuaianKerjaRouter.get('/:id(\d+)', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.getById);
-tabel2b5KesesuaianKerjaRouter.post('/', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.create);
-tabel2b5KesesuaianKerjaRouter.put('/:id(\d+)', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.update);
-tabel2b5KesesuaianKerjaRouter.delete('/:id', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.remove);
-tabel2b5KesesuaianKerjaRouter.post('/:id/restore', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.restore);
-tabel2b5KesesuaianKerjaRouter.delete('/:id/hard-delete', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), crud.hardRemove);
+// Restore — hanya boleh dilakukan oleh WAKET/TPM
+router.post('/:id/restore', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'U'), restoreTabel2b5KesesuaianKerja);
 
-// ---- EXPORT (DOCX/PDF, TS-aware) ----
+// Hard delete — hanya boleh oleh superadmin
+router.delete('/:id/hard-delete', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'H'), hardDeleteTabel2b5KesesuaianKerja);
+
+/**
+ * ======================
+ * ====== SUMMARY =======
+ * ======================
+ */
+
+// Summary data untuk dashboard/statistik
+router.get('/summary/data', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), summaryTabel2b5KesesuaianKerja);
+
+/**
+ * ======================
+ * ====== VALIDASI ======
+ * ======================
+ */
+
+// Validasi jumlah tidak boleh lebih dari jumlah terlacak di tabel 2.B.4
+router.get('/validate/jumlah', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), validateJumlahTabel2b5);
+
+/**
+ * ======================
+ * ====== EXPORT ========
+ * ======================
+ */
+
 const meta = {
   resourceKey: 'tabel_2b5_kesesuaian_kerja',
   table: 'tabel_2b5_kesesuaian_kerja',
   columns: [
-    'id',
-    'id_unit_prodi',
-    'id_tahun_lulus',
-    'jml_infokom',
-    'jml_non_infokom',
-    'jml_internasional',
-    'jml_nasional',
+    'id', 
+    'id_unit_prodi', 
+    'id_tahun_lulus', 
+    'jml_infokom', 
+    'jml_non_infokom', 
+    'jml_internasional', 
+    'jml_nasional', 
     'jml_wirausaha',
+    'jumlah_lulusan',
+    'jumlah_terlacak',
+    'rata_rata_waktu_tunggu_bulan'
   ],
   headers: [
-    'ID',
-    'Unit Prodi',
-    'Tahun Lulus',
-    'Jumlah Infokom',
-    'Jumlah Non Infokom',
-    'Jumlah Internasional',
-    'Jumlah Nasional',
+    'ID', 
+    'Unit Prodi', 
+    'Tahun Lulus', 
+    'Jumlah Infokom', 
+    'Jumlah Non Infokom', 
+    'Jumlah Internasional', 
+    'Jumlah Nasional', 
     'Jumlah Wirausaha',
+    'Jumlah Lulusan',
+    'Jumlah Terlacak',
+    'Rata-rata Waktu Tunggu (Bulan)'
   ],
-  title: (label) => `Kesesuaian Kerja — ${label}`,
-  orderBy: 'm.id ASC',
+  title: (label) => `Tabel 2.B.5 Kesesuaian Bidang Kerja Lulusan — ${label}`,
+  orderBy: 't2b5.id_tahun_lulus DESC, t2b5.id_unit_prodi ASC',
 };
 
+// Export handler (xlsx, docx, pdf)
 const exportHandler = makeExportHandler(meta, { requireYear: true });
+router.get('/export', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), exportHandler);
+router.post('/export', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), exportHandler);
+router.get('/export-doc', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), makeDocAlias(exportHandler));
+router.post('/export-doc', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), makeDocAlias(exportHandler));
+router.get('/export-pdf', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), makePdfAlias(exportHandler));
+router.post('/export-pdf', requireAuth, permit('tabel_2b5_kesesuaian_kerja', 'R'), makePdfAlias(exportHandler));
 
-// Endpoint utama: /export (GET/POST) + ?format=docx|pdf + dukung id_tahun / id_tahun_in / tahun
-tabel2b5KesesuaianKerjaRouter.get('/export', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), exportHandler);
-tabel2b5KesesuaianKerjaRouter.post('/export', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), exportHandler);
-
-// Alias agar FE lama yang pakai /export-doc & /export-pdf tetap jalan
-tabel2b5KesesuaianKerjaRouter.get('/export-doc', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), makeDocAlias(exportHandler));
-tabel2b5KesesuaianKerjaRouter.post('/export-doc', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), makeDocAlias(exportHandler));
-tabel2b5KesesuaianKerjaRouter.get('/export-pdf', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), makePdfAlias(exportHandler));
-tabel2b5KesesuaianKerjaRouter.post('/export-pdf', requireAuth, permit('tabel_2b5_kesesuaian_kerja'), makePdfAlias(exportHandler));
-
-export default tabel2b5KesesuaianKerjaRouter;
+export default router;

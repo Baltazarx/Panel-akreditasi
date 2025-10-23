@@ -17,7 +17,6 @@ const Tabel2A2 = () => {
 
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [tahunList, setTahunList] = useState([]);
-  const [kabupatenKotaList, setKabupatenKotaList] = useState([]);
 
   const geographicalCategories = ["Sama Kota/Kab", "Kota/Kab Lain", "Provinsi Lain", "Negara Lain"];
   const specialCategories = ["Afirmasi", "Berkebutuhan Khusus"];
@@ -30,14 +29,12 @@ const Tabel2A2 = () => {
     setLoading(true);
     setError(null);
     try {
-      const [keragamanAsalData, tahunData, kabupatenKotaData] = await Promise.all([
-        api.get("/tabel-2a2-keragaman-asal"),
-        api.get("/tahun"),
-        api.get("/ref-kabupaten-kota"),
+      const [keragamanAsalData, tahunData] = await Promise.all([
+        api.get("/tabel2a2-keragaman-asal"),
+        api.get("/tahun-akademik"),
       ]);
       setData(Array.isArray(keragamanAsalData) ? keragamanAsalData : []);
       setTahunList(Array.isArray(tahunData) ? tahunData.sort((a, b) => a.id_tahun - b.id_tahun) : []);
-      setKabupatenKotaList(Array.isArray(kabupatenKotaData) ? kabupatenKotaData : []);
       if (Array.isArray(tahunData) && tahunData.length > 0) {
         const years = keragamanAsalData.map(x => Number(x?.id_tahun)).filter(Number.isFinite);
         const latest = years.length > 0 ? Math.max(...years) : Math.max(...tahunData.map(t => t.id_tahun));
@@ -117,21 +114,19 @@ const Tabel2A2 = () => {
       }
       aggregatedData[geoKey].jumlah_mahasiswa += Number(item.jumlah_mahasiswa) || 0;
 
-      // Duplikasi untuk Provinsi Lain
+      // Duplikasi untuk Provinsi Lain - simplified without kabupatenKotaList
       if (item.kategori_geografis === 'Kota/Kab Lain' && item.nama_daerah_input) {
-          const foundKab = kabupatenKotaList.find(kab => kab.nama_kabupaten_kota.toLowerCase() === item.nama_daerah_input.toLowerCase());
-          if (foundKab && foundKab.nama_provinsi.toLowerCase() !== NAMA_PROVINSI_PS.toLowerCase()) {
-            const provKey = `Provinsi Lain-${item.id_tahun}-${foundKab.nama_provinsi}`;
-            if (!aggregatedData[provKey]) {
-              aggregatedData[provKey] = { ...item, kategori_asal: 'Provinsi Lain', nama_daerah_input: foundKab.nama_provinsi, jumlah_mahasiswa: 0, id: null, _id: provKey };
-            }
-            aggregatedData[provKey].jumlah_mahasiswa += Number(item.jumlah_mahasiswa) || 0;
+          // Simplified logic without external kabupaten data
+          const provKey = `Provinsi Lain-${item.id_tahun}-${item.nama_daerah_input}`;
+          if (!aggregatedData[provKey]) {
+            aggregatedData[provKey] = { ...item, kategori_asal: 'Provinsi Lain', nama_daerah_input: item.nama_daerah_input, jumlah_mahasiswa: 0, id: null, _id: provKey };
           }
+          aggregatedData[provKey].jumlah_mahasiswa += Number(item.jumlah_mahasiswa) || 0;
       }
     });
 
     return Object.values(aggregatedData);
-  }, [data, selectedTahun, user?.unit_id, kabupatenKotaList, yearWindow]);
+  }, [data, selectedTahun, user?.unit_id, yearWindow]);
   
   const sumRowData = useMemo(() => {
     const totals = { 'TS': 0, 'TS-1': 0, 'TS-2': 0, 'TS-3': 0, 'TS-4': 0 };

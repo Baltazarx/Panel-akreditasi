@@ -1,19 +1,25 @@
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
+import {
+  listRefJabatanFungsional,
+  getRefJabatanFungsionalById,
+  createRefJabatanFungsional,
+  updateRefJabatanFungsional,
+  softDeleteRefJabatanFungsional,
+  restoreRefJabatanFungsional,
+  hardDeleteRefJabatanFungsional
+} from '../controllers/refJabatanFungsional.controller.js';
 
-export const refJabatanFungsionalRouter = Router();
+const router = express.Router();
 
-const refJabatanFungsionalCrud = crudFactory({
-  table: 'ref_jabatan_fungsional',
-  idCol: 'id_jafung',
-  allowedCols: ['nama_jafung'],
-  resourceKey: 'ref_jabatan_fungsional',
-});
+// ===== CRUD =====
+router.get('/', requireAuth, permit('ref_jabatan_fungsional', 'R'), listRefJabatanFungsional);
+router.get('/:id', requireAuth, permit('ref_jabatan_fungsional', 'R'), getRefJabatanFungsionalById);
+router.post('/', requireAuth, permit('ref_jabatan_fungsional', 'C'), createRefJabatanFungsional);
+router.put('/:id', requireAuth, permit('ref_jabatan_fungsional', 'U'), updateRefJabatanFungsional);
+router.delete('/:id/hard-delete', requireAuth, permit('ref_jabatan_fungsional', 'D'), hardDeleteRefJabatanFungsional);
+router.delete('/:id', requireAuth, permit('ref_jabatan_fungsional', 'D'), softDeleteRefJabatanFungsional);
+router.post('/:id/restore', requireAuth, permit('ref_jabatan_fungsional', 'U'), restoreRefJabatanFungsional);
 
-refJabatanFungsionalRouter.get('/', requireAuth, permit('ref_jabatan_fungsional'), refJabatanFungsionalCrud.list);
-refJabatanFungsionalRouter.get('/:id', requireAuth, permit('ref_jabatan_fungsional'), refJabatanFungsionalCrud.getById);
-refJabatanFungsionalRouter.post('/', requireAuth, permit('ref_jabatan_fungsional'), refJabatanFungsionalCrud.create);
-refJabatanFungsionalRouter.put('/:id', requireAuth, permit('ref_jabatan_fungsional'), refJabatanFungsionalCrud.update);
-refJabatanFungsionalRouter.delete('/:id', requireAuth, permit('ref_jabatan_fungsional'), refJabatanFungsionalCrud.remove);
+export default router;

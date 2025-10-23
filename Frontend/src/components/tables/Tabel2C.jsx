@@ -66,15 +66,15 @@ export function Tabel2C() {
     setError(null);
     try {
       const [flex, mabaAktif, t] = await Promise.all([
-        api.get("/tabel-2c-pembelajaran-luar-prodi"), // Endpoint for flexibility data
-        api.get("/tabel-2a1-mahasiswa-baru-aktif"), // Endpoint for active students (aggregated total)
-        api.get("/tahun"),
+        api.get("/tabel2c-fleksibilitas-pembelajaran"), // Corrected endpoint for flexibility data
+        api.get("/tabel2a1-mahasiswa-baru-aktif"), // Corrected endpoint for active students
+        api.get("/tahun-akademik"), // Corrected endpoint for year list
       ]);
       setFleksibilitasData(Array.isArray(flex) ? flex : []);
       setMahasiswaAktifTotalData(Array.isArray(mabaAktif) ? mabaAktif : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);
 
-      const years = [...flex, ...mabaAktif]
+      const years = [...(Array.isArray(flex) ? flex : []), ...(Array.isArray(mabaAktif) ? mabaAktif : [])]
         .map((x) => Number(x?.id_tahun))
         .filter((n) => Number.isFinite(n));
       const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);

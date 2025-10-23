@@ -1,160 +1,181 @@
 // src/utils/exporter.js
-import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, HeadingLevel, WidthType } from 'docx';
-import PDFDocument from 'pdfkit';
-import stream from 'stream';
 import { pool } from '../db.js';
+import { jsPDF } from 'jspdf';
+import ExcelJS from 'exceljs';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableRow,
+  TableCell,
+  TextRun
+} from 'docx';
 
-function buildWhereSql(q, { requireYear = false, extraWhere = '' } = {}) {
-  const where = [];
-  const params = [];
-
-  if (String(q.include_deleted) !== '1') where.push('m.deleted_at IS NULL');
-
-  const single = q.id_tahun ?? q.tahun;
-  const multi = q.id_tahun_in;
-
-  if (requireYear && !single && !multi) {
-    return { error: 'Parameter "id_tahun"/"tahun" atau "id_tahun_in" wajib.' };
-  }
-
-  if (single) {
-    where.push('m.id_tahun = ?');
-    params.push(single);
-  } else if (multi) {
-    const arr = String(multi).split(',').map(s => s.trim()).filter(Boolean);
-    if (arr.length) {
-      where.push(`m.id_tahun IN (${arr.map(()=> '?').join(',')})`);
-      params.push(...arr);
-    }
-  }
-
-  if (extraWhere) where.push(`(${extraWhere})`);
-
-  return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
-}
-
-async function fetchRows({ table, columns, orderBy = 'm.id DESC' }, q, options) {
-  const { error, whereSql, params } = buildWhereSql(q, options);
-  if (error) return { error };
-  const colsSql = columns.map(c => `m.${c}`).join(', ');
-  const sql = `
-    SELECT ${colsSql}, t.tahun AS tahun_text
-    FROM ${table} m
-    LEFT JOIN tahun_akademik t ON t.id_tahun = m.id_tahun
-    ${whereSql}
-    ORDER BY ${orderBy}
-  `;
-  const [rows] = await pool.query(sql, params);
-  return { rows };
-}
-
-async function toDocxBuffer({ title, headers, columns, rows }) {
-  const heading = new Paragraph({
-    text: title,
-    heading: HeadingLevel.HEADING_1,
-    spacing: { after: 300 },
-  });
-
-  const head = new TableRow({
-    children: headers.map(h =>
-      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })] })
-    )
-  });
-
-  const body = rows.map(r => new TableRow({
-    children: columns.map(c => new TableCell({ children: [new Paragraph(String(r[c] ?? ''))] }))
-  }));
-
-  const table = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [head, ...body],
-  });
-
-  const doc = new Document({ sections: [{ children: [heading, table] }] });
-  return Packer.toBuffer(doc);
-}
-
-async function streamPdf({ res, title, headers, columns, rows, filename }) {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  const doc = new PDFDocument({ size: 'A4', margin: 36 });
-  doc.pipe(res);
-
-  doc.fontSize(14).text(title, { align: 'left' });
-  doc.moveDown(0.5);
-
-  const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const colW = pageW / headers.length;
-
-  const drawRow = (cells, isHead = false) => {
-    const y = doc.y;
-    const startX = doc.page.margins.left; // Mulai menggambar dari margin kiri untuk setiap baris
-    cells.forEach((cell, i) => {
-      const x = startX + i * colW; // Gunakan startX untuk posisi kolom yang konsisten
-      doc.save().rect(x, y - 2, colW, 20).strokeColor('#e5e7eb').stroke().restore();
-      doc.text(String(cell ?? ''), x + 4, y, { width: colW - 8 });
-    });
-    doc.moveDown(isHead ? 1.1 : 0.8);
-  };
-
-  drawRow(headers, true);
-  rows.forEach(r => {
-    drawRow(columns.map(c => r[c]));
-    if (doc.y > doc.page.height - 72) doc.addPage();
-  });
-
-  doc.end();
-}
-
+/**
+ * Fungsi utama untuk membuat endpoint export (PDF, DOCX, XLSX)
+ * @param {object} meta - konfigurasi resource
+ * @param {object} options - opsi tambahan
+ */
 export function makeExportHandler(meta, options = {}) {
-  const {
-    resourceKey, table, columns, headers,
-    title = (label)=>`${resourceKey} — ${label}`,
-    orderBy = 'm.id DESC'
-  } = meta;
-
-  const makeLabel = (q) => {
-    if (q.id_tahun_in) return `Tahun ${q.id_tahun_in}`;
-    if (q.id_tahun || q.tahun) return `Tahun ${q.id_tahun || q.tahun}`;
-    return 'Semua Tahun';
-  };
-
-  return async function handler(req, res) {
+  return async (req, res) => {
     try {
-      const q = req.query || {};
-      const { rows, error } = await fetchRows({ table, columns, orderBy }, q, options);
-      if (error) return res.status(400).json({ error });
+      // 🎯 Deteksi format dari query atau header
+      const accept = req.headers.accept || '';
+      const format =
+        (req.query.format ||
+          (accept.includes('sheet')
+            ? 'xlsx'
+            : accept.includes('word')
+            ? 'docx'
+            : accept.includes('pdf')
+            ? 'pdf'
+            : 'pdf')
+        ).toLowerCase();
 
-      const label = makeLabel(q);
-      const docTitle = typeof title === 'function' ? title(label) : title;
-      const base = `${resourceKey}_${(q.id_tahun || q.tahun || q.id_tahun_in || 'semua')}`.replace(/[^\w,-]+/g,'-');
+      // 📦 Ambil data
+      const [rows] = await pool.query(
+        `SELECT ${meta.columns.join(', ')} FROM ${meta.table} m ORDER BY ${meta.orderBy}`
+      );
 
-      const fmt = (q.format || 'docx').toLowerCase();
-      if (fmt === 'pdf') {
-        await streamPdf({ res, title: docTitle, headers, columns, rows, filename: `${base}.pdf` });
+      // ========================================================
+      // 🟢 EXPORT KE EXCEL (.xlsx)
+      // ========================================================
+      if (format === 'xlsx' || format === 'xls') {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(meta.title('Export XLSX'));
+
+        // header
+        worksheet.addRow(meta.headers);
+        worksheet.getRow(1).font = { bold: true };
+
+        // data
+        rows.forEach((r) => {
+          worksheet.addRow(meta.columns.map((c) => r[c] ?? ''));
+        });
+
+        // styling
+        worksheet.columns.forEach((col) => {
+          col.width = 25;
+          col.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+        });
+
+        // kirim hasil
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader('Content-Disposition', `attachment; filename=${meta.resourceKey}.xlsx`);
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        res.send(Buffer.from(buffer));
         return;
       }
-      const buf = await toDocxBuffer({ title: docTitle, headers, columns, rows });
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', `attachment; filename="${base}.docx"`);
-      res.end(buf);
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Export failed', message: e.message });
+
+      // ========================================================
+      // 🟣 EXPORT KE WORD (.docx)
+      // ========================================================
+      if (format === 'docx') {
+        const tableRows = [
+          new TableRow({
+            children: meta.headers.map(
+              (h) =>
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      children: [new TextRun({ text: h, bold: true })],
+                    }),
+                  ],
+                })
+            ),
+          }),
+          ...rows.map(
+            (r) =>
+              new TableRow({
+                children: meta.columns.map(
+                  (c) =>
+                    new TableCell({
+                      children: [
+                        new Paragraph(String(r[c] ?? '')),
+                      ],
+                    })
+                ),
+              })
+          ),
+        ];
+
+        const doc = new Document({
+          sections: [
+            {
+              children: [
+                new Paragraph({
+                  text: meta.title('Export DOCX'),
+                  heading: 'Heading1',
+                  spacing: { after: 300 },
+                }),
+                new Table({ rows: tableRows }),
+              ],
+            },
+          ],
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+        res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+        res.setHeader('Content-Disposition', `attachment; filename=${meta.resourceKey}.docx`);
+        res.send(buffer);
+        return;
+      }
+
+      // ========================================================
+      // 🔵 EXPORT KE PDF
+      // ========================================================
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text(meta.title('Export PDF'), 10, 10);
+
+      let y = 20;
+      const lineHeight = 7;
+
+      // Header
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      meta.headers.forEach((h, i) => {
+        doc.text(h, 10 + i * 40, y);
+      });
+      y += lineHeight;
+
+      // Data rows
+      doc.setFont(undefined, 'normal');
+      rows.forEach((r) => {
+        meta.columns.forEach((c, i) => {
+          doc.text(String(r[c] ?? ''), 10 + i * 40, y);
+        });
+        y += lineHeight;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+
+      const pdfBuffer = doc.output('arraybuffer');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${meta.resourceKey}.pdf`);
+      res.send(Buffer.from(pdfBuffer));
+    } catch (err) {
+      console.error('Export error:', err);
+      res.status(500).json({ error: 'Export failed' });
     }
   };
 }
 
-export function makeDocAlias(handler) {
-  return (req, res, next) => {
-    req.query.format = 'docx';
-    return handler(req, res, next);
-  };
-}
+/**
+ * Alias untuk rute legacy agar tetap backward-compatible
+ */
+export const makeDocAlias = (handler) => (req, res) =>
+  handler({ ...req, query: { ...req.query, format: 'docx' } }, res);
 
-export function makePdfAlias(handler) {
-  return (req, res, next) => {
-    req.query.format = 'pdf';
-    return handler(req, res, next);
-  };
-}
+export const makePdfAlias = (handler) => (req, res) =>
+  handler({ ...req, query: { ...req.query, format: 'pdf' } }, res);

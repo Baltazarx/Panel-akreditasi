@@ -1,118 +1,108 @@
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
-import { pool } from '../db.js';
+import {
+  listTabel2b6KepuasanPengguna,
+  getTabel2b6KepuasanPenggunaById,
+  createTabel2b6KepuasanPengguna,
+  updateTabel2b6KepuasanPengguna,
+  softDeleteTabel2b6KepuasanPengguna,
+  restoreTabel2b6KepuasanPengguna,
+  hardDeleteTabel2b6KepuasanPengguna,
+  summaryTabel2b6KepuasanPengguna,
+  getJenisKemampuanTersedia,
+  getDataStatistikTabel2b6
+} from '../controllers/tabel2b6KepuasanPengguna.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
-export const tabel2b6KepuasanPenggunaRouter = Router();
+const router = express.Router();
 
-const listTabel2b6KepuasanPengguna = async (req, res) => {
-  const q = req.query || {};
-  const idUnitProdiParam = q.id_unit_prodi ?? null;
-  const idTahunParam = q.id_tahun ?? q.tahun ?? null;
-  const jenisKemampuanParam = q.jenis_kemampuan ?? null;
+/**
+ * ======================
+ * ====== CRUD ==========
+ * ======================
+ */
 
-  let sql = `
-    SELECT
-      kp.*,
-      uk.nama_unit AS nama_unit_prodi,
-      ta.tahun AS tahun_akademik
-    FROM tabel_2b6_kepuasan_pengguna kp
-    LEFT JOIN unit_kerja uk ON kp.id_unit_prodi = uk.id_unit
-    LEFT JOIN tahun_akademik ta ON kp.id_tahun = ta.id_tahun
-  `;
-  const where = [];
-  const params = [];
+// List data
+router.get('/', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), listTabel2b6KepuasanPengguna);
 
-  if (idUnitProdiParam) {
-    where.push('kp.id_unit_prodi = ?');
-    params.push(idUnitProdiParam);
-  }
-  if (idTahunParam) {
-    where.push('kp.id_tahun = ?');
-    params.push(idTahunParam);
-  }
-  if (jenisKemampuanParam) {
-    where.push('kp.jenis_kemampuan = ?');
-    params.push(jenisKemampuanParam);
-  }
+// Detail data
+router.get('/:id', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), getTabel2b6KepuasanPenggunaById);
 
-  if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-  sql += ` ORDER BY kp.id ASC`;
+// Create data
+router.post('/', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'C'), createTabel2b6KepuasanPengguna);
 
-  try {
-    const [rows] = await pool.query(sql, params);
-    res.json(rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Gagal memuat data kepuasan pengguna' });
-  }
-};
+// Update data
+router.put('/:id', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'U'), updateTabel2b6KepuasanPengguna);
 
-const crud = crudFactory({
-  table: 'tabel_2b6_kepuasan_pengguna',
-  idCol: 'id',
-  allowedCols: [
-    'id_unit_prodi',
-    'id_tahun',
-    'jenis_kemampuan',
-    'persen_sangat_baik',
-    'persen_baik',
-    'persen_cukup',
-    'persen_kurang',
-  ],
-  resourceKey: 'tabel_2b6_kepuasan_pengguna',
-  list: listTabel2b6KepuasanPengguna,
-});
+// Soft delete
+router.delete('/:id', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'D'), softDeleteTabel2b6KepuasanPengguna);
 
-// ---- CRUD ----
-tabel2b6KepuasanPenggunaRouter.get('/', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.list);
-tabel2b6KepuasanPenggunaRouter.get('/:id(\d+)', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.getById);
-tabel2b6KepuasanPenggunaRouter.post('/', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.create);
-tabel2b6KepuasanPenggunaRouter.put('/:id(\d+)', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.update);
-tabel2b6KepuasanPenggunaRouter.delete('/:id', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.remove);
-tabel2b6KepuasanPenggunaRouter.post('/:id/restore', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.restore);
-tabel2b6KepuasanPenggunaRouter.delete('/:id/hard-delete', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), crud.hardRemove);
+// Restore
+router.post('/:id/restore', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'U'), restoreTabel2b6KepuasanPengguna);
 
-// ---- EXPORT (DOCX/PDF, TS-aware) ----
+// Hard delete
+router.delete('/:id/hard-delete', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'H'), hardDeleteTabel2b6KepuasanPengguna);
+
+/**
+ * ======================
+ * ====== SUMMARY =======
+ * ======================
+ */
+
+// Summary data untuk dashboard/statistik
+router.get('/summary/data', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), summaryTabel2b6KepuasanPengguna);
+
+// Get jenis kemampuan yang tersedia
+router.get('/available/jenis-kemampuan', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), getJenisKemampuanTersedia);
+
+// Get data statistik tambahan (alumni, responden, mahasiswa aktif)
+router.get('/statistik/data', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), getDataStatistikTabel2b6);
+
+/**
+ * ======================
+ * ====== EXPORT ========
+ * ======================
+ */
+
 const meta = {
   resourceKey: 'tabel_2b6_kepuasan_pengguna',
   table: 'tabel_2b6_kepuasan_pengguna',
   columns: [
-    'id',
-    'id_unit_prodi',
-    'id_tahun',
-    'jenis_kemampuan',
-    'persen_sangat_baik',
-    'persen_baik',
-    'persen_cukup',
-    'persen_kurang',
+    'id', 
+    'id_unit_prodi', 
+    'id_tahun', 
+    'jenis_kemampuan', 
+    'persen_sangat_baik', 
+    'persen_baik', 
+    'persen_cukup', 
+    'persen_kurang'
   ],
   headers: [
-    'ID',
-    'Unit Prodi',
-    'Tahun',
-    'Jenis Kemampuan',
-    'Persen Sangat Baik',
-    'Persen Baik',
-    'Persen Cukup',
-    'Persen Kurang',
+    'ID', 
+    'Unit Prodi', 
+    'Tahun Akademik', 
+    'Jenis Kemampuan', 
+    'Persen Sangat Baik', 
+    'Persen Baik', 
+    'Persen Cukup', 
+    'Persen Kurang'
   ],
-  title: (label) => `Kepuasan Pengguna — ${label}`,
-  orderBy: 'm.id ASC',
+  title: (label) => `Tabel 2.B.6 Kepuasan Pengguna Lulusan — ${label}`,
+  orderBy: 't2b6.id_tahun DESC, t2b6.id_unit_prodi ASC',
+  requireYear: true,
 };
 
-const exportHandler = makeExportHandler(meta, { requireYear: true });
+// Export Excel/CSV
+router.get('/export', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makeExportHandler(meta));
+router.post('/export', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makeExportHandler(meta));
 
-// Endpoint utama: /export (GET/POST) + ?format=docx|pdf + dukung id_tahun / id_tahun_in / tahun
-tabel2b6KepuasanPenggunaRouter.get('/export', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), exportHandler);
-tabel2b6KepuasanPenggunaRouter.post('/export', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), exportHandler);
+// Export Word Document
+router.get('/export-doc', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makeDocAlias(meta));
+router.post('/export-doc', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makeDocAlias(meta));
 
-// Alias agar FE lama yang pakai /export-doc & /export-pdf tetap jalan
-tabel2b6KepuasanPenggunaRouter.get('/export-doc', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), makeDocAlias(exportHandler));
-tabel2b6KepuasanPenggunaRouter.post('/export-doc', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), makeDocAlias(exportHandler));
-tabel2b6KepuasanPenggunaRouter.get('/export-pdf', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), makePdfAlias(exportHandler));
-tabel2b6KepuasanPenggunaRouter.post('/export-pdf', requireAuth, permit('tabel_2b6_kepuasan_pengguna'), makePdfAlias(exportHandler));
+// Export PDF
+router.get('/export-pdf', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makePdfAlias(meta));
+router.post('/export-pdf', requireAuth, permit('tabel_2b6_kepuasan_pengguna', 'R'), makePdfAlias(meta));
 
-export default tabel2b6KepuasanPenggunaRouter;
+export default router;

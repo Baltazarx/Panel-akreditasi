@@ -30,7 +30,7 @@ const DosenTable = () => {
 
   const fetchJabatanFungsionalOptions = async () => {
     try {
-      const response = await api.get("/jabatan-fungsional");
+      const response = await api.get("/ref-jabatan-fungsional");
       setJabatanFungsionalOptions(response.map(item => ({ value: item.id_jafung, label: item.nama_jafung })));
     } catch (err) {
       console.error("Failed to fetch jabatan fungsional options:", err);

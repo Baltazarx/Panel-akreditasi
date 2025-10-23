@@ -98,8 +98,8 @@ export function Tabel2A3() {
     setError(null);
     try {
       const [mc, t] = await Promise.all([
-        api.get(`/tabel-2a3-kondisi-mahasiswa?timestamp=${new Date().getTime()}`),
-        api.get("/tahun"),
+        api.get(`/tabel2a3-kondisi-mahasiswa?timestamp=${new Date().getTime()}`),
+        api.get("/tahun-akademik"),
       ]);
       setMahasiswaConditions(Array.isArray(mc) ? mc : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);

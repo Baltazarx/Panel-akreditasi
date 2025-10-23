@@ -64,8 +64,8 @@ export function Tabel2B4() {
     setError(null);
     try {
       const [mt, t] = await Promise.all([
-        api.get("/tabel-2b4-masa-tunggu"), // Endpoint untuk data masa tunggu
-        api.get("/tahun"), // Endpoint untuk daftar tahun
+        api.get("/tabel2b4-masa-tunggu"), // Endpoint untuk data masa tunggu
+        api.get("/tahun-akademik"), // Endpoint untuk daftar tahun
       ]);
       setMasaTungguData(Array.isArray(mt) ? mt : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);

@@ -1,20 +1,25 @@
-// src/routes/tendik.route.js
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
+import {
+  listTendik,
+  getTendikById,
+  createTendik,
+  updateTendik,
+  softDeleteTendik,
+  restoreTendik,
+  hardDeleteTendik
+} from '../controllers/tendik.controller.js';
 
-export const tendikRouter = Router();
+const router = express.Router();
 
-const crud = crudFactory({
-  table: 'tenaga_kependidikan',
-  idCol: 'id_tendik',
-  allowedCols: ['id_pegawai', 'nikp'],
-  resourceKey: 'tenaga_kependidikan',
-});
+// ===== CRUD =====
+router.get('/', requireAuth, permit('tenaga_kependidikan', 'R'), listTendik);
+router.get('/:id', requireAuth, permit('tenaga_kependidikan', 'R'), getTendikById);
+router.post('/', requireAuth, permit('tenaga_kependidikan', 'C'), createTendik);
+router.put('/:id', requireAuth, permit('tenaga_kependidikan', 'U'), updateTendik);
+router.delete('/:id/hard-delete', requireAuth, permit('tenaga_kependidikan', 'D'), hardDeleteTendik);
+router.delete('/:id', requireAuth, permit('tenaga_kependidikan', 'D'), softDeleteTendik);
+router.post('/:id/restore', requireAuth, permit('tenaga_kependidikan', 'U'), restoreTendik);
 
-tendikRouter.get('/', requireAuth, permit('tenaga_kependidikan'), crud.list);
-tendikRouter.get('/:id', requireAuth, permit('tenaga_kependidikan'), crud.getById);
-tendikRouter.post('/', requireAuth, permit('tenaga_kependidikan'), crud.create);
-tendikRouter.put('/:id', requireAuth, permit('tenaga_kependidikan'), crud.update);
-tendikRouter.delete('/:id', requireAuth, permit('tenaga_kependidikan'), crud.remove);
+export default router;

@@ -1,23 +1,60 @@
+// src/routes/profilLulusan.route.js
 import express from 'express';
-const router = express.Router();
-import { pool } from '../db.js';
-import { requireAuth as authenticateToken } from '../auth/auth.middleware.js';
+import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
-import { crudFactory } from '../utils/crudFactory.js';
+import {
+  listProfilLulusan,
+  getProfilLulusanById,
+  createProfilLulusan,
+  updateProfilLulusan,
+  softDeleteProfilLulusan,
+  restoreProfilLulusan,
+  hardDeleteProfilLulusan,
+} from '../controllers/profilLulusan.controller.js';
+import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
-// Create (Hanya Superadmin)
-router.post('/', authenticateToken, permit(['superadmin']), crudFactory({ table: 'profil_lulusan', allowedCols: ['id_unit_prodi', 'kode_pl', 'deskripsi_pl'], idCol: 'id_pl' }).create);
+const router = express.Router();
 
-// Read All (Semua bisa baca)
-router.get('/', authenticateToken, permit(['superadmin', 'waket-1', 'waket-2', 'prodi-ti', 'prodi-mi', 'dosen', 'tpm', 'pimpinan']), crudFactory({ table: 'profil_lulusan', idCol: 'id_pl' }).list);
+/**
+ * CRUD
+ */
+router.get('/', requireAuth, permit('profil_lulusan', 'R'), listProfilLulusan);
+router.get('/:id', requireAuth, permit('profil_lulusan', 'R'), getProfilLulusanById);
+router.post('/', requireAuth, permit('profil_lulusan', 'C'), createProfilLulusan);
+router.put('/:id', requireAuth, permit('profil_lulusan', 'U'), updateProfilLulusan);
+router.delete('/:id', requireAuth, permit('profil_lulusan', 'D'), softDeleteProfilLulusan);
+router.post('/:id/restore', requireAuth, permit('profil_lulusan', 'U'), restoreProfilLulusan);
+router.delete('/:id/hard-delete', requireAuth, permit('profil_lulusan', 'H'), hardDeleteProfilLulusan);
 
-// Read One (Semua bisa baca)
-router.get('/:id', authenticateToken, permit(['superadmin', 'waket-1', 'waket-2', 'prodi-ti', 'prodi-mi', 'dosen', 'tpm', 'pimpinan']), crudFactory({ table: 'profil_lulusan', idCol: 'id_pl' }).getById);
+/**
+ * EXPORT
+ */
+const meta = {
+  resourceKey: 'profil_lulusan',
+  table: 'profil_lulusan',
+  columns: [
+    'id_pl',
+    'id_unit_prodi',
+    'kode_pl',
+    'deskripsi_pl',
+  ],
+  headers: [
+    'ID',
+    'Unit Prodi',
+    'Kode PL',
+    'Deskripsi PL',
+  ],
+  title: (label) => `Profil Lulusan — ${label}`,
+  orderBy: 'pl.id_pl ASC',
+};
 
-// Update (Hanya Superadmin)
-router.put('/:id', authenticateToken, permit(['superadmin']), crudFactory({ table: 'profil_lulusan', allowedCols: ['id_unit_prodi', 'kode_pl', 'deskripsi_pl'], idCol: 'id_pl' }).update);
+const exportHandler = makeExportHandler(meta, { requireYear: false });
 
-// Delete (Hanya Superadmin)
-router.delete('/:id', authenticateToken, permit(['superadmin']), crudFactory({ table: 'profil_lulusan', idCol: 'id_pl' }).remove);
+router.get('/export', requireAuth, permit('profil_lulusan', 'R'), exportHandler);
+router.post('/export', requireAuth, permit('profil_lulusan', 'R'), exportHandler);
+router.get('/export-doc', requireAuth, permit('profil_lulusan', 'R'), makeDocAlias(exportHandler));
+router.post('/export-doc', requireAuth, permit('profil_lulusan', 'R'), makeDocAlias(exportHandler));
+router.get('/export-pdf', requireAuth, permit('profil_lulusan', 'R'), makePdfAlias(exportHandler));
+router.post('/export-pdf', requireAuth, permit('profil_lulusan', 'R'), makePdfAlias(exportHandler));
 
 export default router;

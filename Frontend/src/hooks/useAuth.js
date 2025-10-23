@@ -11,7 +11,7 @@ export function useAuth() {
       const me = await apiFetch("/api/me");
       console.log("useAuth: /me response:", me);
       setUser({
-        name: me.username, role: me.role, unit_id: me.id_unit ?? null,
+        name: me.username, role: me.role, unit_id: me.id_unit_prodi ?? null,
         id_user: me.id_user, nama_unit: me.nama_unit ?? null,
       });
     } catch {}
@@ -23,7 +23,7 @@ export function useAuth() {
       await apiFetch("/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
       const me = await apiFetch("/api/me");
       setUser({
-        name: me.username, role: me.role, unit_id: me.id_unit ?? null,
+        name: me.username, role: me.role, unit_id: me.id_unit_prodi ?? null,
         id_user: me.id_user, nama_unit: me.nama_unit ?? null,
       });
     } catch (e) { setError(e?.message || "Login gagal"); }

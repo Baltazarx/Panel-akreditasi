@@ -35,9 +35,9 @@ export function Tabel2A1() {
     setError(null);
     try {
       const [p, m, t] = await Promise.all([
-        api.get("/tabel-2a1-pendaftaran"),
-        api.get("/tabel-2a1-mahasiswa-baru-aktif"),
-        api.get("/tahun"),
+        api.get("/tabel2a1-pendaftaran"),
+        api.get("/tabel2a1-mahasiswa-baru-aktif"),
+        api.get("/tahun-akademik"),
       ]);
       setPendaftaran(Array.isArray(p) ? p : []);
       setMabaAktif(Array.isArray(m) ? m : []);

@@ -1,36 +1,31 @@
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
-import bcrypt from 'bcryptjs';
+import {
+  listUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  softDeleteUser,
+  restoreUser,
+  hardDeleteUser,
+  listUnits,
+  searchPegawai
+} from '../controllers/users.controller.js';
 
-export const usersRouter = Router();
+const router = express.Router();
 
-const usersCrud = crudFactory({
-  table: 'users',
-  idCol: 'id_user',
-  allowedCols: ['username', 'password', 'id_unit', 'is_active'],
-  resourceKey: 'users',
-});
+// ===== CRUD USERS =====
+router.get('/', requireAuth, permit('users', 'R'), listUsers);
+router.get('/:id', requireAuth, permit('users', 'R'), getUserById);
+router.post('/', requireAuth, permit('users', 'C'), createUser);
+router.put('/:id', requireAuth, permit('users', 'U'), updateUser);
+router.delete('/:id', requireAuth, permit('users', 'D'), softDeleteUser);
+router.post('/:id/restore', requireAuth, permit('users', 'U'), restoreUser);
+router.delete('/:id/hard-delete', requireAuth, permit('users', 'D'), hardDeleteUser);
 
-// Custom create to hash password
-usersRouter.post('/', requireAuth, permit('users'), async (req, res) => {
-  const { password } = req.body;
-  if (password) {
-    req.body.password = await bcrypt.hash(password, 10);
-  }
-  return usersCrud.create(req, res);
-});
+// ===== EXTRA ENDPOINTS =====
+router.get('/extra/units', requireAuth, permit('users', 'R'), listUnits);
+router.get('/extra/pegawai', requireAuth, permit('users', 'R'), searchPegawai);
 
-// Custom update to hash password if provided
-usersRouter.put('/:id', requireAuth, permit('users'), async (req, res) => {
-  const { password } = req.body;
-  if (password) {
-    req.body.password = await bcrypt.hash(password, 10);
-  }
-  return usersCrud.update(req, res);
-});
-
-usersRouter.get('/', requireAuth, permit('users'), usersCrud.list);
-usersRouter.get('/:id', requireAuth, permit('users'), usersCrud.getById);
-usersRouter.delete('/:id', requireAuth, permit('users'), usersCrud.remove);
+export default router;

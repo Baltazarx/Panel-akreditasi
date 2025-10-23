@@ -1,13 +1,11 @@
 import express from 'express';
-import { pool } from '../db.js';
+import { listRefJabatanStruktural } from '../controllers/refJabatanStruktural.controller.js';
+import { requireAuth } from '../auth/auth.middleware.js';
+import { permit } from '../rbac/permit.middleware.js';
 
-export const refJabatanStrukturalRouter = express.Router();
+const router = express.Router();
 
-refJabatanStrukturalRouter.get('/', async (req, res, next) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM ref_jabatan_struktural ORDER BY nama_jabatan ASC');
-    res.json(rows);
-  } catch (error) {
-    next(error);
-  }
-});
+// hanya GET daftar jabatan struktural
+router.get('/', requireAuth, permit('ref_jabatan_struktural', 'R'), listRefJabatanStruktural);
+
+export default router;

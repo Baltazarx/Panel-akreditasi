@@ -1,77 +1,74 @@
-// src/utils/queryHelper.js
-import { pool } from "../db.js";
+import { pool } from '../db.js';
 
-/**
- * Cek apakah tabel punya kolom tertentu
- */
-export async function hasColumn(table, col) {
+// Cek apakah tabel punya kolom tertentu
+export const hasColumn = async (table, col) => {
   const [rows] = await pool.query(
-    `SELECT 1 FROM information_schema.COLUMNS
+    `SELECT 1 FROM information_schema.COLUMNS 
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
     [table, col]
   );
   return rows.length > 0;
-}
+};
 
-/**
- * Bangun WHERE clause dari query string
- * Support:
- *  - ?id_tahun=2025
- *  - ?id_tahun_in=1,2,3
- *  - ?tahun=2025 (legacy)
- *  - ?id_unit_prodi=XX / ?id_unit=XX
- *  - soft delete (skip deleted_at kecuali ?include_deleted=1)
- */
-export async function buildWhere(req, table, alias = "m", softDelete = true) {
+// Build filter (id_tahun, id_unit_prodi, soft delete, dll.)
+export const buildWhere = async (req, table, alias = 'm') => {
   const where = [];
   const params = [];
-  const q = req.query || {};
-  const prefix = alias ? alias + "." : "";
 
-  // Tahun akademik
-  if (await hasColumn(table, "id_tahun")) {
+  // ===== Filter Tahun Akademik =====
+  if (await hasColumn(table, 'id_tahun')) {
+    const q = req.query || {};
     const qSingle = q.id_tahun ?? q.tahun;
     const qMulti = q.id_tahun_in;
+
     if (qSingle) {
-      where.push(`${prefix}id_tahun = ?`);
+      where.push(`${alias}.id_tahun = ?`);
       params.push(qSingle);
     } else if (qMulti) {
-      const arr = String(qMulti).split(",").map(s => s.trim()).filter(Boolean);
+      const arr = String(qMulti).split(',').map(s => s.trim()).filter(Boolean);
       if (arr.length) {
-        where.push(`${prefix}id_tahun IN (${arr.map(() => "?").join(",")})`);
+        where.push(`${alias}.id_tahun IN (${arr.map(() => '?').join(',')})`);
         params.push(...arr);
       }
     }
   }
 
-  // Unit / Prodi
-  if (await hasColumn(table, "id_unit_prodi") && (q.id_unit_prodi || q.id_unit)) {
-    where.push(`${prefix}id_unit_prodi = ?`);
-    params.push(q.id_unit_prodi || q.id_unit);
-  }
-
-  // Soft delete
-  if (softDelete && await hasColumn(table, "deleted_at")) {
-    const includeDeleted = q.include_deleted;
-    if (String(includeDeleted) !== "1") {
-      where.push(`${prefix}deleted_at IS NULL`);
+  // ===== Filter Unit/Prodi Otomatis =====
+  if (await hasColumn(table, 'id_unit_prodi')) {
+    // Cek role user — kalau bukan superadmin, hanya boleh lihat datanya sendiri
+    const isSuperAdmin =
+      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role);
+    if (!isSuperAdmin) {
+      where.push(`${alias}.id_unit_prodi = ?`);
+      // === PERBAIKAN: Baca 'id_unit_prodi' dari token, bukan 'id_unit' ===
+      params.push(req.user?.id_unit_prodi || 0);
+    } else if (req.query?.id_unit_prodi) {
+      // superadmin bisa filter manual via ?id_unit_prodi=2 (opsional)
+      where.push(`${alias}.id_unit_prodi = ?`);
+      params.push(req.query.id_unit_prodi);
     }
   }
 
-  return {
-    where: where.length ? "AND " + where.join(" AND ") : "",
-    params,
-  };
-}
+  // ===== Soft Delete Handling =====
+  if (await hasColumn(table, 'deleted_at')) {
+    const includeDeleted = req.query?.include_deleted;
+    if (String(includeDeleted) !== '1') {
+      where.push(`${alias}.deleted_at IS NULL`);
+    }
+  }
 
-/**
- * Bangun ORDER BY clause
- */
-export function buildOrderBy(orderByParam, defaultCol, alias = "m") {
-  if (!orderByParam) return `${alias}.${defaultCol} DESC`;
-  return orderByParam
-    .split(",")
+  return { where, params };
+};
+
+// Build order_by
+export const buildOrderBy = (raw, idCol, alias = 'm') => {
+  const def = `${alias}.${idCol} DESC`;
+  if (!raw) return def;
+  const ok = /^[a-zA-Z0-9_,\s\.]+(ASC|DESC)?(\s*,\s*[a-zA-Z0-9_\.\s]+(ASC|DESC)?)*$/.test(raw);
+  if (!ok) return def;
+  return raw
+    .split(',')
     .map(s => s.trim())
-    .map(part => (part.includes(".") ? part : `${alias}.${part}`))
-    .join(", ");
-}
+    .map(part => (part.includes('.') ? part : `${alias}.${part}`))
+    .join(', ');
+};

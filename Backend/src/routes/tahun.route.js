@@ -1,26 +1,21 @@
-// src/routes/tahun.route.js
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
+import {
+  listTahun,
+  getTahunById,
+  createTahun,
+  updateTahun,
+  deleteTahun
+} from '../controllers/tahun.controller.js';
 
-export const tahunRouter = Router();
+const router = express.Router();
 
-// Konfigurasi crudFactory disederhanakan
-const tahunCrud = crudFactory({
-  table: 'tahun_akademik',
-  idCol: 'id_tahun',
-  // Kolom 'semester' dihapus dari daftar kolom yang diizinkan
-  allowedCols: ['tahun'], 
-  resourceKey: 'tahun_akademik', // Menggunakan nama tabel agar konsisten
-});
+// ===== CRUD =====
+router.get('/', requireAuth, permit('tahun_akademik', 'R'), listTahun);
+router.get('/:id', requireAuth, permit('tahun_akademik', 'R'), getTahunById);
+router.post('/', requireAuth, permit('tahun_akademik', 'C'), createTahun);
+router.put('/:id', requireAuth, permit('tahun_akademik', 'U'), updateTahun);
+router.delete('/:id', requireAuth, permit('tahun_akademik', 'D'), deleteTahun);
 
-// Middleware otentikasi dan otorisasi diterapkan ke semua rute di bawahnya
-tahunRouter.use(requireAuth, permit('tahun_akademik'));
-
-// Definisi rute CRUD
-tahunRouter.get('/', tahunCrud.list);
-tahunRouter.get('/:id', tahunCrud.getById);
-tahunRouter.post('/', tahunCrud.create);
-tahunRouter.put('/:id', tahunCrud.update);
-tahunRouter.delete('/:id', tahunCrud.remove);
+export default router;

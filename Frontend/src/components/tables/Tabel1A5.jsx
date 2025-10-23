@@ -4,7 +4,7 @@ import { apiFetch } from "../../lib/api";
 import { useMaps } from "../../hooks/useMaps";
 import { Badge, Card, EmptyState } from "../ui";
 
-const ENDPOINT = "/api/jumlah-tendik-by-pendidikan";
+const ENDPOINT = "/api/kualifikasi-tendik";
 const TABLE_KEY = "tabel_1a6_agregasi";
 const LABEL = "1.A.5 Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir";
 

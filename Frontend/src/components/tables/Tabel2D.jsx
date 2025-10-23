@@ -66,15 +66,15 @@ export function Tabel2D() {
     setError(null);
     try {
       const [rek, kondisi, t] = await Promise.all([
-        api.get("/tabel-2d-rekognisi-lulusan"), // Endpoint for recognition data
-        api.get("/tabel-2a3-kondisi-mahasiswa"), // Endpoint for student condition data
-        api.get("/tahun"),
+        api.get("/tabel2d-rekognisi-lulusan"), // Corrected endpoint for recognition data
+        api.get("/tabel2a3-kondisi-mahasiswa"), // Corrected endpoint for student condition data
+        api.get("/tahun-akademik"), // Corrected endpoint for year list
       ]);
       setRekognisiData(Array.isArray(rek) ? rek : []);
       setKondisiMahasiswaData(Array.isArray(kondisi) ? kondisi : []); // Changed from setMahasiswaAktifTotalData
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);
 
-      const years = [...rek, ...kondisi]
+      const years = [...(Array.isArray(rek) ? rek : []), ...(Array.isArray(kondisi) ? kondisi : [])]
         .map((x) => Number(x?.id_tahun))
         .filter((n) => Number.isFinite(n));
       const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);

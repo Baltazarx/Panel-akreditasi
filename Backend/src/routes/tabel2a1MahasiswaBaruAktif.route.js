@@ -1,119 +1,52 @@
-import { Router } from 'express';
-import { crudFactory } from '../utils/crudFactory.js';
+// src/routes/tabel2a1MahasiswaBaruAktif.route.js
+import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
-import { pool } from '../db.js';
+import {
+  listMahasiswaBaruAktif,
+  getMahasiswaBaruAktifById,
+  createMahasiswaBaruAktif,
+  updateMahasiswaBaruAktif,
+  softDeleteMahasiswaBaruAktif,
+  restoreMahasiswaBaruAktif,
+  hardDeleteMahasiswaBaruAktif,
+} from '../controllers/tabel2a1MahasiswaBaruAktif.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
-export const tabel2a1MahasiswaBaruAktifRouter = Router();
+const router = express.Router();
 
-const listTabel2a1MahasiswaBaruAktif = async (req, res) => {
-  const q = req.query || {};
-  const idUnitProdiParam = q.id_unit_prodi ?? null;
-  const idTahunParam = q.id_tahun ?? q.tahun ?? null;
-  const jenisParam = q.jenis ?? null;
-  const jalurParam = q.jalur ?? null;
+/**
+ * ==========================================
+ * ================ CRUD ====================
+ * ==========================================
+ */
 
-  let sql = `
-    SELECT
-      maba.*,
-      uk.nama_unit AS nama_unit_prodi,
-      ta.tahun AS tahun_akademik
-    FROM tabel_2a1_mahasiswa_baru_aktif maba
-    LEFT JOIN unit_kerja uk ON maba.id_unit_prodi = uk.id_unit
-    LEFT JOIN tahun_akademik ta ON maba.id_tahun = ta.id_tahun
-  `;
-  const where = [];
-  const params = [];
+// LIST
+router.get('/', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), listMahasiswaBaruAktif);
 
-  if (idUnitProdiParam) {
-    where.push('maba.id_unit_prodi = ?');
-    params.push(idUnitProdiParam);
-  }
-  if (idTahunParam) {
-    where.push('maba.id_tahun = ?');
-    params.push(idTahunParam);
-  }
-  if (jenisParam) {
-    where.push('maba.jenis = ?');
-    params.push(jenisParam);
-  }
-  if (jalurParam) {
-    where.push('maba.jalur = ?');
-    params.push(jalurParam);
-  }
+// DETAIL
+router.get('/:id', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), getMahasiswaBaruAktifById);
 
-  if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-  sql += ` ORDER BY maba.id ASC`;
+// CREATE
+router.post('/', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'C'), createMahasiswaBaruAktif);
 
-  try {
-    const [rows] = await pool.query(sql, params);
-    res.json(rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Gagal memuat data mahasiswa baru aktif' });
-  }
-};
+// UPDATE
+router.put('/:id', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'U'), updateMahasiswaBaruAktif);
 
-const crud = crudFactory({
-  table: 'tabel_2a1_mahasiswa_baru_aktif',
-  idCol: 'id',
-  allowedCols: [
-    'id_unit_prodi',
-    'id_tahun',
-    'daya_tampung',
-    'jenis',
-    'jalur',
-    'jumlah_diterima',
-    'jumlah_afirmasi',
-    'jumlah_kebutuhan_khusus',
-  ],
-  resourceKey: 'tabel_2a1_mahasiswa_baru_aktif',
-  list: listTabel2a1MahasiswaBaruAktif,
-});
+// SOFT DELETE — boleh dilakukan oleh unit (ALA, PMB, PRODI, dll.)
+router.delete('/:id', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'D'), softDeleteMahasiswaBaruAktif);
 
-// ---- CRUD ----
-tabel2a1MahasiswaBaruAktifRouter.get('/', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.list);
-tabel2a1MahasiswaBaruAktifRouter.get('/:id(\d+)', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.getById);
-tabel2a1MahasiswaBaruAktifRouter.post('/', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.create);
+// RESTORE — bisa oleh WAKET & TPM
+router.post('/:id/restore', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'U'), restoreMahasiswaBaruAktif);
 
-// --- Endpoint untuk update daya_tampung ---
-tabel2a1MahasiswaBaruAktifRouter.put(
-  '/daya-tampung',
-  requireAuth,
-  permit('tabel_2a1_mahasiswa_baru_aktif'),
-  async (req, res) => {
-    try {
-      const { id_unit_prodi, id_tahun, daya_tampung } = req.body;
-      if (!id_unit_prodi || !id_tahun || daya_tampung === undefined) {
-        return res.status(400).json({ error: 'id_unit_prodi, id_tahun, dan daya_tampung diperlukan' });
-      }
+// HARD DELETE — hanya Superadmin (WAKET1/WAKET2)
+router.delete('/:id/hard-delete', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'H'), hardDeleteMahasiswaBaruAktif);
 
-      const [result] = await pool.query(
-        `UPDATE tabel_2a1_mahasiswa_baru_aktif
-         SET daya_tampung = ?
-         WHERE id_unit_prodi = ? AND id_tahun = ?`,
-        [daya_tampung, id_unit_prodi, id_tahun]
-      );
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Data daya tampung tidak ditemukan untuk diupdate' });
-      }
-
-      res.json({ message: 'Daya tampung berhasil diperbarui', affectedRows: result.affectedRows });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: 'Gagal memperbarui daya tampung' });
-    }
-  }
-);
-
-tabel2a1MahasiswaBaruAktifRouter.put('/:id', crud.update);
-tabel2a1MahasiswaBaruAktifRouter.delete('/:id', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.remove);
-tabel2a1MahasiswaBaruAktifRouter.post('/:id/restore', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.restore);
-tabel2a1MahasiswaBaruAktifRouter.delete('/:id/hard-delete', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), crud.hardRemove);
-
-// ---- EXPORT (DOCX/PDF, TS-aware) ----
+/**
+ * ==========================================
+ * ============== EXPORT ROUTES =============
+ * ==========================================
+ */
 const meta = {
   resourceKey: 'tabel_2a1_mahasiswa_baru_aktif',
   table: 'tabel_2a1_mahasiswa_baru_aktif',
@@ -123,7 +56,7 @@ const meta = {
     'id_tahun',
     'jenis',
     'jalur',
-    'jumlah_diterima',
+    'jumlah_total',
     'jumlah_afirmasi',
     'jumlah_kebutuhan_khusus',
   ],
@@ -133,22 +66,22 @@ const meta = {
     'Tahun',
     'Jenis',
     'Jalur',
-    'Jumlah Total',
-    'Jumlah Afirmasi',
-    'Jumlah Kebutuhan Khusus',
+    'Total',
+    'Afirmasi',
+    'Kebutuhan Khusus',
   ],
-  title: (label) => `Mahasiswa Baru Aktif — ${label}`,
+  title: (label) => `Tabel 2.A.1 — Mahasiswa Baru/Aktif (${label})`,
   orderBy: 'm.id ASC',
 };
 
-const exportHandler = makeExportHandler(meta, { requireYear: true });
+const exportHandler = makeExportHandler(meta, { requireYear: false });
 
-// Endpoint utama: /export (GET/POST) + ?format=docx|pdf + dukung id_tahun / id_tahun_in / tahun
-tabel2a1MahasiswaBaruAktifRouter.get('/export', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), exportHandler);
-tabel2a1MahasiswaBaruAktifRouter.post('/export', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), exportHandler);
+// EXPORT HANDLERS (xlsx, docx, pdf)
+router.get('/export', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), exportHandler);
+router.post('/export', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), exportHandler);
+router.get('/export-doc', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), makeDocAlias(exportHandler));
+router.post('/export-doc', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), makeDocAlias(exportHandler));
+router.get('/export-pdf', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), makePdfAlias(exportHandler));
+router.post('/export-pdf', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'R'), makePdfAlias(exportHandler));
 
-// Alias agar FE lama yang pakai /export-doc & /export-pdf tetap jalan
-tabel2a1MahasiswaBaruAktifRouter.get('/export-doc', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), makeDocAlias(exportHandler));
-tabel2a1MahasiswaBaruAktifRouter.post('/export-doc', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), makeDocAlias(exportHandler));
-tabel2a1MahasiswaBaruAktifRouter.get('/export-pdf', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), makePdfAlias(exportHandler));
-tabel2a1MahasiswaBaruAktifRouter.post('/export-pdf', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif'), makePdfAlias(exportHandler));
+export default router;

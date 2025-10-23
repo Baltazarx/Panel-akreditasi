@@ -64,8 +64,8 @@ export function Tabel2B5() {
     setError(null);
     try {
       const [kk, t] = await Promise.all([
-        api.get("/tabel-2b5-kesesuaian-kerja"), // Endpoint for job suitability data
-        api.get("/tahun"), // Endpoint for year list
+        api.get("/tabel2b5-kesesuaian-kerja"), // Endpoint for job suitability data
+        api.get("/tahun-akademik"), // Endpoint for year list
       ]);
       setKesesuaianKerjaData(Array.isArray(kk) ? kk : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);

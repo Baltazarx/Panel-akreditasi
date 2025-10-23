@@ -5,43 +5,46 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from "./hooks/useAuth";
 
-// Tables
+// Tables - Only components that match backend routes
+import PegawaiTable from "./components/tables/PegawaiTable";
+import DosenTable from "./components/tables/DosenTable";
 import Tabel1A1 from "./components/tables/Tabel1A1";
 import Tabel1A2 from "./components/tables/Tabel1A2";
 import Tabel1A3 from "./components/tables/Tabel1A3";
 import Tabel1A4 from "./components/tables/Tabel1A4";
 import Tabel1A5 from "./components/tables/Tabel1A5";
-import Tabel1B  from "./components/tables/Tabel1B";
-import PegawaiTable from "./components/tables/PegawaiTable";
-import DosenTable from "./components/tables/DosenTable";
+import Tabel1B from "./components/tables/Tabel1B";
 import Tabel2A1 from "./components/tables/Tabel2A1";
 import Tabel2A2 from "./components/tables/Tabel2A2";
 import Tabel2A3 from "./components/tables/Tabel2A3";
-import ManajemenKurikulum from "./components/tables/ManajemenKurikulum";
 import Tabel2B4 from "./components/tables/Tabel2B4";
 import Tabel2B5 from "./components/tables/Tabel2B5";
 import Tabel2B6 from "./components/tables/Tabel2B6";
 import Tabel2C from "./components/tables/Tabel2C";
 import Tabel2D from "./components/tables/Tabel2D";
-// Tab list
+// Tab list - Only tabs that match backend routes
 const TABS = [
+  // Master Data
   { key: "pegawai",   label: "Daftar Pegawai",                    icon: "👥", Comp: PegawaiTable },
-  { key: "dosen",     label: "Daftar Dosen",                      icon: "👨‍🏫", Comp: DosenTable   },
-  { key: "tabel_1a1", label: "1.A.1 Pimpinan & Tupoksi UPPS/PS",  icon: "👤", Comp: Tabel1A1 },
-  { key: "tabel_1a2", label: "1.A.2 Sumber Pendanaan UPPS/PS",    icon: "💰", Comp: Tabel1A2 },
-  { key: "tabel_1a3", label: "1.A.3 Penggunaan Dana UPPS/PS",     icon: "📊", Comp: Tabel1A3 },
-  { key: "tabel_1a4", label: "1.A.4 EWMP DTPR TS",                icon: "📈", Comp: Tabel1A4 },
-  { key: "tabel_1a5", label: "1.A.5 Kualifikasi Tendik",          icon: "🎓", Comp: Tabel1A5 },
-  { key: "tabel_1b",  label: "1.B Unit SPMI & SDM",               icon: "🏢", Comp: Tabel1B  },
-  { key: "tabel_2a1", label: "2.A.1 Data Mahasiswa",              icon: "👥", Comp: Tabel2A1 },
-  { key: "tabel_2a2", label: "2.A.2 Keragaman Asal Mahasiswa",    icon: "🌍", Comp: Tabel2A2 },
-  { key: "tabel_2a3", label: "2.A.3 Kondisi Mahasiswa",           icon: "📊", Comp: Tabel2A3 },
-  { key: "manajemen_kurikulum", label: "2.B Manajemen Kurikulum", icon: "📚", Comp: ManajemenKurikulum },
-  { key: "tabel_2b4", label: "2.B.4 Masa Tunggu",                  icon: "⏰", Comp: Tabel2B4 },
-  { key: "tabel_2b5", label: "2.B.5 Kesesuaian Kerja",             icon: "💼", Comp: Tabel2B5 },
-  { key: "tabel_2b6", label: "2.B.6 Kepuasan Pengguna",            icon: "😊", Comp: Tabel2B6 },
-  { key: "tabel_2c",  label: "2.C Pembelajaran Luar Prodi",        icon: "🎓", Comp: Tabel2C  },
-  { key: "tabel_2d",  label: "2.D Rekognisi Lulusan",              icon: "🏆", Comp: Tabel2D  },
+  { key: "dosen",     label: "Daftar Dosen",                      icon: "👨‍🏫", Comp: DosenTable },
+  
+  // C1 - Standar 1
+  { key: "tabel_1a1", label: "1.A.1 Pimpinan UPPS/PS",            icon: "👤", Comp: Tabel1A1 },
+  { key: "tabel_1a2", label: "1.A.2 Sumber Pendanaan",           icon: "💰", Comp: Tabel1A2 },
+  { key: "tabel_1a3", label: "1.A.3 Penggunaan Dana",            icon: "📊", Comp: Tabel1A3 },
+  { key: "tabel_1a4", label: "1.A.4 Beban Kerja Dosen",          icon: "📈", Comp: Tabel1A4 },
+  { key: "tabel_1a5", label: "1.A.5 Kualifikasi Tendik",         icon: "🎓", Comp: Tabel1A5 },
+  { key: "tabel_1b",  label: "1.B Audit Mutu Internal",         icon: "🏢", Comp: Tabel1B },
+  
+  // C2 - Standar 2
+  { key: "tabel_2a1", label: "2.A.1 Data Mahasiswa",             icon: "👥", Comp: Tabel2A1 },
+  { key: "tabel_2a2", label: "2.A.2 Keragaman Asal",             icon: "🌍", Comp: Tabel2A2 },
+  { key: "tabel_2a3", label: "2.A.3 Kondisi Mahasiswa",          icon: "📊", Comp: Tabel2A3 },
+  { key: "tabel_2b4", label: "2.B.4 Masa Tunggu",                icon: "⏰", Comp: Tabel2B4 },
+  { key: "tabel_2b5", label: "2.B.5 Kesesuaian Kerja",           icon: "💼", Comp: Tabel2B5 },
+  { key: "tabel_2b6", label: "2.B.6 Kepuasan Pengguna",          icon: "😊", Comp: Tabel2B6 },
+  { key: "tabel_2c",  label: "2.C Pembelajaran Luar Prodi",      icon: "🎓", Comp: Tabel2C },
+  { key: "tabel_2d",  label: "2.D Rekognisi Lulusan",           icon: "🏆", Comp: Tabel2D },
 ];
 
 function LoginForm({ onSubmit, loading, error }) {

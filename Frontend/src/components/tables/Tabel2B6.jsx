@@ -64,15 +64,15 @@ export function Tabel2B6() {
     setError(null);
     try {
       const [kp, t] = await Promise.all([
-        api.get("/tabel-2b6-kepuasan-pengguna"), // Endpoint for graduate user satisfaction data
-        api.get("/tahun"), // Endpoint for year list
+        api.get("/tabel2b6-kepuasan-pengguna"), // Endpoint for graduate user satisfaction data
+        api.get("/tahun-akademik"), // Endpoint for year list
       ]);
       setKepuasanPenggunaData(Array.isArray(kp) ? kp : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);
 
-      const years = [...kp]
+      const years = Array.isArray(kp) ? [...kp]
         .map((x) => Number(x?.id_tahun))
-        .filter((n) => Number.isFinite(n));
+        .filter((n) => Number.isFinite(n)) : [];
       const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);
       setSelectedTahun(latest);
 
@@ -214,20 +214,24 @@ export function Tabel2B6() {
 
   const refreshSummary = async () => {
     try {
-      const [alumniCount, respondenCount, mabaAktifCount] = await Promise.all([
-        api.get(`/tabel-2b6-jumlah-alumni/${selectedTahun}`), // Assuming endpoint for alumni count
-        api.get(`/tabel-2b6-jumlah-responden/${selectedTahun}`), // Assuming endpoint for responden count
-        api.get(`/tabel-2b6-jumlah-mahasiswa-aktif/${selectedTahun}`), // Assuming endpoint for active students
-      ]);
+      // Calculate summary from existing data instead of calling non-existent endpoints
+      const currentYearData = kepuasanPenggunaData.filter(item => 
+        Number(item.id_tahun) === Number(selectedTahun) && 
+        Number(item.id_unit_prodi) === Number(user?.unit_id)
+      );
+      
+      // Calculate totals from existing data
+      const totalAlumni = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_lulusan) || 0), 0);
+      const totalResponden = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_responden) || 0), 0);
+      const totalAktif = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_mahasiswa_aktif) || 0), 0);
 
       setSummaryValues({
-        jumlah_alumni_lulusan: alumniCount?.jumlah || 0,
-        jumlah_pengguna_responden: respondenCount?.jumlah || 0,
-        jumlah_mahasiswa_aktif: mabaAktifCount?.jumlah || 0,
+        jumlah_alumni_lulusan: totalAlumni,
+        jumlah_pengguna_responden: totalResponden,
+        jumlah_mahasiswa_aktif: totalAktif,
       });
     } catch (e) {
-      console.error("Failed to fetch summary data:", e);
-      // Optionally set error here for summary data, or combine with main error state
+      console.error("Failed to calculate summary data:", e);
     }
   };
 

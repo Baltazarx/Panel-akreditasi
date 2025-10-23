@@ -1,4 +1,3 @@
-// src/server.js
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -6,132 +5,152 @@ import cookieParser from 'cookie-parser';
 
 import { config as appConfig } from './config.js';
 
-// AUTH
+// ===== MIDDLEWARE AUTH =====
+import { requireAuth } from './auth/auth.middleware.js';
+import { normalizeRole } from './auth/normalizeRole.middleware.js';
+
+// ===== ROUTERS =====
 import { loginRouter } from './auth/login.route.js';
+import pimpinanUppsPsRouter from './routes/1.A.1PimpinanUppsPs.route.js';
+import sumberPendanaanRouter from './routes/1.A.2SumberPendanaan.route.js';
+import penggunaanDanaRouter from './routes/1.A.3PenggunaanDana.route.js';
+import bebanKerjaDosenRouter from './routes/1.A.4BebanKerjaDosen.route.js';
+import kualifikasiTendikRouter from './routes/1.A.5KualifikasiTendik.route.js';
+import auditMutuInternalRouter from './routes/1.BAuditMutuInternal.route.js';
+import dosenRouter from './routes/dosen.route.js';
+import pegawaiRouter from './routes/pegawai.route.js';
+import refJabatanFungsionalRouter from './routes/refJabatanFungsional.route.js';
+import refJabatanStrukturalRouter from './routes/refJabatanStruktural.route.js';
+import tahunRouter from './routes/tahun.route.js';
+import tendikRouter from './routes/tendik.route.js';
+import unitKerjaRouter from './routes/unitKerja.route.js';
+import usersRouter from './routes/users.route.js';
 
-// C1 ROUTERS
-import { pimpinanUppsPsRouter }                            from './routes/pimpinanUppsPs.route.js';   // 1.A.1
-import { sumberPendanaanRouter }                           from './routes/sumberPendanaan.route.js';  // 1.A.2
-import { penggunaanDanaRouter }                            from './routes/penggunaanDana.route.js';   // 1.A.3
-import { bebanKerjaDosenRouter }                           from './routes/bebanKerjaDosen.route.js';  // 1.A.4
-import kualifikasiTendikRouter from './routes/kualifikasiTendik.route.js';// 1.A.5
-import { auditMutuInternalRouter } from './routes/auditMutuInternal.route.js'; // 1.B
-import { unitKerjaRouter }         from './routes/unitKerja.route.js';
-import { pegawaiRouter }           from './routes/pegawai.route.js';
-import { dosenRouter }             from './routes/dosen.route.js'; // Import dosenRouter
-import { tahunRouter }             from './routes/tahun.route.js';
-import { tendikRouter }            from './routes/tendik.route.js';
-import { refJabatanStrukturalRouter } from './routes/refJabatanStruktural.route.js';
-import { refJabatanFungsionalRouter } from './routes/refJabatanFungsional.route.js';
-import { jumlahTendikByPendidikanRouter } from './routes/jumlahTendikByPendidikan.route.js';
-import { cplRouter } from './routes/cpl.route.js';
-import { cpmkRouter } from './routes/cpmk.route.js';
-import { kurikulumRouter } from './routes/kurikulum.route.js';
-import { logAktivitasRouter } from './routes/logAktivitas.route.js';
-import { mapCplMkRouter } from './routes/mapCplMk.route.js';
-import { mapCplPlRouter } from './routes/mapCplPl.route.js';
-import { mapCpmkCplRouter } from './routes/mapCpmkCpl.route.js';
-import { mapCpmkMkRouter } from './routes/mapCpmkMk.route.js';
-import mataKuliahRouter from './routes/mataKuliah.route.js';
+// ===== C2 ROUTES =====
+import tabel2a1PendaftaranRouter from './routes/tabel2a1Pendaftaran.route.js';
+import tabel2a1MahasiswaBaruAktifRouter from './routes/tabel2a1MahasiswaBaruAktif.route.js';
+import tabel2a2KeragamanAsalRouter from './routes/tabel2a2KeragamanAsal.route.js';
+import tabel2a3KondisiMahasiswaRouter from './routes/tabel2a3KondisiMahasiswa.route.js';
+import tabel2b4MasaTungguRouter from './routes/tabel2b4MasaTunggu.route.js';
+import tabel2b5KesesuaianKerjaRouter from './routes/tabel2b5KesesuaianKerja.route.js';
+import tabel2b6KepuasanPenggunaRouter from './routes/tabel2b6KepuasanPengguna.route.js';
+import tabel2cBentukPembelajaranRouter from './routes/tabel2cBentukPembelajaran.route.js';
+import tabel2cFleksibilitasPembelajaranRouter from './routes/tabel2cFleksibilitasPembelajaran.route.js';
+import tabel2dRekognisiLulusanRouter from './routes/tabel2dRekognisiLulusan.route.js';
+import tabel2dSumberRekognisiRouter from './routes/tabel2dSumberRekognisi.route.js';
+import cplRouter from './routes/cpl.route.js';
 import profilLulusanRouter from './routes/profilLulusan.route.js';
-import { tabel2a1MahasiswaBaruAktifRouter } from './routes/tabel2a1MahasiswaBaruAktif.route.js';
-import { tabel2a1PendaftaranRouter } from './routes/tabel2a1Pendaftaran.route.js';
-import { tabel2a2KeragamanAsalRouter } from './routes/tabel2a2KeragamanAsal.route.js';
-import { tabel2a3KondisiMahasiswaRouter } from './routes/tabel2a3KondisiMahasiswa.route.js';
-import { tabel2b4MasaTungguRouter } from './routes/tabel2b4MasaTunggu.route.js';
-import { tabel2b5KesesuaianKerjaRouter } from './routes/tabel2b5KesesuaianKerja.route.js';
-import { tabel2b6KepuasanPenggunaRouter } from './routes/tabel2b6KepuasanPengguna.route.js';
-import { tabel2cPembelajaranLuarProdiRouter } from './routes/tabel2cPembelajaranLuarProdi.route.js';
-import { tabel2dRekognisiLulusanRouter } from './routes/tabel2dRekognisiLulusan.route.js';
-import { refKabupatenKotaRouter } from './routes/refKabupatenKota.route.js'; // Import new router
-import { refProvinsiRouter } from './routes/refProvinsi.route.js';
-import tabel2b1IsiPembelajaranRouter from "./routes/tabel2b1IsiPembelajaran.route.js";
-import tabel2b6RekapJumlahRoutes from './routes/tabel2b6RekapJumlah.route.js';
-
+import mataKuliahRouter from './routes/mataKuliah.route.js';
+import cpmkRouter from './routes/cpmk.route.js';
+// ===== C2B – PEMETAAN KURIKULUM =====
+import pemetaan2b1Router from './routes/pemetaan2b1.route.js';
+import pemetaan2b2Router from './routes/pemetaan2b2.route.js';
+import pemetaan2b3Router from './routes/pemetaan2b3.route.js';
+import pemetaanCpmkCplRoutes from './routes/pemetaanCpmkCpl.route.js';
+// TODO: import route lain setelah dikonversi
 
 const app = express();
 
-// ===== Middlewares =====
+// ===== MIDDLEWARES =====
 app.use(express.json());
 app.use(cookieParser());
 
-// Middleware logging global (sementara untuk debugging)
-app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.originalUrl} - REQUEST RECEIVED`);
+// Simple logger (dev only)
+app.use((req, _res, next) => {
+  console.log(`[${req.method}] ${req.originalUrl}`);
   next();
 });
 
-// CORS (sesuaikan origin FE-mu; untuk test Thunder Client boleh true)
-const ALLOW_ORIGIN = process.env.FRONTEND_ORIGIN || true; // true = reflect origin (dev)
-app.use(cors({
-  origin: ALLOW_ORIGIN,
-  credentials: true,
-}));
+// ===== CORS =====
+const ALLOW_ORIGIN = process.env.FRONTEND_ORIGIN?.split(",") || [
+  "http://localhost:5173", // vite default
+  "http://localhost:3001"  // vite custom port
+];
 
-// ===== Healthcheck =====
+app.use(
+  cors({
+    origin: ALLOW_ORIGIN,
+    credentials: true,
+  })
+);
+
+// ===== ROOT =====
+app.get('/', (req, res) => {
+  res.send(
+    '✅ Backend API Akreditasi STIKOM PGRI Banyuwangi sudah jalan. Gunakan endpoint /api/* untuk akses data.'
+  );
+});
+
+// ===== HEALTHCHECK =====
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, env: process.env.NODE_ENV || 'development' });
 });
 
-// ===== Routes =====
+// ===== ROUTES =====
+// route login ga butuh auth
 app.use('/api', loginRouter);
 
-app.use('/api/pimpinan-upps-ps',    pimpinanUppsPsRouter);    // 1.A.1
-app.use('/api/sumber-pendanaan',    sumberPendanaanRouter);   // 1.A.2
-app.use('/api/penggunaan-dana',     penggunaanDanaRouter);    // 1.A.3
-app.use('/api/ref-jenis-penggunaan', penggunaanDanaRouter);
-app.use('/api/beban-kerja-dosen',   bebanKerjaDosenRouter);   // 1.A.4
-app.use('/api/kualifikasi-tendik',  kualifikasiTendikRouter); // 1.A.5
-app.use('/api/audit-mutu-internal', auditMutuInternalRouter); // 1.B
-app.use('/api/unit-kerja',          unitKerjaRouter);
-app.use('/api/ref-jenis-unit-spmi', unitKerjaRouter);
-app.use('/api/pegawai',             pegawaiRouter);
-app.use('/api/dosen',               dosenRouter); // Use dosenRouter
-app.use('/api/tahun',               tahunRouter);
-app.use('/api/tenaga-kependidikan', tendikRouter);
-app.use('/api/ref-jabatan-struktural', refJabatanStrukturalRouter);
-app.use('/api/jabatan-fungsional', refJabatanFungsionalRouter);
-app.use('/api/ref-kabupaten-kota', refKabupatenKotaRouter); // New route for ref_kabupaten_kota
-app.use('/api/ref-provinsi', refProvinsiRouter);
-app.use('/api/jumlah-tendik-by-pendidikan', jumlahTendikByPendidikanRouter);
-app.use('/api/cpl', cplRouter);
-app.use('/api/cpmk', cpmkRouter);
-app.use('/api/kurikulum', kurikulumRouter);
-app.use('/api/log-aktivitas', logAktivitasRouter);
-app.use('/api/map-cpl-mk', mapCplMkRouter);
-app.use('/api/map-cpl-pl', mapCplPlRouter);
-app.use('/api/map-cpmk-cpl', mapCpmkCplRouter);
-app.use('/api/map-cpmk-mk', mapCpmkMkRouter);
-app.use('/api/mata-kuliah', mataKuliahRouter);
-app.use('/api/profil-lulusan', profilLulusanRouter);
-console.log("Backend: Attaching tabel2a1MahasiswaBaruAktifRouter");
-app.use('/api/tabel-2a1-mahasiswa-baru-aktif', tabel2a1MahasiswaBaruAktifRouter);
-app.use('/api/tabel-2a1-pendaftaran', tabel2a1PendaftaranRouter);
-app.use('/api/tabel-2a2-keragaman-asal', tabel2a2KeragamanAsalRouter);
-app.use('/api/tabel-2a3-kondisi-mahasiswa', tabel2a3KondisiMahasiswaRouter);
-app.use('/api/tabel-2b4-masa-tunggu', tabel2b4MasaTungguRouter);
-app.use('/api/tabel-2b5-kesesuaian-kerja', tabel2b5KesesuaianKerjaRouter);
-app.use('/api/tabel-2b6-kepuasan-pengguna', tabel2b6KepuasanPenggunaRouter);
-app.use('/api/tabel-2c-pembelajaran-luar-prodi', tabel2cPembelajaranLuarProdiRouter);
-app.use('/api/tabel-2d-rekognisi-lulusan', tabel2dRekognisiLulusanRouter);
-app.use('/api/v1/tabel-2b6-rekap-jumlah', tabel2b6RekapJumlahRoutes);
-app.use("/api/tabel-2b1-isi-pembelajaran", tabel2b1IsiPembelajaranRouter);
+// semua route setelah ini wajib auth + role normalize
+app.use('/api', requireAuth, normalizeRole);
 
-// ===== 404 fallback =====
-app.use((req, res) => {
+// ===== C1 =====
+app.use('/api/pimpinan-upps-ps', pimpinanUppsPsRouter);
+app.use('/api/sumber-pendanaan', sumberPendanaanRouter);
+app.use('/api/penggunaan-dana', penggunaanDanaRouter);
+app.use('/api/beban-kerja-dosen', bebanKerjaDosenRouter);
+app.use('/api/kualifikasi-tendik', kualifikasiTendikRouter);
+app.use('/api/audit-mutu-internal', auditMutuInternalRouter);
+
+// ===== MASTER DATA =====
+app.use('/api/dosen', dosenRouter);
+app.use('/api/pegawai', pegawaiRouter);
+app.use('/api/ref-jabatan-fungsional', refJabatanFungsionalRouter);
+app.use('/api/ref-jabatan-struktural', refJabatanStrukturalRouter);
+app.use('/api/tahun-akademik', tahunRouter);
+app.use('/api/tendik', tendikRouter);
+app.use('/api/unit-kerja', unitKerjaRouter);
+app.use('/api/users', usersRouter);
+
+// ===== C2 ====
+app.use('/api/tabel2a1-pendaftaran', tabel2a1PendaftaranRouter);
+app.use('/api/tabel2a1-mahasiswa-baru-aktif', tabel2a1MahasiswaBaruAktifRouter);
+app.use('/api/tabel2a2-keragaman-asal', tabel2a2KeragamanAsalRouter);
+app.use('/api/tabel2a3-kondisi-mahasiswa', tabel2a3KondisiMahasiswaRouter);
+app.use('/api/tabel2b4-masa-tunggu', tabel2b4MasaTungguRouter);
+app.use('/api/tabel2b5-kesesuaian-kerja', tabel2b5KesesuaianKerjaRouter);
+app.use('/api/tabel2b6-kepuasan-pengguna', tabel2b6KepuasanPenggunaRouter);
+app.use('/api/tabel2c-bentuk-pembelajaran', tabel2cBentukPembelajaranRouter);
+app.use('/api/tabel2c-fleksibilitas-pembelajaran', tabel2cFleksibilitasPembelajaranRouter);
+app.use('/api/tabel2d-rekognisi-lulusan', tabel2dRekognisiLulusanRouter);
+app.use('/api/tabel2d-sumber-rekognisi', tabel2dSumberRekognisiRouter);
+app.use('/api/cpl', cplRouter);
+app.use('/api/profil-lulusan', profilLulusanRouter);
+app.use('/api/mata-kuliah', mataKuliahRouter);
+app.use('/api/cpmk', cpmkRouter);
+app.use('/api/pemetaan-2b1', pemetaan2b1Router);
+app.use('/api/pemetaan-2b2', pemetaan2b2Router);
+app.use('/api/pemetaan-2b3', pemetaan2b3Router);
+app.use('/api/pemetaan-cpmk-cpl', pemetaanCpmkCplRoutes);
+
+
+
+// ===== 404 FALLBACK =====
+app.use((_req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// ===== Error handler global =====
-app.use((err, req, res, next) => {
+// ===== ERROR HANDLER =====
+app.use((err, _req, res, _next) => {
   console.error('[ERR]', err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+  });
 });
 
-// ===== Start server =====
+// ===== START SERVER =====
 const PORT = process.env.PORT || appConfig?.port || 3000;
 app.listen(PORT, () => {
-  console.log(`API ready on http://localhost:${PORT}`);
+  console.log(`🚀 API ready on http://localhost:${PORT}`);
 });
 
 export default app;
