@@ -8,7 +8,16 @@ const ENDPOINT = "/api/kualifikasi-tendik";
 const TABLE_KEY = "tabel_1a6_agregasi";
 const LABEL = "1.A.5 Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir";
 
-const educationLevels = ["S3", "S2", "S1", "D4", "D3", "D2", "D1", "SMA/SMK/MA"];
+const educationLevels = [
+  { label: "S3", field: "s3" },
+  { label: "S2", field: "s2" },
+  { label: "S1", field: "s1" },
+  { label: "D4", field: "d4" },
+  { label: "D3", field: "d3" },
+  { label: "D2", field: "d2" },
+  { label: "D1", field: "d1" },
+  { label: "SMA/SMK/MA", field: "sma_smk" }
+];
 
 function PrettyTable({ rows, maps }) {
   return (
@@ -25,7 +34,7 @@ function PrettyTable({ rows, maps }) {
             </tr>
             <tr className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white sticky top-0">
               {educationLevels.map((level) => (
-                <th key={level} className="px-4 py-2 text-left font-semibold border">{level}</th>
+                <th key={level.field} className="px-4 py-2 text-left font-semibold border">{level.label}</th>
               ))}
             </tr>
           </thead>
@@ -36,9 +45,9 @@ function PrettyTable({ rows, maps }) {
                 className="odd:bg-white even:bg-gray-50 dark:odd:bg-white/5 dark:even:bg-white/10 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 transition"
               >
                 <td className="px-4 py-3 align-middle border">{i + 1}.</td>
-                <td className="px-4 py-3 align-middle border">{r.jenis_tendik}</td>
+                <td className="px-4 py-3 align-middle border">{r.jenis_tenaga_kependidikan}</td>
                 {educationLevels.map((level) => (
-                  <td key={level} className="px-4 py-3 align-middle border">{r[level] || 0}</td>
+                  <td key={level.field} className="px-4 py-3 align-middle border">{r[level.field] || 0}</td>
                 ))}
                 <td className="px-4 py-3 align-middle border">{r.unit_kerja}</td>
                 

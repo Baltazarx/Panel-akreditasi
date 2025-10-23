@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
-import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh } from "../ui";
+import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh, Button } from "../ui";
 
 // Helper functions for building table headers, copied from Tabel2A1.jsx for styling consistency.
 // These are retained for consistency, although the primary header structure is manually built for Tabel2D.
@@ -232,6 +232,34 @@ export function Tabel2D() {
           <TableCell className="border text-center align-middle">
             {item.link_bukti ? <a href={item.link_bukti} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline dark:text-indigo-400">Lihat Bukti</a> : "-"}
           </TableCell>
+          
+          <TableCell className="border text-center align-middle whitespace-nowrap">
+            {!isSumOrPercentageRow ? (
+              <>
+                <Button
+                  variant="soft"
+                  className="mr-2"
+                  onClick={() => {
+                    // TODO: Implement edit functionality
+                    console.log("Edit item:", item);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    // TODO: Implement delete functionality
+                    console.log("Delete item:", item);
+                  }}
+                >
+                  Hapus
+                </Button>
+              </>
+            ) : (
+              ""
+            )}
+          </TableCell>
         </TableRow>
       );
     });
@@ -266,6 +294,7 @@ export function Tabel2D() {
             <TableTh className="text-center border font-semibold tracking-wide" rowSpan={2}>SUMBER REKOGNISI</TableTh>
             <TableTh className="text-center border font-semibold tracking-wide" colSpan={5}>TAHUN AKADEMIK</TableTh>
             <TableTh className="text-center border font-semibold tracking-wide" rowSpan={2}>LINK BUKTI</TableTh>
+            <TableTh className="text-center border font-semibold tracking-wide" rowSpan={2}>AKSI</TableTh>
           </TableRow>
           <TableRow className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white sticky top-0">
             <TableTh className="text-center border font-semibold tracking-wide">TS-4</TableTh>

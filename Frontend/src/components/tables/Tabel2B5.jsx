@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
-import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh } from "../ui";
+import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh, Button } from "../ui";
+import { formatDecimal } from "../../lib/format";
 
 // Helper functions for building table headers, copied from Tabel2A1.jsx for styling consistency.
 const seg = (n) => (n.key ? String(n.key) : String(n.label || "col")).replace(/\s+/g, "_");
@@ -103,6 +104,7 @@ export function Tabel2B5() {
         { key: "lingkup_wirausaha", label: "Wirausaha" },
       ],
     },
+    { key: "aksi", label: "Aksi" },
   ], []);
 
   const headerRows = useMemo(() => buildHeaderRows(COLS_2B5), [COLS_2B5]);
@@ -149,9 +151,40 @@ export function Tabel2B5() {
         >
           {leaves.map((leaf) => {
             const cellKey = `td:${leaf.__path}:${rowKey}`;
+            
+            // Handle action column
+            if (leaf.key === "aksi") {
+              return (
+                <TableCell
+                  key={cellKey}
+                  className="text-center border align-middle whitespace-nowrap"
+                >
+                  <Button
+                    variant="soft"
+                    className="mr-2"
+                    onClick={() => {
+                      // TODO: Implement edit functionality
+                      console.log("Edit item:", item);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      // TODO: Implement delete functionality
+                      console.log("Delete item:", item);
+                    }}
+                  >
+                    Hapus
+                  </Button>
+                </TableCell>
+              );
+            }
+            
             const val = item?.[leaf.key];
             const num = typeof val === "number" ? val : Number(val);
-            const show = Number.isFinite(num) ? num : val ?? 0;
+            const show = Number.isFinite(num) ? formatDecimal(num) : val ?? 0;
 
             return (
               <TableCell

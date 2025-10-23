@@ -22,6 +22,7 @@ import Tabel2B5 from "./components/tables/Tabel2B5";
 import Tabel2B6 from "./components/tables/Tabel2B6";
 import Tabel2C from "./components/tables/Tabel2C";
 import Tabel2D from "./components/tables/Tabel2D";
+import ManajemenKurikulum from "./components/tables/ManajemenKurikulum";
 // Tab list - Only tabs that match backend routes
 const TABS = [
   // Master Data
@@ -44,7 +45,10 @@ const TABS = [
   { key: "tabel_2b5", label: "2.B.5 Kesesuaian Kerja",           icon: "💼", Comp: Tabel2B5 },
   { key: "tabel_2b6", label: "2.B.6 Kepuasan Pengguna",          icon: "😊", Comp: Tabel2B6 },
   { key: "tabel_2c",  label: "2.C Pembelajaran Luar Prodi",      icon: "🎓", Comp: Tabel2C },
-  { key: "tabel_2d",  label: "2.D Rekognisi Lulusan",           icon: "🏆", Comp: Tabel2D },
+  { key: "tabel_2d",  label: "2.D Rekognisi Lulusan",            icon: "🏆", Comp: Tabel2D },
+  
+  // Manajemen Kurikulum
+  { key: "manajemen_kurikulum", label: "Manajemen Kurikulum",     icon: "📚", Comp: ManajemenKurikulum },
 ];
 
 function LoginForm({ onSubmit, loading, error }) {

@@ -39,6 +39,12 @@ export function Tabel2A1() {
         api.get("/tabel2a1-mahasiswa-baru-aktif"),
         api.get("/tahun-akademik"),
       ]);
+      
+      console.log("API Response - Pendaftaran:", p);
+      console.log("API Response - MabaAktif:", m);
+      console.log("API Response - Tahun:", t);
+      console.log("User info:", user);
+      
       setPendaftaran(Array.isArray(p) ? p : []);
       setMabaAktif(Array.isArray(m) ? m : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);
@@ -49,8 +55,12 @@ export function Tabel2A1() {
         .filter((n) => Number.isFinite(n));
       const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);
       setSelectedTahun(latest);
+      
+      console.log("Selected tahun:", latest);
+      console.log("Years found:", years);
 
     } catch (e) {
+      console.error("Error in refresh:", e);
       setError(e);
     } finally {
       setLoading(false);
@@ -66,7 +76,7 @@ export function Tabel2A1() {
     try {
       // Tambahkan id_unit_prodi dari user yang sedang login
       const dataToSend = { ...formData, id_unit_prodi: user.unit_id, id_tahun: selectedTahun };
-      await api.post("/tabel-2a1-pendaftaran", dataToSend);
+      await api.post("/tabel2a1-pendaftaran", dataToSend);
       await refresh();
       setIsModalOpen(false);
     } catch (e) {
@@ -78,7 +88,7 @@ export function Tabel2A1() {
   const handleAddMabaAktifSubmit = async (formData) => {
     try {
       const dataToSend = { ...formData, id_unit_prodi: user.unit_id, id_tahun: selectedTahun };
-      await api.post("/tabel-2a1-mahasiswa-baru-aktif", dataToSend);
+      await api.post("/tabel2a1-mahasiswa-baru-aktif", dataToSend);
       await refresh();
       setIsMabaAktifModalOpen(false);
     } catch (e) {
@@ -91,7 +101,7 @@ export function Tabel2A1() {
     try {
       const dataToSend = { ...formData, id_unit_prodi: user.unit_id, id_tahun: initialAddMabaAktifData.id_tahun };
       delete dataToSend.daya_tampung; // Hapus daya_tampung agar tidak terkirim saat menambah data individual
-      await api.post("/tabel-2a1-mahasiswa-baru-aktif", dataToSend);
+      await api.post("/tabel2a1-mahasiswa-baru-aktif", dataToSend);
       await refresh();
       setIsAddIndividualMabaAktifModalOpen(false);
       setInitialAddMabaAktifData(null);
@@ -128,7 +138,7 @@ export function Tabel2A1() {
     if (!confirm("Yakin hapus data ini?")) return;
     try {
       setLoading(true);
-      await api.delete(`/tabel-2a1-mahasiswa-baru-aktif/${row.id}`);
+      await api.delete(`/tabel2a1-mahasiswa-baru-aktif/${row.id}`);
       await refresh();
     } catch (e) {
       console.error("Failed to delete active student data", e);
@@ -173,7 +183,7 @@ export function Tabel2A1() {
     if (!confirm("Yakin hapus data ini?")) return;
     try {
       setLoading(true);
-      await api.delete(`/tabel-2a1-pendaftaran/${row.id}`);
+      await api.delete(`/tabel2a1-pendaftaran/${row.id}`);
       await refresh();
     } catch (e) {
       console.error("Failed to delete data", e);
@@ -252,21 +262,21 @@ export function Tabel2A1() {
         const currentAgg = aggregated[key];
         if (row.jenis === 'baru') {
           if (row.jalur === 'reguler') {
-            currentAgg.maba_reguler_diterima += (row.jumlah_diterima || 0);
+            currentAgg.maba_reguler_diterima += (row.jumlah_total || 0);
             currentAgg.maba_reguler_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.maba_reguler_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           } else if (row.jalur === 'rpl') {
-            currentAgg.maba_rpl_diterima += (row.jumlah_diterima || 0);
+            currentAgg.maba_rpl_diterima += (row.jumlah_total || 0);
             currentAgg.maba_rpl_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.maba_rpl_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           }
         } else if (row.jenis === 'aktif') {
           if (row.jalur === 'reguler') {
-            currentAgg.aktif_reguler_diterima += (row.jumlah_diterima || 0);
+            currentAgg.aktif_reguler_diterima += (row.jumlah_total || 0);
             currentAgg.aktif_reguler_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.aktif_reguler_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           } else if (row.jalur === 'rpl') {
-            currentAgg.aktif_rpl_diterima += (row.jumlah_diterima || 0);
+            currentAgg.aktif_rpl_diterima += (row.jumlah_total || 0);
             currentAgg.aktif_rpl_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.aktif_rpl_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           }
@@ -329,21 +339,21 @@ export function Tabel2A1() {
         const currentAgg = aggregated[key];
         if (row.jenis === 'baru') {
           if (row.jalur === 'reguler') {
-            currentAgg.maba_reguler_diterima += (row.jumlah_diterima || 0);
+            currentAgg.maba_reguler_diterima += (row.jumlah_total || 0);
             currentAgg.maba_reguler_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.maba_reguler_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           } else if (row.jalur === 'rpl') {
-            currentAgg.maba_rpl_diterima += (row.jumlah_diterima || 0);
+            currentAgg.maba_rpl_diterima += (row.jumlah_total || 0);
             currentAgg.maba_rpl_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.maba_rpl_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           }
         } else if (row.jenis === 'aktif') {
           if (row.jalur === 'reguler') {
-            currentAgg.aktif_reguler_diterima += (row.jumlah_diterima || 0);
+            currentAgg.aktif_reguler_diterima += (row.jumlah_total || 0);
             currentAgg.aktif_reguler_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.aktif_reguler_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           } else if (row.jalur === 'rpl') {
-            currentAgg.aktif_rpl_diterima += (row.jumlah_diterima || 0);
+            currentAgg.aktif_rpl_diterima += (row.jumlah_total || 0);
             currentAgg.aktif_rpl_afirmasi += (row.jumlah_afirmasi || 0);
             currentAgg.aktif_rpl_kebutuhan_khusus += (row.jumlah_kebutuhan_khusus || 0);
           }
@@ -758,7 +768,7 @@ export function Tabel2A1() {
           <PendaftaranForm
             onSubmit={async (formData) => {
               try {
-                await api.put(`/tabel-2a1-pendaftaran/${Number(editingRow.id)}`, formData);
+                await api.put(`/tabel2a1-pendaftaran/${Number(editingRow.id)}`, formData);
                 await refresh();
                 setIsEditModalOpen(false);
                 setEditingRow(null);
@@ -795,7 +805,7 @@ export function Tabel2A1() {
           <MabaAktifForm
             onSubmit={async (formData) => {
               try {
-                await api.put(`/tabel-2a1-mahasiswa-baru-aktif/${Number(editingMabaAktifRow.id)}`, formData);
+                await api.put(`/tabel2a1-mahasiswa-baru-aktif/${Number(editingMabaAktifRow.id)}`, formData);
                 await refresh();
                 setIsMabaAktifEditModalOpen(false);
                 setEditingMabaAktifRow(null);
@@ -947,7 +957,7 @@ function MabaAktifDetailModalContent({ aggregatedRow, allMabaAktif, onClose, onE
                   <TableRow key={record.id} className={`${index % 2 === 0 ? 'bg-white dark:bg-white/5' : 'bg-gray-50 dark:bg-white/10'} hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 transition`}>
                     <TableCell className="border text-center align-middle">{record.jenis}</TableCell>
                     <TableCell className="border text-center align-middle">{record.jalur}</TableCell>
-                    <TableCell className="border text-center align-middle">{record.jumlah_diterima}</TableCell>
+                    <TableCell className="border text-center align-middle">{record.jumlah_total}</TableCell>
                     <TableCell className="border text-center align-middle">{record.jumlah_afirmasi}</TableCell>
                     <TableCell className="border text-center align-middle">{record.jumlah_kebutuhan_khusus}</TableCell>
                     <TableCell className="border whitespace-nowrap text-center align-middle">

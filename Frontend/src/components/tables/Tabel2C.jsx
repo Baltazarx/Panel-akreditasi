@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
-import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh } from "../ui";
+import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh, Button } from "../ui";
 
 // Helper functions for building table headers, copied from Tabel2A1.jsx for styling consistency.
 // These are retained for consistency, although the primary header structure is manually built for Tabel2C.
@@ -217,6 +217,27 @@ export function Tabel2C() {
               <TableCell className="border text-center align-middle">{item.ts_minus_1}</TableCell>
               <TableCell className="border text-center align-middle">{item.ts}</TableCell>
               <TableCell className="border text-center align-middle">{item.link_bukti}</TableCell>
+              <TableCell className="border text-center align-middle whitespace-nowrap">
+                <Button
+                  variant="soft"
+                  className="mr-2"
+                  onClick={() => {
+                    // TODO: Implement edit functionality
+                    console.log("Edit item:", item);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    // TODO: Implement delete functionality
+                    console.log("Delete item:", item);
+                  }}
+                >
+                  Hapus
+                </Button>
+              </TableCell>
             </>
           )}
 
@@ -224,6 +245,7 @@ export function Tabel2C() {
             <>
               <TableCell className="border text-left pl-4 font-semibold text-gray-900 dark:text-white" rowSpan={1}>{item.label}</TableCell>
               <TableCell colSpan={5} className="border text-center align-middle font-semibold text-gray-900 dark:text-white">{item.sub_header_span}</TableCell>
+              <TableCell className="border text-center align-middle"></TableCell>
               <TableCell className="border text-center align-middle"></TableCell>
             </>
           )}
@@ -239,6 +261,27 @@ export function Tabel2C() {
               <TableCell className="border text-center align-middle">
                 {item.link_bukti ? <a href={item.link_bukti} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline dark:text-indigo-400">Lihat Bukti</a> : "-"}
               </TableCell>
+              <TableCell className="border text-center align-middle whitespace-nowrap">
+                <Button
+                  variant="soft"
+                  className="mr-2"
+                  onClick={() => {
+                    // TODO: Implement edit functionality
+                    console.log("Edit item:", item);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    // TODO: Implement delete functionality
+                    console.log("Delete item:", item);
+                  }}
+                >
+                  Hapus
+                </Button>
+              </TableCell>
             </>
           )}
 
@@ -250,6 +293,7 @@ export function Tabel2C() {
               <TableCell className="border text-center align-middle">{item.type === "percentage" ? `${item.ts_minus_2}%` : item.ts_minus_2}</TableCell>
               <TableCell className="border text-center align-middle">{item.type === "percentage" ? `${item.ts_minus_1}%` : item.ts_minus_1}</TableCell>
               <TableCell className="border text-center align-middle">{item.type === "percentage" ? `${item.ts}%` : item.ts}</TableCell>
+              <TableCell className="border text-center align-middle"></TableCell>
               <TableCell className="border text-center align-middle"></TableCell>
             </>
           )}
@@ -291,6 +335,7 @@ export function Tabel2C() {
             <TableTh className="text-center border font-semibold tracking-wide">TS-1</TableTh>
             <TableTh className="text-center border font-semibold tracking-wide">TS</TableTh>
             <TableTh className="text-center border font-semibold tracking-wide">LINK BUKTI</TableTh>
+            <TableTh className="text-center border font-semibold tracking-wide">AKSI</TableTh>
           </TableRow>
         </TableHeadGroup>
         <TableBody>{renderBody(displayRows)}</TableBody>

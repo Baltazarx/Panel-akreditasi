@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
-import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh } from "../ui";
+import { Table, TableBody, TableCell, TableHeadGroup, TableRow, TableTh, Button } from "../ui";
+import { formatDecimal } from "../../lib/format";
 
 // Helper functions for building table headers, copied from Tabel2A1.jsx for styling consistency.
 const seg = (n) => (n.key ? String(n.key) : String(n.label || "col")).replace(/\s+/g, "_");
@@ -102,6 +103,7 @@ export function Tabel2B6() {
       ],
     },
     { key: "rencana_tindak_lanjut", label: "Rencana Tindak Lanjut oleh UPPS/PS" },
+    { key: "aksi", label: "Aksi" },
   ], []);
 
   const headerRows = useMemo(() => buildHeaderRows(COLS_2B6), [COLS_2B6]);
@@ -149,9 +151,40 @@ export function Tabel2B6() {
         >
           {leaves.map((leaf) => {
             const cellKey = `td:${leaf.__path}:${rowKey}`;
+            
+            // Handle action column
+            if (leaf.key === "aksi") {
+              return (
+                <TableCell
+                  key={cellKey}
+                  className="text-center border align-middle whitespace-nowrap"
+                >
+                  <Button
+                    variant="soft"
+                    className="mr-2"
+                    onClick={() => {
+                      // TODO: Implement edit functionality
+                      console.log("Edit item:", item);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      // TODO: Implement delete functionality
+                      console.log("Delete item:", item);
+                    }}
+                  >
+                    Hapus
+                  </Button>
+                </TableCell>
+              );
+            }
+            
             const val = item?.[leaf.key];
             const num = typeof val === "number" ? val : Number(val);
-            let content = Number.isFinite(num) ? num : val ?? "";
+            let content = Number.isFinite(num) ? formatDecimal(num) : val ?? "";
 
             // For Rencana Tindak Lanjut, display text directly
             if (leaf.key === "rencana_tindak_lanjut") {
@@ -176,7 +209,7 @@ export function Tabel2B6() {
   const renderSumRow = (rows, leaves) => {
     const totals = {};
     leaves.forEach((leaf) => {
-      if (["no", "jenis_kemampuan", "rencana_tindak_lanjut"].includes(leaf.key)) return; // Don't sum these columns
+      if (["no", "jenis_kemampuan", "rencana_tindak_lanjut", "aksi"].includes(leaf.key)) return; // Don't sum these columns
       totals[leaf.key] = rows.reduce((acc, r) => acc + (Number(r?.[leaf.key]) || 0), 0);
     });
 
@@ -194,6 +227,10 @@ export function Tabel2B6() {
           ) : leaf.key === "rencana_tindak_lanjut" ? (
             <TableCell key={`sum:${leaf.__path}:${i}`} className="text-left pl-4 border align-middle">
               {/* Kosong untuk rencana tindak lanjut di baris jumlah */}
+            </TableCell>
+          ) : leaf.key === "aksi" ? (
+            <TableCell key={`sum:${leaf.__path}:${i}`} className="text-center border align-middle">
+              {/* Kosong untuk kolom aksi di baris jumlah */}
             </TableCell>
           ) : (
             <TableCell key={`sum:${leaf.__path}:${i}`} className="text-center border align-middle">

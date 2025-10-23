@@ -4,6 +4,7 @@ import { apiFetch, getIdField } from "../../lib/api";
 import { roleCan } from "../../lib/role";
 import { useMaps } from "../../hooks/useMaps";
 import { Badge, Button, Card, EmptyState, InputField, Modal, Checkbox, Select } from "../ui";
+import { formatDecimal } from "../../lib/format";
 
 const ENDPOINT = "/api/beban-kerja-dosen";
 const TABLE_KEY = "tabel_1a4";
@@ -102,17 +103,17 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                     <span className="font-medium">{getDosenName(r.id_dosen)}</span>
                   </td>
 
-                  <td className="px-4 py-3 align-middle border">{pengajaranPsSendiri}</td>
-                  <td className="px-4 py-3 align-middle border">{pengajaranPsLainPtSendiri}</td>
-                  <td className="px-4 py-3 align-middle border">{pengajaranPtLain}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(pengajaranPsSendiri)}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(pengajaranPsLainPtSendiri)}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(pengajaranPtLain)}</td>
 
-                  <td className="px-4 py-3 align-middle border">{penelitian}</td>
-                  <td className="px-4 py-3 align-middle border">{pkm}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(penelitian)}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(pkm)}</td>
 
-                  <td className="px-4 py-3 align-middle border">{manajemenPtSendiri}</td>
-                  <td className="px-4 py-3 align-middle border">{manajemenPtLain}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(manajemenPtSendiri)}</td>
+                  <td className="px-4 py-3 align-middle border">{formatDecimal(manajemenPtLain)}</td>
 
-                  <td className="px-4 py-3 align-middle border font-semibold">{total}</td>
+                  <td className="px-4 py-3 align-middle border font-semibold">{formatDecimal(total)}</td>
 
                   <td className="px-4 py-3 align-middle border whitespace-nowrap">
                     {!showDeleted && canUpdate && (
@@ -459,7 +460,7 @@ export default function Tabel1A4({ role }) {
             </div>
           </Card>
 
-          <div className="text-sm opacity-70">Total SKS (preview): <span className="font-medium">{newTotal}</span></div>
+          <div className="text-sm opacity-70">Total SKS (preview): <span className="font-medium">{formatDecimal(newTotal)}</span></div>
 
           <div className="flex gap-2 justify-end">
             <Button type="submit" variant="primary" disabled={loading}>Simpan</Button>
@@ -544,7 +545,7 @@ export default function Tabel1A4({ role }) {
             </div>
           </Card>
 
-          <div className="text-sm opacity-70">Total SKS (preview): <span className="font-medium">{editTotal}</span></div>
+          <div className="text-sm opacity-70">Total SKS (preview): <span className="font-medium">{formatDecimal(editTotal)}</span></div>
 
           <div className="flex gap-2 justify-end">
             <Button type="submit" variant="primary" disabled={loading}>Simpan</Button>
