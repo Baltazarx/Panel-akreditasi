@@ -111,11 +111,13 @@ export function Tabel2B5() {
   const leaves = useMemo(() => flattenLeaves(COLS_2B5), [COLS_2B5]);
 
   const displayRows = useMemo(() => {
-    if (!selectedTahun || !user?.unit_id) return [];
+    if (!selectedTahun) return [];
 
-    const filteredData = kesesuaianKerjaData.filter(
-      (item) => item.id_unit_prodi === user.unit_id
-    );
+    // Filter data based on user role
+    const filteredData = kesesuaianKerjaData.filter(item => {
+      if (user?.role === "waket1") return true;
+      return item.id_unit_prodi === user?.unit_id;
+    });
 
     const yearsToShow = [];
     for (let i = 0; i <= 4; i++) { // TS, TS-1, TS-2, TS-3, TS-4
@@ -127,19 +129,19 @@ export function Tabel2B5() {
       const tsLabel = year === selectedTahun ? "TS" : `TS-${selectedTahun - year}`;
       return {
         tahun_lulus_label: tsLabel,
-        jumlah_lulusan: dataForYear?.jumlah_lulusan || 0,
-        jumlah_terlacal: dataForYear?.jumlah_terlacal || 0,
-        profesi_infokom: dataForYear?.profesi_infokom || 0,
-        profesi_non_infokom: dataForYear?.profesi_non_infokom || 0,
-        lingkup_multinasional: dataForYear?.lingkup_multinasional || 0,
-        lingkup_nasional: dataForYear?.lingkup_nasional || 0,
-        lingkup_wirausaha: dataForYear?.lingkup_wirausaha || 0,
+        jumlah_lulusan: (dataForYear?.jml_infokom || 0) + (dataForYear?.jml_non_infokom || 0),
+        jumlah_terlacal: (dataForYear?.jml_infokom || 0) + (dataForYear?.jml_non_infokom || 0),
+        profesi_infokom: dataForYear?.jml_infokom || 0,
+        profesi_non_infokom: dataForYear?.jml_non_infokom || 0,
+        lingkup_multinasional: dataForYear?.jml_internasional || 0,
+        lingkup_nasional: dataForYear?.jml_nasional || 0,
+        lingkup_wirausaha: dataForYear?.jml_wirausaha || 0,
         id_tahun_lulus: year,
       };
     });
 
     return rows.sort((a, b) => b.id_tahun_lulus - a.id_tahun_lulus);
-  }, [kesesuaianKerjaData, selectedTahun, user?.unit_id]);
+  }, [kesesuaianKerjaData, selectedTahun, user?.unit_id, user?.role]);
 
   const renderBody = (rows, leaves) =>
     rows.map((item, rowIndex) => {

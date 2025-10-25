@@ -195,7 +195,7 @@ export function Tabel2A1() {
 
   // --- util role filter
   const filterByRole = (rows) => {
-    if (user?.role === "waket-1") return rows;
+    if (user?.role === "waket1") return rows;
     if (!user?.unit_id) return [];
     return rows.filter((x) => x.id_unit_prodi === user.unit_id);
   };
@@ -539,11 +539,11 @@ export function Tabel2A1() {
             } else if (leaf.key === "aksi") {
               // Logika aksi untuk Tabel 2.A.1 Data Mahasiswa (PMB)
               if (cols === COLS_PMB) {
-                // Cek apakah ada data untuk tahun dan unit prodi ini di pendaftaranRows
+                // Cek apakah ada data untuk tahun ini di pendaftaranRows
                 const hasPendaftaranData = pendaftaranRows.some(
                   (data) =>
                     Number(data.id_tahun) === Number(item.id_tahun) &&
-                    data.id_unit_prodi === user.unit_id
+                    (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
                 );
 
                 return (
@@ -556,11 +556,30 @@ export function Tabel2A1() {
                         <Button
                           variant="soft"
                           className="mr-2"
-                          onClick={() => doEdit(item)}
+                          onClick={() => {
+                            // Find the actual data row for this year
+                            const actualData = pendaftaranRows.find(
+                              (data) =>
+                                Number(data.id_tahun) === Number(item.id_tahun) &&
+                                (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
+                            );
+                            doEdit(actualData || item);
+                          }}
                         >
                           Edit
                         </Button>
-                        <Button variant="ghost" onClick={() => doDelete(item)}>
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => {
+                            // Find the actual data row for this year
+                            const actualData = pendaftaranRows.find(
+                              (data) =>
+                                Number(data.id_tahun) === Number(item.id_tahun) &&
+                                (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
+                            );
+                            doDelete(actualData || item);
+                          }}
+                        >
                           Hapus
                         </Button>
                       </>
@@ -583,7 +602,7 @@ export function Tabel2A1() {
                 const hasMabaAktifData = mabaAktifRows.some(
                   (data) =>
                     Number(data.id_tahun) === Number(item.id_tahun) &&
-                    data.id_unit_prodi === user.unit_id
+                    (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
                 );
 
                 return (
@@ -597,7 +616,13 @@ export function Tabel2A1() {
                           variant="soft"
                           className="mr-2"
                           onClick={() => {
-                            setCurrentAggregatedMabaAktifRow(item);
+                            // Find the actual data row for this year
+                            const actualData = mabaAktifRows.find(
+                              (data) =>
+                                Number(data.id_tahun) === Number(item.id_tahun) &&
+                                (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
+                            );
+                            setCurrentAggregatedMabaAktifRow(actualData || item);
                             setIsDetailMabaAktifModalOpen(true);
                           }}
                         >
@@ -605,7 +630,15 @@ export function Tabel2A1() {
                         </Button>
                         <Button
                           variant="ghost"
-                          onClick={() => doDeleteMabaAktifAggregated(item)}
+                          onClick={() => {
+                            // Find the actual data row for this year
+                            const actualData = mabaAktifRows.find(
+                              (data) =>
+                                Number(data.id_tahun) === Number(item.id_tahun) &&
+                                (user?.role === "waket1" || data.id_unit_prodi === user.unit_id)
+                            );
+                            doDeleteMabaAktifAggregated(actualData || item);
+                          }}
                         >
                           Hapus
                         </Button>

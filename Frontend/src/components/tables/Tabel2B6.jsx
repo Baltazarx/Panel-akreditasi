@@ -68,13 +68,19 @@ export function Tabel2B6() {
         api.get("/tabel2b6-kepuasan-pengguna"), // Endpoint for graduate user satisfaction data
         api.get("/tahun-akademik"), // Endpoint for year list
       ]);
-      setKepuasanPenggunaData(Array.isArray(kp) ? kp : []);
+      
+      console.log("Fetched kepuasan pengguna data:", kp);
+      console.log("User info:", user);
+      
+      // The API returns { data: [...], statistik: [...] }, so we need to extract the data array
+      const kepuasanData = kp?.data || kp;
+      setKepuasanPenggunaData(Array.isArray(kepuasanData) ? kepuasanData : []);
       setTahunList(Array.isArray(t) ? t.sort((a, b) => a.id_tahun - b.id_tahun) : []);
 
-      const years = Array.isArray(kp) ? [...kp]
+      const years = Array.isArray(kepuasanData) ? [...kepuasanData]
         .map((x) => Number(x?.id_tahun))
         .filter((n) => Number.isFinite(n)) : [];
-      const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);
+      const latest = years.length === 0 ? 2024 : Math.max(...years); // Default to 2024 since that's the latest data in DB
       setSelectedTahun(latest);
 
     } catch (e) {
@@ -109,37 +115,33 @@ export function Tabel2B6() {
   const headerRows = useMemo(() => buildHeaderRows(COLS_2B6), [COLS_2B6]);
   const leaves = useMemo(() => flattenLeaves(COLS_2B6), [COLS_2B6]);
 
-  // Fixed categories for Jenis Kemampuan
-  const fixedCategories = useMemo(() => [
-    { id: 1, label: "Kerjasama Tim" },
-    { id: 2, label: "Keahlian di Bidang Prodi" },
-    { id: 3, label: "Kemampuan Berbahasa Asing (Inggris)" },
-    { id: 4, label: "Kemampuan Berkomunikasi" },
-    { id: 5, label: "Pengembangan Diri" },
-    { id: 6, label: "Kepemimpinan" },
-    { id: 7, label: "Etos Kerja" },
-  ], []);
 
   const displayRows = useMemo(() => {
-    if (!selectedTahun || !user?.unit_id) return [];
+    console.log("displayRows - selectedTahun:", selectedTahun);
+    console.log("displayRows - kepuasanPenggunaData:", kepuasanPenggunaData);
+    console.log("displayRows - user:", user);
+    
+    if (!selectedTahun) return [];
 
-    const filteredData = kepuasanPenggunaData.filter(
-      (item) => Number(item.id_tahun) === Number(selectedTahun) && item.id_unit_prodi === user.unit_id
-    );
-
-    return fixedCategories.map(category => {
-      const dataForCategory = filteredData.find(d => d.jenis_kemampuan === category.label);
-      return {
-        no: category.id,
-        jenis_kemampuan: category.label,
-        sangat_baik: dataForCategory?.sangat_baik || 0,
-        baik: dataForCategory?.baik || 0,
-        cukup: dataForCategory?.cukup || 0,
-        kurang: dataForCategory?.kurang || 0,
-        rencana_tindak_lanjut: dataForCategory?.rencana_tindak_lanjut || "",
-      };
+    // Filter data based on user role
+    const filteredData = kepuasanPenggunaData.filter(item => {
+      if (user?.role === "waket1") return Number(item.id_tahun) === Number(selectedTahun);
+      return Number(item.id_tahun) === Number(selectedTahun) && item.id_unit_prodi === user?.unit_id;
     });
-  }, [kepuasanPenggunaData, selectedTahun, user?.unit_id, fixedCategories]);
+
+    console.log("displayRows - filteredData:", filteredData);
+
+    // Use actual data from database instead of fixed categories
+    return filteredData.map((item, index) => ({
+      no: index + 1,
+      jenis_kemampuan: item.jenis_kemampuan,
+      sangat_baik: item.persen_sangat_baik || 0,
+      baik: item.persen_baik || 0,
+      cukup: item.persen_cukup || 0,
+      kurang: item.persen_kurang || 0,
+      rencana_tindak_lanjut: item.rencana_tindak_lanjut || "",
+    }));
+  }, [kepuasanPenggunaData, selectedTahun, user?.unit_id, user?.role]);
 
   const renderBody = (rows, leaves) =>
     rows.map((item, rowIndex) => {
@@ -251,21 +253,18 @@ export function Tabel2B6() {
 
   const refreshSummary = async () => {
     try {
-      // Calculate summary from existing data instead of calling non-existent endpoints
-      const currentYearData = kepuasanPenggunaData.filter(item => 
-        Number(item.id_tahun) === Number(selectedTahun) && 
-        Number(item.id_unit_prodi) === Number(user?.unit_id)
-      );
+      // Filter data based on user role
+      const currentYearData = kepuasanPenggunaData.filter(item => {
+        if (user?.role === "waket1") return Number(item.id_tahun) === Number(selectedTahun);
+        return Number(item.id_tahun) === Number(selectedTahun) && Number(item.id_unit_prodi) === Number(user?.unit_id);
+      });
       
-      // Calculate totals from existing data
-      const totalAlumni = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_lulusan) || 0), 0);
-      const totalResponden = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_responden) || 0), 0);
-      const totalAktif = currentYearData.reduce((sum, item) => sum + (Number(item.jumlah_mahasiswa_aktif) || 0), 0);
-
+      // Since the database doesn't have these fields, we'll set them to 0 or calculate from available data
+      // In a real implementation, these would come from other tables or be calculated differently
       setSummaryValues({
-        jumlah_alumni_lulusan: totalAlumni,
-        jumlah_pengguna_responden: totalResponden,
-        jumlah_mahasiswa_aktif: totalAktif,
+        jumlah_alumni_lulusan: 0, // Would need to be calculated from other tables
+        jumlah_pengguna_responden: currentYearData.length, // Number of survey responses
+        jumlah_mahasiswa_aktif: 0, // Would need to be calculated from other tables
       });
     } catch (e) {
       console.error("Failed to calculate summary data:", e);

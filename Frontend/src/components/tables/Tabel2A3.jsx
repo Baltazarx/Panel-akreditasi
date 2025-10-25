@@ -43,9 +43,15 @@ const flattenLeaves = (tree) => {
   return out;
 };
 
-// Komponen Form untuk Tambah/Edit data Lulus & DO
+// Komponen Form untuk Tambah/Edit data Kondisi Mahasiswa
 function KondisiMahasiswaForm({ initialData, onSubmit, onClose }) {
-  const [formData, setFormData] = useState({ jml_lulus: 0, jml_do: 0, ...initialData });
+  const [formData, setFormData] = useState({ 
+    jml_baru: 0, 
+    jml_aktif: 0, 
+    jml_lulus: 0, 
+    jml_do: 0, 
+    ...initialData 
+  });
 
   useEffect(() => {
     setFormData({ ...initialData });
@@ -63,6 +69,21 @@ function KondisiMahasiswaForm({ initialData, onSubmit, onClose }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          <strong>Catatan:</strong> Data Mahasiswa Baru dan Mahasiswa Aktif akan otomatis diambil dari Tabel 2.A.1. 
+          Anda hanya perlu mengisi data Lulus dan DO.
+        </p>
+      </div>
+      
+      <InputField
+        label="Jumlah Mahasiswa Baru (Otomatis dari 2.A.1)" type="number" name="jml_baru"
+        value={formData.jml_baru} onChange={handleChange} placeholder="Otomatis" disabled
+      />
+      <InputField
+        label="Jumlah Mahasiswa Aktif (Otomatis dari 2.A.1)" type="number" name="jml_aktif"
+        value={formData.jml_aktif} onChange={handleChange} placeholder="Otomatis" disabled
+      />
       <InputField
         label="Jumlah Lulus pada saat TS" type="number" name="jml_lulus"
         value={formData.jml_lulus} onChange={handleChange} placeholder="Masukkan jumlah" required
@@ -118,19 +139,27 @@ export function Tabel2A3() {
     refresh();
   }, [api]);
 
-  const currentYearLulusDoData = useMemo(() => {
-    if (!selectedTahun || !user?.unit_id) return null;
-    const lulusRecord = mahasiswaConditions.find(d => d.id_tahun === selectedTahun && d.id_unit_prodi === user.unit_id && d.jenis_mahasiswa === 'lulus');
-    const doRecord = mahasiswaConditions.find(d => d.id_tahun === selectedTahun && d.id_unit_prodi === user.unit_id && d.jenis_mahasiswa === 'mengundurkan_diri');
-    if (!lulusRecord && !doRecord) return null;
+  const currentYearData = useMemo(() => {
+    if (!selectedTahun) return null;
+    
+    // For waket1, show data from all units; for others, filter by unit_id
+    const record = mahasiswaConditions.find(d => {
+      if (d.id_tahun !== selectedTahun) return false;
+      if (user?.role === "waket1") return true;
+      return d.id_unit_prodi === user?.unit_id;
+    });
+    
+    if (!record) return null;
     return {
-      id: lulusRecord?.id || doRecord?.id,
+      id: record.id,
       id_tahun: selectedTahun,
-      id_unit_prodi: user.unit_id,
-      jml_lulus: lulusRecord?.jumlah || 0,
-      jml_do: doRecord?.jumlah || 0,
+      id_unit_prodi: record.id_unit_prodi,
+      jml_baru: record.jml_baru || 0,
+      jml_aktif: record.jml_aktif || 0,
+      jml_lulus: record.jml_lulus || 0,
+      jml_do: record.jml_do || 0,
     };
-  }, [mahasiswaConditions, selectedTahun, user?.unit_id]);
+  }, [mahasiswaConditions, selectedTahun, user?.unit_id, user?.role]);
 
   const handleOpenAddModal = () => {
     setModalMode('add');
@@ -139,17 +168,17 @@ export function Tabel2A3() {
   };
 
   const handleOpenEditModal = () => {
-    if (!currentYearLulusDoData) return;
+    if (!currentYearData) return;
     setModalMode('edit');
-    setEditingData(currentYearLulusDoData);
+    setEditingData(currentYearData);
     setIsModalOpen(true);
   };
 
   const handleHapus = async () => {
-    if (!currentYearLulusDoData) return;
-    if (confirm(`Yakin ingin menghapus data Lulus & DO untuk tahun ${selectedTahun}?`)) {
+    if (!currentYearData) return;
+    if (confirm(`Yakin ingin menghapus data kondisi mahasiswa untuk tahun ${selectedTahun}?`)) {
       try {
-        await api.delete(`/tabel-2a3-kondisi-mahasiswa/${currentYearLulusDoData.id}`);
+        await api.delete(`/tabel-2a3-kondisi-mahasiswa/${currentYearData.id}`);
         await refresh();
       } catch (err) {
         setError(err);
@@ -188,34 +217,61 @@ export function Tabel2A3() {
   const leaves = useMemo(() => flattenLeaves(COLS_2A3), [COLS_2A3]);
 
   const displayRows = useMemo(() => {
-    if (!selectedTahun || !user?.unit_id) return [];
-    const filteredData = mahasiswaConditions.filter(item => item.id_unit_prodi === user.unit_id);
-    const aggregatedData = {};
-    const categories = ["Mahasiswa Baru", "Mahasiswa Aktif pada saat TS", "Lulus pada saat TS", "Mengundurkan Diri/DO pada saat TS"];
-    categories.forEach(category => {
-      aggregatedData[category] = { kategori: category, ts: 0, ts_minus_1: 0, ts_minus_2: 0, ts_minus_3: 0, ts_minus_4: 0, jumlah: 0 };
+    if (!selectedTahun) return [];
+    
+    // Filter data based on user role
+    const filteredData = mahasiswaConditions.filter(item => {
+      if (user?.role === "waket1") return true;
+      return item.id_unit_prodi === user?.unit_id;
     });
+    
+    // Create base structure for all categories
+    const categories = ["Mahasiswa Baru", "Mahasiswa Aktif pada saat TS", "Lulus pada saat TS", "Mengundurkan Diri/DO pada saat TS"];
+    const aggregatedData = {};
+    categories.forEach(category => {
+      aggregatedData[category] = { 
+        kategori: category, 
+        ts: 0, 
+        ts_minus_1: 0, 
+        ts_minus_2: 0, 
+        ts_minus_3: 0, 
+        ts_minus_4: 0, 
+        jumlah: 0 
+      };
+    });
+
+    // Process each year's data
     filteredData.forEach(item => {
       const year = Number(item.id_tahun);
-      const value = Number(item.jumlah) || 0;
-      let key;
-      if (item.jenis_mahasiswa === "baru") key = "Mahasiswa Baru";
-      else if (item.jenis_mahasiswa === "aktif") key = "Mahasiswa Aktif pada saat TS";
-      else if (item.jenis_mahasiswa === "lulus") key = "Lulus pada saat TS";
-      else if (item.jenis_mahasiswa === "mengundurkan_diri") key = "Mengundurkan Diri/DO pada saat TS";
-      if (key && aggregatedData[key]) {
-        if (year === selectedTahun) aggregatedData[key].ts += value;
-        else if (year === selectedTahun - 1) aggregatedData[key].ts_minus_1 += value;
-        else if (year === selectedTahun - 2) aggregatedData[key].ts_minus_2 += value;
-        else if (year === selectedTahun - 3) aggregatedData[key].ts_minus_3 += value;
-        else if (year === selectedTahun - 4) aggregatedData[key].ts_minus_4 += value;
-      }
+      const yearOffset = selectedTahun - year;
+      
+      // Map data fields to categories
+      const dataMapping = {
+        "Mahasiswa Baru": item.jml_baru || 0,
+        "Mahasiswa Aktif pada saat TS": item.jml_aktif || 0,
+        "Lulus pada saat TS": item.jml_lulus || 0,
+        "Mengundurkan Diri/DO pada saat TS": item.jml_do || 0
+      };
+
+      // Assign values to appropriate year columns
+      Object.entries(dataMapping).forEach(([category, value]) => {
+        if (aggregatedData[category]) {
+          if (yearOffset === 0) aggregatedData[category].ts += value;
+          else if (yearOffset === 1) aggregatedData[category].ts_minus_1 += value;
+          else if (yearOffset === 2) aggregatedData[category].ts_minus_2 += value;
+          else if (yearOffset === 3) aggregatedData[category].ts_minus_3 += value;
+          else if (yearOffset === 4) aggregatedData[category].ts_minus_4 += value;
+        }
+      });
     });
+
+    // Calculate totals
     Object.values(aggregatedData).forEach(row => {
       row.jumlah = row.ts + row.ts_minus_1 + row.ts_minus_2 + row.ts_minus_3 + row.ts_minus_4;
     });
+
     return Object.values(aggregatedData);
-  }, [mahasiswaConditions, selectedTahun, user?.unit_id]);
+  }, [mahasiswaConditions, selectedTahun, user?.unit_id, user?.role]);
 
   const renderBody = (rows, leaves) => rows.map((item, rowIndex) => (
     <TableRow key={`row-${rowIndex}`} className="odd:bg-white even:bg-gray-50 dark:odd:bg-white/5 dark:even:bg-white/10">
@@ -262,7 +318,7 @@ export function Tabel2A3() {
               <option value="" disabled>Pilih Tahun</option>
               {tahunList.map((tahun) => <option key={tahun.id_tahun} value={tahun.id_tahun}>{tahun.tahun}</option>)}
             </select>
-            {currentYearLulusDoData ? (
+            {currentYearData ? (
               <div className="flex items-center space-x-2">
                 <Button onClick={handleOpenEditModal} variant="soft" disabled={loading}>Edit Data</Button>
                 <Button onClick={handleHapus} variant="ghost" disabled={loading}>Hapus Data</Button>
@@ -279,7 +335,7 @@ export function Tabel2A3() {
           <TableBody>{renderBody(displayRows, leaves)}{renderSumRow(displayRows, leaves)}</TableBody>
         </Table>
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`${modalMode === 'add' ? 'Tambah' : 'Edit'} Data Lulus & DO untuk Tahun ${selectedTahun}`}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`${modalMode === 'add' ? 'Tambah' : 'Edit'} Data Kondisi Mahasiswa untuk Tahun ${selectedTahun}`}>
         <KondisiMahasiswaForm initialData={editingData} onSubmit={handleFormSubmit} onClose={() => setIsModalOpen(false)} />
       </Modal>
     </>

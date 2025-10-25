@@ -120,7 +120,7 @@ export default function App() {
 
             {/* Content */}
             {TABS.filter(t => t.key === active).map(({ key, Comp }) => (
-              <Comp key={key} role={auth.user?.role} />
+              <Comp key={key} auth={auth} role={auth.user?.role} />
             ))}
           </div>
         )}

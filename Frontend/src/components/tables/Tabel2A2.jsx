@@ -114,15 +114,8 @@ const Tabel2A2 = () => {
       }
       aggregatedData[geoKey].jumlah_mahasiswa += Number(item.jumlah_mahasiswa) || 0;
 
-      // Duplikasi untuk Provinsi Lain - simplified without kabupatenKotaList
-      if (item.kategori_geografis === 'Kota/Kab Lain' && item.nama_daerah_input) {
-          // Simplified logic without external kabupaten data
-          const provKey = `Provinsi Lain-${item.id_tahun}-${item.nama_daerah_input}`;
-          if (!aggregatedData[provKey]) {
-            aggregatedData[provKey] = { ...item, kategori_asal: 'Provinsi Lain', nama_daerah_input: item.nama_daerah_input, jumlah_mahasiswa: 0, id: null, _id: provKey };
-          }
-          aggregatedData[provKey].jumlah_mahasiswa += Number(item.jumlah_mahasiswa) || 0;
-      }
+      // Note: Removed automatic "Provinsi Lain" duplication logic
+      // "Provinsi Lain" should only be created when explicitly categorized as such
     });
 
     return Object.values(aggregatedData);
