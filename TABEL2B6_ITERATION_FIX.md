@@ -1,4 +1,4 @@
-# Tabel2B6 Iteration Error Fix wkwk
+# Tabel2B6 Iteration Error Fix
 
 ## Issue Found
 
