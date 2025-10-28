@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 24, 2025 at 02:57 PM
+-- Generation Time: Oct 28, 2025 at 03:56 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.22
 
@@ -48,8 +48,9 @@ CREATE TABLE `audit_mutu_internal` (
 --
 
 INSERT INTO `audit_mutu_internal` (`id_ami`, `id_unit`, `id_tahun`, `frekuensi_audit`, `dokumen_spmi`, `laporan_audit_url`, `bukti_certified_url`, `jumlah_auditor_certified`, `jumlah_auditor_noncertified`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(5, 9, 2023, 12, 'ini dokumen', 'ini laporan', 'ini url', 12, 13, '2025-08-22 23:46:22', '2025-08-28 03:24:10', NULL, NULL),
-(6, 2, 2022, 1, 'ini dokumen', 'link', NULL, 1, 1, '2025-09-26 08:15:56', '2025-09-26 08:16:27', '2025-09-26 15:16:28', 1);
+(5, 9, 2023, 9, 'ini dokumen', 'ini laporan', NULL, 10, 11, '2025-08-22 23:46:22', '2025-10-27 07:45:20', NULL, NULL),
+(6, 2, 2022, 1, 'ini dokumen', 'link', NULL, 1, 1, '2025-09-26 08:15:56', '2025-09-26 08:16:27', '2025-09-26 15:16:28', 1),
+(7, 7, 2024, 10, 'ini dokumen baru', 'ini url', 'ini bukti', 2, 3, '2025-10-27 06:36:01', '2025-10-27 06:36:01', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -78,7 +79,8 @@ CREATE TABLE `beban_kerja_dosen` (
 INSERT INTO `beban_kerja_dosen` (`id_beban_kerja`, `id_dosen`, `id_tahun`, `sks_pengajaran`, `sks_penelitian`, `sks_pkm`, `sks_manajemen`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
 (9, 1, 2020, 3, 1, 1, 2.5, '2025-08-23 03:48:17', '2025-08-23 03:53:14', NULL, NULL),
 (10, 1, 2021, 3, 1, 1, 2, '2025-09-26 08:13:00', '2025-09-26 08:13:22', '2025-09-26 15:13:22', 1),
-(11, 2, 2025, 5, 2.5, 2, 4, '2025-09-30 13:31:52', '2025-09-30 13:31:52', NULL, NULL);
+(11, 2, 2025, 5, 2.5, 2, 4, '2025-09-30 13:31:52', '2025-09-30 13:31:52', NULL, NULL),
+(12, 7, 2025, 6, 4, 5, 13, '2025-10-27 06:31:56', '2025-10-27 06:31:56', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1418,7 +1420,8 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
 
 INSERT INTO `tabel_2a2_keragaman_asal` (`id`, `id_unit_prodi`, `id_tahun`, `nama_daerah_input`, `kategori_geografis`, `is_afirmasi`, `is_kebutuhan_khusus`, `jumlah_mahasiswa`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
 (2, 2, 2024, 'KABUPATEN BANYUWANGI', 'Kota/Kab Lain', 0, 0, 30, 'https://drive.google.com/file/abc123', '2025-10-06 06:37:18', '2025-10-06 06:37:18', NULL, NULL),
-(3, 2, 2024, 'KABUPATEN BANYUWANGI', 'Kota/Kab Lain', 0, 0, 30, 'https://drive.google.com/file/abc123', '2025-10-06 09:12:19', '2025-10-06 09:12:19', NULL, NULL);
+(3, 2, 2024, 'KABUPATEN BANYUWANGI', 'Kota/Kab Lain', 0, 0, 30, 'https://drive.google.com/file/abc123', '2025-10-06 09:12:19', '2025-10-06 09:12:19', NULL, NULL),
+(4, 2, 2024, 'KOTA YOGYAKARTA', 'Negara Lain', 0, 0, 10, 'https://www.youtube.com/?gl=ID&hl=id&app=desktop', '2025-10-27 07:00:58', '2025-10-27 07:00:58', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1538,56 +1541,98 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
 --
 
 INSERT INTO `tabel_2b6_kepuasan_pengguna` (`id`, `id_unit_prodi`, `id_tahun`, `jenis_kemampuan`, `persen_sangat_baik`, `persen_baik`, `persen_cukup`, `persen_kurang`, `deleted_at`, `deleted_by`) VALUES
-(1, 4, 2020, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 45.5, 35.2, 15.8, 3.5, NULL, NULL),
-(2, 4, 2020, 'Kemampuan merancang dan melaksanakan penelitian', 38.7, 42.1, 16.3, 2.9, NULL, NULL),
-(3, 4, 2020, 'Kemampuan mengembangkan diri secara profesional', 52.3, 31.4, 13.2, 3.1, NULL, NULL),
-(4, 4, 2020, 'Kemampuan berkomunikasi secara efektif', 48.9, 36.7, 12.1, 2.3, NULL, NULL),
-(5, 4, 2020, 'Kemampuan bekerja dalam tim', 41.2, 38.5, 17.8, 2.5, NULL, NULL),
-(6, 4, 2021, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 47.8, 33.6, 15.1, 3.5, NULL, NULL),
-(7, 4, 2021, 'Kemampuan merancang dan melaksanakan penelitian', 41.3, 40.2, 15.8, 2.7, NULL, NULL),
-(8, 4, 2021, 'Kemampuan mengembangkan diri secara profesional', 54.1, 29.8, 13.4, 2.7, NULL, NULL),
-(9, 4, 2021, 'Kemampuan berkomunikasi secara efektif', 50.2, 35.1, 12.3, 2.4, NULL, NULL),
-(10, 4, 2021, 'Kemampuan bekerja dalam tim', 43.7, 36.9, 16.8, 2.6, NULL, NULL),
-(11, 4, 2022, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 49.2, 32.4, 15.8, 2.6, NULL, NULL),
-(12, 4, 2022, 'Kemampuan merancang dan melaksanakan penelitian', 43.1, 38.7, 15.6, 2.6, NULL, NULL),
-(13, 4, 2022, 'Kemampuan mengembangkan diri secara profesional', 55.8, 28.4, 13.2, 2.6, NULL, NULL),
-(14, 4, 2022, 'Kemampuan berkomunikasi secara efektif', 51.3, 33.9, 12.4, 2.4, NULL, NULL),
-(15, 4, 2022, 'Kemampuan bekerja dalam tim', 45.1, 35.2, 16.3, 3.4, NULL, NULL),
-(16, 4, 2023, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 51.7, 30.8, 14.9, 2.6, NULL, NULL),
-(17, 4, 2023, 'Kemampuan merancang dan melaksanakan penelitian', 45.6, 36.4, 15.2, 2.8, NULL, NULL),
-(18, 4, 2023, 'Kemampuan mengembangkan diri secara profesional', 57.2, 26.8, 13.1, 2.9, NULL, NULL),
-(19, 4, 2023, 'Kemampuan berkomunikasi secara efektif', 53.1, 31.7, 12.8, 2.4, NULL, NULL),
-(20, 4, 2023, 'Kemampuan bekerja dalam tim', 47.3, 33.1, 16.2, 3.4, NULL, NULL),
-(21, 4, 2024, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 53.4, 29.2, 14.8, 2.6, NULL, NULL),
-(22, 4, 2024, 'Kemampuan merancang dan melaksanakan penelitian', 47.8, 34.6, 14.9, 2.7, NULL, NULL),
-(23, 4, 2024, 'Kemampuan mengembangkan diri secara profesional', 58.9, 25.4, 12.8, 2.9, NULL, NULL),
-(24, 4, 2024, 'Kemampuan berkomunikasi secara efektif', 54.7, 29.8, 12.9, 2.6, NULL, NULL),
-(25, 4, 2024, 'Kemampuan bekerja dalam tim', 49.1, 31.7, 15.8, 3.4, NULL, NULL),
-(26, 5, 2020, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 42.3, 37.8, 16.4, 3.5, NULL, NULL),
-(27, 5, 2020, 'Kemampuan merancang dan melaksanakan penelitian', 36.2, 44.1, 16.8, 2.9, NULL, NULL),
-(28, 5, 2020, 'Kemampuan mengembangkan diri secara profesional', 49.1, 33.7, 14.2, 3, NULL, NULL),
-(29, 5, 2020, 'Kemampuan berkomunikasi secara efektif', 46.5, 38.2, 13.1, 2.2, NULL, NULL),
-(30, 5, 2020, 'Kemampuan bekerja dalam tim', 39.8, 40.1, 17.6, 2.5, NULL, NULL),
-(31, 5, 2021, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 44.7, 35.9, 16.1, 3.3, NULL, NULL),
-(32, 5, 2021, 'Kemampuan merancang dan melaksanakan penelitian', 38.9, 42.3, 16.2, 2.6, NULL, NULL),
-(33, 5, 2021, 'Kemampuan mengembangkan diri secara profesional', 51.4, 31.2, 14.5, 2.9, NULL, NULL),
-(34, 5, 2021, 'Kemampuan berkomunikasi secara efektif', 48.1, 36.4, 13.2, 2.3, NULL, NULL),
-(35, 5, 2021, 'Kemampuan bekerja dalam tim', 42.3, 38.7, 16.5, 2.5, NULL, NULL),
-(36, 5, 2022, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 46.8, 34.2, 16.3, 2.7, NULL, NULL),
-(37, 5, 2022, 'Kemampuan merancang dan melaksanakan penelitian', 41.2, 40.8, 15.4, 2.6, NULL, NULL),
-(38, 5, 2022, 'Kemampuan mengembangkan diri secara profesional', 53.1, 29.4, 14.1, 3.4, NULL, NULL),
-(39, 5, 2022, 'Kemampuan berkomunikasi secara efektif', 49.7, 34.6, 13.4, 2.3, NULL, NULL),
-(40, 5, 2022, 'Kemampuan bekerja dalam tim', 44.6, 36.8, 16.1, 2.5, NULL, NULL),
-(41, 5, 2023, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 48.9, 32.6, 15.8, 2.7, NULL, NULL),
-(42, 5, 2023, 'Kemampuan merancang dan melaksanakan penelitian', 43.7, 38.9, 15.1, 2.3, NULL, NULL),
-(43, 5, 2023, 'Kemampuan mengembangkan diri secara profesional', 55.2, 27.8, 13.6, 4.4, NULL, NULL),
-(44, 5, 2023, 'Kemampuan berkomunikasi secara efektif', 51.8, 32.4, 13.5, 2.3, NULL, NULL),
-(45, 5, 2023, 'Kemampuan bekerja dalam tim', 46.3, 34.7, 15.6, 3.4, NULL, NULL),
-(46, 5, 2024, 'Kemampuan dalam bidang ilmu pengetahuan, teknologi, dan seni', 50.6, 30.8, 15.9, 2.7, NULL, NULL),
-(47, 5, 2024, 'Kemampuan merancang dan melaksanakan penelitian', 45.1, 37.2, 14.8, 2.9, NULL, NULL),
-(48, 5, 2024, 'Kemampuan mengembangkan diri secara profesional', 56.7, 26.4, 13.2, 3.7, NULL, NULL),
-(49, 5, 2024, 'Kemampuan berkomunikasi secara efektif', 53.4, 30.6, 13.7, 2.3, NULL, NULL),
-(50, 5, 2024, 'Kemampuan bekerja dalam tim', 48.2, 32.9, 15.5, 3.4, NULL, NULL);
+(51, 4, 2020, 'Kerjasama Tim', 45.5, 35.2, 15.8, 3.5, NULL, NULL),
+(52, 4, 2020, 'Keahlian di Bidang Prodi', 52.3, 31.4, 13.2, 3.1, NULL, NULL),
+(53, 4, 2020, 'Kemampuan Berbahasa Asing (Inggris)', 38.7, 42.1, 16.3, 2.9, NULL, NULL),
+(54, 4, 2020, 'Kemampuan Berkomunikasi', 48.9, 36.7, 12.1, 2.3, NULL, NULL),
+(55, 4, 2020, 'Pengembangan Diri', 41.2, 38.5, 17.8, 2.5, NULL, NULL),
+(56, 4, 2020, 'Kepemimpinan', 35.8, 40.2, 20.1, 3.9, NULL, NULL),
+(57, 4, 2020, 'Etos Kerja', 47.3, 33.6, 15.1, 4, NULL, NULL),
+(58, 4, 2021, 'Kerjasama Tim', 47.8, 33.6, 15.1, 3.5, NULL, NULL),
+(59, 4, 2021, 'Keahlian di Bidang Prodi', 54.1, 29.8, 13.4, 2.7, NULL, NULL),
+(60, 4, 2021, 'Kemampuan Berbahasa Asing (Inggris)', 41.3, 40.2, 15.8, 2.7, NULL, NULL),
+(61, 4, 2021, 'Kemampuan Berkomunikasi', 50.2, 35.1, 12.3, 2.4, NULL, NULL),
+(62, 4, 2021, 'Pengembangan Diri', 43.7, 36.9, 16.8, 2.6, NULL, NULL),
+(63, 4, 2021, 'Kepemimpinan', 38.2, 42.1, 16.8, 2.9, NULL, NULL),
+(64, 4, 2021, 'Etos Kerja', 49.5, 31.2, 15.8, 3.5, NULL, NULL),
+(65, 4, 2022, 'Kerjasama Tim', 49.2, 32.4, 15.8, 2.6, NULL, NULL),
+(66, 4, 2022, 'Keahlian di Bidang Prodi', 55.8, 28.4, 13.2, 2.6, NULL, NULL),
+(67, 4, 2022, 'Kemampuan Berbahasa Asing (Inggris)', 43.1, 38.7, 15.6, 2.6, NULL, NULL),
+(68, 4, 2022, 'Kemampuan Berkomunikasi', 51.3, 33.9, 12.4, 2.4, NULL, NULL),
+(69, 4, 2022, 'Pengembangan Diri', 45.1, 35.2, 16.3, 3.4, NULL, NULL),
+(70, 4, 2022, 'Kepemimpinan', 40.5, 39.8, 16.2, 3.5, NULL, NULL),
+(71, 4, 2022, 'Etos Kerja', 51.2, 29.8, 15.5, 3.5, NULL, NULL),
+(72, 4, 2023, 'Kerjasama Tim', 51.7, 30.8, 14.9, 2.6, NULL, NULL),
+(73, 4, 2023, 'Keahlian di Bidang Prodi', 57.2, 26.8, 13.1, 2.9, NULL, NULL),
+(74, 4, 2023, 'Kemampuan Berbahasa Asing (Inggris)', 45.6, 36.4, 15.2, 2.8, NULL, NULL),
+(75, 4, 2023, 'Kemampuan Berkomunikasi', 53.1, 31.7, 12.8, 2.4, NULL, NULL),
+(76, 4, 2023, 'Pengembangan Diri', 47.3, 33.1, 16.2, 3.4, NULL, NULL),
+(77, 4, 2023, 'Kepemimpinan', 42.8, 37.5, 16.2, 3.5, NULL, NULL),
+(78, 4, 2023, 'Etos Kerja', 53.1, 28.4, 15, 3.5, NULL, NULL),
+(79, 4, 2024, 'Kerjasama Tim', 53.4, 29.2, 14.8, 2.6, NULL, NULL),
+(80, 4, 2024, 'Keahlian di Bidang Prodi', 58.9, 25.4, 12.8, 2.9, NULL, NULL),
+(81, 4, 2024, 'Kemampuan Berbahasa Asing (Inggris)', 47.8, 34.6, 14.9, 2.7, NULL, NULL),
+(82, 4, 2024, 'Kemampuan Berkomunikasi', 54.7, 29.8, 12.9, 2.6, NULL, NULL),
+(83, 4, 2024, 'Pengembangan Diri', 49.1, 31.7, 15.8, 3.4, NULL, NULL),
+(84, 4, 2024, 'Kepemimpinan', 45.2, 35.8, 15.5, 3.5, NULL, NULL),
+(85, 4, 2024, 'Etos Kerja', 55.3, 26.7, 14.5, 3.5, NULL, NULL),
+(86, 5, 2020, 'Kerjasama Tim', 42.3, 37.8, 16.4, 3.5, NULL, NULL),
+(87, 5, 2020, 'Keahlian di Bidang Prodi', 49.1, 33.7, 14.2, 3, NULL, NULL),
+(88, 5, 2020, 'Kemampuan Berbahasa Asing (Inggris)', 36.2, 44.1, 16.8, 2.9, NULL, NULL),
+(89, 5, 2020, 'Kemampuan Berkomunikasi', 46.5, 38.2, 13.1, 2.2, NULL, NULL),
+(90, 5, 2020, 'Pengembangan Diri', 39.8, 40.1, 17.6, 2.5, NULL, NULL),
+(91, 5, 2020, 'Kepemimpinan', 33.5, 38.2, 22.1, 6.2, NULL, NULL),
+(92, 5, 2020, 'Etos Kerja', 44.8, 35.2, 16.5, 3.5, NULL, NULL),
+(93, 5, 2021, 'Kerjasama Tim', 44.7, 35.9, 16.1, 3.3, NULL, NULL),
+(94, 5, 2021, 'Keahlian di Bidang Prodi', 51.4, 31.2, 14.5, 2.9, NULL, NULL),
+(95, 5, 2021, 'Kemampuan Berbahasa Asing (Inggris)', 38.9, 42.3, 16.2, 2.6, NULL, NULL),
+(96, 5, 2021, 'Kemampuan Berkomunikasi', 48.1, 36.4, 13.2, 2.3, NULL, NULL),
+(97, 5, 2021, 'Pengembangan Diri', 42.3, 38.7, 16.5, 2.5, NULL, NULL),
+(98, 5, 2021, 'Kepemimpinan', 36.8, 40.5, 18.2, 4.5, NULL, NULL),
+(99, 5, 2021, 'Etos Kerja', 47.2, 33.1, 16.2, 3.5, NULL, NULL),
+(100, 5, 2022, 'Kerjasama Tim', 46.8, 34.2, 16.3, 2.7, NULL, NULL),
+(101, 5, 2022, 'Keahlian di Bidang Prodi', 53.1, 29.4, 14.1, 3.4, NULL, NULL),
+(102, 5, 2022, 'Kemampuan Berbahasa Asing (Inggris)', 41.2, 40.8, 15.4, 2.6, NULL, NULL),
+(103, 5, 2022, 'Kemampuan Berkomunikasi', 49.7, 34.6, 13.4, 2.3, NULL, NULL),
+(104, 5, 2022, 'Pengembangan Diri', 44.6, 36.8, 16.1, 2.5, NULL, NULL),
+(105, 5, 2022, 'Kepemimpinan', 39.5, 38.9, 17.1, 4.5, NULL, NULL),
+(106, 5, 2022, 'Etos Kerja', 49.8, 30.7, 16, 3.5, NULL, NULL),
+(107, 5, 2023, 'Kerjasama Tim', 48.9, 32.6, 15.8, 2.7, NULL, NULL),
+(108, 5, 2023, 'Keahlian di Bidang Prodi', 55.2, 27.8, 13.6, 4.4, NULL, NULL),
+(109, 5, 2023, 'Kemampuan Berbahasa Asing (Inggris)', 43.7, 38.9, 15.1, 2.3, NULL, NULL),
+(110, 5, 2023, 'Kemampuan Berkomunikasi', 51.8, 32.4, 13.5, 2.3, NULL, NULL),
+(111, 5, 2023, 'Pengembangan Diri', 46.3, 34.7, 15.6, 3.4, NULL, NULL),
+(112, 5, 2023, 'Kepemimpinan', 41.8, 37.2, 16.5, 4.5, NULL, NULL),
+(113, 5, 2023, 'Etos Kerja', 52.1, 28.9, 15.5, 3.5, NULL, NULL),
+(114, 5, 2024, 'Kerjasama Tim', 50.6, 30.8, 15.9, 2.7, NULL, NULL),
+(115, 5, 2024, 'Keahlian di Bidang Prodi', 56.7, 26.4, 13.2, 3.7, NULL, NULL),
+(116, 5, 2024, 'Kemampuan Berbahasa Asing (Inggris)', 45.1, 37.2, 14.8, 2.9, NULL, NULL),
+(117, 5, 2024, 'Kemampuan Berkomunikasi', 53.4, 30.6, 13.7, 2.3, NULL, NULL),
+(118, 5, 2024, 'Pengembangan Diri', 48.2, 32.9, 15.5, 3.4, NULL, NULL),
+(119, 5, 2024, 'Kepemimpinan', 43.5, 35.8, 16.2, 4.5, NULL, NULL),
+(120, 5, 2024, 'Etos Kerja', 54.2, 27.3, 15, 3.5, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tabel_3a1_sarpras_penelitian`
+--
+
+CREATE TABLE `tabel_3a1_sarpras_penelitian` (
+  `id` int NOT NULL,
+  `id_unit_prodi` int NOT NULL,
+  `nama_sarpras` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama Prasarana (misal: nama laboratorium)',
+  `daya_tampung` int DEFAULT NULL COMMENT 'Daya Tampung (jika relevan)',
+  `luas_ruang_m2` float DEFAULT NULL COMMENT 'Luas Ruang (m²)',
+  `kepemilikan` enum('M','S','W') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Milik sendiri (M), Sewa (S), atau Kerjasama (W)',
+  `lisensi` enum('L','P','T') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Berlisensi (L), Public Domain (P), atau Tidak Berlisensi (T)',
+  `perangkat_detail` text COLLATE utf8mb4_unicode_ci COMMENT 'Detail perangkat (keras, lunak, bandwidth, dll)',
+  `link_bukti` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2033,6 +2078,13 @@ ALTER TABLE `tabel_2b6_kepuasan_pengguna`
   ADD KEY `id_tahun` (`id_tahun`);
 
 --
+-- Indexes for table `tabel_3a1_sarpras_penelitian`
+--
+ALTER TABLE `tabel_3a1_sarpras_penelitian`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_t3a1_unit` (`id_unit_prodi`);
+
+--
 -- Indexes for table `tahun_akademik`
 --
 ALTER TABLE `tahun_akademik`
@@ -2069,13 +2121,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `audit_mutu_internal`
 --
 ALTER TABLE `audit_mutu_internal`
-  MODIFY `id_ami` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_ami` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `beban_kerja_dosen`
 --
 ALTER TABLE `beban_kerja_dosen`
-  MODIFY `id_beban_kerja` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_beban_kerja` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `bentuk_pembelajaran_master`
@@ -2195,7 +2247,7 @@ ALTER TABLE `tabel_2a1_pendaftaran`
 -- AUTO_INCREMENT for table `tabel_2a2_keragaman_asal`
 --
 ALTER TABLE `tabel_2a2_keragaman_asal`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `tabel_2a3_kondisi_mahasiswa`
@@ -2219,7 +2271,13 @@ ALTER TABLE `tabel_2b5_kesesuaian_kerja`
 -- AUTO_INCREMENT for table `tabel_2b6_kepuasan_pengguna`
 --
 ALTER TABLE `tabel_2b6_kepuasan_pengguna`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
+
+--
+-- AUTO_INCREMENT for table `tabel_3a1_sarpras_penelitian`
+--
+ALTER TABLE `tabel_3a1_sarpras_penelitian`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tenaga_kependidikan`
@@ -2424,6 +2482,12 @@ ALTER TABLE `tabel_2b5_kesesuaian_kerja`
 ALTER TABLE `tabel_2b6_kepuasan_pengguna`
   ADD CONSTRAINT `tabel_2b6_kepuasan_pengguna_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`),
   ADD CONSTRAINT `tabel_2b6_kepuasan_pengguna_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`);
+
+--
+-- Constraints for table `tabel_3a1_sarpras_penelitian`
+--
+ALTER TABLE `tabel_3a1_sarpras_penelitian`
+  ADD CONSTRAINT `fk_t3a1_unit` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`);
 
 --
 -- Constraints for table `tenaga_kependidikan`
