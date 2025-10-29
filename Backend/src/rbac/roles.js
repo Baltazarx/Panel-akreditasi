@@ -43,6 +43,18 @@ export const AccessMatrix = {
     'sumber_pendanaan_summary':   { R: true }, // Untuk API /sumber-pendanaan/summary (jika keynya ini)
     'penggunaan_dana':          { R: true }, // Untuk API /penggunaan-dana
     'penggunaan_dana_summary':  { R: true }, // Untuk API /penggunaan-dana/summary
+    
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { R: true }, // Untuk dropdown unit kerja
+    'pegawai': { R: true }, // Untuk dropdown pegawai
+    'tahun_akademik': { R: true }, // Untuk dropdown tahun akademik
+    'ref_jabatan_struktural': { R: true }, // Untuk dropdown jabatan struktural
+    'ref_jabatan_fungsional': { R: true }, // Untuk dropdown jabatan fungsional
+    'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
+    'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
+    
+    // === USER MANAGEMENT: Izin Baca untuk UserManagementPage ===
+    'users': { R: true }, // Untuk UserManagementPage
   },
 
   // ========== KEPEGAWAIAN ==========

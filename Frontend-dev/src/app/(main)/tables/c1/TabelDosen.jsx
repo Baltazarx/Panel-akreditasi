@@ -20,11 +20,32 @@ export default function TabelDosen({ role }) {
   const [formState, setFormState] = useState({});
   const [ptCustom, setPtCustom] = useState("");
   const [showPtInput, setShowPtInput] = useState(false);
+  const [pegawaiSearch, setPegawaiSearch] = useState("");
+  const [showPegawaiDropdown, setShowPegawaiDropdown] = useState(false);
 
   // Cek hak akses
   const canCreate = roleCan(role, table.key, "C");
   const canUpdate = roleCan(role, table.key, "U");
   const canDelete = roleCan(role, table.key, "D");
+
+  // Filter pegawai berdasarkan pencarian (bisa di mana saja dalam nama)
+  const filteredPegawai = maps?.pegawai ? Object.values(maps.pegawai).filter(pegawai => 
+    pegawai.nama_lengkap.toLowerCase().includes(pegawaiSearch.toLowerCase())
+  ).sort((a, b) => {
+    // Urutkan berdasarkan relevansi: yang dimulai dengan pencarian di atas
+    const aStartsWith = a.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
+    const bStartsWith = b.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
+    
+    if (aStartsWith && !bStartsWith) return -1;
+    if (!aStartsWith && bStartsWith) return 1;
+    
+    // Jika sama-sama dimulai atau tidak dimulai, urutkan alfabetis
+    return a.nama_lengkap.localeCompare(b.nama_lengkap);
+  }) : [];
+
+  // Mendapatkan nama pegawai yang dipilih
+  const selectedPegawai = maps?.pegawai && formState.id_pegawai ? 
+    maps.pegawai[formState.id_pegawai] : null;
   const canRestore = roleCan(role, table.key, "H");
   
   // Debug permissions
@@ -77,6 +98,13 @@ export default function TabelDosen({ role }) {
         setPtCustom("");
         setShowPtInput(false);
       }
+      
+      // Set pegawaiSearch untuk combobox
+      if (editing.id_pegawai && maps?.pegawai && maps.pegawai[editing.id_pegawai]) {
+        setPegawaiSearch(maps.pegawai[editing.id_pegawai].nama_lengkap);
+      } else {
+        setPegawaiSearch("");
+      }
     } else {
       setFormState({
         id_pegawai: "",
@@ -89,11 +117,45 @@ export default function TabelDosen({ role }) {
       });
       setPtCustom("");
       setShowPtInput(false);
+      setPegawaiSearch("");
+      setShowPegawaiDropdown(false);
     }
   }, [editing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validasi semua field wajib diisi
+    if (!formState.id_pegawai || !formState.nidn || !formState.nuptk || !formState.homebase || 
+        !formState.id_jafung || formState.beban_sks === "" || formState.beban_sks === null || formState.beban_sks === undefined) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Belum Lengkap',
+        text: 'Mohon lengkapi semua field yang wajib diisi.',
+      });
+      return;
+    }
+
+    // Validasi khusus untuk PT (Perguruan Tinggi)
+    if (!formState.pt || formState.pt === "") {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Belum Lengkap',
+        text: 'Mohon pilih atau isi Perguruan Tinggi.',
+      });
+      return;
+    }
+
+    // Validasi jika memilih "Lainnya" tetapi ptCustom kosong
+    if (showPtInput && (!ptCustom || ptCustom.trim() === "")) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Belum Lengkap',
+        text: 'Mohon isi nama perguruan tinggi.',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const idField = getIdField(editing);
@@ -116,6 +178,10 @@ export default function TabelDosen({ role }) {
       
       setShowModal(false);
       setEditing(null);
+      setPtCustom("");
+      setShowPtInput(false);
+      setPegawaiSearch("");
+      setShowPegawaiDropdown(false);
       fetchRows();
       
       Swal.fire({
@@ -340,48 +406,92 @@ export default function TabelDosen({ role }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">ID Pegawai <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.id_pegawai || ""}
-                      onChange={(e) => setFormState({...formState, id_pegawai: e.target.value})}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Pegawai</option>
-                      {maps?.pegawai && Object.values(maps.pegawai).map((p) => (
-                        <option key={p.id_pegawai} value={p.id_pegawai}>
-                          {p.nama_lengkap}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={pegawaiSearch}
+                        onChange={(e) => {
+                          setPegawaiSearch(e.target.value);
+                          setShowPegawaiDropdown(true);
+                          if (!e.target.value) {
+                            setFormState({...formState, id_pegawai: ""});
+                          }
+                        }}
+                        onFocus={() => setShowPegawaiDropdown(true)}
+                        onBlur={() => {
+                          // Delay untuk memungkinkan click pada dropdown
+                          setTimeout(() => {
+                            setShowPegawaiDropdown(false);
+                            // Jika user mengetik tapi tidak memilih dari dropdown, reset id_pegawai
+                            if (pegawaiSearch && !selectedPegawai) {
+                              setFormState({...formState, id_pegawai: ""});
+                            }
+                          }, 200);
+                        }}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                        placeholder="Cari atau pilih pegawai..."
+                      />
+                      {showPegawaiDropdown && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredPegawai.length > 0 ? (
+                            filteredPegawai.map((pegawai) => (
+                              <div
+                                key={pegawai.id_pegawai}
+                                className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // Mencegah onBlur dari input
+                                }}
+                                onClick={() => {
+                                  setFormState({...formState, id_pegawai: pegawai.id_pegawai});
+                                  setPegawaiSearch(pegawai.nama_lengkap);
+                                  setShowPegawaiDropdown(false);
+                                }}
+                              >
+                                <div className="font-medium text-gray-900">{pegawai.nama_lengkap}</div>
+                                <div className="text-sm text-gray-500">ID: {pegawai.id_pegawai}</div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-gray-500 text-center">
+                              {pegawaiSearch ? "Pegawai tidak ditemukan" : "Tidak ada data pegawai"}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">NIDN</label>
+                    <label className="block text-sm font-semibold text-gray-700">NIDN <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formState.nidn || ""}
                       onChange={(e) => setFormState({...formState, nidn: e.target.value})}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan NIDN"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">NUPTK</label>
+                    <label className="block text-sm font-semibold text-gray-700">NUPTK <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formState.nuptk || ""}
                       onChange={(e) => setFormState({...formState, nuptk: e.target.value})}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan NUPTK"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Homebase</label>
+                    <label className="block text-sm font-semibold text-gray-700">Homebase <span className="text-red-500">*</span></label>
                     <select
                       value={formState.homebase || ""}
                       onChange={(e) => setFormState({...formState, homebase: e.target.value})}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                     >
                       <option value="">Pilih Homebase</option>
@@ -391,7 +501,7 @@ export default function TabelDosen({ role }) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">PT (Perguruan Tinggi)</label>
+                    <label className="block text-sm font-semibold text-gray-700">PT (Perguruan Tinggi) <span className="text-red-500">*</span></label>
                     <select
                       value={formState.pt === "STIKOM PGRI Banyuwangi" ? "STIKOM PGRI Banyuwangi" : showPtInput ? "Lainnya" : ""}
                       onChange={(e) => {
@@ -408,6 +518,7 @@ export default function TabelDosen({ role }) {
                           setShowPtInput(false);
                         }
                       }}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                     >
                       <option value="">Pilih Perguruan Tinggi</option>
@@ -422,6 +533,7 @@ export default function TabelDosen({ role }) {
                           setPtCustom(e.target.value);
                           setFormState({...formState, pt: e.target.value});
                         }}
+                        required={showPtInput}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white mt-2"
                         placeholder="Masukkan nama perguruan tinggi"
                       />
@@ -429,10 +541,11 @@ export default function TabelDosen({ role }) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Jabatan Fungsional</label>
+                    <label className="block text-sm font-semibold text-gray-700">Jabatan Fungsional <span className="text-red-500">*</span></label>
                     <select
                       value={formState.id_jafung || ""}
                       onChange={(e) => setFormState({...formState, id_jafung: e.target.value})}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                     >
                       <option value="">Pilih Jabatan Fungsional</option>
@@ -445,19 +558,28 @@ export default function TabelDosen({ role }) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Beban SKS</label>
+                    <label className="block text-sm font-semibold text-gray-700">Beban SKS <span className="text-red-500">*</span></label>
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={formState.beban_sks || ""}
                       onChange={(e) => setFormState({...formState, beban_sks: e.target.value})}
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan Beban SKS"
                     />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <button type="button" onClick={() => {setShowModal(false); setEditing(null);}} className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">Batal</button>
+                  <button type="button" onClick={() => {
+                    setShowModal(false); 
+                    setEditing(null);
+                    setPtCustom("");
+                    setShowPtInput(false);
+                    setPegawaiSearch("");
+                    setShowPegawaiDropdown(false);
+                  }} className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">Batal</button>
                   <button type="submit" className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white">{loading ? "Menyimpan..." : "Simpan"}</button>
                 </div>
               </form>
