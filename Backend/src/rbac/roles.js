@@ -12,6 +12,9 @@ export const AccessMatrix = {
     // ---- Tabel C1 ----
     'tabel_1a4':        { R: true }, // Sesuai permintaan (Hanya Read)
 
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { C: true, R: true, U: true, D: true },
+
     // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
     'profil_lulusan':   { C: true, R: true, U: true, D: true },
     'cpl':              { C: true, R: true, U: true, D: true },
@@ -21,14 +24,98 @@ export const AccessMatrix = {
     'pemetaan2b1':      { R: true },
     'pemetaan2b2':      { R: true, U: true },
     'pemetaan2b3':      { R: true },
-    'pemetaanCpmkCpl':  { R: true, U: true },
+    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
     'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
     'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
-    'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true }
+    'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { R: true },
+    'pegawai': { R: true },
+    'tahun_akademik': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'ref_jabatan_fungsional': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'audit_mutu_internal': { R: true },
+    'users': { R: true },
+  },
+
+  // ========== PRODI TI ==========
+  'prodi_ti': {
+    // ---- Tabel C1 ----
+    'tabel_1a4':        { R: true }, // Sesuai permintaan (Hanya Read)
+
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { C: true, R: true, U: true, D: true },
+
+    // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
+    'profil_lulusan':   { C: true, R: true, U: true, D: true },
+    'cpl':              { C: true, R: true, U: true, D: true },
+    'mata_kuliah':      { C: true, R: true, U: true, D: true },
+    'cpmk':             { C: true, R: true, U: true, D: true },
+    'visi_misi':        { C: true, R: true, U: true, D: true },
+    'pemetaan2b1':      { R: true },
+    'pemetaan2b2':      { R: true, U: true },
+    'pemetaan2b3':      { R: true },
+    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
+    'isi_pembelajaran': { C: true, R: true, U: true, D: true },
+    'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
+    'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
+    'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
+    'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
+    'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
+    'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { R: true },
+    'pegawai': { R: true },
+    'tahun_akademik': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'ref_jabatan_fungsional': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'audit_mutu_internal': { R: true },
+    'users': { R: true },
+  },
+
+  // ========== PRODI MI ==========
+  'prodi_mi': {
+    // ---- Tabel C1 ----
+    'tabel_1a4':        { R: true }, // Sesuai permintaan (Hanya Read)
+
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { C: true, R: true, U: true, D: true },
+
+    // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
+    'profil_lulusan':   { C: true, R: true, U: true, D: true },
+    'cpl':              { C: true, R: true, U: true, D: true },
+    'mata_kuliah':      { C: true, R: true, U: true, D: true },
+    'cpmk':             { C: true, R: true, U: true, D: true },
+    'visi_misi':        { C: true, R: true, U: true, D: true },
+    'pemetaan2b1':      { R: true },
+    'pemetaan2b2':      { R: true, U: true },
+    'pemetaan2b3':      { R: true },
+    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
+    'isi_pembelajaran': { C: true, R: true, U: true, D: true },
+    'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
+    'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
+    'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
+    'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
+    'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
+    'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { R: true },
+    'pegawai': { R: true },
+    'tahun_akademik': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'ref_jabatan_fungsional': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'audit_mutu_internal': { R: true },
+    'users': { R: true },
   },
 
   // ========== LPPM ==========

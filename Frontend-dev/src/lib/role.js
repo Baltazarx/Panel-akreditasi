@@ -17,7 +17,10 @@ export const ACCESS_MATRIX = {
     // ---- Tabel C1 ----
     'tabel_1a4':        { r: true }, // HANYA 1A4 yang bisa diakses Prodi (Read assumed)
 
-    // ---- Tabel 2B ----
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { c: true, r: true, u: true, d: true },
+
+    // ---- Tabel 2B & Lainnya (dari backend roles.js) ----
     'profil_lulusan':   { c: true, r: true, u: true, d: true },
     'cpl':              { c: true, r: true, u: true, d: true },
     'mata_kuliah':      { c: true, r: true, u: true, d: true },
@@ -25,9 +28,7 @@ export const ACCESS_MATRIX = {
     'pemetaan2b1':      { r: true },
     'pemetaan2b2':      { r: true, u: true },
     'pemetaan2b3':      { r: true },
-    'pemetaanCpmkCpl':  { r: true, u: true },
-
-    // ---- Tabel Prodi Lainnya (dari backend roles.js) ----
+    'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
     'visi_misi':        { c: true, r: true, u: true, d: true },
     'isi_pembelajaran': { c: true, r: true, u: true, d: true },
     'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
@@ -35,11 +36,88 @@ export const ACCESS_MATRIX = {
     'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
     'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
     'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
-    'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true }
-    // Resource prodi lain dari file asli Anda (seperti dosen, pegawai, dll.)
-    // sebaiknya dihapus dari sini jika tidak ada di backend roles.js untuk prodi
-    // 'dosen': { c: true, u: true, d: true, r: true, h: true }, // Contoh HAPUS jika tidak relevan
-    // 'pegawai': { c: true, u: true, d: true, r: true, h: true }, // Contoh HAPUS jika tidak relevan
+    'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { r: true },
+    'tahun_akademik': { r: true },
+    'ref_jabatan_struktural': { r: true },
+    'ref_jabatan_fungsional': { r: true },
+    'tenaga_kependidikan': { r: true },
+    'audit_mutu_internal': { r: true },
+    'users': { r: true },
+  },
+
+  // ========== PRODI TI ==========
+  'prodi_ti': {
+    // ---- Tabel C1 ----
+    'tabel_1a4':        { r: true }, // HANYA 1A4 yang bisa diakses Prodi (Read assumed)
+
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { c: true, r: true, u: true, d: true },
+
+    // ---- Tabel 2B & Lainnya (dari backend roles.js) ----
+    'profil_lulusan':   { c: true, r: true, u: true, d: true },
+    'cpl':              { c: true, r: true, u: true, d: true },
+    'mata_kuliah':      { c: true, r: true, u: true, d: true },
+    'cpmk':             { c: true, r: true, u: true, d: true },
+    'pemetaan2b1':      { r: true },
+    'pemetaan2b2':      { r: true, u: true },
+    'pemetaan2b3':      { r: true },
+    'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
+    'visi_misi':        { c: true, r: true, u: true, d: true },
+    'isi_pembelajaran': { c: true, r: true, u: true, d: true },
+    'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
+    'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
+    'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
+    'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
+    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
+    'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { r: true },
+    'tahun_akademik': { r: true },
+    'ref_jabatan_struktural': { r: true },
+    'ref_jabatan_fungsional': { r: true },
+    'tenaga_kependidikan': { r: true },
+    'audit_mutu_internal': { r: true },
+    'users': { r: true },
+  },
+
+  // ========== PRODI MI ==========
+  'prodi_mi': {
+    // ---- Tabel C1 ----
+    'tabel_1a4':        { r: true }, // HANYA 1A4 yang bisa diakses Prodi (Read assumed)
+
+    // ---- Tabel 2A3 ----
+    'tabel_2a3_kondisi_mahasiswa': { c: true, r: true, u: true, d: true },
+
+    // ---- Tabel 2B & Lainnya (dari backend roles.js) ----
+    'profil_lulusan':   { c: true, r: true, u: true, d: true },
+    'cpl':              { c: true, r: true, u: true, d: true },
+    'mata_kuliah':      { c: true, r: true, u: true, d: true },
+    'cpmk':             { c: true, r: true, u: true, d: true },
+    'pemetaan2b1':      { r: true },
+    'pemetaan2b2':      { r: true, u: true },
+    'pemetaan2b3':      { r: true },
+    'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
+    'visi_misi':        { c: true, r: true, u: true, d: true },
+    'isi_pembelajaran': { c: true, r: true, u: true, d: true },
+    'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
+    'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
+    'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
+    'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
+    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
+    'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { r: true },
+    'tahun_akademik': { r: true },
+    'ref_jabatan_struktural': { r: true },
+    'ref_jabatan_fungsional': { r: true },
+    'tenaga_kependidikan': { r: true },
+    'audit_mutu_internal': { r: true },
+    'users': { r: true },
   },
 
   // ========== LPPM (sesuai aturan baru C1 + aturan backend) ==========
