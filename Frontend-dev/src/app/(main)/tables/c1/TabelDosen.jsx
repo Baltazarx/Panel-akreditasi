@@ -18,6 +18,8 @@ export default function TabelDosen({ role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const { maps } = useMaps(true);
   const [formState, setFormState] = useState({});
+  const [ptCustom, setPtCustom] = useState("");
+  const [showPtInput, setShowPtInput] = useState(false);
 
   // Cek hak akses
   const canCreate = roleCan(role, table.key, "C");
@@ -67,6 +69,14 @@ export default function TabelDosen({ role }) {
         id_jafung: editing.id_jafung || "",
         beban_sks: editing.beban_sks || "",
       });
+      // Set ptCustom untuk input text jika PT bukan STIKOM PGRI Banyuwangi
+      if (editing.pt && editing.pt !== "STIKOM PGRI Banyuwangi") {
+        setPtCustom(editing.pt);
+        setShowPtInput(true);
+      } else {
+        setPtCustom("");
+        setShowPtInput(false);
+      }
     } else {
       setFormState({
         id_pegawai: "",
@@ -77,6 +87,8 @@ export default function TabelDosen({ role }) {
         id_jafung: "",
         beban_sks: "",
       });
+      setPtCustom("");
+      setShowPtInput(false);
     }
   }, [editing]);
 
@@ -268,7 +280,7 @@ export default function TabelDosen({ role }) {
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_fungsional || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.homebase || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.beban_sks || '-'}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{(row.beban_sks !== null && row.beban_sks !== undefined) ? row.beban_sks : '-'}</td>
                 <td className="px-6 py-4 text-center border border-slate-200">
                   <div className="flex items-center justify-center gap-2">
                     {!showDeleted && canUpdate && (
@@ -367,24 +379,53 @@ export default function TabelDosen({ role }) {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Homebase</label>
-                    <input
-                      type="text"
+                    <select
                       value={formState.homebase || ""}
                       onChange={(e) => setFormState({...formState, homebase: e.target.value})}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      placeholder="Masukkan Homebase"
-                    />
+                    >
+                      <option value="">Pilih Homebase</option>
+                      <option value="Manajemen Informatika">Manajemen Informatika</option>
+                      <option value="Teknik Informatika">Teknik Informatika</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">PT (Perguruan Tinggi)</label>
-                    <input
-                      type="text"
-                      value={formState.pt || ""}
-                      onChange={(e) => setFormState({...formState, pt: e.target.value})}
+                    <select
+                      value={formState.pt === "STIKOM PGRI Banyuwangi" ? "STIKOM PGRI Banyuwangi" : showPtInput ? "Lainnya" : ""}
+                      onChange={(e) => {
+                        if (e.target.value === "STIKOM PGRI Banyuwangi") {
+                          setFormState({...formState, pt: "STIKOM PGRI Banyuwangi"});
+                          setPtCustom("");
+                          setShowPtInput(false);
+                        } else if (e.target.value === "Lainnya") {
+                          setShowPtInput(true);
+                          setFormState({...formState, pt: ptCustom || ""});
+                        } else {
+                          setFormState({...formState, pt: ""});
+                          setPtCustom("");
+                          setShowPtInput(false);
+                        }
+                      }}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      placeholder="Masukkan Perguruan Tinggi"
-                    />
+                    >
+                      <option value="">Pilih Perguruan Tinggi</option>
+                      <option value="STIKOM PGRI Banyuwangi">STIKOM PGRI Banyuwangi</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                    {showPtInput && (
+                      <input
+                        type="text"
+                        value={ptCustom}
+                        onChange={(e) => {
+                          setPtCustom(e.target.value);
+                          setFormState({...formState, pt: e.target.value});
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white mt-2"
+                        placeholder="Masukkan nama perguruan tinggi"
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">

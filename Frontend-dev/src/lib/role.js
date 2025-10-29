@@ -54,7 +54,9 @@ export const ACCESS_MATRIX = {
   // ========== KEPEGAWAIAN (sesuai aturan baru C1) ==========
   'kepegawaian': { // Menambahkan role ini jika belum ada
     'tabel_1a5': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
-    // 'tendik': { r: true }, // Jika perlu akses tendik, tambahkan
+    'dosen': { c: true, r: true, u: true, d: true, h: true }, // Data Dosen
+    'pegawai': { c: true, r: true, u: true, d: true, h: true }, // Data Pegawai
+    'tendik': { c: true, r: true, u: true, d: true, h: true }, // Data Tenaga Kependidikan
   },
 
   // ========== SARPRAS (dari backend roles.js) ==========

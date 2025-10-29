@@ -29,7 +29,7 @@ export function permit(resourceKey, action = 'R') {
 
     // ==== BATASAN HARD DELETE ====
     // Aksi H (Hard Delete) hanya boleh dilakukan oleh WAKET1 / WAKET2 / TPM
-    if (action === 'H' && !['waket-1', 'waket-2', 'tpm'].includes(role)) {
+    if (action === 'H' && !['waket1', 'waket2', 'tpm'].includes(role)) {
       return res.status(403).json({
         error: 'Forbidden: Hanya (WAKET1/WAKET2/TPM) yang boleh melakukan hard delete.',
       });

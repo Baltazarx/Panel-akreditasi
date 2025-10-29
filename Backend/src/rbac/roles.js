@@ -49,6 +49,10 @@ export const AccessMatrix = {
   'kepegawaian': { // Menambahkan role ini
     // ---- Tabel C1 ----
     'tabel_1a5': { C: true, R: true, U: true, D: true }, // Data Kepegawaian
+    // ---- Master Data ----
+    'dosen': { C: true, R: true, U: true, D: true, H: true }, // Data Dosen
+    'pegawai': { C: true, R: true, U: true, D: true, H: true }, // Data Pegawai
+    'tendik': { C: true, R: true, U: true, D: true, H: true }, // Data Tenaga Kependidikan
     // Tambahkan resource lain untuk kepegawaian jika perlu
   },
 

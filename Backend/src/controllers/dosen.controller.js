@@ -5,7 +5,8 @@ import { hasColumn } from '../utils/queryHelper.js';
 export const listDosen = async (req, res) => {
   try {
     const { role, id_unit } = req.user || {};
-    const superRoles = new Set(['waket-1', 'waket-2', 'tpm', 'ketuastikom']);
+    const { include_deleted } = req.query;
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Fixed: no hyphen in role names
 
     let sql = `
       SELECT 
@@ -22,7 +23,8 @@ export const listDosen = async (req, res) => {
         u.id_unit,
         uk.nama_unit,
         rjs.nama_jabatan AS jabatan_struktural,
-        rjs.sks_beban AS sks_manajemen_auto
+        rjs.sks_beban AS sks_manajemen_auto,
+        d.deleted_at
       FROM dosen d
       JOIN pegawai p ON d.id_pegawai = p.id_pegawai
       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
@@ -32,15 +34,19 @@ export const listDosen = async (req, res) => {
         AND pup.deleted_at IS NULL
         AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
       LEFT JOIN ref_jabatan_struktural rjs ON pup.id_jabatan = rjs.id_jabatan
-      WHERE d.deleted_at IS NULL        -- 🔥 tambahin filter ini
+      WHERE 1=1
     `;
-
 
     const params = [];
 
+    // Filter deleted records unless include_deleted is true
+    if (!include_deleted) {
+      sql += ` AND d.deleted_at IS NULL`;
+    }
+
     // check role case-insensitive
     if (!superRoles.has(role?.toLowerCase())) {
-      sql += ` WHERE u.id_unit = ?`;
+      sql += ` AND u.id_unit = ?`;
       params.push(id_unit);
     }
 
