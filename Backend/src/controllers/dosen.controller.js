@@ -5,10 +5,11 @@ import { hasColumn } from '../utils/queryHelper.js';
 export const listDosen = async (req, res) => {
   try {
     const { role, id_unit } = req.user || {};
-    const superRoles = new Set(['waket-1', 'waket-2', 'tpm', 'ketuastikom']);
+    const { include_deleted } = req.query;
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Fixed: no hyphen in role names
 
     let sql = `
-      SELECT
+      SELECT 
         d.id_dosen,
         d.nidn,
         d.nuptk,
@@ -29,13 +30,12 @@ export const listDosen = async (req, res) => {
       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
       LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
-      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai
+      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
         AND pup.deleted_at IS NULL
         AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
       LEFT JOIN ref_jabatan_struktural rjs ON pup.id_jabatan = rjs.id_jabatan
-      WHERE d.deleted_at IS NULL        -- 🔥 tambahin filter ini
+      WHERE 1=1
     `;
-
 
     const params = [];
 
@@ -46,7 +46,7 @@ export const listDosen = async (req, res) => {
 
     // check role case-insensitive
     if (!superRoles.has(role?.toLowerCase())) {
-      sql += ` WHERE u.id_unit = ?`;
+      sql += ` AND u.id_unit = ?`;
       params.push(id_unit);
     }
 
@@ -56,7 +56,7 @@ export const listDosen = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    res.status(500).json({ error: 'List failed', message: err.message }); // Sertakan pesan error
+    res.status(500).json({ error: 'List failed' });
   }
 };
 
