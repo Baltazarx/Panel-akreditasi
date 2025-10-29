@@ -12,8 +12,8 @@ export const listTendik = async (req, res) => {
         tk.*,
         p.nama_lengkap,
         p.pendidikan_terakhir,
-        u.id_unit,
-        uk.nama_unit
+        p.id_unit,
+        uk.nama_unit,
       FROM tenaga_kependidikan tk
       JOIN pegawai p ON tk.id_pegawai = p.id_pegawai
       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
