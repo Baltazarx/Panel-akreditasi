@@ -11,8 +11,7 @@ export const listTendik = async (req, res) => {
       SELECT 
         tk.*,
         p.nama_lengkap,
-        p.pendidikan_terakhir,
-        p.id_unit
+        p.pendidikan_terakhir
       FROM tenaga_kependidikan tk
       JOIN pegawai p ON tk.id_pegawai = p.id_pegawai
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
