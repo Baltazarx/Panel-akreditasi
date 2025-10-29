@@ -1,110 +1,100 @@
 // lib/role.js
 
 /**
- * ACCESS_MATRIX mendefinisikan semua izin akses untuk setiap role.
- * Role dan nama tabel sebaiknya ditulis dalam huruf kecil untuk konsistensi.
- *
- * Struktur:
- * {
- * nama_role: {
- * nama_tabel: { C: true, R: true, U: true, D: true },
- * "*": { ... } // Wildcard untuk memberikan izin ke semua tabel
- * }
- * }
+ * ACCESS_MATRIX mendefinisikan izin akses frontend, MENCERMINKAN backend roles.js.
+ * Digunakan oleh fungsi roleCan() untuk mengatur visibilitas UI.
+ * Aksi ditulis dalam huruf kecil: c, r, u, d, h.
  */
 export const ACCESS_MATRIX = {
-  admin: { "*": { c: true, u: true, d: true, r: true, h: true } },
-  "waket1": { 
-    "*": { c: true, u: true, d: true, r: true, h: true },
-    "pimpinan_upps_ps": { c: true, u: true, d: true, r: true, h: true }
+  // ========== SUPERADMIN (dari backend - punya akses *) ==========
+  'waket1': { '*': { c: true, r: true, u: true, d: true, h: true } },
+  'waket2': { '*': { c: true, r: true, u: true, d: true, h: true } },
+  'tpm':    { '*': { c: true, r: true, u: true, d: true, h: true } },
+  'ketuastikom': { '*': { r: true } }, // Hanya read wildcard
+
+  // ========== PRODI (sesuai aturan baru C1 + aturan Tabel 2B) ==========
+  'prodi': {
+    // ---- Tabel C1 ----
+    'tabel_1a4':        { r: true }, // HANYA 1A4 yang bisa diakses Prodi (Read assumed)
+
+    // ---- Tabel 2B ----
+    'profil_lulusan':   { c: true, r: true, u: true, d: true },
+    'cpl':              { c: true, r: true, u: true, d: true },
+    'mata_kuliah':      { c: true, r: true, u: true, d: true },
+    'cpmk':             { c: true, r: true, u: true, d: true },
+    'pemetaan2b1':      { r: true },
+    'pemetaan2b2':      { r: true, u: true },
+    'pemetaan2b3':      { r: true },
+    'pemetaanCpmkCpl':  { r: true, u: true },
+
+    // ---- Tabel Prodi Lainnya (dari backend roles.js) ----
+    'visi_misi':        { c: true, r: true, u: true, d: true },
+    'isi_pembelajaran': { c: true, r: true, u: true, d: true },
+    'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
+    'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
+    'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
+    'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
+    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
+    'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true }
+    // Resource prodi lain dari file asli Anda (seperti dosen, pegawai, dll.)
+    // sebaiknya dihapus dari sini jika tidak ada di backend roles.js untuk prodi
+    // 'dosen': { c: true, u: true, d: true, r: true, h: true }, // Contoh HAPUS jika tidak relevan
+    // 'pegawai': { c: true, u: true, d: true, r: true, h: true }, // Contoh HAPUS jika tidak relevan
   },
-  "waket2": { 
-    "*": { c: true, u: true, d: true, r: true, h: true },
-    "pimpinan_upps_ps": { c: true, u: true, d: true, r: true, h: true }
+
+  // ========== LPPM (sesuai aturan baru C1 + aturan backend) ==========
+  'lppm': {
+    'tabel_1a2':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    'tabel_1a3':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    'penelitian': { c: true, r: true, u: true, d: true }, // Dari backend roles.js
+    'pkm':        { c: true, r: true, u: true, d: true }, // Dari backend roles.js
+    'sumber_pendanaan_summary': { R: true },
   },
-  tpm: { 
-    "*": { c: true, u: true, d: true, r: true, h: true },
-    "pimpinan_upps_ps": { c: true, u: true, d: true, r: true, h: true }
+
+  // ========== KEPEGAWAIAN (sesuai aturan baru C1) ==========
+  'kepegawaian': { // Menambahkan role ini jika belum ada
+    'tabel_1a5': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    // 'tendik': { r: true }, // Jika perlu akses tendik, tambahkan
   },
-  prodi: {
-    tabel_1a1: { c: true, u: true, d: true, r: true, h: true }, // Pimpinan UPPS/PS
-    pimpinan_upps_ps: { c: true, u: true, d: true, r: true, h: true }, // Pimpinan UPPS/PS
-    beban_kerja_dosen: { c: true, u: true, d: true, r: true, h: true },
-    dosen: { c: true, u: true, d: true, r: true, h: true }, // Enable dosen untuk prodi
-    pegawai: { c: true, u: true, d: true, r: true, h: true }, // Enable pegawai untuk prodi
-    tabel_2a1_pendaftaran: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a1_mahasiswa_baru_aktif: { c: true, u: true, d: true, r: true, h: true },
-    tahun: { r: true },
-    pemetaan2b1: { r: true },
-    pemetaan2b2: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b3: { r: true },
-    pemetaanCpmkCpl: { c: true, u: true, d: true, r: true, h: true },
-    cpmk: { c: true, u: true, d: true, r: true, h: true },
-    cpl: { c: true, u: true, d: true, r: true, h: true },
-    profil_lulusan: { c: true, u: true, d: true, r: true, h: true },
-    mata_kuliah: { c: true, u: true, d: true, r: true, h: true },
+
+  // ========== SARPRAS (dari backend roles.js) ==========
+  'sarpras': {
+    'tabel_3a1_sarpras_penelitian': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
   },
-  lppm: {
-    tabel_1a2: { c: true, u: true, d: true, r: true, h: true },
-    tabel_1a3: { c: true, u: true, d: true, r: true, h: true },
+
+  // Role lain dari file asli Anda (ala, pmb, kemahasiswaan) perlu ditinjau ulang
+  // apakah mereka punya akses ke tabel C1 atau tidak sesuai aturan baru.
+  // Untuk sementara, saya hapus akses C1 dari mereka di sini.
+  'ala': {
+    // Hapus/sesuaikan akses tabel C1 jika tidak relevan
+    // Hapus/sesuaikan akses tabel 2B jika tidak relevan
+     pemetaan2b1: { r: true }, // Contoh: biarkan jika ALA perlu lihat
+     // ...
   },
-  ala: {
-    tabel_2a1: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a1_pendaftaran: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a1_mahasiswa_baru_aktif: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a2_keragaman_asal: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a3_kondisi_mahasiswa: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b1: { r: true },
-    pemetaan2b2: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b3: { r: true },
-    pemetaanCpmkCpl: { c: true, u: true, d: true, r: true, h: true },
-    cpmk: { c: true, u: true, d: true, r: true, h: true },
-    cpl: { c: true, u: true, d: true, r: true, h: true },
-    profil_lulusan: { c: true, u: true, d: true, r: true, h: true },
-    mata_kuliah: { c: true, u: true, d: true, r: true, h: true },
+  'pmb': {
+    // Hapus/sesuaikan akses tabel C1 jika tidak relevan
+    // Hapus/sesuaikan akses tabel 2B jika tidak relevan
+     pemetaan2b1: { r: true }, // Contoh
+     // ...
   },
-  pmb: {
-    tabel_2a1: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a1_pendaftaran: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a1_mahasiswa_baru_aktif: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a2_keragaman_asal: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a3_kondisi_mahasiswa: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b1: { r: true },
-    pemetaan2b2: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b3: { r: true },
-    pemetaanCpmkCpl: { c: true, u: true, d: true, r: true, h: true },
-    cpmk: { c: true, u: true, d: true, r: true, h: true },
-    cpl: { c: true, u: true, d: true, r: true, h: true },
-    profil_lulusan: { c: true, u: true, d: true, r: true, h: true },
-    mata_kuliah: { c: true, u: true, d: true, r: true, h: true },
-  },
-  kemahasiswaan: {
-    tabel_2a2_keragaman_asal: { c: true, u: true, d: true, r: true, h: true },
-    tabel_2a3_kondisi_mahasiswa: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b1: { r: true },
-    pemetaan2b2: { c: true, u: true, d: true, r: true, h: true },
-    pemetaan2b3: { r: true },
-    pemetaanCpmkCpl: { c: true, u: true, d: true, r: true, h: true },
-    cpmk: { c: true, u: true, d: true, r: true, h: true },
-    cpl: { c: true, u: true, d: true, r: true, h: true },
-    profil_lulusan: { c: true, u: true, d: true, r: true, h: true },
-    mata_kuliah: { c: true, u: true, d: true, r: true, h: true },
-  },
-  kepegawaian: {
-    tabel_1a5: { c: true, u: true, d: true, r: true, h: true },
-    tendik: { r: true },
+  'kemahasiswaan': {
+     // Hapus/sesuaikan akses tabel C1 jika tidak relevan
+     // Hapus/sesuaikan akses tabel 2B jika tidak relevan
+     pemetaan2b1: { r: true }, // Contoh
+     // ...
   },
 };
 
 /**
  * Memeriksa apakah sebuah role memiliki izin untuk melakukan aksi tertentu pada tabel tertentu.
- * @param {string} role - Role pengguna (misal: "WAKET-1").
- * @param {string} tableKey - Kunci tabel yang ingin diakses (misal: "dosen").
- * @param {string} action - Aksi yang ingin dilakukan ("C", "R", "U", "D").
+ * LOGIKA BARU: Prioritaskan izin spesifik, baru cek wildcard jika tidak ada izin spesifik.
+ * @param {string} role - Role pengguna (misal: "prodi").
+ * @param {string} tableKey - Kunci tabel yang ingin diakses (misal: "cpl").
+ * @param {string} action - Aksi yang ingin dilakukan ("c", "r", "u", "d", "h"). Huruf kecil.
  * @returns {boolean} - True jika diizinkan, false jika ditolak.
  */
 export function roleCan(role, tableKey, action) {
-  // Log input awal untuk debugging
+  // Debug input awal
   console.log(
     `roleCan - Input: role=${role}, tableKey=${tableKey}, action=${action}`
   );
@@ -114,15 +104,15 @@ export function roleCan(role, tableKey, action) {
     return false;
   }
 
-  // --- PERBAIKAN UTAMA ---
-  // Ubah input role dan action menjadi huruf kecil agar tidak case-sensitive
-  // Handle case where role might not be a string
+  // Normalisasi input ke lowercase
   const roleLower = typeof role === 'string' ? role.toLowerCase() : String(role).toLowerCase();
   const actionLower = typeof action === 'string' ? action.toLowerCase() : String(action).toLowerCase();
   const tableKeyLower = typeof tableKey === 'string' ? tableKey.toLowerCase() : String(tableKey).toLowerCase();
 
+  // Dapatkan izin untuk role tersebut
   const permissions = ACCESS_MATRIX[roleLower];
 
+  // Jika role tidak ditemukan di matrix
   if (!permissions) {
     console.log(
       `roleCan - Role '${roleLower}' not found in ACCESS_MATRIX, returning false`
@@ -130,19 +120,32 @@ export function roleCan(role, tableKey, action) {
     return false;
   }
 
-  // Cek izin wildcard ("*") terlebih dahulu
-  if (permissions["*"]) {
-    const hasWildcardPermission = !!permissions["*"][actionLower];
-    console.log(
-      `roleCan - Wildcard check for '${roleLower}' on action '${actionLower}': ${hasWildcardPermission}`
-    );
-    return hasWildcardPermission;
+  // ===== LOGIKA BARU =====
+  // 1. Cek Izin Spesifik untuk Tabel Terlebih Dahulu
+  const tablePermissions = permissions[tableKeyLower];
+  if (tablePermissions && tablePermissions.hasOwnProperty(actionLower)) {
+     // Ada izin spesifik (true atau false) yang didefinisikan untuk tabel & aksi ini. Gunakan itu.
+     const hasSpecificPermission = !!tablePermissions[actionLower];
+     console.log(
+       `roleCan - Specific permission found for '${roleLower}' on '${tableKeyLower}' action '${actionLower}': ${hasSpecificPermission}`
+     );
+     return hasSpecificPermission;
   }
 
-  // Cek izin spesifik untuk tabel
-  const hasSpecificPermission = !!permissions[tableKeyLower]?.[actionLower];
+  // 2. JIKA TIDAK ADA Izin Spesifik, Baru Cek Izin Wildcard (*)
+  const wildcardPermissions = permissions["*"];
+  if (wildcardPermissions) {
+     const hasWildcardPermission = !!wildcardPermissions[actionLower];
+     console.log(
+       `roleCan - No specific permission. Wildcard check for '${roleLower}' action '${actionLower}': ${hasWildcardPermission}`
+     );
+     return hasWildcardPermission;
+  }
+
+  // 3. Jika tidak ada izin spesifik DAN tidak ada izin wildcard yang relevan
   console.log(
-    `roleCan - Specific check for '${roleLower}' on table '${tableKeyLower}' action '${actionLower}': ${hasSpecificPermission}`
+      `roleCan - No specific or wildcard permission found for '${roleLower}' on '${tableKeyLower}' action '${actionLower}'. Returning false.`
   );
-  return hasSpecificPermission;
+  return false;
+  // ===== AKHIR LOGIKA BARU =====
 }

@@ -75,7 +75,7 @@ loginRouter.get('/me', (req, res) => {
     res.json({
       id_user: decoded.id_user,
       username: decoded.username,
-      id_unit_prodi: decoded.id_unit_prodi,
+      id_unit_prodi: decoded.id_unit,
       role: decoded.role
     });
   } catch (err) {

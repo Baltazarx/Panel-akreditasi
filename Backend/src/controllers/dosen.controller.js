@@ -4,8 +4,8 @@ import { hasColumn } from '../utils/queryHelper.js';
 // ===== LIST dengan scope unit =====
 export const listDosen = async (req, res) => {
   try {
-    const { role, id_unit_prodi } = req.user || {};
-    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']);
+    const { role, id_unit } = req.user || {};
+    const superRoles = new Set(['waket-1', 'waket-2', 'tpm', 'ketuastikom']);
 
     let sql = `
       SELECT 
@@ -40,8 +40,8 @@ export const listDosen = async (req, res) => {
 
     // check role case-insensitive
     if (!superRoles.has(role?.toLowerCase())) {
-      sql += ` AND u.id_unit = ?`;
-      params.push(id_unit_prodi);
+      sql += ` WHERE u.id_unit = ?`;
+      params.push(id_unit);
     }
 
     sql += ` ORDER BY d.id_dosen ASC`;
