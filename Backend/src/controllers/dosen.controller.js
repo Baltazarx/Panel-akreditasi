@@ -5,10 +5,11 @@ import { hasColumn } from '../utils/queryHelper.js';
 export const listDosen = async (req, res) => {
   try {
     const { role, id_unit } = req.user || {};
-    const superRoles = new Set(['waket-1', 'waket-2', 'tpm', 'ketuastikom']);
+    // === PERBAIKAN 1: Sesuaikan nama role di Set ===
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Hapus tanda hubung
 
     let sql = `
-      SELECT 
+      SELECT
         d.id_dosen,
         d.nidn,
         d.nuptk,
@@ -28,21 +29,31 @@ export const listDosen = async (req, res) => {
       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
       LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
-      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
+      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai
         AND pup.deleted_at IS NULL
         AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
       LEFT JOIN ref_jabatan_struktural rjs ON pup.id_jabatan = rjs.id_jabatan
-      WHERE d.deleted_at IS NULL        -- 🔥 tambahin filter ini
-    `;
-
+      WHERE d.deleted_at IS NULL  -- Filter wajib untuk data aktif
+    `; // Hapus WHERE kedua dari sini
 
     const params = [];
 
-    // check role case-insensitive
-    if (!superRoles.has(role?.toLowerCase())) {
-      sql += ` WHERE u.id_unit = ?`;
-      params.push(id_unit);
+    // === PERBAIKAN 2: Gunakan AND untuk filter tambahan ===
+    // Cek role case-insensitive
+    if (role && !superRoles.has(role.toLowerCase())) {
+      // Jika BUKAN superadmin DAN punya id_unit, filter berdasarkan unit
+      if (id_unit) {
+         sql += ` AND u.id_unit = ?`; // Gunakan AND
+         params.push(id_unit);
+      } else {
+         // Handle kasus jika role bukan superadmin TAPI tidak punya id_unit?
+         // Mungkin return error atau data kosong?
+         console.warn(`Role ${role} is not superadmin but has no id_unit.`);
+         // Untuk sementara, kita return array kosong agar tidak error SQL
+         return res.json([]);
+      }
     }
+    // Jika superadmin, tidak perlu filter unit tambahan
 
     sql += ` ORDER BY d.id_dosen ASC`;
 
@@ -50,7 +61,7 @@ export const listDosen = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    res.status(500).json({ error: 'List failed' });
+    res.status(500).json({ error: 'List failed', message: err.message }); // Sertakan pesan error
   }
 };
 
@@ -129,6 +140,13 @@ export const updateDosen = async (req, res) => {
       data.updated_by = req.user.id_user;
     }
 
+    // Hapus properti undefined agar tidak menimpa dengan NULL
+    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+
+    if (Object.keys(data).length === 0) {
+        return res.status(400).json({ error: 'Tidak ada data untuk diupdate.'});
+    }
+
     await pool.query(
       `UPDATE dosen SET ? WHERE id_dosen=?`,
       [data, req.params.id]
@@ -146,7 +164,7 @@ export const updateDosen = async (req, res) => {
       [req.params.id]
     );
 
-    if (!row[0]) return res.status(404).json({ error: 'Not found' });
+    if (!row[0]) return res.status(404).json({ error: 'Not found after update' }); // Sedikit modifikasi pesan error
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateDosen:", err);
@@ -187,6 +205,7 @@ export const restoreDosen = async (req, res) => {
 
 export const hardDeleteDosen = async (req, res) => {
   try {
+    // Tambahkan logika transaksi jika perlu menghapus data terkait di tabel lain
     await pool.query(
       `DELETE FROM dosen WHERE id_dosen=?`,
       [req.params.id]
