@@ -47,6 +47,9 @@ import pemetaan2b1Router from './routes/pemetaan2b1.route.js';
 import pemetaan2b2Router from './routes/pemetaan2b2.route.js';
 import pemetaan2b3Router from './routes/pemetaan2b3.route.js';
 import pemetaanCpmkCplRoutes from './routes/pemetaanCpmkCpl.route.js';
+
+// ==== C3 ROUTES ====
+import tabel3a1SarprasPenelitianRouter from './routes/tabel3a1SarprasPenelitian.route.js';
 // TODO: import route lain setelah dikonversi
 
 const app = express();
@@ -132,6 +135,8 @@ app.use('/api/pemetaan-2b2', pemetaan2b2Router);
 app.use('/api/pemetaan-2b3', pemetaan2b3Router);
 app.use('/api/pemetaan-cpmk-cpl', pemetaanCpmkCplRoutes);
 
+// ===== C3 =====
+app.use('/api/tabel-3a1-sarpras-penelitian', tabel3a1SarprasPenelitianRouter);
 
 
 // ===== 404 FALLBACK =====
