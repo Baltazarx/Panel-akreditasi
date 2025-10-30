@@ -10,6 +10,7 @@ import {
   softDeletePendaftaran,
   restorePendaftaran,
   hardDeletePendaftaran,
+  restoreMultiplePendaftaran,
 } from '../controllers/tabel2a1Pendaftaran.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
@@ -38,6 +39,9 @@ router.delete('/:id', requireAuth, permit('tabel_2a1_pendaftaran', 'D'), softDel
 
 // RESTORE — bisa oleh WAKET & TPM
 router.post('/:id/restore', requireAuth, permit('tabel_2a1_pendaftaran', 'U'), restorePendaftaran);
+
+// RESTORE MULTIPLE — batch restore
+router.post('/restore-multiple', requireAuth, permit('tabel_2a1_pendaftaran', 'U'), restoreMultiplePendaftaran);
 
 // HARD DELETE — hanya Superadmin (WAKET1/WAKET2)
 router.delete('/:id/hard-delete', requireAuth, permit('tabel_2a1_pendaftaran', 'H'), hardDeletePendaftaran);

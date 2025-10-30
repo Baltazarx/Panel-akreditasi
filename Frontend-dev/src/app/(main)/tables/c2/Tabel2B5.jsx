@@ -28,6 +28,7 @@ export default function Tabel2B5({ role }) {
     jml_nasional: "",
     jml_wirausaha: ""
   });
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const availableYears = useMemo(() => {
     const years = Object.values(maps?.tahun || {}).map(year => ({
@@ -44,7 +45,8 @@ export default function Tabel2B5({ role }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
+      let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
+      if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
       const result = await apiFetch(`/tabel2b5-kesesuaian-kerja${params}`);
       setData(result);
     } catch (error) {
@@ -64,20 +66,59 @@ export default function Tabel2B5({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  useEffect(() => { fetchData(); }, [selectedTahun]);
+  useEffect(() => { fetchData(); }, [selectedTahun, showDeleted]);
 
   // Mapping ke baris TS, TS-1, TS-2, TS-3, TS-4, Jumlah
   const tableData = useMemo(() => {
     if (!selectedTahun || !availableYears.length) return [];
+
+    if (showDeleted) {
+      // Tampilkan HANYA data yang sudah soft delete
+      const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
+      const deletedRows = data.filter(item => item.deleted_at).map(item => {
+        const idxTarget = availableYears.findIndex(y => parseInt(item.id_tahun_lulus) === y.id);
+        const tsIdx = idxSelected - idxTarget;
+        let tsLabel = (tsIdx >= 0 && tsIdx <= 4) ? (tsIdx === 0 ? "TS" : `TS-${tsIdx}`) : (availableYears[idxTarget]?.tahun || item.id_tahun_lulus);
+        return {
+          tahun_lulus: tsLabel,
+          tahun_label: availableYears[idxTarget]?.tahun || item.id_tahun_lulus,
+          jumlah_lulusan: item.jumlah_lulusan || "",
+          jumlah_terlacak: item.jumlah_terlacak || "",
+          jml_infokom: item.jml_infokom || "",
+          jml_non_infokom: item.jml_non_infokom || "",
+          jml_internasional: item.jml_internasional || "",
+          jml_nasional: item.jml_nasional || "",
+          jml_wirausaha: item.jml_wirausaha || "",
+          data: item,
+        };
+      });
+      // Baris jumlah hanya untuk deletedRows
+      if (deletedRows.length > 0) {
+        const fieldSum = f => deletedRows.reduce((acc, x) => acc + (parseInt(x[f]) || 0), 0);
+        deletedRows.push({
+          tahun_lulus: "Jumlah",
+          tahun_label: "",
+          jumlah_lulusan: fieldSum("jumlah_lulusan"),
+          jumlah_terlacak: fieldSum("jumlah_terlacak"),
+          jml_infokom: fieldSum("jml_infokom"),
+          jml_non_infokom: fieldSum("jml_non_infokom"),
+          jml_internasional: fieldSum("jml_internasional"),
+          jml_nasional: fieldSum("jml_nasional"),
+          jml_wirausaha: fieldSum("jml_wirausaha"),
+          data: null,
+        });
+      }
+      return deletedRows;
+    }
+
+    // Default: slot TS~TS-4, hanya data aktif
     const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
-    // Himpun untuk 5 tahun (TS s/d TS-4)
     const rows = [];
     for (let i = 0; i <= 4; i++) {
       const idxTarget = idxSelected - i;
       if (idxTarget < 0) continue;
-      const yearMeta = availableYears[idxTarget]; // info {id, tahun}
-      // Ambil data by id_tahun_lulus
-      const dataItem = data.find(d => parseInt(d.id_tahun_lulus) === yearMeta.id);
+      const yearMeta = availableYears[idxTarget];
+      const dataItem = data.find(d => parseInt(d.id_tahun_lulus) === yearMeta.id && !d.deleted_at);
       rows.push({
         tahun_lulus: i === 0 ? "TS" : `TS-${i}`,
         tahun_label: yearMeta.tahun,
@@ -91,7 +132,6 @@ export default function Tabel2B5({ role }) {
         data: dataItem || null,
       });
     }
-    // Baris Jumlah hanya yang ditampilkan (rows di atas, bukan seluruh 'data')
     const fieldSum = f => rows.reduce((acc, x) => acc + (parseInt(x[f]) || 0), 0);
     rows.push({
       tahun_lulus: "Jumlah",
@@ -106,7 +146,7 @@ export default function Tabel2B5({ role }) {
       data: null
     });
     return rows;
-  }, [data, selectedTahun, availableYears]);
+  }, [data, selectedTahun, availableYears, showDeleted]);
 
   const handleAddClick = () => {
     setFormState({
@@ -218,7 +258,7 @@ export default function Tabel2B5({ role }) {
         </thead>
         <tbody className="divide-y divide-slate-200">
           {tableData.map((row, idx) => (
-            <tr key={idx} className={`transition-colors ${idx%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
+            <tr key={idx} className={`transition-colors ${row.data && row.data.deleted_at ? "bg-red-100 text-red-800" : idx%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
               <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium">{row.tahun_lulus}</td>
               <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jumlah_lulusan}</td>
               <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jumlah_terlacak}</td>
@@ -233,6 +273,9 @@ export default function Tabel2B5({ role }) {
                     {canUpdate && <button onClick={()=>handleEditClick(row.data)} className="font-medium text-[#0384d6] hover:underline">Edit</button>}
                     {canDelete && <button onClick={()=>handleDeleteClick(row.data)} className="font-medium text-red-600 hover:underline">Hapus</button>}
                   </div>
+                )}
+                {row.data && row.data.deleted_at && (
+                  <div className="italic">Dihapus</div>
                 )}
               </td>
             </tr>
@@ -280,6 +323,15 @@ export default function Tabel2B5({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
+          {canDelete && (
+            <button
+              onClick={() => setShowDeleted(prev => !prev)}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"}`}
+              disabled={loading}
+            >
+              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan yang Dihapus"}
+            </button>
+          )}
         </div>
         {canCreate && (
           <button

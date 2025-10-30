@@ -53,13 +53,10 @@ export default function Tabel2A1({ role }) {
       if (showDeletedPend) params.append("include_deleted", "1");
       if (selectedYearPend) params.append("id_tahun", selectedYearPend);
       const data = await apiFetch(`${tablePend.path}?${params}`);
-      console.log('Fetched Pendaftaran data:', data);
       const filteredData = showDeletedPend
-        ? data.filter((row) => row.deleted_at !== null)
-        : data.filter((row) => row.deleted_at === null);
+        ? data.filter((row) => row.deleted_at)
+        : data.filter((row) => !row.deleted_at);
       const sortedData = filteredData.sort((a, b) => b.id - a.id);
-      console.log('Sorted Pendaftaran data:', sortedData);
-      console.log('Unit Prodi values in data:', sortedData.map(row => ({ id: row.id, unit_prodi: row.id_unit_prodi, unit_name: getUnitName(row.id_unit_prodi) })));
       setRowsPend(Array.isArray(sortedData) ? sortedData : sortedData?.items || []);
     } catch (e) {
       setError(e?.message || "Gagal memuat data pendaftaran");
@@ -76,13 +73,10 @@ export default function Tabel2A1({ role }) {
       if (showDeletedMaba) params.append("include_deleted", "1");
       if (selectedYearMaba) params.append("id_tahun", selectedYearMaba);
       const data = await apiFetch(`${tableMaba.path}?${params}`);
-      console.log('Fetched Maba data:', data);
       const filteredData = showDeletedMaba
-        ? data.filter((row) => row.deleted_at !== null)
-        : data.filter((row) => row.deleted_at === null);
+        ? data.filter((row) => row.deleted_at)
+        : data.filter((row) => !row.deleted_at);
       const sortedData = filteredData.sort((a, b) => b.id - a.id);
-      console.log('Sorted Maba data:', sortedData);
-      console.log('Unit Prodi values in data:', sortedData.map(row => ({ id: row.id, unit_prodi: row.id_unit_prodi, unit_name: getUnitName(row.id_unit_prodi) })));
       setRowsMaba(Array.isArray(sortedData) ? sortedData : sortedData?.items || []);
     } catch (e) {
       setError(e?.message || "Gagal memuat data mahasiswa baru/aktif");
@@ -297,27 +291,18 @@ export default function Tabel2A1({ role }) {
   // Handle select all checkbox
   const handleSelectAll = (table, checked) => {
     const rows = table.key === tablePend.key ? rowsPend : rowsMaba;
-    console.log('handleSelectAll:', { tableKey: table.key, checked, rowsCount: rows.length });
     if (checked) {
-      const ids = rows.map(row => {
-        const idField = getIdField(row);
-        const idValue = row[idField];
-        console.log('Select all - row:', row, 'idField:', idField, 'idValue:', idValue);
-        return idValue;
-      });
+      // Hanya select data yang sedang tampil (sudah dihapus jika showDeleted)
+      const ids = rows.map(row => getIdField(row) ? row[getIdField(row)] : row.id);
       if (table.key === tablePend.key) {
-        console.log('Setting selectedRowsPend to:', ids);
         setSelectedRowsPend(ids);
       } else {
-        console.log('Setting selectedRowsMaba to:', ids);
         setSelectedRowsMaba(ids);
       }
     } else {
       if (table.key === tablePend.key) {
-        console.log('Clearing selectedRowsPend');
         setSelectedRowsPend([]);
       } else {
-        console.log('Clearing selectedRowsMaba');
         setSelectedRowsMaba([]);
       }
     }

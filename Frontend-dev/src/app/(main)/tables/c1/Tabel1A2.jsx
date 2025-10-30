@@ -154,7 +154,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
 
 /* ---------- Tabel Per Tahun (CRUD) ---------- */
 function TablePerYear({ rows, onEdit, onDelete, onRestore, onHardDelete, canUpdate, canDelete, getYearLabel, showDeleted, selectedRows, setSelectedRows, isAllSelected, handleSelectAll }) {
-  // Filter rows berdasarkan showDeleted
+  // Hanya tampilkan data yang dihapus jika showDeleted true
   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
   
   return (
@@ -459,7 +459,7 @@ export default function Tabel1A2({ auth, role }) {
         // Fetch data utama
         let qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
         if (showDeleted) {
-          qs += (qs.length > 1 ? "&" : "") + "include_deleted=true";
+          qs += (qs.length > 1 ? "&" : "") + "include_deleted=1";
         }
         const fullUrl = `/sumber-pendanaan${qs}`;
         console.log("Tabel1A2 - Making API call to:", fullUrl);
@@ -574,7 +574,7 @@ export default function Tabel1A2({ auth, role }) {
           
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
-          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=true" : qs;
+          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
           setRows(Array.isArray(data) ? data : data?.items || []);
 
@@ -612,7 +612,7 @@ export default function Tabel1A2({ auth, role }) {
           
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
-          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=true" : qs;
+          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
           setRows(Array.isArray(data) ? data : data?.items || []);
 
@@ -650,7 +650,7 @@ export default function Tabel1A2({ auth, role }) {
           
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
-          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=true" : qs;
+          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
           setRows(Array.isArray(data) ? data : data?.items || []);
 
@@ -697,7 +697,7 @@ export default function Tabel1A2({ auth, role }) {
           
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
-          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=true" : qs;
+          const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
           setRows(Array.isArray(data) ? data : data?.items || []);
 
@@ -717,8 +717,8 @@ export default function Tabel1A2({ auth, role }) {
     });
   };
 
-  // Select all handler
-  const isAllSelected = rows.filter(r => r.deleted_at).length > 0 && selectedRows.length === rows.filter(r => r.deleted_at).length;
+  // Select all logic
+  const isAllSelected = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length > 0 && selectedRows.length === rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).map(r => r.id_sumber).length;
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {

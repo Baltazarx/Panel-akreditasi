@@ -25,6 +25,7 @@ export default function Tabel2B4({ role }) {
     jumlah_terlacak: "",
     rata_rata_waktu_tunggu_bulan: ""
   });
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
@@ -34,7 +35,8 @@ export default function Tabel2B4({ role }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
+      let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
+      if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
       console.log('Fetching Tabel2B4 data with params:', params);
       const result = await apiFetch(`/tabel2b4-masa-tunggu${params}`);
       console.log('Tabel2B4 data received:', result);
@@ -49,7 +51,7 @@ export default function Tabel2B4({ role }) {
 
   useEffect(() => {
     fetchData();
-  }, [selectedTahun]);
+  }, [selectedTahun, showDeleted]);
 
   // Filter tahun yang tersedia
   const availableYears = useMemo(() => {
@@ -234,7 +236,7 @@ export default function Tabel2B4({ role }) {
           </thead>
           <tbody className="divide-y divide-slate-200">
             {tableData.map((row, index) => (
-              <tr key={index} className={`transition-colors ${index%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
+              <tr key={index} className={`transition-colors ${row.data && row.data.deleted_at ? "bg-red-100 text-red-800" : index%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium">
                   {row.tahun_lulus}
                 </td>
@@ -282,6 +284,9 @@ export default function Tabel2B4({ role }) {
                         </button>
                       )}
                     </div>
+                  )}
+                  {row.data && row.data.deleted_at && (
+                    <div className="italic">Dihapus</div>
                   )}
                 </td>
               </tr>
@@ -353,6 +358,19 @@ export default function Tabel2B4({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
+          {canDelete && (
+            <button
+              onClick={() => setShowDeleted(prev => !prev)}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                showDeleted
+                  ? "bg-[#0384d6] text-white"
+                  : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+              }`}
+              disabled={loading}
+            >
+              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan yang Dihapus"}
+            </button>
+          )}
         </div>
         
         {canCreate && (
@@ -389,9 +407,8 @@ export default function Tabel2B4({ role }) {
                       required
                     >
                       <option value="">Pilih Unit Prodi...</option>
-                      {Object.entries(maps?.units || {}).map(([id, unit]) => (
-                        <option key={id} value={id}>{unit?.nama || unit?.nama_unit || id}</option>
-                      ))}
+                      <option value="4">Teknik Informatika (TI)</option>
+                      <option value="5">Manajemen Informatika (MI)</option>
                     </select>
                   </div>
                   
