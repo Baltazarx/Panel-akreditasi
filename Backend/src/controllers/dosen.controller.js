@@ -215,4 +215,4 @@ export const hardDeleteDosen = async (req, res) => {
     console.error("Error hardDeleteDosen:", err);
     res.status(500).json({ error: 'Hard delete failed' });
   }
-};
+};1
