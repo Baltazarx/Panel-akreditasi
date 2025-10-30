@@ -5,11 +5,11 @@ import { hasColumn } from '../utils/queryHelper.js';
 export const listDosen = async (req, res) => {
   try {
     const { role, id_unit } = req.user || {};
-    // === PERBAIKAN 1: Sesuaikan nama role di Set ===
-    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Hapus tanda hubung
+    const { include_deleted } = req.query;
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Fixed: no hyphen in role names
 
     let sql = `
-      SELECT
+      SELECT 
         d.id_dosen,
         d.nidn,
         d.nuptk,
@@ -23,37 +23,32 @@ export const listDosen = async (req, res) => {
         u.id_unit,
         uk.nama_unit,
         rjs.nama_jabatan AS jabatan_struktural,
-        rjs.sks_beban AS sks_manajemen_auto
+        rjs.sks_beban AS sks_manajemen_auto,
+        d.deleted_at
       FROM dosen d
       JOIN pegawai p ON d.id_pegawai = p.id_pegawai
       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
       LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
-      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai
+      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
         AND pup.deleted_at IS NULL
         AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
       LEFT JOIN ref_jabatan_struktural rjs ON pup.id_jabatan = rjs.id_jabatan
-      WHERE d.deleted_at IS NULL  -- Filter wajib untuk data aktif
-    `; // Hapus WHERE kedua dari sini
+      WHERE 1=1
+    `;
 
     const params = [];
 
-    // === PERBAIKAN 2: Gunakan AND untuk filter tambahan ===
-    // Cek role case-insensitive
-    if (role && !superRoles.has(role.toLowerCase())) {
-      // Jika BUKAN superadmin DAN punya id_unit, filter berdasarkan unit
-      if (id_unit) {
-         sql += ` AND u.id_unit = ?`; // Gunakan AND
-         params.push(id_unit);
-      } else {
-         // Handle kasus jika role bukan superadmin TAPI tidak punya id_unit?
-         // Mungkin return error atau data kosong?
-         console.warn(`Role ${role} is not superadmin but has no id_unit.`);
-         // Untuk sementara, kita return array kosong agar tidak error SQL
-         return res.json([]);
-      }
+    // Filter deleted records unless include_deleted is true
+    if (!include_deleted) {
+      sql += ` AND d.deleted_at IS NULL`;
     }
-    // Jika superadmin, tidak perlu filter unit tambahan
+
+    // check role case-insensitive
+    if (!superRoles.has(role?.toLowerCase())) {
+      sql += ` AND u.id_unit = ?`;
+      params.push(id_unit);
+    }
 
     sql += ` ORDER BY d.id_dosen ASC`;
 
@@ -61,7 +56,7 @@ export const listDosen = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    res.status(500).json({ error: 'List failed', message: err.message }); // Sertakan pesan error
+    res.status(500).json({ error: 'List failed' });
   }
 };
 

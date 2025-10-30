@@ -215,17 +215,23 @@ export default function TablesPage() {
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = c1AccessKeys.some((k) => roleCan(authUser?.role, k, "R"));
+  const hasC1Access = c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
-  const c2AccessKeys = ["TabelC2"]; // sesuaikan dengan kunci tabel C2 di ACCESS_MATRIX jika ada
-  const hasC2Access = c2AccessKeys.some((k) => roleCan(authUser?.role, k, "R"));
+  const c2AccessKeys = [
+    "tabel_2a1_pendaftaran",
+    "tabel_2a2_keragaman_asal", 
+    "tabel_2a3_kondisi_mahasiswa",
+    "pemetaan2b1",
+    "tabel_2b4_masa_tunggu"
+  ]; // tabel-tabel yang ada di C2
+  const hasC2Access = c2AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
   const loweredRole = (authUser?.role || "").toLowerCase();
   const canSeeUserMgmt = ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
-    || roleCan(authUser?.role, "dosen", "R")
-    || roleCan(authUser?.role, "pegawai", "R");
+    || roleCan(authUser?.role, "dosen", "r")
+    || roleCan(authUser?.role, "pegawai", "r");
 
   // Susun item sidebar sesuai akses
   const sidebarItems = [

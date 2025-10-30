@@ -25,7 +25,7 @@ export default function C2WithTopNav() {
 
   // Filter tabel berdasarkan akses role
   const tabs = useMemo(() => {
-    const filteredTabs = ALL_TABLES.filter(table => roleCan(role, table.accessKey, "R"));
+    const filteredTabs = ALL_TABLES.filter(table => roleCan(role, table.accessKey, "r"));
     console.log("C2 - Available tabs:", {
       role,
       allTables: ALL_TABLES.map(t => ({ key: t.key, accessKey: t.accessKey })),
@@ -33,7 +33,7 @@ export default function C2WithTopNav() {
       roleCanResults: ALL_TABLES.map(table => ({
         key: table.key,
         accessKey: table.accessKey,
-        canAccess: roleCan(role, table.accessKey, "R")
+        canAccess: roleCan(role, table.accessKey, "r")
       }))
     });
     return filteredTabs;

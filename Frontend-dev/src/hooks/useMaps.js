@@ -16,6 +16,7 @@ import { apiFetch } from "../lib/api";
 export function useMaps(authUser = true) {
   const [maps, setMaps] = useState({
     units: {},
+    unit_kerja: {}, // Alias untuk kompatibilitas
     pegawai: {},
     tahun: {},
     tendik: {},
@@ -66,6 +67,7 @@ export function useMaps(authUser = true) {
 
         const next = {
           units: toMap(units, "id_unit"),
+          unit_kerja: toMap(units, "id_unit"), // Alias untuk kompatibilitas
           pegawai: toMap(pegawai, "id_pegawai"),
           tahun: toMap(tahun, "id_tahun"),
           tendik: toMap(tendik, "id_tendik"),

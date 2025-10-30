@@ -6,7 +6,9 @@ import {
   getPegawaiById,
   createPegawai,
   updatePegawai,
-  deletePegawai
+  deletePegawai,
+  restorePegawai,
+  hardDeletePegawai
 } from '../controllers/pegawai.controller.js';
 
 const router = express.Router();
@@ -17,5 +19,9 @@ router.get('/:id', requireAuth, permit('pegawai', 'R'), getPegawaiById);
 router.post('/', requireAuth, permit('pegawai', 'C'), createPegawai);
 router.put('/:id', requireAuth, permit('pegawai', 'U'), updatePegawai);
 router.delete('/:id', requireAuth, permit('pegawai', 'D'), deletePegawai);
+
+// ===== RESTORE & HARD DELETE =====
+router.post('/:id/restore', requireAuth, permit('pegawai', 'U'), restorePegawai);
+router.delete('/:id/hard-delete', requireAuth, permit('pegawai', 'H'), hardDeletePegawai);
 
 export default router;

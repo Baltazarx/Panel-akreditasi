@@ -106,6 +106,35 @@ export const deletePegawai = async (req, res) => {
     );
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
+    console.error("Error deletePegawai:", err);
     res.status(500).json({ error: 'Delete failed' });
+  }
+};
+
+// ===== RESTORE =====
+export const restorePegawai = async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE pegawai SET deleted_at=NULL, deleted_by=NULL WHERE id_pegawai=?`,
+      [req.params.id]
+    );
+    res.json({ ok: true, restored: true });
+  } catch (err) {
+    console.error("Error restorePegawai:", err);
+    res.status(500).json({ error: 'Restore failed' });
+  }
+};
+
+// ===== HARD DELETE =====
+export const hardDeletePegawai = async (req, res) => {
+  try {
+    await pool.query(
+      `DELETE FROM pegawai WHERE id_pegawai=?`,
+      [req.params.id]
+    );
+    res.json({ ok: true, hardDeleted: true });
+  } catch (err) {
+    console.error("Error hardDeletePegawai:", err);
+    res.status(500).json({ error: 'Hard delete failed' });
   }
 };

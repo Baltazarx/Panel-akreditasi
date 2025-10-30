@@ -130,7 +130,7 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
   }, [editing]);
 
   // Ekstrak Prodi dari maps untuk filter
-  const prodiList = Object.values(maps?.unit_kerja || {}).filter(
+  const prodiList = Object.values(maps?.units || {}).filter(
     uk => uk.id_unit === 4 || uk.id_unit === 5 // Asumsi hanya TI (4) dan MI (5)
   );
 
