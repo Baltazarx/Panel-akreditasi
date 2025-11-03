@@ -158,7 +158,22 @@ export const AccessMatrix = {
   // ========== SARPRAS ==========
   'sarpras': {
     'tabel_3a1_sarpras_penelitian': { C: true, R: true, U: true, D: true },
-    // Tambahkan resource lain untuk sarpras jika perlu
+  },
+
+  // ========== KEMAHASISWAAN ==========
+  'kemahasiswaan': {
+    // Tabel 2.B.4 sampai 2.B.6
+    'tabel_2b4_masa_tunggu': { C: true, R: true, U: true, D: true },
+    'tabel_2b5_kesesuaian_kerja': { C: true, R: true, U: true, D: true },
+    'tabel_2b6_kepuasan_pengguna': { C: true, R: true, U: true, D: true },
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { R: true },
+    'pegawai': { R: true },
+    'tahun_akademik': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'ref_jabatan_fungsional': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'audit_mutu_internal': { R: true },
   }
 
   // Catatan: Akses untuk waket1/waket2/tpm ke tabel 1A1, 1A2, 1A3, 1A4, 1A5, 1B

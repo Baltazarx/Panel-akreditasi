@@ -158,10 +158,18 @@ export const ACCESS_MATRIX = {
      // ...
   },
   'kemahasiswaan': {
-     // Hapus/sesuaikan akses tabel C1 jika tidak relevan
-     // Hapus/sesuaikan akses tabel 2B jika tidak relevan
-     pemetaan2b1: { r: true }, // Contoh
-     // ...
+     // Tabel 2.B.4 sampai 2.B.6
+     'tabel_2b4_masa_tunggu': { c: true, r: true, u: true, d: true },
+     'tabel_2b5_kesesuaian_kerja': { c: true, r: true, u: true, d: true },
+     'tabel_2b6_kepuasan_pengguna': { c: true, r: true, u: true, d: true },
+     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+     'unit_kerja': { r: true },
+     'pegawai': { r: true },
+     'tahun_akademik': { r: true },
+     'ref_jabatan_struktural': { r: true },
+     'ref_jabatan_fungsional': { r: true },
+     'tenaga_kependidikan': { r: true },
+     'audit_mutu_internal': { r: true },
   },
 };
 
