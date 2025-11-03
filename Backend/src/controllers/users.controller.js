@@ -8,6 +8,21 @@ export const listUsers = async (req, res) => {
     const { where, params } = await buildWhere(req, 'users', 'u');
     const orderBy = buildOrderBy(req.query?.order_by, 'id_user', 'u');
 
+    // Abaikan filter soft-delete dari buildWhere: hapus kondisi terkait deleted_at jika ada
+    let whereNoDeleted = (where || []).filter(w => !/deleted_at/i.test(w));
+
+    // Filter berdasarkan status (active/inactive/all)
+    const statusFilter = req.query?.status;
+    if (statusFilter === 'active') {
+      // Akun Aktif: is_active = 1 DAN deleted_at IS NULL
+      whereNoDeleted.push('u.is_active = 1');
+      whereNoDeleted.push('u.deleted_at IS NULL');
+    } else if (statusFilter === 'inactive') {
+      // Akun Nonaktif: is_active = 0 ATAU deleted_at IS NOT NULL
+      whereNoDeleted.push('(u.is_active = 0 OR u.deleted_at IS NOT NULL)');
+    }
+    // Jika status = 'all' atau tidak ada, tampilkan semua (tidak perlu filter tambahan)
+
     const sql = `
       SELECT u.id_user, u.username, u.role, u.is_active, u.deleted_at,
              u.id_unit, uk.nama_unit AS unit_name,
@@ -15,7 +30,7 @@ export const listUsers = async (req, res) => {
       FROM users u
       LEFT JOIN unit_kerja uk ON uk.id_unit = u.id_unit
       LEFT JOIN pegawai p ON p.id_pegawai = u.id_pegawai
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ${whereNoDeleted.length ? `WHERE ${whereNoDeleted.join(' AND ')}` : ''}
       ORDER BY ${orderBy}
     `;
 
@@ -106,10 +121,14 @@ export const updateUser = async (req, res) => {
 };
 
 
-// ===== SOFT DELETE =====
+// ===== SOFT DELETE (NONAKTIFKAN) =====
 export const softDeleteUser = async (req, res) => {
   try {
-    const payload = { deleted_at: new Date() };
+    // Nonaktifkan = set is_active = 0 dan deleted_at (mencegah login)
+    const payload = { 
+      deleted_at: new Date(),
+      is_active: 0  // Nonaktifkan untuk mencegah login
+    };
     if (await hasColumn('users', 'deleted_by')) {
       payload.deleted_by = req.user?.id_user || null;
     }
@@ -124,12 +143,13 @@ export const softDeleteUser = async (req, res) => {
   }
 };
 
-// ===== RESTORE =====
+// ===== RESTORE (AKTIFKAN KEMBALI) =====
 export const restoreUser = async (req, res) => {
   try {
+    // Aktifkan kembali = set is_active = 1 dan hapus deleted_at (izin login)
     await pool.query(
       `UPDATE users 
-       SET deleted_at=NULL, deleted_by=NULL 
+       SET deleted_at=NULL, deleted_by=NULL, is_active=1 
        WHERE id_user=?`,
       [req.params.id]
     );

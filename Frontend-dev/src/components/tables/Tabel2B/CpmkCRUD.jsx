@@ -28,15 +28,21 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
   const canUpdate = roleCan(role, "cpmk", "U");
   const canDelete = roleCan(role, "cpmk", "D");
   
-  // === PERBAIKAN: Logika filter disederhanakan ===
-  const filteredRows = selectedProdi 
-    ? rows.filter(row => row.id_unit_prodi == selectedProdi)
-    : rows;
-
+  // === PERBAIKAN: Filter dilakukan di backend, bukan di frontend ===
   const fetchRows = async () => {
     setLoading(true);
     try {
-      const result = await apiFetch("/cpmk");
+      // Jika filter "Semua Prodi" dipilih (selectedProdi === ""), kirim id_unit_prodi_in=4,5
+      // Jika filter prodi tertentu dipilih, kirim id_unit_prodi=<id>
+      let url = "/cpmk";
+      if (selectedProdi) {
+        url += `?id_unit_prodi=${selectedProdi}`;
+      } else {
+        // Filter "Semua Prodi" = kirim semua prodi (TI dan MI)
+        url += "?id_unit_prodi_in=4,5";
+      }
+      
+      const result = await apiFetch(url);
       setRows(result);
     } catch (err) {
       console.error("Error fetching CPMK:", err);
@@ -109,7 +115,7 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
 
   useEffect(() => {
     fetchRows();
-  }, []);
+  }, [selectedProdi]); // Fetch ulang ketika filter berubah
 
   useEffect(() => {
     if (editing) {
@@ -170,11 +176,10 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
       </div>
 
       {/* Filter Info */}
-      {selectedProdi && (
-        <div className="mb-3 text-sm text-slate-600">
-          Menampilkan {filteredRows.length} dari {rows.length} CPMK
-        </div>
-      )}
+      <div className="mb-3 text-sm text-slate-600">
+        Menampilkan {rows.length} CPMK
+        {selectedProdi && ` untuk ${prodiList.find(p => p.id_unit == selectedProdi)?.nama_unit || 'Prodi Terpilih'}`}
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <table className="w-full text-sm text-left">
@@ -189,7 +194,7 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {filteredRows.map((row, idx) => (
+            {rows.map((row, idx) => (
               <tr key={row.id_cpmk} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200">{row.id_cpmk}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_cpmk}</td>

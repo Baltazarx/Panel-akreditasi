@@ -10,6 +10,7 @@ export default function UserManagementPage() {
   const [units, setUnits] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [pegawaiQuery, setPegawaiQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // "all", "active", "inactive"
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -26,7 +27,11 @@ export default function UserManagementPage() {
   // Ambil data users
   const fetchUsers = async () => {
     try {
-      const data = await api.get("/users");
+      let url = "/users";
+      if (statusFilter !== "all") {
+        url += `?status=${statusFilter}`;
+      }
+      const data = await api.get(url);
       setUsers(data);
     } catch (err) {
       console.error("Gagal ambil users:", err);
@@ -47,8 +52,11 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers();
+  }, [statusFilter]); // Fetch ulang ketika filter berubah
+
+  useEffect(() => {
     fetchUnits();
-  }, []);
+  }, []); // Fetch units sekali saat mount
 
   // Submit tambah/edit user
   const handleSubmit = async (e) => {
@@ -196,16 +204,31 @@ export default function UserManagementPage() {
             {users.length}
           </span>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setEditMode(false);
-            setShowForm(true);
-          }}
-          className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
-        >
-          + Tambah Akun
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Filter Status */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700">Filter:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
+            >
+              <option value="all">Semua Akun</option>
+              <option value="active">Akun Aktif</option>
+              <option value="inactive">Akun Nonaktif</option>
+            </select>
+          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              setEditMode(false);
+              setShowForm(true);
+            }}
+            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
+          >
+            + Tambah Akun
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
@@ -237,12 +260,12 @@ export default function UserManagementPage() {
                 <td className="px-6 py-4 border border-slate-200 text-center">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      u.deleted_at
+                      !u.is_active || u.deleted_at
                         ? "bg-red-100 text-red-700"
                         : "bg-green-100 text-green-700"
                     }`}
                   >
-                    {u.deleted_at ? "Nonaktif" : "Aktif"}
+                    {!u.is_active || u.deleted_at ? "Nonaktif" : "Aktif"}
                   </span>
                 </td>
                 <td className="px-6 py-4 border border-slate-200 text-center">
@@ -259,7 +282,7 @@ export default function UserManagementPage() {
                           onClick={() => handleRestore(u.id_user)}
                           className="text-green-600 hover:underline text-sm font-medium"
                         >
-                          Restore
+                          Aktifkan
                         </button>
                         <button
                           onClick={() => handleHardDelete(u.id_user)}

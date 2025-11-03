@@ -241,8 +241,6 @@ export default function TabelPegawai({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID Pegawai</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Created At</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Updated At</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
@@ -258,8 +256,6 @@ export default function TabelPegawai({ role }) {
                     {row.pendidikan_terakhir || '-'}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.created_at || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.updated_at || '-'}</td>
                 <td className="px-6 py-4 text-center border border-slate-200">
                   <div className="flex items-center justify-center gap-2">
                     {!showDeleted && canUpdate && (
@@ -296,7 +292,7 @@ export default function TabelPegawai({ role }) {
             ))}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={4} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>

@@ -18,8 +18,9 @@ loginRouter.post('/login', async (req, res) => {
   }
 
   try {
+    // Cek username, is_active = 1, dan deleted_at IS NULL (double safety)
     const [rows] = await pool.query(
-      'SELECT * FROM users WHERE username = ? AND is_active = 1 LIMIT 1',
+      'SELECT * FROM users WHERE username = ? AND is_active = 1 AND deleted_at IS NULL LIMIT 1',
       [username]
     );
 
