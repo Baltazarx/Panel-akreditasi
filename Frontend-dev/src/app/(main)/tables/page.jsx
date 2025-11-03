@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Impor halaman C1 & C2
 import C1Page from "./c1/c1";
 import C2Page from "./c2/c2";
+import C3Page from "./c3/c3";
 import UserManagementPage from "../../../components/UserManagementPage";
 import TabelDosen from "./c1/TabelDosen";
 import TabelPegawai from "./c1/TabelPegawai";
@@ -39,6 +40,7 @@ const useMediaQuery = (query) => {
 const menuMap = {
   C1: { name: "C1", Component: C1Page, icon: FaTable },
   C2: { name: "C2", Component: C2Page, icon: FaTable },
+  C3: { name: "C3", Component: C3Page, icon: FaTable },
   ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaUserGroup },
   TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaUserGroup },
   TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserGroup },
@@ -223,9 +225,17 @@ export default function TablesPage() {
     "tabel_2a2_keragaman_asal", 
     "tabel_2a3_kondisi_mahasiswa",
     "pemetaan2b1",
-    "tabel_2b4_masa_tunggu"
+    "tabel_2b4_masa_tunggu",
+    "tabel_2b5_kesesuaian_kerja",
+    "tabel_2b6_kepuasan_pengguna"
   ]; // tabel-tabel yang ada di C2
   const hasC2Access = c2AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+
+  // Akses C3: jika ada akses ke tabel C3
+  const c3AccessKeys = [
+    "tabel_3a1_sarpras_penelitian"
+  ]; // tabel-tabel yang ada di C3
+  const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
   const loweredRole = (authUser?.role || "").toLowerCase();
@@ -237,6 +247,7 @@ export default function TablesPage() {
   const sidebarItems = [
     ...(hasC1Access ? ["C1"] : []),
     ...(hasC2Access ? ["C2"] : []),
+    ...(hasC3Access ? ["C3"] : []),
     // Manajemen Akun dipindah ke panel admin, bukan list tabel utama
   ];
 

@@ -5,9 +5,32 @@ import ExcelJS from 'exceljs'; // <-- Impor ExcelJS
 // Nama fungsi disesuaikan
 export const listTabel3a1SarprasPenelitian = async (req, res) => {
   try {
+    // Special handling: Role sarpras bisa melihat semua data tanpa filter unit/prodi
+    const userRole = req.user?.role?.toLowerCase();
+    const isSarpras = userRole === 'sarpras';
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    
     // Nama tabel dan alias disesuaikan
     const { where, params } = await buildWhere(req, 'tabel_3a1_sarpras_penelitian', 't3a1');
-    const orderBy = buildOrderBy(req.query?.order_by, 'id', 't3a1');
+    
+    // Jika role sarpras, hapus filter id_unit_prodi yang ditambahkan oleh buildWhere
+    // Sarpras harus bisa melihat semua data sarana prasarana dari semua unit/prodi
+    if (isSarpras && !isSuperAdmin) {
+      // Hapus filter id_unit_prodi dari where clause jika ada
+      // Pattern: "t3a1.id_unit_prodi = ?" (dengan alias t3a1)
+      const unitProdiFilterIndex = where.findIndex(w => w.includes('t3a1.id_unit_prodi') || w.includes('.id_unit_prodi'));
+      if (unitProdiFilterIndex !== -1) {
+        where.splice(unitProdiFilterIndex, 1);
+        params.splice(unitProdiFilterIndex, 1);
+      }
+    }
+    
+    // Urutkan ascending (ASC) agar data baru (ID lebih besar) ada di bawah
+    // Jika ada custom order_by dari query, gunakan itu, jika tidak gunakan ASC
+    const customOrder = req.query?.order_by;
+    const orderBy = customOrder 
+      ? buildOrderBy(customOrder, 'id', 't3a1')
+      : 't3a1.id ASC';
 
     const sql = `
       SELECT 
@@ -47,28 +70,30 @@ export const getTabel3a1SarprasPenelitianById = async (req, res) => {
 
 export const createTabel3a1SarprasPenelitian = async (req, res) => {
   try {
-    // PERBAIKAN: Baca id_unit dari body, bukan id_unit_prodi
+    // Baca data dari body (tanpa id_unit, karena akan otomatis dari user)
     const { 
-      id_unit, nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan, 
+      nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan, 
       lisensi, perangkat_detail, link_bukti
     } = req.body;
 
     // Validasi
     if (!nama_sarpras) { return res.status(400).json({ error: 'Nama Prasarana wajib diisi.' }); }
-    if (!id_unit) { return res.status(400).json({ error: 'Unit/Prodi wajib dipilih.' }); } // Pastikan id_unit ada
+    
+    // Auto-fill id_unit_prodi dari user yang login
+    const id_unit_prodi = req.user?.id_unit_prodi;
+    if (!id_unit_prodi) { 
+      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit/prodi.' }); 
+    }
 
     const data = {
-      // Petakan id_unit dari body ke kolom id_unit_prodi di DB
-      id_unit_prodi: id_unit, 
+      id_unit_prodi: id_unit_prodi, // Otomatis dari user yang login
       nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan,
       lisensi, perangkat_detail, link_bukti
     };
     
-    // PERBAIKAN: Hapus logika otomatis untuk role 'prodi'
-    // if (!data.id_unit_prodi && req.user?.role === 'prodi') { data.id_unit_prodi = req.user.id_unit_prodi; }
-    // if (!data.id_unit_prodi && req.user?.role !== 'prodi') { return res.status(400).json({ error: 'Prodi wajib dipilih.' }); }
-    
-    if (await hasColumn('tabel_3a1_sarpras_penelitian', 'created_by') && req.user?.id_user) { data.created_by = req.user.id_user; }
+    if (await hasColumn('tabel_3a1_sarpras_penelitian', 'created_by') && req.user?.id_user) { 
+      data.created_by = req.user.id_user; 
+    }
 
     const [result] = await pool.query('INSERT INTO tabel_3a1_sarpras_penelitian SET ?', [data]);
     res.status(201).json({ message: 'Data sarpras penelitian berhasil dibuat', id: result.insertId });
@@ -80,23 +105,31 @@ export const createTabel3a1SarprasPenelitian = async (req, res) => {
 
 export const updateTabel3a1SarprasPenelitian = async (req, res) => {
   try {
-    // PERBAIKAN: Baca id_unit dari body
+    // Baca data dari body (tanpa id_unit, karena akan otomatis dari user)
     const { 
-      id_unit, nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan,
+      nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan,
       lisensi, perangkat_detail, link_bukti
     } = req.body;
 
     // Validasi
     if (!nama_sarpras) { return res.status(400).json({ error: 'Nama Prasarana wajib diisi.' }); }
-    if (!id_unit) { return res.status(400).json({ error: 'Unit/Prodi wajib dipilih.' }); } // Pastikan id_unit ada
+    
+    // Auto-fill id_unit_prodi dari user yang login (jika belum ada, tetap gunakan yang lama)
+    // Tapi biasanya update tidak mengubah id_unit_prodi, jadi kita tidak perlu set ulang
+    // Kecuali kalau memang mau allow change unit, tapi untuk sekarang tetap dari user login
+    const id_unit_prodi = req.user?.id_unit_prodi;
+    if (!id_unit_prodi) { 
+      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user.' }); 
+    }
 
     const data = {
-      // Petakan id_unit dari body ke kolom id_unit_prodi di DB
-      id_unit_prodi: id_unit, 
+      id_unit_prodi: id_unit_prodi, // Update dengan unit/prodi dari user yang login
       nama_sarpras, daya_tampung, luas_ruang_m2, kepemilikan,
       lisensi, perangkat_detail, link_bukti
     };
-    if (await hasColumn('tabel_3a1_sarpras_penelitian', 'updated_by') && req.user?.id_user) { data.updated_by = req.user.id_user; }
+    if (await hasColumn('tabel_3a1_sarpras_penelitian', 'updated_by') && req.user?.id_user) { 
+      data.updated_by = req.user.id_user; 
+    }
 
     const [result] = await pool.query('UPDATE tabel_3a1_sarpras_penelitian SET ? WHERE id = ?', [data, req.params.id]);
     if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
@@ -135,7 +168,11 @@ export const hardDeleteTabel3a1SarprasPenelitian = async (req, res) => {
 export const exportTabel3a1SarprasPenelitian = async (req, res) => {
     try {
         const { where, params } = await buildWhere(req, 'tabel_3a1_sarpras_penelitian', 't3a1');
-        const orderBy = buildOrderBy(req.query?.order_by, 'id', 't3a1');
+        // Urutkan ascending untuk export juga
+        const customOrder = req.query?.order_by;
+        const orderBy = customOrder 
+          ? buildOrderBy(customOrder, 'id', 't3a1')
+          : 't3a1.id ASC';
         const sql = `
           SELECT 
             t3a1.nama_sarpras, t3a1.daya_tampung, t3a1.luas_ruang_m2, t3a1.kepemilikan,

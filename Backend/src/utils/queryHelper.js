@@ -37,7 +37,7 @@ export const buildWhere = async (req, table, alias = 'm') => {
   if (await hasColumn(table, 'id_unit_prodi')) {
     // Cek role user — kalau bukan superadmin, hanya boleh lihat datanya sendiri
     const isSuperAdmin =
-      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role);
+      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
     if (!isSuperAdmin) {
       where.push(`${alias}.id_unit_prodi = ?`);
       // === PERBAIKAN: Baca 'id_unit_prodi' dari token, bukan 'id_unit' ===
