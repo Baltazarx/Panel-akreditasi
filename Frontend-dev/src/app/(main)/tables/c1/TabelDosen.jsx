@@ -330,6 +330,7 @@ export default function TabelDosen({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIDN</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NUPTK</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT (Perguruan Tinggi)</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Fungsional</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Homebase</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Beban SKS</th>
@@ -344,6 +345,7 @@ export default function TabelDosen({ role }) {
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nidn || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nuptk || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.pt || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_fungsional || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.homebase || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{(row.beban_sks !== null && row.beban_sks !== undefined) ? row.beban_sks : '-'}</td>
@@ -383,7 +385,7 @@ export default function TabelDosen({ role }) {
             ))}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>

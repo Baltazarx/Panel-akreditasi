@@ -38,15 +38,29 @@ export const buildWhere = async (req, table, alias = 'm') => {
     // Cek role user — kalau bukan superadmin, hanya boleh lihat datanya sendiri
     const isSuperAdmin =
       ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
-    if (!isSuperAdmin) {
-      where.push(`${alias}.id_unit_prodi = ?`);
-      // === PERBAIKAN: Baca 'id_unit_prodi' dari token, bukan 'id_unit' ===
-      params.push(req.user?.id_unit_prodi || 0);
-    } else if (req.query?.id_unit_prodi) {
-      // superadmin bisa filter manual via ?id_unit_prodi=2 (opsional)
+    
+    // Jika ada query param id_unit_prodi_in (untuk filter multiple prodi)
+    if (req.query?.id_unit_prodi_in) {
+      const arr = String(req.query.id_unit_prodi_in)
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (arr.length) {
+        where.push(`${alias}.id_unit_prodi IN (${arr.map(() => '?').join(',')})`);
+        params.push(...arr);
+      }
+    }
+    // Jika ada query param id_unit_prodi (filter single prodi)
+    else if (req.query?.id_unit_prodi) {
       where.push(`${alias}.id_unit_prodi = ?`);
       params.push(req.query.id_unit_prodi);
     }
+    // Jika bukan superadmin dan tidak ada query param, default ke prodi mereka sendiri
+    else if (!isSuperAdmin) {
+      where.push(`${alias}.id_unit_prodi = ?`);
+      params.push(req.user?.id_unit_prodi || 0);
+    }
+    // Superadmin tanpa query param = lihat semua prodi (tidak perlu filter)
   }
 
   // ===== Soft Delete Handling =====
