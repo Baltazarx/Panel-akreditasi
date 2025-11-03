@@ -24,22 +24,20 @@ const FiDatabase = (props) => (<svg stroke="currentColor" fill="none" strokeWidt
 const FiTrendingUp = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>);
 const FiGrid = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>);
 const FiTarget = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>);
+const FiSettings = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m19-4.24a3.5 3.5 0 0 0-4.93-4.93l-4.13 4.14M8.06 8.06l-4.13-4.14A3.5 3.5 0 0 0 1 6.76m13.94 9.3l4.13 4.14a3.5 3.5 0 0 1-4.93 4.93l-4.14-4.13M8.94 15.94l-4.14 4.13a3.5 3.5 0 0 1-4.93-4.93l4.14-4.14"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const staggerContainer = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const slideUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-// Data tabel yang tersedia (tidak diubah)
+// Data tabel yang tersedia - Disederhanakan menjadi 5 kategori utama
 const tableData = [
-    { id: 'TabelDosen', title: 'Data Dosen', description: 'Kelola informasi dan data dosen', icon: FiUsers, category: 'Data Master', color: 'from-blue-500 to-cyan-500' },
-    { id: 'TabelPegawai', title: 'Data Pegawai', description: 'Kelola informasi dan data pegawai', icon: FiUsers, category: 'Data Master', color: 'from-green-500 to-emerald-500' },
-    { id: 'Tabel1A1', title: 'Tabel 1A-1', description: 'Data akademik dan kinerja dosen', icon: FiBarChart, category: 'Akademik', color: 'from-purple-500 to-violet-500' },
-    { id: 'Tabel1A2', title: 'Tabel 1A-2', description: 'Data penelitian dan pengabdian', icon: FiTrendingUp, category: 'Akademik', color: 'from-orange-500 to-red-500' },
-    { id: 'Tabel1A3', title: 'Tabel 1A-3', description: 'Data publikasi dan karya ilmiah', icon: FiFileText, category: 'Akademik', color: 'from-indigo-500 to-blue-500' },
-    { id: 'Tabel1A4', title: 'Tabel 1A-4', description: 'Data prestasi dan penghargaan', icon: FiTarget, category: 'Akademik', color: 'from-pink-500 to-rose-500' },
-    { id: 'Tabel1A5', title: 'Tabel 1A-5', description: 'Data kerjasama dan kemitraan', icon: FiGrid, category: 'Akademik', color: 'from-teal-500 to-cyan-500' },
-    { id: 'Tabel1B', title: 'Tabel 1B', description: 'Data keuangan dan anggaran', icon: FiDatabase, category: 'Keuangan', color: 'from-amber-500 to-yellow-500' }
+    { id: 'C1', title: 'C1', description: 'Tabel Penjaminan Mutu Standar C1', icon: FiBarChart, category: 'Akreditasi', color: 'from-blue-500 to-cyan-500' },
+    { id: 'C2', title: 'C2', description: 'Tabel Penjaminan Mutu Standar C2', icon: FiTrendingUp, category: 'Akreditasi', color: 'from-purple-500 to-violet-500' },
+    { id: 'TabelDosen', title: 'Data Dosen', description: 'Kelola informasi dan data dosen', icon: FiUsers, category: 'Data Master', color: 'from-green-500 to-emerald-500' },
+    { id: 'TabelPegawai', title: 'Data Pegawai', description: 'Kelola informasi dan data pegawai', icon: FiUsers, category: 'Data Master', color: 'from-orange-500 to-red-500' },
+    { id: 'ManajemenAkun', title: 'Manajemen Akun', description: 'Kelola pengguna dan akses sistem', icon: FiSettings, category: 'Administrasi', color: 'from-pink-500 to-rose-500' }
 ];
 
 const AnimatedDatabaseIcon = () => {

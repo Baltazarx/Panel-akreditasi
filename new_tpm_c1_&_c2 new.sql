@@ -34,14 +34,14 @@ CREATE TABLE `audit_mutu_internal` (
   `frekuensi_audit` int DEFAULT NULL,
   `dokumen_spmi` text,
   `laporan_audit_url` text,
-  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `jumlah_auditor_certified` int DEFAULT NULL,
   `jumlah_auditor_noncertified` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `audit_mutu_internal`
@@ -68,7 +68,7 @@ CREATE TABLE `beban_kerja_dosen` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `beban_kerja_dosen`
@@ -88,7 +88,7 @@ CREATE TABLE `cpl` (
   `id_unit_prodi` int NOT NULL,
   `kode_cpl` varchar(20) NOT NULL,
   `deskripsi_cpl` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cpl`
@@ -119,7 +119,7 @@ CREATE TABLE `cpmk` (
   `deskripsi_cpmk` text NOT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cpmk`
@@ -150,7 +150,7 @@ CREATE TABLE `dosen` (
   `beban_sks` float DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `dosen`
@@ -180,7 +180,7 @@ CREATE TABLE `kualifikasi_tendik` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kualifikasi_tendik`
@@ -202,7 +202,7 @@ CREATE TABLE `kurikulum` (
   `id_unit_prodi` int NOT NULL,
   `nama_kurikulum` varchar(255) NOT NULL,
   `tahun_mulai_berlaku` year NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kurikulum`
@@ -227,7 +227,7 @@ CREATE TABLE `log_aktivitas` (
   `id_record` int DEFAULT NULL,
   `waktu_aksi` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `detail_perubahan` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -238,7 +238,7 @@ CREATE TABLE `log_aktivitas` (
 CREATE TABLE `map_cpl_mk` (
   `id_cpl` int NOT NULL,
   `id_mk` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpl_mk`
@@ -273,7 +273,7 @@ INSERT INTO `map_cpl_mk` (`id_cpl`, `id_mk`) VALUES
 CREATE TABLE `map_cpl_pl` (
   `id_cpl` int NOT NULL,
   `id_pl` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpl_pl`
@@ -304,7 +304,7 @@ INSERT INTO `map_cpl_pl` (`id_cpl`, `id_pl`) VALUES
 CREATE TABLE `map_cpmk_cpl` (
   `id_cpmk` int NOT NULL,
   `id_cpl` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -315,7 +315,7 @@ CREATE TABLE `map_cpmk_cpl` (
 CREATE TABLE `map_cpmk_mk` (
   `id_cpmk` int NOT NULL,
   `id_mk` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpmk_mk`
@@ -346,7 +346,7 @@ CREATE TABLE `mata_kuliah` (
   `nama_mk` varchar(255) NOT NULL,
   `sks` int NOT NULL,
   `semester` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `mata_kuliah`
@@ -378,7 +378,7 @@ CREATE TABLE `pegawai` (
   `pendidikan_terakhir` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pegawai`
@@ -413,7 +413,7 @@ CREATE TABLE `penggunaan_dana` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `penggunaan_dana`
@@ -443,7 +443,7 @@ CREATE TABLE `pimpinan_upps_ps` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pimpinan_upps_ps`
@@ -468,7 +468,7 @@ CREATE TABLE `profil_lulusan` (
   `id_unit_prodi` int NOT NULL,
   `kode_pl` varchar(20) NOT NULL,
   `deskripsi_pl` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `profil_lulusan`
@@ -495,7 +495,7 @@ INSERT INTO `profil_lulusan` (`id_pl`, `id_unit_prodi`, `kode_pl`, `deskripsi_pl
 CREATE TABLE `ref_jabatan_fungsional` (
   `id_jafung` int NOT NULL,
   `nama_jafung` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_jabatan_fungsional`
@@ -517,7 +517,7 @@ CREATE TABLE `ref_jabatan_struktural` (
   `id_jabatan` int NOT NULL,
   `nama_jabatan` varchar(100) NOT NULL,
   `sks_beban` float DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_jabatan_struktural`
@@ -540,7 +540,7 @@ CREATE TABLE `ref_kabupaten_kota` (
   `id_kabupaten_kota` int NOT NULL,
   `id_provinsi` int NOT NULL,
   `nama_kabupaten_kota` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_kabupaten_kota`
@@ -1097,7 +1097,7 @@ INSERT INTO `ref_kabupaten_kota` (`id_kabupaten_kota`, `id_provinsi`, `nama_kabu
 CREATE TABLE `ref_provinsi` (
   `id_provinsi` int NOT NULL,
   `nama_provinsi` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_provinsi`
@@ -1159,7 +1159,7 @@ CREATE TABLE `sumber_pendanaan` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sumber_pendanaan`
@@ -1184,14 +1184,14 @@ CREATE TABLE `tabel_2a1_mahasiswa_baru_aktif` (
   `id_unit_prodi` int NOT NULL,
   `id_tahun` int NOT NULL,
   `daya_tampung` int NOT NULL DEFAULT '0',
-  `jenis` enum('baru','aktif') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `jalur` enum('reguler','rpl') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `jenis` enum('baru','aktif') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `jalur` enum('reguler','rpl') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `jumlah_diterima` int DEFAULT '0',
   `jumlah_afirmasi` int DEFAULT '0',
   `jumlah_kebutuhan_khusus` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a1_mahasiswa_baru_aktif`
@@ -1218,7 +1218,7 @@ CREATE TABLE `tabel_2a1_pendaftaran` (
   `pendaftar_kebutuhan_khusus` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a1_pendaftaran`
@@ -1245,7 +1245,7 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
   `link_bukti` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a2_keragaman_asal`
@@ -1274,7 +1274,7 @@ CREATE TABLE `tabel_2a3_kondisi_mahasiswa` (
   `id_tahun` int NOT NULL,
   `jml_lulus` int DEFAULT '0',
   `jml_do` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a3_kondisi_mahasiswa`
@@ -1296,7 +1296,7 @@ CREATE TABLE `tabel_2b4_masa_tunggu` (
   `jumlah_lulusan` int DEFAULT '0',
   `jumlah_terlacak` int DEFAULT '0',
   `rata_rata_waktu_tunggu_bulan` float DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1315,7 +1315,7 @@ CREATE TABLE `tabel_2b5_kesesuaian_kerja` (
   `jml_internasional` int DEFAULT '0',
   `jml_nasional` int DEFAULT '0',
   `jml_wirausaha` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1333,7 +1333,7 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
   `persen_cukup` float DEFAULT '0',
   `persen_kurang` float DEFAULT '0',
   `rencana_tindak_lanjut` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1348,7 +1348,7 @@ CREATE TABLE `tabel_2b6_rekap_jumlah` (
   `jumlah_alumni_3_tahun` int DEFAULT '0',
   `jumlah_pengguna_responden` int DEFAULT '0',
   `jumlah_mahasiswa_aktif_ts` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1362,7 +1362,7 @@ CREATE TABLE `tabel_2c_pembelajaran_luar_prodi` (
   `id_tahun` int NOT NULL,
   `bentuk_pembelajaran` varchar(255) NOT NULL,
   `jumlah_mahasiswa` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1376,7 +1376,7 @@ CREATE TABLE `tabel_2d_rekognisi_lulusan` (
   `id_tahun` int NOT NULL,
   `sumber_rekognisi` varchar(255) NOT NULL,
   `jumlah_rekognisi` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1387,7 +1387,7 @@ CREATE TABLE `tabel_2d_rekognisi_lulusan` (
 CREATE TABLE `tahun_akademik` (
   `id_tahun` int NOT NULL,
   `tahun` varchar(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tahun_akademik`
@@ -1489,7 +1489,7 @@ CREATE TABLE `tenaga_kependidikan` (
   `nikp` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tenaga_kependidikan`
@@ -1510,7 +1510,7 @@ INSERT INTO `tenaga_kependidikan` (`id_tendik`, `id_pegawai`, `jenis_tendik`, `n
 CREATE TABLE `unit_kerja` (
   `id_unit` int NOT NULL,
   `nama_unit` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `unit_kerja`
@@ -1545,7 +1545,7 @@ CREATE TABLE `users` (
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
@@ -2262,14 +2262,14 @@ CREATE TABLE `audit_mutu_internal` (
   `frekuensi_audit` int DEFAULT NULL,
   `dokumen_spmi` text,
   `laporan_audit_url` text,
-  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `jumlah_auditor_certified` int DEFAULT NULL,
   `jumlah_auditor_noncertified` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `audit_mutu_internal`
@@ -2296,7 +2296,7 @@ CREATE TABLE `beban_kerja_dosen` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `beban_kerja_dosen`
@@ -2316,7 +2316,7 @@ CREATE TABLE `cpl` (
   `id_unit_prodi` int NOT NULL,
   `kode_cpl` varchar(20) NOT NULL,
   `deskripsi_cpl` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cpl`
@@ -2347,7 +2347,7 @@ CREATE TABLE `cpmk` (
   `deskripsi_cpmk` text NOT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cpmk`
@@ -2378,7 +2378,7 @@ CREATE TABLE `dosen` (
   `beban_sks` float DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `dosen`
@@ -2408,7 +2408,7 @@ CREATE TABLE `kualifikasi_tendik` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kualifikasi_tendik`
@@ -2430,7 +2430,7 @@ CREATE TABLE `kurikulum` (
   `id_unit_prodi` int NOT NULL,
   `nama_kurikulum` varchar(255) NOT NULL,
   `tahun_mulai_berlaku` year NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kurikulum`
@@ -2455,7 +2455,7 @@ CREATE TABLE `log_aktivitas` (
   `id_record` int DEFAULT NULL,
   `waktu_aksi` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `detail_perubahan` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -2466,7 +2466,7 @@ CREATE TABLE `log_aktivitas` (
 CREATE TABLE `map_cpl_mk` (
   `id_cpl` int NOT NULL,
   `id_mk` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpl_mk`
@@ -2501,7 +2501,7 @@ INSERT INTO `map_cpl_mk` (`id_cpl`, `id_mk`) VALUES
 CREATE TABLE `map_cpl_pl` (
   `id_cpl` int NOT NULL,
   `id_pl` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpl_pl`
@@ -2532,7 +2532,7 @@ INSERT INTO `map_cpl_pl` (`id_cpl`, `id_pl`) VALUES
 CREATE TABLE `map_cpmk_cpl` (
   `id_cpmk` int NOT NULL,
   `id_cpl` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -2543,7 +2543,7 @@ CREATE TABLE `map_cpmk_cpl` (
 CREATE TABLE `map_cpmk_mk` (
   `id_cpmk` int NOT NULL,
   `id_mk` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `map_cpmk_mk`
@@ -2574,7 +2574,7 @@ CREATE TABLE `mata_kuliah` (
   `nama_mk` varchar(255) NOT NULL,
   `sks` int NOT NULL,
   `semester` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `mata_kuliah`
@@ -2606,7 +2606,7 @@ CREATE TABLE `pegawai` (
   `pendidikan_terakhir` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pegawai`
@@ -2641,7 +2641,7 @@ CREATE TABLE `penggunaan_dana` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `penggunaan_dana`
@@ -2671,7 +2671,7 @@ CREATE TABLE `pimpinan_upps_ps` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `pimpinan_upps_ps`
@@ -2696,7 +2696,7 @@ CREATE TABLE `profil_lulusan` (
   `id_unit_prodi` int NOT NULL,
   `kode_pl` varchar(20) NOT NULL,
   `deskripsi_pl` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `profil_lulusan`
@@ -2723,7 +2723,7 @@ INSERT INTO `profil_lulusan` (`id_pl`, `id_unit_prodi`, `kode_pl`, `deskripsi_pl
 CREATE TABLE `ref_jabatan_fungsional` (
   `id_jafung` int NOT NULL,
   `nama_jafung` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_jabatan_fungsional`
@@ -2745,7 +2745,7 @@ CREATE TABLE `ref_jabatan_struktural` (
   `id_jabatan` int NOT NULL,
   `nama_jabatan` varchar(100) NOT NULL,
   `sks_beban` float DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_jabatan_struktural`
@@ -2768,7 +2768,7 @@ CREATE TABLE `ref_kabupaten_kota` (
   `id_kabupaten_kota` int NOT NULL,
   `id_provinsi` int NOT NULL,
   `nama_kabupaten_kota` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_kabupaten_kota`
@@ -3325,7 +3325,7 @@ INSERT INTO `ref_kabupaten_kota` (`id_kabupaten_kota`, `id_provinsi`, `nama_kabu
 CREATE TABLE `ref_provinsi` (
   `id_provinsi` int NOT NULL,
   `nama_provinsi` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ref_provinsi`
@@ -3387,7 +3387,7 @@ CREATE TABLE `sumber_pendanaan` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sumber_pendanaan`
@@ -3412,14 +3412,14 @@ CREATE TABLE `tabel_2a1_mahasiswa_baru_aktif` (
   `id_unit_prodi` int NOT NULL,
   `id_tahun` int NOT NULL,
   `daya_tampung` int NOT NULL DEFAULT '0',
-  `jenis` enum('baru','aktif') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `jalur` enum('reguler','rpl') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `jenis` enum('baru','aktif') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `jalur` enum('reguler','rpl') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `jumlah_diterima` int DEFAULT '0',
   `jumlah_afirmasi` int DEFAULT '0',
   `jumlah_kebutuhan_khusus` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a1_mahasiswa_baru_aktif`
@@ -3446,7 +3446,7 @@ CREATE TABLE `tabel_2a1_pendaftaran` (
   `pendaftar_kebutuhan_khusus` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a1_pendaftaran`
@@ -3473,7 +3473,7 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
   `link_bukti` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a2_keragaman_asal`
@@ -3502,7 +3502,7 @@ CREATE TABLE `tabel_2a3_kondisi_mahasiswa` (
   `id_tahun` int NOT NULL,
   `jml_lulus` int DEFAULT '0',
   `jml_do` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tabel_2a3_kondisi_mahasiswa`
@@ -3524,7 +3524,7 @@ CREATE TABLE `tabel_2b4_masa_tunggu` (
   `jumlah_lulusan` int DEFAULT '0',
   `jumlah_terlacak` int DEFAULT '0',
   `rata_rata_waktu_tunggu_bulan` float DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3543,7 +3543,7 @@ CREATE TABLE `tabel_2b5_kesesuaian_kerja` (
   `jml_internasional` int DEFAULT '0',
   `jml_nasional` int DEFAULT '0',
   `jml_wirausaha` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3561,7 +3561,7 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
   `persen_cukup` float DEFAULT '0',
   `persen_kurang` float DEFAULT '0',
   `rencana_tindak_lanjut` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3576,7 +3576,7 @@ CREATE TABLE `tabel_2b6_rekap_jumlah` (
   `jumlah_alumni_3_tahun` int DEFAULT '0',
   `jumlah_pengguna_responden` int DEFAULT '0',
   `jumlah_mahasiswa_aktif_ts` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3590,7 +3590,7 @@ CREATE TABLE `tabel_2c_pembelajaran_luar_prodi` (
   `id_tahun` int NOT NULL,
   `bentuk_pembelajaran` varchar(255) NOT NULL,
   `jumlah_mahasiswa` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3604,7 +3604,7 @@ CREATE TABLE `tabel_2d_rekognisi_lulusan` (
   `id_tahun` int NOT NULL,
   `sumber_rekognisi` varchar(255) NOT NULL,
   `jumlah_rekognisi` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3615,7 +3615,7 @@ CREATE TABLE `tabel_2d_rekognisi_lulusan` (
 CREATE TABLE `tahun_akademik` (
   `id_tahun` int NOT NULL,
   `tahun` varchar(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tahun_akademik`
@@ -3717,7 +3717,7 @@ CREATE TABLE `tenaga_kependidikan` (
   `nikp` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tenaga_kependidikan`
@@ -3738,7 +3738,7 @@ INSERT INTO `tenaga_kependidikan` (`id_tendik`, `id_pegawai`, `jenis_tendik`, `n
 CREATE TABLE `unit_kerja` (
   `id_unit` int NOT NULL,
   `nama_unit` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `unit_kerja`
@@ -3773,7 +3773,7 @@ CREATE TABLE `users` (
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
