@@ -52,7 +52,62 @@ const getStatistikData = async (id_unit_prodi, id_tahun) => {
 // === LIST TABEL 2B6 KEPUASAN PENGGUNA ===
 export const listTabel2b6KepuasanPengguna = async (req, res) => {
   try {
-    const { where, params } = await buildWhere(req, 'tabel_2b6_kepuasan_pengguna', 't2b6');
+    let { where, params } = await buildWhere(req, 'tabel_2b6_kepuasan_pengguna', 't2b6');
+
+    // Khusus role kemahasiswaan: tampilkan semua prodi (jangan batasi id_unit_prodi)
+    if (String(req.user?.role).toLowerCase() === 'kemahasiswaan') {
+      const newWhere = [];
+      const newParams = [];
+
+      // Sinkronisasi penghapusan clause dengan params
+      let paramIdx = 0;
+      for (const clause of where) {
+        const isUnitFilter = /\bt2b6\.id_unit_prodi\s*=\s*\?/i.test(clause);
+        const isYearFilter = /\bt2b6\.id_tahun\s*=\s*\?/i.test(clause);
+        const isYearInFilter = /\bt2b6\.id_tahun\s+IN\s*\(/i.test(clause);
+        const isDeletedNull = /\bt2b6\.deleted_at\s+IS\s+NULL/i.test(clause);
+
+        if (isDeletedNull) {
+          newWhere.push(clause);
+          continue; // tidak konsumsi param
+        }
+
+        if (isUnitFilter) {
+          // skip clause dan konsumsi 1 param (unit)
+          paramIdx += 1;
+          continue;
+        }
+
+        if (isYearFilter) {
+          newWhere.push(clause);
+          newParams.push(params[paramIdx]);
+          paramIdx += 1;
+          continue;
+        }
+
+        if (isYearInFilter) {
+          // Hitung jumlah placeholder "?" di IN (...)
+          const placeholders = (clause.match(/\?/g) || []).length;
+          newWhere.push(clause);
+          for (let i = 0; i < placeholders; i += 1) {
+            newParams.push(params[paramIdx]);
+            paramIdx += 1;
+          }
+          continue;
+        }
+
+        // Default: teruskan clause apa adanya dan coba konsumsi param jika ada
+        newWhere.push(clause);
+        if (paramIdx < params.length) {
+          newParams.push(params[paramIdx]);
+          paramIdx += 1;
+        }
+      }
+
+      where = newWhere;
+      params = newParams;
+      // override done silently
+    }
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b6');
 
     const sql = `
@@ -67,6 +122,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
         t2b6.persen_baik,
         t2b6.persen_cukup,
         t2b6.persen_kurang,
+        t2b6.rencana_tindak_lanjut,
         t2b6.deleted_at
       FROM tabel_2b6_kepuasan_pengguna t2b6
       LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
@@ -146,7 +202,8 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
       persen_sangat_baik, 
       persen_baik, 
       persen_cukup, 
-      persen_kurang 
+      persen_kurang,
+      rencana_tindak_lanjut,
     } = req.body;
 
     if (!id_unit_prodi || !id_tahun || !jenis_kemampuan) {
@@ -169,6 +226,7 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
       persen_baik: persen_baik || 0,
       persen_cukup: persen_cukup || 0,
       persen_kurang: persen_kurang || 0,
+      rencana_tindak_lanjut: rencana_tindak_lanjut || null,
     };
 
     // multi-prodi aware - khusus untuk role kemahasiswaan
@@ -210,7 +268,8 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
       persen_sangat_baik, 
       persen_baik, 
       persen_cukup, 
-      persen_kurang 
+      persen_kurang,
+      rencana_tindak_lanjut,
     } = req.body;
 
     // Validasi total persentase tidak boleh lebih dari 100%
@@ -233,6 +292,7 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
       persen_baik: persen_baik,
       persen_cukup: persen_cukup,
       persen_kurang: persen_kurang,
+      rencana_tindak_lanjut: rencana_tindak_lanjut,
     };
 
     // Hapus properti yang tidak didefinisikan agar tidak menimpa data yang ada dengan NULL

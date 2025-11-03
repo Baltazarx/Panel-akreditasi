@@ -12,9 +12,11 @@ export default function Tabel2B6({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
   const tableKey = "tabel_2b6_kepuasan_pengguna";
   const [data, setData] = useState([]);
+  const [statistik, setStatistik] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTahun, setSelectedTahun] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [formState, setFormState] = useState({
@@ -24,7 +26,8 @@ export default function Tabel2B6({ role }) {
     persen_sangat_baik: "",
     persen_baik: "",
     persen_cukup: "",
-    persen_kurang: ""
+    persen_kurang: "",
+    rencana_tindak_lanjut: ""
   });
   const [showDeleted, setShowDeleted] = useState(false);
 
@@ -47,6 +50,16 @@ export default function Tabel2B6({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
+  const availableUnits = useMemo(() => {
+    const allUnits = Object.values(maps?.units || {}).map(u => ({ id: u.id_unit || u.id, nama: u.nama_unit || u.nama }));
+    const onlyTIMI = allUnits.filter(u => {
+      const id = Number(u.id);
+      const name = String(u.nama || "");
+      return id === 4 || id === 5 || /Teknik Informatika|Prodi TI|\bTI\b/i.test(name) || /Manajemen Informatika|Prodi MI|\bMI\b/i.test(name);
+    });
+    return onlyTIMI.sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+  }, [maps?.units]);
+
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
@@ -56,10 +69,14 @@ export default function Tabel2B6({ role }) {
       setLoading(true);
       let params = "";
       if (selectedTahun) params += `?id_tahun=${selectedTahun}`;
+      if (selectedUnit) params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
-      
+
       const result = await apiFetch(`/tabel2b6-kepuasan-pengguna${params}`);
-      setData(Array.isArray(result.data) ? result.data : []);
+      
+      const rows = Array.isArray(result?.data) ? result.data : [];
+      setData(rows);
+      setStatistik(result?.statistik || null);
     } catch (error) {
       console.error("Error fetching data:", error);
       Swal.fire("Error", "Gagal mengambil data", "error");
@@ -79,59 +96,72 @@ export default function Tabel2B6({ role }) {
 
   useEffect(() => { 
     fetchData(); 
-  }, [selectedTahun, showDeleted]);
+  }, [selectedTahun, selectedUnit, showDeleted]);
+
+  // Pastikan selalu ada Prodi terpilih (TI/MI), hilangkan opsi "Semua Prodi"
+  useEffect(() => {
+    if (!selectedUnit && Array.isArray(availableUnits) && availableUnits.length > 0) {
+      setSelectedUnit(parseInt(availableUnits[0].id));
+    }
+  }, [availableUnits, selectedUnit]);
 
   // Transform data untuk tampilan tabel
   const tableData = useMemo(() => {
     if (!selectedTahun) return [];
 
-    let filteredData = data.filter(item => !item.deleted_at);
-    if (showDeleted) {
-      filteredData = data.filter(item => item.deleted_at);
+    // Pastikan hanya tahun terpilih yang ditampilkan walau API mengembalikan lebih banyak
+    const filteredByYear = data.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
+    const filteredByUnit = selectedUnit ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
+    const source = showDeleted ? filteredByUnit.filter(d => d.deleted_at) : filteredByUnit.filter(d => !d.deleted_at);
+    const byJenis = new Map();
+    for (const row of source) {
+      const key = String(row.jenis_kemampuan || '').toLowerCase();
+      // Ambil yang pertama (seharusnya unik per tahun/unit)
+      if (!byJenis.has(key)) byJenis.set(key, row);
     }
 
-    // Group by jenis_kemampuan
-    const grouped = {};
-    filteredData.forEach(item => {
-      if (!grouped[item.jenis_kemampuan]) {
-        grouped[item.jenis_kemampuan] = {
-          jenis_kemampuan: item.jenis_kemampuan,
-          sangat_baik: item.persen_sangat_baik || 0,
-          baik: item.persen_baik || 0,
-          cukup: item.persen_cukup || 0,
-          kurang: item.persen_kurang || 0,
-          data: item
-        };
-      }
+    return jenisKemampuanList.map((label) => {
+      const item = byJenis.get(label.toLowerCase());
+      return {
+        jenis_kemampuan: label,
+        sangat_baik: item?.persen_sangat_baik ?? null,
+        baik: item?.persen_baik ?? null,
+        cukup: item?.persen_cukup ?? null,
+        kurang: item?.persen_kurang ?? null,
+        data: item || null,
+      };
     });
+  }, [data, selectedTahun, selectedUnit, showDeleted]);
 
-    const rows = Object.values(grouped);
-    
-    // Tambahkan baris total
-    if (rows.length > 0) {
-      const fieldSum = (field) => rows.reduce((acc, x) => acc + (parseFloat(x[field]) || 0), 0);
-      rows.push({
-        jenis_kemampuan: "Rata-rata",
-        sangat_baik: (fieldSum("sangat_baik") / rows.length).toFixed(2),
-        baik: (fieldSum("baik") / rows.length).toFixed(2),
-        cukup: (fieldSum("cukup") / rows.length).toFixed(2),
-        kurang: (fieldSum("kurang") / rows.length).toFixed(2),
-        data: null
-      });
+  // Statistik terpilih (backend bisa kirim object atau array)
+  const statData = useMemo(() => {
+    if (!selectedTahun || !selectedUnit) return null;
+    if (!statistik) return null;
+    if (Array.isArray(statistik)) {
+      return statistik.find(s => parseInt(s?.unit_prodi) === parseInt(selectedUnit) && parseInt(s?.tahun_akademik) === parseInt(selectedTahun)) || statistik[0] || null;
     }
+    return statistik;
+  }, [statistik, selectedTahun, selectedUnit]);
 
-    return rows;
-  }, [data, selectedTahun, showDeleted]);
+  // Helper untuk nama prodi dari maps
+  const getUnitName = (id) => {
+    return maps?.units?.[id]?.nama || maps?.units?.[id]?.nama_unit || id || "";
+  };
 
   const handleAddClick = () => {
+    if (!selectedUnit) {
+      Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter sebelum menambah data.", "info");
+      return;
+    }
     setFormState({
-      id_unit_prodi: authUser?.unit || "",
+      id_unit_prodi: selectedUnit,
       id_tahun: selectedTahun || "",
       jenis_kemampuan: "",
       persen_sangat_baik: "",
       persen_baik: "",
       persen_cukup: "",
-      persen_kurang: ""
+      persen_kurang: "",
+      rencana_tindak_lanjut: ""
     });
     setEditing(null);
     setShowAddModal(true);
@@ -145,7 +175,8 @@ export default function Tabel2B6({ role }) {
       persen_sangat_baik: item.data.persen_sangat_baik,
       persen_baik: item.data.persen_baik,
       persen_cukup: item.data.persen_cukup,
-      persen_kurang: item.data.persen_kurang
+      persen_kurang: item.data.persen_kurang,
+      rencana_tindak_lanjut: item.data.rencana_tindak_lanjut || ""
     });
     setEditing(item.data);
     setShowAddModal(true);
@@ -214,14 +245,21 @@ export default function Tabel2B6({ role }) {
 
     try {
       setSaving(true);
+      if (!selectedUnit) {
+        Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter terlebih dahulu.", "error");
+        setSaving(false);
+        return;
+      }
+
       const submitData = {
         ...formState,
-        id_unit_prodi: parseInt(formState.id_unit_prodi),
+        id_unit_prodi: parseInt(selectedUnit),
         id_tahun: parseInt(formState.id_tahun),
         persen_sangat_baik: parseFloat(formState.persen_sangat_baik) || 0,
         persen_baik: parseFloat(formState.persen_baik) || 0,
         persen_cukup: parseFloat(formState.persen_cukup) || 0,
         persen_kurang: parseFloat(formState.persen_kurang) || 0,
+        ...(formState.rencana_tindak_lanjut ? { rencana_tindak_lanjut: String(formState.rencana_tindak_lanjut).trim() } : {}),
       };
 
       if (editing) {
@@ -252,21 +290,25 @@ export default function Tabel2B6({ role }) {
   const renderTable = () => (
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Kemampuan</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik (%)</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik (%)</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup (%)</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang (%)</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+        <thead>
+          <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
+            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
+            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
+            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
+            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
+          </tr>
+          <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
+            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
+            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
+            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
           {loading ? (
             <tr>
-              <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+              <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                 <div className="flex justify-center items-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <span className="ml-2">Memuat data...</span>
@@ -275,20 +317,22 @@ export default function Tabel2B6({ role }) {
             </tr>
           ) : tableData.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+              <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                 <p className="font-medium">Data tidak ditemukan</p>
                 <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
               </td>
             </tr>
           ) : (
-            tableData.map((row, idx) => (
+            <>
+            {tableData.map((row, idx) => (
               <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${row.data?.deleted_at ? "bg-red-100 text-red-800" : ""}`}>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
                 <td className="px-6 py-4 text-center border border-slate-200">
                   {row.data && (
                     <div className="flex items-center justify-center gap-2">
@@ -310,7 +354,35 @@ export default function Tabel2B6({ role }) {
                   )}
                 </td>
               </tr>
-            ))
+            ))}
+            {/* Baris Jumlah (gabung kolom No + Jumlah) */}
+            <tr className={tableData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
+              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
+            </tr>
+
+            {/* Baris Statistik (dalam struktur tabel utama) */}
+            <tr className={(tableData.length + 1) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah alumni/lulusan dalam 3 tahun terakhir</td>
+              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_alumni_3_tahun ?? ""}</td>
+              <td className="px-6 py-4 text-center border border-slate-300"></td>
+            </tr>
+            <tr className={(tableData.length + 2) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah pengguna lulusan sebagai responden</td>
+              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_responden ?? ""}</td>
+              <td className="px-6 py-4 text-center border border-slate-300"></td>
+            </tr>
+            <tr className={(tableData.length + 3) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah mahasiswa aktif pada tahun TS</td>
+              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_mahasiswa_aktif_ts ?? ""}</td>
+              <td className="px-6 py-4 text-center border border-slate-300"></td>
+            </tr>
+            </>
           )}
         </tbody>
       </table>
@@ -334,6 +406,23 @@ export default function Tabel2B6({ role }) {
     </div>
   );
 
+  const UnitSelector = () => (
+    <div className="flex items-center gap-2">
+      <label htmlFor="filter-prodi" className="text-sm font-medium text-slate-700">Prodi:</label>
+      <select
+        id="filter-prodi"
+        value={selectedUnit || ""}
+        onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : null)}
+        className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-64"
+        disabled={loading}
+      >
+        {availableUnits.map(u => (
+          <option key={u.id} value={u.id} className="text-slate-700">{u.nama}</option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-10">
       {mapsLoading && (
@@ -352,6 +441,7 @@ export default function Tabel2B6({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
+          <UnitSelector />
           {canDelete && (
             <button
               onClick={() => setShowDeleted(prev => !prev)}
@@ -385,17 +475,13 @@ export default function Tabel2B6({ role }) {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Unit Prodi <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.id_unit_prodi}
-                      onChange={e => setFormState({ ...formState, id_unit_prodi: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      required
-                    >
-                      <option value="">Pilih Unit Prodi...</option>
-                      <option value="4">Teknik Informatika (TI)</option>
-                      <option value="5">Manajemen Informatika (MI)</option>
-                    </select>
+                    <label className="block text-sm font-semibold text-gray-700">Unit Prodi</label>
+                    <input
+                      type="text"
+                      value={getUnitName(selectedUnit) || "(Pilih di filter atas)"}
+                      readOnly
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg text-slate-700 bg-slate-50"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Tahun Akademik <span className="text-red-500">*</span></label>
@@ -476,6 +562,16 @@ export default function Tabel2B6({ role }) {
                       onChange={e => setFormState({ ...formState, persen_kurang: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       required
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700">Rencana Tindak Lanjut oleh UPPS/PS</label>
+                    <textarea
+                      value={formState.rencana_tindak_lanjut}
+                      onChange={e => setFormState({ ...formState, rencana_tindak_lanjut: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                      rows={3}
+                      placeholder="Opsional"
                     />
                   </div>
                 </div>
