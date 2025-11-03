@@ -11,6 +11,7 @@ import Tabel2A3 from "./Tabel2A3";
 import Tabel2B from "./Tabel2B";
 import Tabel2B4 from "./Tabel2B4";
 import Tabel2B5 from "./Tabel2B5";
+import Tabel2B6 from "./Tabel2B6";
 
 const ALL_TABLES = [
   { key: "2a1", label: "Tabel 2A-1", Component: Tabel2A1, accessKey: "tabel_2a1_pendaftaran" },
@@ -19,6 +20,7 @@ const ALL_TABLES = [
   { key: "2b", label: "Tabel 2B", Component: Tabel2B, accessKey: "pemetaan2b1" },
   { key: "2b4", label: "Tabel 2B-4", Component: Tabel2B4, accessKey: "tabel_2b4_masa_tunggu" },
   { key: "2b5", label: "Tabel 2B-5", Component: Tabel2B5, accessKey: "tabel_2b5_kesesuaian_kerja" },
+  { key: "2b6", label: "Tabel 2B-6", Component: Tabel2B6, accessKey: "tabel_2b6_kepuasan_pengguna" },
 ];
 
 export default function C2WithTopNav() {

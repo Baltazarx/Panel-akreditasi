@@ -34,7 +34,7 @@ CREATE TABLE `audit_mutu_internal` (
   `frekuensi_audit` int DEFAULT NULL,
   `dokumen_spmi` text,
   `laporan_audit_url` text,
-  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_cutf8mb4_general_cii,
+  `bukti_certified_url` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `jumlah_auditor_certified` int DEFAULT NULL,
   `jumlah_auditor_noncertified` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
