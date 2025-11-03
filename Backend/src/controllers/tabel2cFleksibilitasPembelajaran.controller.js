@@ -12,7 +12,7 @@ export const listFleksibilitas = async (req, res) => {
     // PERBAIKAN: Ganti 'th.tahun_akademik' menjadi 'th.tahun'
     const sqlTahunan = `
       SELECT 
-        fpt.id, fpt.id_tahun, th.tahun,
+        fpt.id, fpt.id_tahun, fpt.id_unit_prodi, th.tahun,
         fpt.jumlah_mahasiswa_aktif, fpt.link_bukti
       FROM fleksibilitas_pembelajaran_tahunan fpt
       LEFT JOIN tahun_akademik th ON fpt.id_tahun = th.id_tahun
@@ -44,12 +44,19 @@ export const createOrUpdateFleksibilitas = async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    const { id_tahun_akademik: id_tahun, jumlah_mahasiswa_aktif, link_bukti, details } = req.body;
+    const { id_tahun_akademik: id_tahun, jumlah_mahasiswa_aktif, link_bukti, details, id_unit_prodi: body_id_unit_prodi } = req.body;
     
-    const id_unit_prodi = req.user?.id_unit_prodi;
+    // Determine id_unit_prodi: dari body untuk superadmin, atau dari user untuk prodi
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
+    let id_unit_prodi = body_id_unit_prodi || req.user?.id_unit_prodi;
 
-    if (!id_unit_prodi || req.user?.role !== 'prodi') {
-        return res.status(403).json({ error: 'Forbidden: Hanya user prodi yang bisa mengubah data ini.' });
+    // Jika bukan superadmin dan tidak ada id_unit_prodi, gunakan dari user
+    if (!isSuperAdmin && !id_unit_prodi && req.user?.role === 'prodi') {
+      id_unit_prodi = req.user.id_unit_prodi;
+    }
+
+    if (!id_unit_prodi) {
+        return res.status(400).json({ error: 'Field `id_unit_prodi` wajib diisi.' });
     }
     if (!id_tahun) {
         return res.status(400).json({ error: 'Tahun Akademik wajib diisi.' });
