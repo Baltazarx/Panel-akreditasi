@@ -54,16 +54,50 @@ export default function Tabel2A1({ role }) {
       setLoading(true);
       setError("");
       const params = new URLSearchParams();
-      if (showDeletedPend) params.append("include_deleted", "1");
-      if (selectedYearPend) params.append("id_tahun", selectedYearPend);
+      
+      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
+      if (selectedYearPend && maps?.tahun) {
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYearPend);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3
+          const yearIds = [];
+          for (let i = 0; i <= 3; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex >= 0 && yearIndex < tahunList.length) {
+              yearIds.push(tahunList[yearIndex].id_tahun);
+            }
+          }
+          
+          if (yearIds.length > 0) {
+            params.append("id_tahun_in", yearIds.join(','));
+          }
+        }
+      }
+      
+      // Handle showDeleted
+      if (showDeletedPend) {
+        params.append("include_deleted", "1");
+      }
+      
       const data = await apiFetch(`${tablePend.path}?${params}`);
-      const filteredData = showDeletedPend
-        ? data.filter((row) => row.deleted_at)
-        : data.filter((row) => !row.deleted_at);
-      const sortedData = filteredData.sort((a, b) => b.id - a.id);
-      setRowsPend(Array.isArray(sortedData) ? sortedData : sortedData?.items || []);
+      
+      // Backend sudah melakukan filtering, jadi langsung gunakan data
+      const sortedData = Array.isArray(data) ? data : (data?.items || []);
+      sortedData.sort((a, b) => {
+        // Sort by tahun (descending) lalu by id (descending)
+        if (a.id_tahun !== b.id_tahun) {
+          return b.id_tahun - a.id_tahun;
+        }
+        return b.id - a.id;
+      });
+      
+      setRowsPend(sortedData);
     } catch (e) {
       setError(e?.message || "Gagal memuat data pendaftaran");
+      setRowsPend([]);
     } finally {
       setLoading(false);
     }
@@ -74,16 +108,50 @@ export default function Tabel2A1({ role }) {
       setLoading(true);
       setError("");
       const params = new URLSearchParams();
-      if (showDeletedMaba) params.append("include_deleted", "1");
-      if (selectedYearMaba) params.append("id_tahun", selectedYearMaba);
+      
+      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
+      if (selectedYearMaba && maps?.tahun) {
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYearMaba);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3
+          const yearIds = [];
+          for (let i = 0; i <= 3; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex >= 0 && yearIndex < tahunList.length) {
+              yearIds.push(tahunList[yearIndex].id_tahun);
+            }
+          }
+          
+          if (yearIds.length > 0) {
+            params.append("id_tahun_in", yearIds.join(','));
+          }
+        }
+      }
+      
+      // Handle showDeleted
+      if (showDeletedMaba) {
+        params.append("include_deleted", "1");
+      }
+      
       const data = await apiFetch(`${tableMaba.path}?${params}`);
-      const filteredData = showDeletedMaba
-        ? data.filter((row) => row.deleted_at)
-        : data.filter((row) => !row.deleted_at);
-      const sortedData = filteredData.sort((a, b) => b.id - a.id);
-      setRowsMaba(Array.isArray(sortedData) ? sortedData : sortedData?.items || []);
+      
+      // Backend sudah melakukan filtering, jadi langsung gunakan data
+      const sortedData = Array.isArray(data) ? data : (data?.items || []);
+      sortedData.sort((a, b) => {
+        // Sort by tahun (descending) lalu by id (descending)
+        if (a.id_tahun !== b.id_tahun) {
+          return b.id_tahun - a.id_tahun;
+        }
+        return b.id - a.id;
+      });
+      
+      setRowsMaba(sortedData);
     } catch (e) {
       setError(e?.message || "Gagal memuat data mahasiswa baru/aktif");
+      setRowsMaba([]);
     } finally {
       setLoading(false);
     }
@@ -278,13 +346,18 @@ export default function Tabel2A1({ role }) {
   }, [mapsLoading, maps?.tahun]);
   
   useEffect(() => { 
-    fetchPend(); 
-    setSelectedRowsPend([]);
-  }, [showDeletedPend, selectedYearPend]);
+    if (!mapsLoading && maps?.tahun) {
+      fetchPend(); 
+      setSelectedRowsPend([]);
+    }
+  }, [showDeletedPend, selectedYearPend, mapsLoading, maps?.tahun]);
+  
   useEffect(() => { 
-    fetchMaba(); 
-    setSelectedRowsMaba([]);
-  }, [showDeletedMaba, selectedYearMaba]);
+    if (!mapsLoading && maps?.tahun) {
+      fetchMaba(); 
+      setSelectedRowsMaba([]);
+    }
+  }, [showDeletedMaba, selectedYearMaba, mapsLoading, maps?.tahun]);
 
   // Helper functions untuk mendapatkan nama dari maps
   const getUnitName = (id) => {
@@ -591,6 +664,630 @@ export default function Tabel2A1({ role }) {
     </div>
   );
 
+  // Fungsi render khusus untuk tabel Pendaftaran dengan struktur header kompleks
+  const renderTablePendaftaran = () => {
+    const selectedRows = selectedRowsPend;
+    const setSelectedRows = setSelectedRowsPend;
+    const rows = rowsPend;
+    const showDeleted = showDeletedPend;
+    const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
+    
+    // Proses data untuk ditampilkan per TS jika selectedYearPend ada
+    let displayRows = [];
+    if (selectedYearPend && maps?.tahun) {
+      const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+      const currentYearId = parseInt(selectedYearPend);
+      const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+      
+      if (currentYearIndex !== -1) {
+        // TS, TS-1, TS-2, TS-3
+        for (let i = 0; i <= 3; i++) {
+          const yearIndex = currentYearIndex - i;
+          if (yearIndex < 0 || yearIndex >= tahunList.length) {
+            displayRows.push({
+              ts: i === 0 ? 'TS' : `TS-${i}`,
+              tahun: null,
+              tahunId: null,
+              tahunName: '',
+              pendaftar: '',
+              pendaftarAfirmasi: '',
+              pendaftarKebutuhanKhusus: '',
+              rowData: null
+            });
+            continue;
+          }
+
+          const year = tahunList[yearIndex];
+          const yearId = year.id_tahun;
+          
+          // Cari data pendaftaran untuk semua unit prodi atau unit prodi tertentu
+          // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
+          const pendData = rows.find(p => {
+            const matchesYear = p.id_tahun === yearId;
+            if (showDeleted) {
+              return matchesYear && p.deleted_at;
+            } else {
+              return matchesYear && !p.deleted_at;
+            }
+          });
+          
+          displayRows.push({
+            ts: i === 0 ? 'TS' : `TS-${i}`,
+            tahun: year.tahun,
+            tahunId: yearId,
+            tahunName: year.tahun,
+            pendaftar: pendData?.pendaftar || '',
+            pendaftarAfirmasi: pendData?.pendaftar_afirmasi || '',
+            pendaftarKebutuhanKhusus: pendData?.pendaftar_kebutuhan_khusus || '',
+            rowData: pendData
+          });
+        }
+      }
+    } else {
+      // Jika tidak ada filter tahun, tampilkan semua data
+      // Filter berdasarkan showDeleted
+      const filteredRows = rows.filter(row => {
+        if (showDeleted) {
+          return row.deleted_at;
+        } else {
+          return !row.deleted_at;
+        }
+      });
+      
+      displayRows = filteredRows.map(row => ({
+        ts: getTahunName(row.id_tahun),
+        tahun: row.id_tahun,
+        tahunId: row.id_tahun,
+        tahunName: getTahunName(row.id_tahun),
+        pendaftar: row.pendaftar || '',
+        pendaftarAfirmasi: row.pendaftar_afirmasi || '',
+        pendaftarKebutuhanKhusus: row.pendaftar_kebutuhan_khusus || '',
+        rowData: row
+      }));
+    }
+
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            {/* Row 1: Header utama */}
+            <tr className="sticky top-0">
+              {showDeleted && (
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={(e) => handleSelectAll(tablePend, e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                  />
+                </th>
+              )}
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                TAHUN
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                TS
+              </th>
+              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                JUMLAH CALON MAHASISWA
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
+              </th>
+            </tr>
+            {/* Row 2: Sub-header */}
+            <tr className="sticky top-0">
+              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                PENDAFTAR
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                PENDAFTAR AFIRMASI
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                PENDAFTAR KEBUTUHAN KHUSUS
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {displayRows.map((row, idx) => {
+              const isSelected = row.rowData && selectedRows.includes(row.rowData[getIdField(row.rowData)]);
+              return (
+                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  {showDeleted && (
+                    <td className="px-6 py-4 text-center border border-slate-200">
+                      {row.rowData && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            const idField = getIdField(row.rowData);
+                            const id = row.rowData[idField];
+                            if (e.target.checked) {
+                              setSelectedRows([...selectedRows, id]);
+                            } else {
+                              setSelectedRows(selectedRows.filter(rowId => rowId !== id));
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                        />
+                      )}
+                    </td>
+                  )}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
+                    {row.tahunName || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
+                    {row.ts}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.pendaftar || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.pendaftarAfirmasi || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.pendaftarKebutuhanKhusus || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    {row.rowData && (
+                      <div className="flex items-center justify-center gap-2">
+                        {!showDeleted && canUPend && (
+                          <button
+                            onClick={() => {
+                              setEditingPend(row.rowData);
+                              setFormPend(row.rowData);
+                              setShowModalPend(true);
+                            }}
+                            className="font-medium text-[#0384d6] hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {!showDeleted && canDPend && (
+                          <button
+                            onClick={() => doDelete(row.rowData, tablePend)}
+                            className="font-medium text-red-600 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        )}
+                        {showDeleted && canUPend && (
+                          <button
+                            onClick={() => doRestore(row.rowData, tablePend)}
+                            className="font-medium text-green-600 hover:underline"
+                          >
+                            Pulihkan
+                          </button>
+                        )}
+                        {showDeleted && canDPend && (
+                          <button
+                            onClick={() => doHardDelete(row.rowData, tablePend)}
+                            className="font-medium text-red-800 hover:underline"
+                          >
+                            Hapus Permanen
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {row.rowData && row.rowData.deleted_at && (
+                      <div className="italic text-slate-500">Dihapus</div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {displayRows.length === 0 && (
+              <tr>
+                <td colSpan={showDeleted ? 7 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Fungsi render khusus untuk tabel Mahasiswa Baru & Aktif dengan struktur header kompleks
+  const renderTableMaba = () => {
+    const selectedRows = selectedRowsMaba;
+    const setSelectedRows = setSelectedRowsMaba;
+    const rows = rowsMaba;
+    const showDeleted = showDeletedMaba;
+    const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
+    
+    // Proses data untuk ditampilkan per TS jika selectedYearMaba ada
+    let displayRows = [];
+    if (selectedYearMaba && maps?.tahun) {
+      const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+      const currentYearId = parseInt(selectedYearMaba);
+      const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+      
+      if (currentYearIndex !== -1) {
+        // TS, TS-1, TS-2, TS-3
+        for (let i = 0; i <= 3; i++) {
+          const yearIndex = currentYearIndex - i;
+          if (yearIndex < 0 || yearIndex >= tahunList.length) {
+            displayRows.push({
+              ts: i === 0 ? 'TS' : `TS-${i}`,
+              tahun: null,
+              tahunId: null,
+              tahunName: '',
+              baruRegulerDiterima: '',
+              baruRegulerAfirmasi: '',
+              baruRegulerKebutuhanKhusus: '',
+              baruRPLDiterima: '',
+              baruRPLAfirmasi: '',
+              baruRPLKebutuhanKhusus: '',
+              aktifRegulerDiterima: '',
+              aktifRegulerAfirmasi: '',
+              aktifRegulerKebutuhanKhusus: '',
+              aktifRPLDiterima: '',
+              aktifRPLAfirmasi: '',
+              aktifRPLKebutuhanKhusus: '',
+              rowData: []
+            });
+            continue;
+          }
+
+          const year = tahunList[yearIndex];
+          const yearId = year.id_tahun;
+          
+          // Cari data mahasiswa baru dan aktif untuk semua unit prodi atau unit prodi tertentu
+          // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
+          const mabaData = rows.filter(m => {
+            const matchesYear = m.id_tahun === yearId;
+            if (showDeleted) {
+              return matchesYear && m.deleted_at;
+            } else {
+              return matchesYear && !m.deleted_at;
+            }
+          });
+          
+          // Proses data mahasiswa baru
+          const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+          const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+          
+          // Proses data mahasiswa aktif
+          const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+          const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+          
+          displayRows.push({
+            ts: i === 0 ? 'TS' : `TS-${i}`,
+            tahun: year.tahun,
+            tahunId: yearId,
+            tahunName: year.tahun,
+            baruRegulerDiterima: baruReguler?.jumlah_total || '',
+            baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || '',
+            baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || '',
+            baruRPLDiterima: baruRPL?.jumlah_total || '',
+            baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || '',
+            baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || '',
+            aktifRegulerDiterima: aktifReguler?.jumlah_total || '',
+            aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || '',
+            aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || '',
+            aktifRPLDiterima: aktifRPL?.jumlah_total || '',
+            aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || '',
+            aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || '',
+            rowData: mabaData
+          });
+        }
+      }
+    } else {
+      // Jika tidak ada filter tahun, tampilkan semua data dalam format yang sama
+      // Filter berdasarkan showDeleted
+      const filteredRows = rows.filter(row => {
+        if (showDeleted) {
+          return row.deleted_at;
+        } else {
+          return !row.deleted_at;
+        }
+      });
+      
+      const groupedByYear = {};
+      filteredRows.forEach(row => {
+        const yearId = row.id_tahun;
+        if (!groupedByYear[yearId]) {
+          groupedByYear[yearId] = [];
+        }
+        groupedByYear[yearId].push(row);
+      });
+      
+      displayRows = Object.keys(groupedByYear).map(yearId => {
+        const yearIdNum = parseInt(yearId);
+        const tahunName = getTahunName(yearIdNum);
+        const mabaData = groupedByYear[yearId];
+        
+        const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+        const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+        const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+        const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+        
+        return {
+          ts: tahunName,
+          tahun: yearIdNum,
+          tahunId: yearIdNum,
+          tahunName: tahunName,
+          baruRegulerDiterima: baruReguler?.jumlah_total || '',
+          baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || '',
+          baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || '',
+          baruRPLDiterima: baruRPL?.jumlah_total || '',
+          baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || '',
+          baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || '',
+          aktifRegulerDiterima: aktifReguler?.jumlah_total || '',
+          aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || '',
+          aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || '',
+          aktifRPLDiterima: aktifRPL?.jumlah_total || '',
+          aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || '',
+          aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || '',
+          rowData: mabaData
+        };
+      });
+    }
+
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            {/* Row 1: Header utama */}
+            <tr className="sticky top-0">
+              {showDeleted && (
+                <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={(e) => handleSelectAll(tableMaba, e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                  />
+                </th>
+              )}
+              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                TAHUN
+              </th>
+              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                TS
+              </th>
+              <th colSpan={6} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                JUMLAH MAHASISWA BARU
+              </th>
+              <th colSpan={6} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                JUMLAH MAHASISWA AKTIF
+              </th>
+              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
+              </th>
+            </tr>
+            {/* Row 2: Sub-header */}
+            <tr className="sticky top-0">
+              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+              {/* Di bawah "Jumlah Mahasiswa Baru" */}
+              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                REGULER
+              </th>
+              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                RPL
+              </th>
+              {/* Di bawah "Jumlah Mahasiswa Aktif" */}
+              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                REGULER
+              </th>
+              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                RPL
+              </th>
+            </tr>
+            {/* Row 3: Header detail */}
+            <tr className="sticky top-0">
+              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+              {/* Di bawah "Reguler" (Mahasiswa Baru) */}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                DITERIMA
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AFIRMASI
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                KEBUTUHAN KHUSUS
+              </th>
+              {/* Di bawah "RPL" (Mahasiswa Baru) */}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                DITERIMA
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AFIRMASI
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                KEBUTUHAN KHUSUS
+              </th>
+              {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                DITERIMA
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AFIRMASI
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                KEBUTUHAN KHUSUS
+              </th>
+              {/* Di bawah "RPL" (Mahasiswa Aktif) */}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                DITERIMA
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AFIRMASI
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                KEBUTUHAN KHUSUS
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {displayRows.map((row, idx) => {
+              // Untuk checkbox, cek apakah ada rowData yang terpilih
+              const rowDataIds = row.rowData && row.rowData.length > 0 
+                ? row.rowData.map(r => r[getIdField(r)])
+                : [];
+              const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
+              
+              return (
+                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  {showDeleted && (
+                    <td className="px-6 py-4 text-center border border-slate-200">
+                      {row.rowData && row.rowData.length > 0 && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedRows([...selectedRows, ...rowDataIds]);
+                            } else {
+                              setSelectedRows(selectedRows.filter(rowId => !rowDataIds.includes(rowId)));
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                        />
+                      )}
+                    </td>
+                  )}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
+                    {row.tahunName || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
+                    {row.ts}
+                  </td>
+                  {/* Mahasiswa Baru - Reguler */}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRegulerDiterima || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRegulerAfirmasi || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRegulerKebutuhanKhusus || '-'}
+                  </td>
+                  {/* Mahasiswa Baru - RPL */}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRPLDiterima || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRPLAfirmasi || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.baruRPLKebutuhanKhusus || '-'}
+                  </td>
+                  {/* Mahasiswa Aktif - Reguler */}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRegulerDiterima || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRegulerAfirmasi || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRegulerKebutuhanKhusus || '-'}
+                  </td>
+                  {/* Mahasiswa Aktif - RPL */}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRPLDiterima || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRPLAfirmasi || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.aktifRPLKebutuhanKhusus || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    {row.rowData && row.rowData.length > 0 ? (
+                      <div className="flex items-center justify-center gap-2">
+                        {!showDeleted && canUMaba && (
+                          <button
+                            onClick={() => {
+                              // Tampilkan semua data untuk edit (bisa multiple)
+                              // Untuk sekarang, edit data pertama saja atau buka modal untuk semua
+                              if (row.rowData.length === 1) {
+                                setEditingMaba(row.rowData[0]);
+                                setFormMaba(row.rowData[0]);
+                                setShowModalMaba(true);
+                              } else {
+                                // Jika ada multiple data, bisa tampilkan info atau edit salah satu
+                                Swal.fire({
+                                  icon: 'info',
+                                  title: 'Data Multiple',
+                                  text: `Terdapat ${row.rowData.length} data untuk tahun ini. Silakan edit secara individual melalui menu lain.`
+                                });
+                              }
+                            }}
+                            className="font-medium text-[#0384d6] hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {!showDeleted && canDMaba && (
+                          <button
+                            onClick={() => {
+                              // Hapus semua data untuk TS ini
+                              const firstData = row.rowData[0];
+                              if (firstData) {
+                                doDelete(firstData, tableMaba);
+                              }
+                            }}
+                            className="font-medium text-red-600 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        )}
+                        {showDeleted && canUMaba && (
+                          <button
+                            onClick={() => {
+                              // Pulihkan semua data untuk TS ini
+                              if (row.rowData.length > 0) {
+                                doRestore(row.rowData[0], tableMaba);
+                              }
+                            }}
+                            className="font-medium text-green-600 hover:underline"
+                          >
+                            Pulihkan
+                          </button>
+                        )}
+                        {showDeleted && canDMaba && (
+                          <button
+                            onClick={() => {
+                              // Hapus permanen semua data untuk TS ini
+                              if (row.rowData.length > 0) {
+                                doHardDelete(row.rowData[0], tableMaba);
+                              }
+                            }}
+                            className="font-medium text-red-800 hover:underline"
+                          >
+                            Hapus Permanen
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                    {row.rowData && row.rowData.length > 0 && row.rowData.some(r => r.deleted_at) && (
+                      <div className="italic text-slate-500">Dihapus</div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {displayRows.length === 0 && (
+              <tr>
+                <td colSpan={showDeleted ? 16 : 15} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderTable = (rows, headers, keys, table, canUpdate, canDelete, setEditing, setForm, setShowModal, showDeleted) => {
     const selectedRows = table.key === tablePend.key ? selectedRowsPend : selectedRowsMaba;
     const setSelectedRows = table.key === tablePend.key ? setSelectedRowsPend : setSelectedRowsMaba;
@@ -794,10 +1491,7 @@ export default function Tabel2A1({ role }) {
           )}
         </div>
 
-        {renderTable(rowsPend,
-          ["Tahun","Daya Tampung","Pendaftar","Afirmasi","Kebutuhan Khusus"],
-          ["id_tahun","daya_tampung","pendaftar","pendaftar_afirmasi","pendaftar_kebutuhan_khusus"],
-          tablePend,canUPend,canDPend,setEditingPend,setFormPend,setShowModalPend,showDeletedPend)}
+        {renderTablePendaftaran()}
       </section>
 
       {/* Mahasiswa Baru & Aktif */}
@@ -862,10 +1556,7 @@ export default function Tabel2A1({ role }) {
           )}
         </div>
 
-        {renderTable(rowsMaba,
-          ["Tahun","Jenis","Jalur","Jumlah Total","Afirmasi","Kebutuhan Khusus"],
-          ["id_tahun","jenis","jalur","jumlah_total","jumlah_afirmasi","jumlah_kebutuhan_khusus"],
-          tableMaba,canUMaba,canDMaba,setEditingMaba,setFormMaba,setShowModalMaba,showDeletedMaba)}
+        {renderTableMaba()}
       </section>
 
       {/* Tabel Data Mahasiswa - Struktur Kompleks */}
@@ -911,28 +1602,30 @@ export default function Tabel2A1({ role }) {
               {/* Row 2: Sub-header */}
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                 {/* TS dan Daya Tampung sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Afirmasi</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Kebutuhan Khusus</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Afirmasi</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Kebutuhan Khusus</th>
                 <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
                 <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
                 <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
                 <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
               </tr>
-              {/* Row 3: Header detail - TS dan Daya Tampung tidak perlu th karena rowSpan masih aktif */}
+              {/* Row 3: Header detail */}
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                {/* TS dan Daya Tampung tidak perlu th karena rowSpan=3 berarti 3 baris */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+                {/* TS, Daya Tampung, Pendaftar, Pendaftar Afirmasi, Pendaftar Kebutuhan Khusus sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+                {/* Di bawah "Reguler" (Mahasiswa Baru) */}
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                {/* Di bawah "RPL" (Mahasiswa Baru) */}
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                {/* Di bawah "RPL" (Mahasiswa Aktif) */}
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
                 <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
@@ -942,6 +1635,9 @@ export default function Tabel2A1({ role }) {
               {(() => {
                 const unitProdiId = parseInt(selectedUnitProdi) || 4;
                 const tableData = processDataForTable(unitProdiId);
+                
+                // Filter data berdasarkan showDeleted jika diperlukan
+                // (Saat ini tabel gabungan ini hanya menampilkan data aktif)
                 
                 if (tableData.length === 0) {
                   return (
@@ -956,7 +1652,7 @@ export default function Tabel2A1({ role }) {
 
                 return tableData.map((row, idx) => (
                   <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${row.ts === 'Jumlah' ? 'bg-slate-100 font-semibold' : ''}`}>
-                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center font-medium bg-gray-50">{row.ts}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center font-medium bg-gray-50 whitespace-nowrap">{row.ts}</td>
                     <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.dayaTampung || ''}</td>
                     <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.pendaftar || ''}</td>
                     <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.pendaftarAfirmasi || ''}</td>
@@ -998,9 +1694,6 @@ export default function Tabel2A1({ role }) {
                       <option value="">Pilih Unit Prodi...</option>
                       <option value="4">Teknik Informatika (TI)</option>
                       <option value="5">Manajemen Informatika (MI)</option>
-                      {maps?.unit_kerja && Object.values(maps.unit_kerja).map((u) => (
-                        <option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>
-                      ))}
                     </select>
                   </div>
                   <div className="md:col-span-1 space-y-2">
