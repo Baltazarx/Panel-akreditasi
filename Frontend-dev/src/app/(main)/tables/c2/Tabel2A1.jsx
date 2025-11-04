@@ -795,8 +795,8 @@ export default function Tabel2A1({ role }) {
         </div>
 
         {renderTable(rowsPend,
-          ["Unit Prodi","Tahun","Daya Tampung","Pendaftar","Afirmasi","Kebutuhan Khusus"],
-          ["id_unit_prodi","id_tahun","daya_tampung","pendaftar","pendaftar_afirmasi","pendaftar_kebutuhan_khusus"],
+          ["Tahun","Daya Tampung","Pendaftar","Afirmasi","Kebutuhan Khusus"],
+          ["id_tahun","daya_tampung","pendaftar","pendaftar_afirmasi","pendaftar_kebutuhan_khusus"],
           tablePend,canUPend,canDPend,setEditingPend,setFormPend,setShowModalPend,showDeletedPend)}
       </section>
 
@@ -863,8 +863,8 @@ export default function Tabel2A1({ role }) {
         </div>
 
         {renderTable(rowsMaba,
-          ["Unit Prodi","Tahun","Jenis","Jalur","Jumlah Total","Afirmasi","Kebutuhan Khusus"],
-          ["id_unit_prodi","id_tahun","jenis","jalur","jumlah_total","jumlah_afirmasi","jumlah_kebutuhan_khusus"],
+          ["Tahun","Jenis","Jalur","Jumlah Total","Afirmasi","Kebutuhan Khusus"],
+          ["id_tahun","jenis","jalur","jumlah_total","jumlah_afirmasi","jumlah_kebutuhan_khusus"],
           tableMaba,canUMaba,canDMaba,setEditingMaba,setFormMaba,setShowModalMaba,showDeletedMaba)}
       </section>
 
