@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
 
 // --- FUNGSI DAN IKON LOKAL ---
 const useRouter = () => {
@@ -25,6 +26,7 @@ const FiTrendingUp = (props) => (<svg stroke="currentColor" fill="none" strokeWi
 const FiGrid = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>);
 const FiTarget = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>);
 const FiSettings = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m19-4.24a3.5 3.5 0 0 0-4.93-4.93l-4.13 4.14M8.06 8.06l-4.13-4.14A3.5 3.5 0 0 0 1 6.76m13.94 9.3l4.13 4.14a3.5 3.5 0 0 1-4.93 4.93l-4.14-4.13M8.94 15.94l-4.14 4.13a3.5 3.5 0 0 1-4.93-4.93l4.14-4.14"></path></svg>);
+const FiNewspaper = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6z"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -466,14 +468,227 @@ const QuickActions = () => {
     );
 };
 
+// Komponen Berita Terbaru
+const BeritaTerbaru = () => {
+    const router = useRouter();
+    const [berita, setBerita] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Data berita (dari halaman berita yang sudah ada)
+    const tpmNewsData = [
+        {
+            id: 1,
+            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
+            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
+            date: "2025-10-02",
+            color: "blue"
+        },
+        {
+            id: 2,
+            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
+            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
+            date: "2025-09-28",
+            color: "emerald"
+        }
+    ];
+
+    useEffect(() => {
+        // Simulasi loading
+        setTimeout(() => {
+            setBerita(tpmNewsData);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    return (
+        <motion.section 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="py-12 px-4 sm:px-8 bg-white"
+        >
+            <div className="container mx-auto max-w-7xl">
+                <motion.div variants={fadeIn} className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <FiNewspaper className="w-8 h-8 text-[#0384d6]" />
+                        <h2 className="text-3xl font-bold" style={{ color: '#043975' }}>
+                            Berita Terbaru
+                        </h2>
+                    </div>
+                    <div className="w-20 h-1 rounded-full bg-[#ffbf1b]"></div>
+                </motion.div>
+
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-gray-100 rounded-2xl p-6 animate-pulse">
+                                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <motion.div 
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
+                        {berita.map((item) => (
+                            <motion.div
+                                key={item.id}
+                                variants={slideUp}
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 p-6 cursor-pointer"
+                                onClick={() => router.push('/berita')}
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                        item.color === 'blue' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                                    }`}>
+                                        {item.color === 'blue' ? 'Pengumuman' : 'Berita'}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{formatDate(item.date)}</span>
+                                </div>
+                                <h3 className="text-lg font-bold mb-3 text-gray-900 group-hover:text-[#043975] transition-colors">
+                                    {item.title}
+                                </h3>
+                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                    {item.excerpt}
+                                </p>
+                                <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                                    <span>Baca selengkapnya</span>
+                                    <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
+            </div>
+        </motion.section>
+    );
+};
+
+// Komponen Grafik Semua Tabel
+const GrafikTabel = () => {
+    const router = useRouter();
+    const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulasi data grafik
+        setTimeout(() => {
+            setChartData([
+                { name: 'C1', count: 12, color: 'from-blue-500 to-cyan-500' },
+                { name: 'C2', count: 8, color: 'from-purple-500 to-violet-500' },
+                { name: 'Data Dosen', count: 45, color: 'from-green-500 to-emerald-500' },
+                { name: 'Data Pegawai', count: 32, color: 'from-orange-500 to-red-500' }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const maxCount = Math.max(...chartData.map(d => d.count), 1);
+
+    return (
+        <motion.section 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="py-12 px-4 sm:px-8"
+            style={{ backgroundColor: '#f8fafc' }}
+        >
+            <div className="container mx-auto max-w-7xl">
+                <motion.div variants={fadeIn} className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <FiBarChart className="w-8 h-8 text-[#0384d6]" />
+                        <h2 className="text-3xl font-bold" style={{ color: '#043975' }}>
+                            Grafik Data Tabel
+                        </h2>
+                    </div>
+                    <div className="w-20 h-1 rounded-full bg-[#ffbf1b]"></div>
+                </motion.div>
+
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="bg-white rounded-2xl p-6 shadow-lg animate-pulse">
+                                <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                                <div className="h-32 bg-gray-200 rounded"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <motion.div 
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    >
+                        {chartData.map((item, index) => (
+                            <motion.div
+                                key={index}
+                                variants={slideUp}
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 cursor-pointer border border-gray-100"
+                                onClick={() => router.push(`/tables?table=${item.name}`)}
+                            >
+                                <h3 className="text-lg font-bold mb-4 text-gray-900 group-hover:text-[#043975] transition-colors">
+                                    {item.name}
+                                </h3>
+                                <div className="relative h-32 bg-gray-100 rounded-lg overflow-hidden">
+                                    <div 
+                                        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${item.color} transition-all duration-500`}
+                                        style={{ 
+                                            height: `${(item.count / maxCount) * 100}%`,
+                                            opacity: 0.8
+                                        }}
+                                    ></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-3xl font-bold text-gray-700 z-10">{item.count}</span>
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-4 text-center">Total Data</p>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
+            </div>
+        </motion.section>
+    );
+};
+
 
 // ----- [TIDAK DIUBAH] KOMPONEN UTAMA APP -----
 export default function App() {
   const [mounted, setMounted] = useState(false);
+  const [showHero, setShowHero] = useState(true);
+  const { authUser, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Logika untuk hide hero setelah 3-4 detik jika user sudah login
+  useEffect(() => {
+    if (authUser && !authLoading) {
+      // Hero tampil 3.5 detik (antara 3-4 detik)
+      const timer = setTimeout(() => {
+        setShowHero(false);
+      }, 3500);
+
+      return () => clearTimeout(timer);
+    } else {
+      // Jika belum login, hero tetap tampil
+      setShowHero(true);
+    }
+  }, [authUser, authLoading]);
 
   return (
     <>
@@ -557,14 +772,47 @@ export default function App() {
                   </div>
                 ) : (
                   <>
-                    <Hero />
-                    <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
-                        <MobileTablesSection />
-                        <div className="hidden md:block">
-                            <TablesSection />
-                        </div>
-                        <QuickActions />
-                    </div>
+                    <AnimatePresence mode="wait">
+                      {showHero && authUser ? (
+                        <motion.div
+                          key="hero"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                        >
+                          <Hero />
+                        </motion.div>
+                      ) : authUser ? (
+                        <motion.div
+                          key="content"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                          className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc]"
+                        >
+                          <div className="pt-20 pb-8">
+                            <BeritaTerbaru />
+                            <GrafikTabel />
+                          </div>
+                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
+                            <MobileTablesSection />
+                            <div className="hidden md:block">
+                                <TablesSection />
+                            </div>
+                            <QuickActions />
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <>
+                          <Hero />
+                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
+                              <MobileTablesSection />
+                              <div className="hidden md:block">
+                                  <TablesSection />
+                              </div>
+                              <QuickActions />
+                          </div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
             </main>
