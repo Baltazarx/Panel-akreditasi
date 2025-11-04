@@ -13,7 +13,7 @@ export const listFleksibilitas = async (req, res) => {
     const sqlTahunan = `
       SELECT 
         fpt.id, fpt.id_tahun, fpt.id_unit_prodi, th.tahun,
-        fpt.jumlah_mahasiswa_aktif, fpt.link_bukti
+        fpt.jumlah_mahasiswa_aktif, fpt.link_bukti, fpt.deleted_at
       FROM fleksibilitas_pembelajaran_tahunan fpt
       LEFT JOIN tahun_akademik th ON fpt.id_tahun = th.id_tahun
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -231,6 +231,18 @@ export const hardDeleteFleksibilitas = async (req, res) => {
     } catch (err) {
         console.error("Error hardDeleteFleksibilitas:", err);
         res.status(500).json({ error: 'Gagal menghapus data secara permanen.' });
+    }
+};
+
+// === RESTORE ===
+export const restoreFleksibilitas = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET deleted_at=NULL, deleted_by=NULL WHERE id=?', [id]);
+        res.json({ message: 'Data berhasil dipulihkan.' });
+    } catch (err) {
+        console.error("Error restoreFleksibilitas:", err);
+        res.status(500).json({ error: 'Gagal memulihkan data.' });
     }
 };
 

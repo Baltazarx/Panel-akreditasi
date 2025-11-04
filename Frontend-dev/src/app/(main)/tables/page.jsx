@@ -238,10 +238,13 @@ export default function TablesPage() {
   const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
+  // KECUALI role kemahasiswaan yang tidak boleh akses Panel Admin
   const loweredRole = (authUser?.role || "").toLowerCase();
-  const canSeeUserMgmt = ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && (
+    ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
-    || roleCan(authUser?.role, "pegawai", "r");
+    || roleCan(authUser?.role, "pegawai", "r")
+  );
 
   // Susun item sidebar sesuai akses
   const sidebarItems = [
