@@ -6,7 +6,8 @@ import {
   createOrUpdateFleksibilitas,
   softDeleteFleksibilitas,
   exportFleksibilitas,
-  hardDeleteFleksibilitas // <-- Tambahkan fungsi hard delete
+  hardDeleteFleksibilitas,
+  restoreFleksibilitas
 } from '../controllers/tabel2cFleksibilitasPembelajaran.controller.js';
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get('/export', requireAuth, permit(resourceKey, 'R'), exportFleksibilitas
 // === RUTE BARU UNTUK HARD DELETE ===
 // Hanya bisa diakses oleh super admin dengan izin 'H'
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteFleksibilitas);
+
+// === RUTE UNTUK RESTORE ===
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreFleksibilitas);
 
 export default router;
 
