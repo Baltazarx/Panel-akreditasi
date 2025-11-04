@@ -82,21 +82,42 @@ export const updateBentukPembelajaran = async (req, res) => {
 // === HARD DELETE BENTUK PEMBELAJARAN ===
 export const hardDeleteBentukPembelajaran = async (req, res) => {
   try {
+    const idBentuk = req.params.id;
+    
     // PENTING: Periksa dulu apakah bentuk pembelajaran ini sedang digunakan
-    // di tabel fleksibilitas_pembelajaran_detail. Jika iya, jangan dihapus permanen.
+    // di tabel fleksibilitas_pembelajaran_detail yang terkait dengan data yang belum dihapus.
+    // Hanya hitung detail yang terkait dengan fleksibilitas_pembelajaran_tahunan yang belum dihapus (deleted_at IS NULL)
     const [usage] = await pool.query(
-        'SELECT COUNT(*) as count FROM fleksibilitas_pembelajaran_detail WHERE id_bentuk = ?',
-        [req.params.id]
+        `SELECT COUNT(*) as count 
+         FROM fleksibilitas_pembelajaran_detail fpd
+         INNER JOIN fleksibilitas_pembelajaran_tahunan fpt ON fpd.id_tahunan = fpt.id
+         WHERE fpd.id_bentuk = ? AND fpt.deleted_at IS NULL`,
+        [idBentuk]
     );
 
+    console.log(`Checking usage for id_bentuk ${idBentuk}:`, usage[0].count);
+
     if (usage[0].count > 0) {
+        // Ambil info detail tentang data yang menggunakan bentuk pembelajaran ini
+        const [details] = await pool.query(
+            `SELECT fpt.id, fpt.id_tahun, fpt.id_unit_prodi, th.tahun, uk.nama_unit
+             FROM fleksibilitas_pembelajaran_detail fpd
+             INNER JOIN fleksibilitas_pembelajaran_tahunan fpt ON fpd.id_tahunan = fpt.id
+             LEFT JOIN tahun_akademik th ON fpt.id_tahun = th.id_tahun
+             LEFT JOIN unit_kerja uk ON fpt.id_unit_prodi = uk.id_unit
+             WHERE fpd.id_bentuk = ? AND fpt.deleted_at IS NULL
+             LIMIT 5`,
+            [idBentuk]
+        );
+        
         return res.status(400).json({ 
-            error: 'Gagal menghapus: Bentuk pembelajaran ini sedang digunakan dalam data fleksibilitas. Hapus data fleksibilitas yang terkait terlebih dahulu.' 
+            error: 'Gagal menghapus: Bentuk pembelajaran ini sedang digunakan dalam data fleksibilitas. Hapus data fleksibilitas yang terkait terlebih dahulu.',
+            details: details.map(d => `Tahun ${d.tahun || d.id_tahun}, Prodi: ${d.nama_unit || d.id_unit_prodi}`)
         });
     }
 
     // Jika tidak digunakan, lanjutkan hard delete
-    const [result] = await pool.query('DELETE FROM bentuk_pembelajaran_master WHERE id_bentuk = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM bentuk_pembelajaran_master WHERE id_bentuk = ?', [idBentuk]);
 
     if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Data tidak ditemukan.' });

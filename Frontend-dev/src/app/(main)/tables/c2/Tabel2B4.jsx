@@ -235,30 +235,32 @@ export default function Tabel2B4({ role }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {tableData.map((row, index) => (
-              <tr key={index} className={`transition-colors ${row.data && row.data.deleted_at ? "bg-red-100 text-red-800" : index%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
+            {tableData.map((row, index) => {
+              const rowBg = row.data && row.data.deleted_at ? "bg-red-100" : (index % 2 === 0 ? "bg-white" : "bg-slate-50");
+              return (
+              <tr key={index} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium">
                   {row.tahun_lulus}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${
-                    row.data ? 'bg-yellow-50 cursor-pointer hover:bg-yellow-100' : ''
+                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
+                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
                   onClick={() => row.data && handleCellClick(row, 'jumlah_lulusan')}
                 >
                   {row.jumlah_lulusan || (row.data ? "Klik untuk mengisi" : "")}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${
-                    row.data ? 'bg-yellow-50 cursor-pointer hover:bg-yellow-100' : ''
+                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
+                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
                   onClick={() => row.data && handleCellClick(row, 'jumlah_terlacak')}
                 >
                   {row.jumlah_terlacak || (row.data ? "Klik untuk mengisi" : "")}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${
-                    row.data ? 'bg-yellow-50 cursor-pointer hover:bg-yellow-100' : ''
+                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
+                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
                   onClick={() => row.data && handleCellClick(row, 'rata_rata_waktu_tunggu_bulan')}
                 >
@@ -290,7 +292,8 @@ export default function Tabel2B4({ role }) {
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {tableData.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">

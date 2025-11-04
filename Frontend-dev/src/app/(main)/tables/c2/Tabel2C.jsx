@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { apiFetch } from "../../../../lib/api";
 import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role";
@@ -12,12 +12,14 @@ export default function Tabel2C({ role }) {
   const { authUser } = useAuth();
 
   const [selectedYear, setSelectedYear] = useState("");
+  const [selectedProdi, setSelectedProdi] = useState(""); // Filter prodi khusus superadmin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [bentukList, setBentukList] = useState([]); // {id_bentuk, nama_bentuk}
-  const [dataByYear, setDataByYear] = useState({}); // { [id_tahun]: { aktif, link, counts:{[id_bentuk]: jumlah} } }
+  const [dataByYear, setDataByYear] = useState({}); // { [id_tahun]: { aktif, link, counts:{[id_bentuk]: jumlah}, deleted_at, hasData } }
   const [showModal, setShowModal] = useState(false);
   const [editingYear, setEditingYear] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false); // Flag untuk membedakan mode tambah/edit
   const [formState, setFormState] = useState({
     id_unit_prodi: "",
     jumlah_mahasiswa_aktif: "",
@@ -25,6 +27,7 @@ export default function Tabel2C({ role }) {
     details: {} // { [id_bentuk]: jumlah_mahasiswa_ikut }
   });
   const [saving, setSaving] = useState(false);
+  const [customBentukList, setCustomBentukList] = useState([]); // Array untuk bentuk pembelajaran custom yang ditambahkan dinamis
 
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(role?.toLowerCase());
 
@@ -63,6 +66,13 @@ export default function Tabel2C({ role }) {
     }
   }, [availableYears, selectedYear]);
 
+  // Default ke prodi pertama untuk superadmin
+  useEffect(() => {
+    if (isSuperAdmin && !selectedProdi && availableProdi.length > 0) {
+      setSelectedProdi(String(availableProdi[0].id));
+    }
+  }, [isSuperAdmin, availableProdi, selectedProdi]);
+
   const yearOrder = useMemo(() => {
     if (!selectedYear) return [];
     const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
@@ -84,6 +94,11 @@ export default function Tabel2C({ role }) {
       return;
     }
 
+    // Untuk superadmin, pastikan prodi sudah dipilih sebelum fetch
+    if (isSuperAdmin && !selectedProdi) {
+      return;
+    }
+
     (async () => {
       try {
         setLoading(true);
@@ -95,8 +110,13 @@ export default function Tabel2C({ role }) {
         // Fetch data fleksibilitas untuk semua tahun dalam yearOrder (yang valid)
         let resAll = { masterBentuk: [], dataTahunan: [], dataDetails: [] };
         if (validYears.length > 0) {
-          const yearParams = `id_tahun_in=${validYears.join(',')}`;
-          resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${yearParams}`);
+          // Build query params: tahun + prodi filter
+          const params = [`id_tahun_in=${validYears.join(',')}`];
+          if (isSuperAdmin && selectedProdi) {
+            params.push(`id_unit_prodi=${selectedProdi}`);
+          }
+          const queryParams = params.join('&');
+          resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         }
         
         // Parse response dari backend: { masterBentuk, dataTahunan, dataDetails }
@@ -107,35 +127,8 @@ export default function Tabel2C({ role }) {
         // Set master bentuk
         setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
 
-        // Mapping data per tahun - hanya map tahun yang tidak null
-        const map = {};
-        yearOrder.forEach((y) => {
-          if (y != null) {
-            // Cari data tahunan untuk tahun ini
-            const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
-            
-            if (tahunData) {
-              const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
-              const link = tahunData.link_bukti || "";
-              const id_tahunan = tahunData.id;
-              const id_unit_prodi = tahunData.id_unit_prodi || null;
-              
-              // Ambil detail untuk id_tahunan ini
-              const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
-              const counts = {};
-              details.forEach((d) => {
-                counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
-              });
-              
-              map[y] = { aktif, link, counts, id_tahunan, id_unit_prodi, hasData: true };
-            } else {
-              // Tidak ada data di database untuk tahun ini - tetap buat entry dengan nilai 0
-              map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, hasData: false };
-            }
-          }
-          // Jika y == null, tidak perlu buat entry - akan langsung return 0 di render
-        });
-        
+        // Mapping data per tahun (hanya data yang tidak dihapus)
+        const map = mapDataByYear(dataTahunan, dataDetails, yearOrder);
         setDataByYear(map);
       } catch (e) {
         console.error("Error fetching data:", e);
@@ -144,7 +137,44 @@ export default function Tabel2C({ role }) {
         setLoading(false);
       }
     })();
-  }, [selectedYear, yearOrder.join(",")]);
+  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin]);
+
+  // Helper function untuk mapping data tahun (hanya data yang tidak dihapus)
+  const mapDataByYear = useCallback((dataTahunan, dataDetails, yearOrder) => {
+    const map = {};
+    yearOrder.forEach((y) => {
+      if (y != null) {
+        // Cari data tahunan untuk tahun ini
+        const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
+        
+        if (tahunData) {
+          const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
+          const link = tahunData.link_bukti || "";
+          const id_tahunan = tahunData.id;
+          const id_unit_prodi = tahunData.id_unit_prodi || null;
+          const deleted_at = tahunData.deleted_at || null;
+          
+          // Hanya tampilkan data yang tidak dihapus
+          if (deleted_at) {
+            return; // Skip data yang dihapus
+          }
+          
+          // Ambil detail untuk id_tahunan ini
+          const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
+          const counts = {};
+          details.forEach((d) => {
+            counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
+          });
+          
+          map[y] = { aktif, link, counts, id_tahunan, id_unit_prodi, deleted_at: null, hasData: true };
+        } else {
+          // Tidak ada data di database untuk tahun ini - tampilkan entry kosong
+          map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
+        }
+      }
+    });
+    return map;
+  }, []);
 
   const totalsByYear = useMemo(() => {
     const sums = {};
@@ -173,6 +203,118 @@ export default function Tabel2C({ role }) {
   const canUpdate = roleCan(role, "fleksibilitas_pembelajaran", "U");
   const canDelete = roleCan(role, "fleksibilitas_pembelajaran", "D");
   const canCreate = roleCan(role, "fleksibilitas_pembelajaran", "C");
+  const canDeleteBentuk = roleCan(role, "bentuk_pembelajaran_master", "D"); // Permission untuk menghapus bentuk pembelajaran master
+
+  // Handler untuk menghapus bentuk pembelajaran dari master
+  const handleDeleteBentuk = async (idBentuk, namaBentuk) => {
+    const confirm = await Swal.fire({
+      title: "Yakin ingin menghapus bentuk pembelajaran?",
+      text: `Bentuk pembelajaran "${namaBentuk}" akan dihapus secara permanen. Pastikan tidak sedang digunakan dalam data fleksibilitas.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal"
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        // Fetch langsung untuk bisa mengakses response body secara lengkap
+        const BASE_URL = "http://localhost:3000/api";
+        const res = await fetch(`${BASE_URL}/tabel2c-bentuk-pembelajaran/${idBentuk}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          mode: "cors",
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw { status: res.status, data: errorData };
+        }
+
+        const result = await res.json();
+        
+        Swal.fire("Berhasil", `Bentuk pembelajaran "${namaBentuk}" berhasil dihapus`, "success");
+        
+        // Hapus bentuk pembelajaran dari formState.details jika sedang digunakan
+        const newDetails = {...formState.details};
+        delete newDetails[idBentuk];
+        setFormState({...formState, details: newDetails});
+        
+        // Refresh bentukList
+        const validYears = yearOrder.filter(y => y != null);
+        if (validYears.length > 0) {
+          const params = [`id_tahun_in=${validYears.join(',')}`];
+          if (isSuperAdmin && selectedProdi) {
+            params.push(`id_unit_prodi=${selectedProdi}`);
+          }
+          const queryParams = params.join('&');
+          const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
+          const masterBentuk = resAll.masterBentuk || [];
+          setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
+        }
+      } catch (e) {
+        console.error("Error deleting bentuk pembelajaran:", e);
+        
+        // Extract error message dan details dari error object
+        let errorMessage = "Gagal menghapus bentuk pembelajaran";
+        let errorDetails = null;
+        
+        if (e?.data) {
+          // Jika error memiliki data property (dari custom fetch)
+          errorMessage = e.data.error || e.data.message || errorMessage;
+          errorDetails = e.data.details || null;
+        } else if (e?.message) {
+          // Fallback ke parsing error message seperti sebelumnya
+          let msg = String(e.message).trim();
+          
+          if (msg.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(msg);
+              errorMessage = parsed.error || parsed.message || errorMessage;
+              errorDetails = parsed.details || null;
+            } catch (parseErr) {
+              const errorMatch = msg.match(/"error"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+              if (errorMatch && errorMatch[1]) {
+                errorMessage = errorMatch[1]
+                  .replace(/\\"/g, '"')
+                  .replace(/\\n/g, '\n')
+                  .replace(/\\t/g, '\t')
+                  .replace(/\\r/g, '\r')
+                  .replace(/\\\\/g, '\\');
+              } else {
+                errorMessage = msg;
+              }
+            }
+          } else {
+            errorMessage = msg;
+          }
+        }
+        
+        let htmlContent = `<div style="text-align: left; padding: 10px; white-space: pre-wrap;">${errorMessage}</div>`;
+        if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
+          htmlContent += `<div style="text-align: left; padding: 10px; margin-top: 10px; background-color: #f8f9fa; border-radius: 5px;">`;
+          htmlContent += `<strong>Data yang menggunakan bentuk pembelajaran ini:</strong><ul style="margin-top: 5px; padding-left: 20px;">`;
+          errorDetails.forEach(detail => {
+            htmlContent += `<li style="margin-bottom: 5px;">${detail}</li>`;
+          });
+          htmlContent += `</ul></div>`;
+        }
+        
+        Swal.fire({
+          title: "Gagal Menghapus Bentuk Pembelajaran",
+          html: htmlContent,
+          icon: "error",
+          confirmButtonText: "OK",
+          width: "600px"
+        });
+      }
+    }
+  };
 
   // Handler untuk reset form
   const resetForm = () => {
@@ -183,6 +325,8 @@ export default function Tabel2C({ role }) {
       details: {}
     });
     setEditingYear(null);
+    setIsEditMode(false);
+    setCustomBentukList([]); // Reset custom bentuk list
   };
 
   // Handler untuk buka modal tambah/edit
@@ -191,6 +335,7 @@ export default function Tabel2C({ role }) {
       // Edit mode - perlu ambil id_unit_prodi dari data existing
       const yearData = dataByYear[yearId];
       setEditingYear(yearId);
+      setIsEditMode(true);
       
       // Untuk edit, kita perlu fetch data lengkap untuk dapat id_unit_prodi
       // Atau bisa dari dataByYear jika kita simpan
@@ -203,10 +348,12 @@ export default function Tabel2C({ role }) {
         link_bukti: yearData.link || "",
         details: yearData.counts || {}
       });
+      setCustomBentukList([]); // Reset custom bentuk list saat edit mode
     } else {
       // Tambah mode (untuk tahun TS yang dipilih)
       resetForm();
       setEditingYear(selectedYear || yearOrder[0]);
+      setIsEditMode(false);
     }
     setShowModal(true);
   };
@@ -229,13 +376,49 @@ export default function Tabel2C({ role }) {
     try {
       setSaving(true);
 
+      // Handle custom bentuk pembelajaran: buat bentuk pembelajaran baru di master terlebih dahulu
+      const customBentukIds = {};
+      for (const customBentuk of customBentukList) {
+        if (customBentuk.nama && customBentuk.nama.trim() && customBentuk.jumlah && Number(customBentuk.jumlah) > 0) {
+          try {
+            const createResult = await apiFetch("/tabel2c-bentuk-pembelajaran", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nama_bentuk: customBentuk.nama.trim() })
+            });
+            if (createResult?.id) {
+              customBentukIds[customBentuk.nama] = createResult.id;
+            }
+          } catch (err) {
+            console.error("Error creating bentuk pembelajaran:", err);
+            Swal.fire("Error", `Gagal membuat bentuk pembelajaran "${customBentuk.nama}": ${err?.message || "Error tidak diketahui"}`, "error");
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
       // Convert details object to array format yang diharapkan backend
+      // Include bentuk master yang sudah ada
       const detailsArray = Object.entries(formState.details)
-        .filter(([_, jumlah]) => jumlah && Number(jumlah) > 0)
+        .filter(([id_bentuk, jumlah_mahasiswa_ikut]) => {
+          // Filter hanya yang valid dan bukan custom (custom di-handle terpisah)
+          return jumlah_mahasiswa_ikut && Number(jumlah_mahasiswa_ikut) > 0 && !isNaN(Number(id_bentuk));
+        })
         .map(([id_bentuk, jumlah_mahasiswa_ikut]) => ({
           id_bentuk: Number(id_bentuk),
           jumlah_mahasiswa_ikut: Number(jumlah_mahasiswa_ikut)
         }));
+
+      // Tambahkan custom bentuk yang sudah dibuat
+      for (const customBentuk of customBentukList) {
+        if (customBentuk.nama && customBentukIds[customBentuk.nama] && customBentuk.jumlah && Number(customBentuk.jumlah) > 0) {
+          detailsArray.push({
+            id_bentuk: customBentukIds[customBentuk.nama],
+            jumlah_mahasiswa_ikut: Number(customBentuk.jumlah)
+          });
+        }
+      }
 
       // Determine id_unit_prodi: dari form untuk superadmin, atau dari user untuk prodi
       let finalIdUnitProdi;
@@ -268,40 +451,25 @@ export default function Tabel2C({ role }) {
         body: JSON.stringify(payload)
       });
 
-      Swal.fire("Berhasil!", dataByYear[editingYear]?.hasData ? "Data berhasil diperbarui" : "Data berhasil ditambahkan", "success");
+      Swal.fire("Berhasil!", isEditMode ? "Data berhasil diperbarui" : "Data berhasil ditambahkan", "success");
       
       handleCloseModal();
       
-      // Refresh data
+      // Refresh data termasuk master bentuk (untuk mendapatkan bentuk baru yang dibuat)
       const validYears = yearOrder.filter(y => y != null);
       if (validYears.length > 0) {
-        const yearParams = `id_tahun_in=${validYears.join(',')}`;
-        const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${yearParams}`);
+        const params = [`id_tahun_in=${validYears.join(',')}`];
+        if (isSuperAdmin && selectedProdi) {
+          params.push(`id_unit_prodi=${selectedProdi}`);
+        }
+        const queryParams = params.join('&');
+        const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         const masterBentuk = resAll.masterBentuk || [];
         const dataTahunan = resAll.dataTahunan || [];
         const dataDetails = resAll.dataDetails || [];
         setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
         
-        const map = {};
-        yearOrder.forEach((y) => {
-          if (y != null) {
-            const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
-            if (tahunData) {
-              const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
-              const link = tahunData.link_bukti || "";
-              const id_tahunan = tahunData.id;
-              const id_unit_prodi = tahunData.id_unit_prodi || null;
-              const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
-              const counts = {};
-              details.forEach((d) => {
-                counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
-              });
-              map[y] = { aktif, link, counts, id_tahunan, id_unit_prodi, hasData: true };
-            } else {
-              map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, hasData: false };
-            }
-          }
-        });
+        const map = mapDataByYear(dataTahunan, dataDetails, yearOrder);
         setDataByYear(map);
       }
     } catch (e) {
@@ -312,7 +480,7 @@ export default function Tabel2C({ role }) {
     }
   };
 
-  // Handler untuk delete
+  // Handler untuk delete (hard delete permanen)
   const handleDelete = async () => {
     if (!yearOrder[0] || !dataByYear[yearOrder[0]]?.id_tahunan) {
       Swal.fire("Info", "Tidak ada data untuk dihapus", "info");
@@ -320,53 +488,39 @@ export default function Tabel2C({ role }) {
     }
 
     const confirm = await Swal.fire({
-      title: "Yakin ingin menghapus?",
-      text: "Data akan dihapus secara permanen",
+      title: "Yakin ingin menghapus permanen?",
+      text: "Data akan dihapus secara permanen dan tidak dapat dipulihkan!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, hapus!",
+      confirmButtonText: "Ya, hapus permanen!",
       cancelButtonText: "Batal"
     });
 
     if (confirm.isConfirmed) {
       try {
-        await apiFetch(`/tabel2c-fleksibilitas-pembelajaran/${dataByYear[yearOrder[0]].id_tahunan}`, {
+        await apiFetch(`/tabel2c-fleksibilitas-pembelajaran/${dataByYear[yearOrder[0]].id_tahunan}/hard`, {
           method: "DELETE"
         });
         
-        Swal.fire("Berhasil", "Data berhasil dihapus", "success");
+        Swal.fire("Berhasil", "Data berhasil dihapus secara permanen", "success");
         
         // Refresh data
         const validYears = yearOrder.filter(y => y != null);
         if (validYears.length > 0) {
-          const yearParams = `id_tahun_in=${validYears.join(',')}`;
-          const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${yearParams}`);
+          const params = [`id_tahun_in=${validYears.join(',')}`];
+          if (isSuperAdmin && selectedProdi) {
+            params.push(`id_unit_prodi=${selectedProdi}`);
+          }
+          const queryParams = params.join('&');
+          const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
           const dataTahunan = resAll.dataTahunan || [];
           const dataDetails = resAll.dataDetails || [];
           setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
           
-          const map = {};
-          yearOrder.forEach((y) => {
-            if (y != null) {
-              const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
-              if (tahunData) {
-                const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
-                const link = tahunData.link_bukti || "";
-                const id_tahunan = tahunData.id;
-                const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
-                const counts = {};
-                details.forEach((d) => {
-                  counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
-                });
-                map[y] = { aktif, link, counts, id_tahunan, hasData: true };
-              } else {
-                map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, hasData: false };
-              }
-            }
-          });
+          const map = mapDataByYear(dataTahunan, dataDetails, yearOrder);
           setDataByYear(map);
         }
       } catch (e) {
@@ -390,7 +544,7 @@ export default function Tabel2C({ role }) {
       </header>
 
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-slate-700">Tahun (TS):</label>
           <select
             value={selectedYear}
@@ -401,6 +555,23 @@ export default function Tabel2C({ role }) {
               <option key={y.id} value={y.id}>{y.text}</option>
             ))}
           </select>
+          
+          {/* Filter Prodi khusus untuk superadmin */}
+          {isSuperAdmin && (
+            <>
+              <label className="text-sm font-medium text-slate-700 ml-2">Prodi:</label>
+              <select
+                value={selectedProdi}
+                onChange={(e) => setSelectedProdi(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                required
+              >
+                {availableProdi.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nama}</option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
         <div className="inline-flex items-center gap-2">
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
@@ -409,7 +580,8 @@ export default function Tabel2C({ role }) {
           {canCreate && (
             <button
               onClick={() => handleOpenModal()}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
+              disabled={loading}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Tambah Data
             </button>
@@ -442,12 +614,17 @@ export default function Tabel2C({ role }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               <tr className="bg-white hover:bg-[#eaf4ff]">
-                <td className="px-4 py-3 text-slate-800 border border-slate-200">Jumlah Mahasiswa Aktif</td>
-                {yearOrder.map((y, idx) => (
-                  <td key={y ?? `null-${idx}`} className="px-4 py-3 text-slate-800 border border-slate-200 text-center">
-                    {y != null ? (dataByYear[y]?.aktif ?? 0) : 0}
-                  </td>
-                ))}
+                <td className="px-4 py-3 text-slate-800 border border-slate-200">
+                  Jumlah Mahasiswa Aktif
+                </td>
+                {yearOrder.map((y, idx) => {
+                  const yearData = y != null ? dataByYear[y] : null;
+                  return (
+                    <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
+                      {y != null ? (yearData?.aktif ?? 0) : 0}
+                    </td>
+                  );
+                })}
                 <td className="px-4 py-3 border border-slate-200">
                   {yearOrder[0] != null && dataByYear[yearOrder[0]]?.link ? (
                     <a href={dataByYear[yearOrder[0]]?.link} target="_blank" rel="noreferrer" className="text-[#0384d6] hover:underline">
@@ -487,37 +664,48 @@ export default function Tabel2C({ role }) {
                 </td>
               </tr>
 
-              {bentukList.map((b) => (
-                <tr key={b.id_bentuk} className="transition-colors bg-white hover:bg-[#eaf4ff]">
-                  <td className="px-4 py-3 text-slate-800 border border-slate-200">{b.nama_bentuk}</td>
-                  {yearOrder.map((y, idx) => (
-                    <td key={y ?? `null-${idx}`} className="px-4 py-3 text-slate-800 border border-slate-200 text-center">
-                      {y != null ? (dataByYear[y]?.counts?.[b.id_bentuk] ?? 0) : 0}
-                    </td>
-                  ))}
-                  <td className="px-4 py-3 border border-slate-200"></td>
-                  <td className="px-4 py-3 border border-slate-200"></td>
-                </tr>
-              ))}
+              {bentukList.map((b) => {
+                return (
+                  <tr key={b.id_bentuk} className="transition-colors bg-white hover:bg-[#eaf4ff]">
+                    <td className="px-4 py-3 border border-slate-200 text-slate-800">{b.nama_bentuk}</td>
+                    {yearOrder.map((y, idx) => {
+                      const yearData = y != null ? dataByYear[y] : null;
+                      return (
+                        <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
+                          {y != null ? (yearData?.counts?.[b.id_bentuk] ?? 0) : 0}
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-3 border border-slate-200"></td>
+                    <td className="px-4 py-3 border border-slate-200"></td>
+                  </tr>
+                );
+              })}
 
               <tr className="bg-slate-50">
-                <td className="px-4 py-3 border border-slate-200 text-slate-800 font-semibold">Jumlah</td>
-                {yearOrder.map((y, idx) => (
-                  <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                    {y != null ? (totalsByYear[y] ?? 0) : 0}
-                  </td>
-                ))}
+                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">Jumlah</td>
+                {yearOrder.map((y, idx) => {
+                  const yearData = y != null ? dataByYear[y] : null;
+                  return (
+                    <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center font-semibold text-slate-800">
+                      {y != null ? (totalsByYear[y] ?? 0) : 0}
+                    </td>
+                  );
+                })}
                 <td className="px-4 py-3 border border-slate-200"></td>
                 <td className="px-4 py-3 border border-slate-200"></td>
               </tr>
 
               <tr className="bg-slate-50">
-                <td className="px-4 py-3 border border-slate-200 text-slate-800 font-semibold">Persentase</td>
-                {yearOrder.map((y, idx) => (
-                  <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                    {y != null ? ((percentByYear[y] ?? 0).toFixed(2)) : "0.00"}%
-                  </td>
-                ))}
+                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">Persentase</td>
+                {yearOrder.map((y, idx) => {
+                  const yearData = y != null ? dataByYear[y] : null;
+                  return (
+                    <td key={y ?? `null-${idx}`} className="px-4 py-3 border border-slate-200 text-center font-semibold text-slate-800">
+                      {y != null ? ((percentByYear[y] ?? 0).toFixed(2)) : "0.00"}%
+                    </td>
+                  );
+                })}
                 <td className="px-4 py-3 border border-slate-200"></td>
                 <td className="px-4 py-3 border border-slate-200"></td>
               </tr>
@@ -536,7 +724,7 @@ export default function Tabel2C({ role }) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h3 className="text-xl font-bold">
-                {editingYear && dataByYear[editingYear]?.hasData ? "Edit Data Fleksibilitas Pembelajaran" : "Tambah Data Fleksibilitas Pembelajaran"}
+                {isEditMode ? "Edit Data Fleksibilitas Pembelajaran" : "Tambah Data Fleksibilitas Pembelajaran"}
               </h3>
               <p className="text-white/80 mt-1 text-sm">
                 Tahun Akademik: {editingYear ? getTahunName(editingYear) : ""}
@@ -618,8 +806,70 @@ export default function Tabel2C({ role }) {
                             className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                             placeholder="0"
                           />
+                          {canDeleteBentuk && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBentuk(b.id_bentuk, b.nama_bentuk)}
+                              className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Hapus bentuk pembelajaran dari master"
+                            >
+                              🗑️
+                            </button>
+                          )}
                         </div>
                       ))}
+                      
+                      {/* Custom bentuk pembelajaran yang ditambahkan dinamis */}
+                      {customBentukList.map((customBentuk, idx) => (
+                        <div key={`custom-${idx}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <input
+                            type="text"
+                            value={customBentuk.nama}
+                            onChange={(e) => {
+                              const updated = [...customBentukList];
+                              updated[idx].nama = e.target.value;
+                              setCustomBentukList(updated);
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                            placeholder="Nama bentuk pembelajaran"
+                            required
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            value={customBentuk.jumlah || ""}
+                            onChange={(e) => {
+                              const updated = [...customBentukList];
+                              updated[idx].jumlah = e.target.value === "" ? "" : Number(e.target.value);
+                              setCustomBentukList(updated);
+                            }}
+                            className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                            placeholder="0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = customBentukList.filter((_, i) => i !== idx);
+                              setCustomBentukList(updated);
+                            }}
+                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Hapus bentuk pembelajaran"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Button Tambah Bentuk Pembelajaran */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomBentukList([...customBentukList, { nama: "", jumlah: "" }]);
+                        }}
+                        className="w-full px-4 py-2 border-2 border-dashed border-[#0384d6] text-[#0384d6] rounded-lg hover:bg-[#eaf3ff] transition-colors font-medium flex items-center justify-center gap-2"
+                      >
+                        + Tambah Bentuk Pembelajaran
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -638,7 +888,7 @@ export default function Tabel2C({ role }) {
                     disabled={saving || !formState.jumlah_mahasiswa_aktif || (isSuperAdmin && !formState.id_unit_prodi)}
                     className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {saving ? "Menyimpan..." : (editingYear && dataByYear[editingYear]?.hasData ? "Perbarui" : "Simpan")}
+                    {saving ? "Menyimpan..." : (isEditMode ? "Perbarui" : "Simpan")}
                   </button>
                 </div>
               </form>

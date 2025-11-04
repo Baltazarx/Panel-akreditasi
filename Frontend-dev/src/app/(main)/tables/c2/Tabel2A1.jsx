@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
@@ -20,6 +20,9 @@ export default function Tabel2A1({ role }) {
   const [showDeletedMaba, setShowDeletedMaba] = useState(false);
   const [selectedYearPend, setSelectedYearPend] = useState('');
   const [selectedYearMaba, setSelectedYearMaba] = useState('');
+  
+  // Flag untuk memastikan tahun default hanya di-set sekali
+  const hasSetDefaultYear = useRef(false);
   
   // Selection states for bulk actions
   const [selectedRowsPend, setSelectedRowsPend] = useState([]);
@@ -97,6 +100,50 @@ export default function Tabel2A1({ role }) {
   };
 
   useEffect(() => { setRowsGabungan(combineRows(rowsPend, rowsMaba)); }, [rowsPend, rowsMaba]);
+  
+  // Set default tahun saat pertama kali maps dimuat berdasarkan tahun sistem
+  useEffect(() => {
+    if (!mapsLoading && maps?.tahun && Object.keys(maps.tahun).length > 0 && !hasSetDefaultYear.current) {
+      // Deteksi tahun saat ini dari sistem
+      const currentYear = new Date().getFullYear();
+      
+      // Cari tahun yang sesuai dengan tahun sistem dari maps.tahun
+      const tahunList = Object.values(maps.tahun);
+      if (tahunList.length > 0) {
+        // Cari tahun yang mengandung tahun saat ini (misal: "2024/2025" mengandung 2024)
+        let tahunTerpilih = null;
+        
+        // Prioritas 1: Cari tahun yang persis sama dengan tahun saat ini
+        tahunTerpilih = tahunList.find(t => {
+          const tahunStr = String(t.tahun || '');
+          return tahunStr.includes(String(currentYear));
+        });
+        
+        // Prioritas 2: Jika tidak ditemukan, cari tahun terdekat (tahun akademik yang mengandung tahun saat ini atau tahun sebelumnya)
+        if (!tahunTerpilih) {
+          tahunTerpilih = tahunList.find(t => {
+            const tahunStr = String(t.tahun || '');
+            const tahunInt = parseInt(tahunStr.split('/')[0]) || 0;
+            return tahunInt >= currentYear - 1 && tahunInt <= currentYear;
+          });
+        }
+        
+        // Prioritas 3: Jika masih tidak ditemukan, gunakan tahun terbaru berdasarkan id_tahun
+        if (!tahunTerpilih) {
+          tahunTerpilih = tahunList.reduce((latest, current) => 
+            (Number(current.id_tahun) > Number(latest.id_tahun)) ? current : latest
+          );
+        }
+        
+        if (tahunTerpilih) {
+          setSelectedYearPend(String(tahunTerpilih.id_tahun));
+          setSelectedYearMaba(String(tahunTerpilih.id_tahun));
+          hasSetDefaultYear.current = true;
+        }
+      }
+    }
+  }, [mapsLoading, maps?.tahun]);
+  
   useEffect(() => { 
     fetchPend(); 
     setSelectedRowsPend([]);
