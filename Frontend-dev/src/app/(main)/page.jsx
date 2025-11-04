@@ -468,32 +468,129 @@ const QuickActions = () => {
     );
 };
 
-// Komponen Berita Terbaru
+// Komponen Statistik Cards untuk Dashboard - Style seperti Layanan Cepat
+const StatistikCards = () => {
+    const [stats, setStats] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setStats([
+                { 
+                    title: 'Total Tabel', 
+                    value: '97', 
+                    icon: FiDatabase, 
+                    color: 'from-blue-500 to-cyan-500',
+                    change: '+12%',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Data Terisi', 
+                    value: '1,248', 
+                    icon: FiFileText, 
+                    color: 'from-green-500 to-emerald-500',
+                    change: '+8%',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Tabel Aktif', 
+                    value: '24', 
+                    icon: FiBarChart, 
+                    color: 'from-purple-500 to-violet-500',
+                    change: '+3',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Update Hari Ini', 
+                    value: '156', 
+                    icon: FiTrendingUp, 
+                    color: 'from-orange-500 to-red-500',
+                    change: '+45',
+                    trend: 'up'
+                }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
+                        <div className="h-6 bg-slate-200 rounded mb-4"></div>
+                        <div className="h-8 bg-slate-200 rounded mb-2"></div>
+                        <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                ))
+            ) : (
+                stats.map((stat, index) => {
+                    const IconComponent = stat.icon;
+                    return (
+                        <motion.div
+                            key={index}
+                            variants={slideUp}
+                            initial="hidden"
+                            animate="visible"
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                            className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100/50 backdrop-blur-sm overflow-hidden"
+                        >
+                            <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                            <div className="relative z-10 mb-6">
+                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <IconComponent className="w-8 h-8" />
+                                </div>
+                            </div>
+                            <div className="relative z-10">
+                                <div className="mb-2">
+                                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                                        stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        {stat.change}
+                                    </span>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-3 text-slate-900">
+                                    {stat.value}
+                                </h3>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {stat.title}
+                                </p>
+                            </div>
+                        </motion.div>
+                    );
+                })
+            )}
+        </div>
+    );
+};
+
+// Komponen Berita Terbaru - Style seperti Layanan Cepat
 const BeritaTerbaru = () => {
     const router = useRouter();
     const [berita, setBerita] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Data berita (dari halaman berita yang sudah ada)
     const tpmNewsData = [
         {
             id: 1,
             title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
             excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
             date: "2025-10-02",
-            color: "blue"
+            color: "from-blue-500 to-cyan-500",
+            icon: FiNewspaper
         },
         {
             id: 2,
             title: "Persiapan Akreditasi Program Studi Teknik Informatika",
             excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
             date: "2025-09-28",
-            color: "emerald"
+            color: "from-green-500 to-emerald-500",
+            icon: FiFileText
         }
     ];
 
     useEffect(() => {
-        // Simulasi loading
         setTimeout(() => {
             setBerita(tpmNewsData);
             setLoading(false);
@@ -504,93 +601,96 @@ const BeritaTerbaru = () => {
         const date = new Date(dateString);
         return date.toLocaleDateString('id-ID', {
             year: 'numeric',
-            month: 'long',
+            month: 'short',
             day: 'numeric'
         });
     };
 
     return (
-        <motion.section 
+        <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="py-12 px-4 sm:px-8 bg-white"
+            className="space-y-6"
         >
-            <div className="container mx-auto max-w-7xl">
-                <motion.div variants={fadeIn} className="mb-8">
-                    <div className="flex items-center gap-3 mb-4">
-                        <FiNewspaper className="w-8 h-8 text-[#0384d6]" />
-                        <h2 className="text-3xl font-bold" style={{ color: '#043975' }}>
-                            Berita Terbaru
-                        </h2>
-                    </div>
-                    <div className="w-20 h-1 rounded-full bg-[#ffbf1b]"></div>
-                </motion.div>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Berita Terbaru</h3>
+                <button 
+                    onClick={() => router.push('/berita')}
+                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
 
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[1, 2].map((i) => (
-                            <div key={i} className="bg-gray-100 rounded-2xl p-6 animate-pulse">
-                                <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <motion.div 
-                        variants={staggerContainer}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                    >
-                        {berita.map((item) => (
+            {loading ? (
+                <div className="space-y-6">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50">
+                            <div className="h-6 bg-slate-200 rounded mb-4 w-3/4"></div>
+                            <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {berita.map((item) => {
+                        const IconComponent = item.icon;
+                        return (
                             <motion.div
                                 key={item.id}
                                 variants={slideUp}
-                                whileHover={{ y: -4, scale: 1.02 }}
-                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 p-6 cursor-pointer"
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
                                 onClick={() => router.push('/berita')}
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                        item.color === 'blue' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
-                                    }`}>
-                                        {item.color === 'blue' ? 'Pengumuman' : 'Berita'}
-                                    </span>
-                                    <span className="text-xs text-gray-500">{formatDate(item.date)}</span>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className="relative z-10 mb-6">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="w-8 h-8" />
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold mb-3 text-gray-900 group-hover:text-[#043975] transition-colors">
-                                    {item.title}
-                                </h3>
-                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                                    {item.excerpt}
-                                </p>
-                                <div className="flex items-center text-sm font-medium text-[#0384d6]">
-                                    <span>Baca selengkapnya</span>
-                                    <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                <div className="relative z-10">
+                                    <div className="mb-2">
+                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
+                                            {formatDate(item.date)}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
+                                        {item.title}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                        {item.excerpt}
+                                    </p>
+                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                                        <span>Baca selengkapnya</span>
+                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
                                 </div>
                             </motion.div>
-                        ))}
-                    </motion.div>
-                )}
-            </div>
-        </motion.section>
+                        );
+                    })}
+                </div>
+            )}
+        </motion.div>
     );
 };
 
-// Komponen Grafik Semua Tabel
+// Komponen Grafik Semua Tabel - Style seperti Layanan Cepat
 const GrafikTabel = () => {
     const router = useRouter();
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulasi data grafik
         setTimeout(() => {
             setChartData([
-                { name: 'C1', count: 12, color: 'from-blue-500 to-cyan-500' },
-                { name: 'C2', count: 8, color: 'from-purple-500 to-violet-500' },
-                { name: 'Data Dosen', count: 45, color: 'from-green-500 to-emerald-500' },
-                { name: 'Data Pegawai', count: 32, color: 'from-orange-500 to-red-500' }
+                { name: 'C1', count: 12, color: 'from-blue-500 to-cyan-500', icon: FiBarChart, description: 'Standar C1' },
+                { name: 'C2', count: 8, color: 'from-purple-500 to-violet-500', icon: FiTrendingUp, description: 'Standar C2' },
+                { name: 'Data Dosen', count: 45, color: 'from-green-500 to-emerald-500', icon: FiUsers, description: 'Master Data' },
+                { name: 'Data Pegawai', count: 32, color: 'from-orange-500 to-red-500', icon: FiUsers, description: 'Master Data' }
             ]);
             setLoading(false);
         }, 500);
@@ -599,68 +699,90 @@ const GrafikTabel = () => {
     const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
     return (
-        <motion.section 
+        <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="py-12 px-4 sm:px-8"
-            style={{ backgroundColor: '#f8fafc' }}
         >
-            <div className="container mx-auto max-w-7xl">
-                <motion.div variants={fadeIn} className="mb-8">
-                    <div className="flex items-center gap-3 mb-4">
-                        <FiBarChart className="w-8 h-8 text-[#0384d6]" />
-                        <h2 className="text-3xl font-bold" style={{ color: '#043975' }}>
-                            Grafik Data Tabel
-                        </h2>
-                    </div>
-                    <div className="w-20 h-1 rounded-full bg-[#ffbf1b]"></div>
-                </motion.div>
+            <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-slate-900">Grafik Data Tabel</h3>
+                <button 
+                    onClick={() => router.push('/tables')}
+                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
 
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl p-6 shadow-lg animate-pulse">
-                                <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                                <div className="h-32 bg-gray-200 rounded"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <motion.div 
-                        variants={staggerContainer}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                    >
-                        {chartData.map((item, index) => (
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
+                            <div className="h-6 bg-slate-200 rounded mb-4"></div>
+                            <div className="h-32 bg-slate-200 rounded-2xl"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <motion.div 
+                    variants={staggerContainer}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                >
+                    {chartData.map((item, index) => {
+                        const IconComponent = item.icon;
+                        return (
                             <motion.div
                                 key={index}
                                 variants={slideUp}
-                                whileHover={{ y: -4, scale: 1.02 }}
-                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 cursor-pointer border border-gray-100"
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
                                 onClick={() => router.push(`/tables?table=${item.name}`)}
                             >
-                                <h3 className="text-lg font-bold mb-4 text-gray-900 group-hover:text-[#043975] transition-colors">
-                                    {item.name}
-                                </h3>
-                                <div className="relative h-32 bg-gray-100 rounded-lg overflow-hidden">
-                                    <div 
-                                        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${item.color} transition-all duration-500`}
-                                        style={{ 
-                                            height: `${(item.count / maxCount) * 100}%`,
-                                            opacity: 0.8
-                                        }}
-                                    ></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="text-3xl font-bold text-gray-700 z-10">{item.count}</span>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className="relative z-10 mb-6">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="w-8 h-8" />
                                     </div>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-4 text-center">Total Data</p>
+                                <div className="relative z-10">
+                                    <div className="mb-2">
+                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
+                                            {item.description}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
+                                        {item.name}
+                                    </h3>
+                                    
+                                    {/* Mini Chart */}
+                                    <div className="relative h-32 bg-gradient-to-b from-slate-50 to-slate-100 rounded-2xl overflow-hidden mb-4 group-hover:shadow-lg transition-shadow duration-300">
+                                        <motion.div 
+                                            initial={{ height: 0 }}
+                                            animate={{ height: `${(item.count / maxCount) * 100}%` }}
+                                            transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
+                                            className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${item.color} shadow-lg`}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent"></div>
+                                        </motion.div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-3xl font-bold text-slate-800 z-10 drop-shadow-sm">
+                                                {item.count}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                                        <span>Lihat Detail</span>
+                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                </div>
                             </motion.div>
-                        ))}
-                    </motion.div>
-                )}
-            </div>
-        </motion.section>
+                        );
+                    })}
+                </motion.div>
+            )}
+        </motion.div>
     );
 };
 
@@ -786,17 +908,78 @@ export default function App() {
                           key="content"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1, transition: { duration: 0.5 } }}
-                          className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc]"
+                          className="min-h-screen bg-slate-50"
                         >
-                          <div className="pt-20 pb-8">
-                            <BeritaTerbaru />
-                            <GrafikTabel />
+                          <div className="pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+                            <div className="container mx-auto max-w-7xl">
+                              {/* Header Dashboard */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-8"
+                              >
+                                <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+                                <p className="text-slate-600">Selamat datang kembali! Berikut ringkasan data Anda.</p>
+                              </motion.div>
+
+                              {/* Statistik Cards */}
+                              <StatistikCards />
+
+                              {/* Berita & Akses Cepat dalam Grid Layout */}
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                                {/* Berita Terbaru - 2 kolom */}
+                                <div className="lg:col-span-2">
+                                  <BeritaTerbaru />
+                                </div>
+                                
+                                {/* Widget Quick Actions - 1 kolom */}
+                                <div className="lg:col-span-1">
+                                  <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    variants={slideUp}
+                                    className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100/50 backdrop-blur-sm h-full"
+                                  >
+                                    <div className="mb-6">
+                                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg mb-4">
+                                        <FiTarget className="w-8 h-8" />
+                                      </div>
+                                      <h3 className="text-xl font-bold mb-3 text-slate-900">Akses Cepat</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                      {[
+                                        { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500' },
+                                        { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500' },
+                                        { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500' },
+                                        { label: 'Berita', path: '/berita', icon: FiNewspaper, color: 'from-orange-500 to-red-500' }
+                                      ].map((item, i) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                          <motion.button
+                                            key={i}
+                                            whileHover={{ x: 4 }}
+                                            onClick={() => router.push(item.path)}
+                                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                          >
+                                            <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} opacity-80 group-hover:opacity-100 transition-opacity`}>
+                                              <IconComponent className="w-4 h-4 text-white" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700 group-hover:text-[#043975] transition-colors flex-1">{item.label}</span>
+                                            <FiArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all" />
+                                          </motion.button>
+                                        );
+                                      })}
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              </div>
+
+                              {/* Grafik Data Tabel */}
+                              <GrafikTabel />
+                            </div>
                           </div>
                           <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
-                            <MobileTablesSection />
-                            <div className="hidden md:block">
-                                <TablesSection />
-                            </div>
                             <QuickActions />
                           </div>
                         </motion.div>
