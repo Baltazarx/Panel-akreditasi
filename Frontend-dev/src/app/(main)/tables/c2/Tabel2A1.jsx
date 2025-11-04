@@ -20,6 +20,7 @@ export default function Tabel2A1({ role }) {
   const [showDeletedMaba, setShowDeletedMaba] = useState(false);
   const [selectedYearPend, setSelectedYearPend] = useState('');
   const [selectedYearMaba, setSelectedYearMaba] = useState('');
+  const [selectedUnitProdi, setSelectedUnitProdi] = useState('4'); // Default TI
   
   // Flag untuk memastikan tahun default hanya di-set sekali
   const hasSetDefaultYear = useRef(false);
@@ -100,6 +101,138 @@ export default function Tabel2A1({ role }) {
   };
 
   useEffect(() => { setRowsGabungan(combineRows(rowsPend, rowsMaba)); }, [rowsPend, rowsMaba]);
+
+  // Fungsi untuk memproses data menjadi format TS-3, TS-2, TS-1, TS
+  const processDataForTable = (unitProdiId) => {
+    if (!selectedYearPend || !maps?.tahun) return [];
+
+    const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+    const currentYearId = parseInt(selectedYearPend);
+    const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+    
+    if (currentYearIndex === -1) return [];
+
+    const result = [];
+    
+    // TS, TS-1, TS-2, TS-3
+    for (let i = 0; i <= 3; i++) {
+      const yearIndex = currentYearIndex - i;
+      if (yearIndex < 0 || yearIndex >= tahunList.length) {
+        result.push({
+          ts: i === 0 ? 'TS' : `TS-${i}`,
+          tahun: null,
+          tahunId: null,
+          dayaTampung: 0,
+          pendaftar: 0,
+          pendaftarAfirmasi: 0,
+          pendaftarKebutuhanKhusus: 0,
+          baruRegulerDiterima: 0,
+          baruRegulerAfirmasi: 0,
+          baruRegulerKebutuhanKhusus: 0,
+          baruRPLDiterima: 0,
+          baruRPLAfirmasi: 0,
+          baruRPLKebutuhanKhusus: 0,
+          aktifRegulerDiterima: 0,
+          aktifRegulerAfirmasi: 0,
+          aktifRegulerKebutuhanKhusus: 0,
+          aktifRPLDiterima: 0,
+          aktifRPLAfirmasi: 0,
+          aktifRPLKebutuhanKhusus: 0,
+        });
+        continue;
+      }
+
+      const year = tahunList[yearIndex];
+      const yearId = year.id_tahun;
+
+      // Data pendaftaran
+      const pendData = rowsPend.find(p => 
+        p.id_unit_prodi === unitProdiId && 
+        p.id_tahun === yearId && 
+        !p.deleted_at
+      );
+
+      // Data mahasiswa baru dan aktif
+      const mabaData = rowsMaba.filter(m => 
+        m.id_unit_prodi === unitProdiId && 
+        m.id_tahun === yearId && 
+        !m.deleted_at
+      );
+
+      // Proses data mahasiswa baru
+      const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+      const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+      
+      // Proses data mahasiswa aktif
+      const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+      const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+
+      result.push({
+        ts: i === 0 ? 'TS' : `TS-${i}`,
+        tahun: year.tahun,
+        tahunId: yearId,
+        dayaTampung: pendData?.daya_tampung || 0,
+        pendaftar: pendData?.pendaftar || 0,
+        pendaftarAfirmasi: pendData?.pendaftar_afirmasi || 0,
+        pendaftarKebutuhanKhusus: pendData?.pendaftar_kebutuhan_khusus || 0,
+        baruRegulerDiterima: baruReguler?.jumlah_total || 0,
+        baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || 0,
+        baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || 0,
+        baruRPLDiterima: baruRPL?.jumlah_total || 0,
+        baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || 0,
+        baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || 0,
+        aktifRegulerDiterima: aktifReguler?.jumlah_total || 0,
+        aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || 0,
+        aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || 0,
+        aktifRPLDiterima: aktifRPL?.jumlah_total || 0,
+        aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || 0,
+        aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || 0,
+      });
+    }
+
+    // Tambahkan baris Jumlah
+    const jumlah = result.reduce((acc, row) => {
+      acc.dayaTampung += row.dayaTampung;
+      acc.pendaftar += row.pendaftar;
+      acc.pendaftarAfirmasi += row.pendaftarAfirmasi;
+      acc.pendaftarKebutuhanKhusus += row.pendaftarKebutuhanKhusus;
+      acc.baruRegulerDiterima += row.baruRegulerDiterima;
+      acc.baruRegulerAfirmasi += row.baruRegulerAfirmasi;
+      acc.baruRegulerKebutuhanKhusus += row.baruRegulerKebutuhanKhusus;
+      acc.baruRPLDiterima += row.baruRPLDiterima;
+      acc.baruRPLAfirmasi += row.baruRPLAfirmasi;
+      acc.baruRPLKebutuhanKhusus += row.baruRPLKebutuhanKhusus;
+      acc.aktifRegulerDiterima += row.aktifRegulerDiterima;
+      acc.aktifRegulerAfirmasi += row.aktifRegulerAfirmasi;
+      acc.aktifRegulerKebutuhanKhusus += row.aktifRegulerKebutuhanKhusus;
+      acc.aktifRPLDiterima += row.aktifRPLDiterima;
+      acc.aktifRPLAfirmasi += row.aktifRPLAfirmasi;
+      acc.aktifRPLKebutuhanKhusus += row.aktifRPLKebutuhanKhusus;
+      return acc;
+    }, {
+      ts: 'Jumlah',
+      tahun: '',
+      tahunId: null,
+      dayaTampung: 0,
+      pendaftar: 0,
+      pendaftarAfirmasi: 0,
+      pendaftarKebutuhanKhusus: 0,
+      baruRegulerDiterima: 0,
+      baruRegulerAfirmasi: 0,
+      baruRegulerKebutuhanKhusus: 0,
+      baruRPLDiterima: 0,
+      baruRPLAfirmasi: 0,
+      baruRPLKebutuhanKhusus: 0,
+      aktifRegulerDiterima: 0,
+      aktifRegulerAfirmasi: 0,
+      aktifRegulerKebutuhanKhusus: 0,
+      aktifRPLDiterima: 0,
+      aktifRPLAfirmasi: 0,
+      aktifRPLKebutuhanKhusus: 0,
+    });
+
+    return [...result, jumlah];
+  };
   
   // Set default tahun saat pertama kali maps dimuat berdasarkan tahun sistem
   useEffect(() => {
@@ -735,18 +868,117 @@ export default function Tabel2A1({ role }) {
           tableMaba,canUMaba,canDMaba,setEditingMaba,setFormMaba,setShowModalMaba,showDeletedMaba)}
       </section>
 
-      {/* Gabungan */}
+      {/* Tabel Data Mahasiswa - Struktur Kompleks */}
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
-          <h1 className="text-2xl font-bold text-slate-800">Gabungan Pendaftaran + Mahasiswa Baru/Aktif</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Tabel 2.A.1 Data Mahasiswa</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Tabel hasil gabungan pendaftaran dan mahasiswa baru/aktif per tahun akademik.
+            Data lengkap mahasiswa berdasarkan tahun akademik (TS-3, TS-2, TS-1, TS).
           </p>
         </header>
-        {renderTable(rowsGabungan,
-          ["Unit Prodi","Tahun","Pendaftar","Mahasiswa Baru","Mahasiswa Aktif"],
-          ["id_unit_prodi","id_tahun","pendaftar","maba_baru","maba_aktif"],
-          {key:"gabungan"},false,false,()=>{},()=>{},()=>{},false)}
+
+        {/* Filter Unit Prodi */}
+        <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <YearSelector 
+              selectedYear={selectedYearPend} 
+              setSelectedYear={setSelectedYearPend} 
+              label="Tahun TS" 
+            />
+            <select
+              value={selectedUnitProdi}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+              onChange={(e) => setSelectedUnitProdi(e.target.value)}
+            >
+              <option value="4">Teknik Informatika (TI)</option>
+              <option value="5">Manajemen Informatika (MI)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Tabel dengan struktur kompleks */}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              {/* Row 1: Header utama */}
+              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Calon Mahasiswa</th>
+                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
+                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Aktif</th>
+              </tr>
+              {/* Row 2: Sub-header */}
+              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                {/* TS dan Daya Tampung sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Kebutuhan Khusus</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
+              </tr>
+              {/* Row 3: Header detail - TS dan Daya Tampung tidak perlu th karena rowSpan masih aktif */}
+              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                {/* TS dan Daya Tampung tidak perlu th karena rowSpan=3 berarti 3 baris */}
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {(() => {
+                const unitProdiId = parseInt(selectedUnitProdi) || 4;
+                const tableData = processDataForTable(unitProdiId);
+                
+                if (tableData.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={17} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                        <p className="font-medium">Data tidak ditemukan</p>
+                        <p className="text-sm">Pilih tahun TS untuk melihat data.</p>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return tableData.map((row, idx) => (
+                  <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${row.ts === 'Jumlah' ? 'bg-slate-100 font-semibold' : ''}`}>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center font-medium bg-gray-50">{row.ts}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.dayaTampung || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.pendaftar || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.pendaftarAfirmasi || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.pendaftarKebutuhanKhusus || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRegulerDiterima || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRegulerAfirmasi || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRegulerKebutuhanKhusus || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRPLDiterima || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRPLAfirmasi || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.baruRPLKebutuhanKhusus || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRegulerDiterima || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRegulerAfirmasi || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRegulerKebutuhanKhusus || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRPLDiterima || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRPLAfirmasi || ''}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.aktifRPLKebutuhanKhusus || ''}</td>
+                  </tr>
+                ));
+              })()}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {/* Modal Form Pendaftaran */}
