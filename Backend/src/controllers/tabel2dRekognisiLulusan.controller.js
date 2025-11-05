@@ -7,8 +7,18 @@ export const listRekognisi = async (req, res) => {
   try {
     const { where, params } = await buildWhere(req, 'rekognisi_lulusan_tahunan', 'rlt');
     const [masterSumber] = await pool.query('SELECT id_sumber, nama_sumber FROM sumber_rekognisi_master WHERE deleted_at IS NULL ORDER BY id_sumber');
+    
+    // Pastikan filter deleted_at ditambahkan jika belum ada
+    const hasDeletedAtFilter = where.some(w => w.includes('deleted_at'));
+    if (!hasDeletedAtFilter) {
+      const hasDeletedAtColumn = await hasColumn('rekognisi_lulusan_tahunan', 'deleted_at');
+      if (hasDeletedAtColumn && String(req.query?.include_deleted) !== '1') {
+        where.push('rlt.deleted_at IS NULL');
+      }
+    }
+    
     const sqlTahunan = `
-      SELECT rlt.id, rlt.id_tahun, th.tahun, rlt.jumlah_lulusan_ts
+      SELECT rlt.id, rlt.id_tahun, th.tahun, rlt.jumlah_lulusan_ts, rlt.deleted_at
       FROM rekognisi_lulusan_tahunan rlt
       LEFT JOIN tahun_akademik th ON rlt.id_tahun = th.id_tahun
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -222,6 +232,23 @@ export const softDeleteRekognisi = async (req, res) => {
     } catch (err) {
         console.error("Error softDeleteRekognisi:", err);
         res.status(500).json({ error: 'Gagal menghapus data' });
+    }
+};
+
+// === RESTORE (Pulihkan Data yang Sudah Di-Soft Delete) ===
+export const restoreRekognisi = async (req, res) => {
+    const { id } = req.params; // ID dari rekognisi_lulusan_tahunan
+    try {
+        const payload = { deleted_at: null };
+        if (await hasColumn('rekognisi_lulusan_tahunan', 'deleted_by')) {
+            payload.deleted_by = null;
+        }
+        const [result] = await pool.query('UPDATE rekognisi_lulusan_tahunan SET ? WHERE id = ?', [payload, id]);
+        if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
+        res.json({ message: 'Data berhasil dipulihkan' });
+    } catch (err) {
+        console.error("Error restoreRekognisi:", err);
+        res.status(500).json({ error: 'Gagal memulihkan data' });
     }
 };
 
