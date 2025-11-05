@@ -5,13 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Table, Book, User, LogOut, X, Menu, Newspaper } from 'lucide-react';
+import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3 } from 'lucide-react';
 import Image from 'next/image'; // Import komponen Image dari Next.js
 
 // Konstanta item navigasi (hindari re-create tiap render)
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/tables", label: "Tabel", icon: Table },
+  { href: "/report", label: "Report", icon: BarChart3 },
   { href: "/panduan", label: "Panduan", icon: Book },
   { href: "/berita", label: "Berita", icon: Newspaper },
 ];
@@ -280,7 +281,7 @@ export default function Header() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200/60 bg-white/95 backdrop-blur-lg shadow-xl focus:outline-none"
+                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200 bg-white shadow-xl focus:outline-none"
                     >
                       <div className="p-3 relative">
                         {/* Arrow */}
