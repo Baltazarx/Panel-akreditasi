@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 03 Nov 2025 pada 05.12
+-- Waktu pembuatan: 05 Nov 2025 pada 07.22
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -1410,6 +1410,13 @@ CREATE TABLE `tabel_2b4_masa_tunggu` (
   `deleted_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `tabel_2b4_masa_tunggu`
+--
+
+INSERT INTO `tabel_2b4_masa_tunggu` (`id`, `id_unit_prodi`, `id_tahun_lulus`, `jumlah_lulusan`, `jumlah_terlacak`, `rata_rata_waktu_tunggu_bulan`, `deleted_at`, `deleted_by`) VALUES
+(1, 4, 2025, 100, 80, 2.6, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1444,9 +1451,19 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
   `persen_baik` float DEFAULT 0,
   `persen_cukup` float DEFAULT 0,
   `persen_kurang` float DEFAULT 0,
+  `rencana_tindak_lanjut` text DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_2b6_kepuasan_pengguna`
+--
+
+INSERT INTO `tabel_2b6_kepuasan_pengguna` (`id`, `id_unit_prodi`, `id_tahun`, `jenis_kemampuan`, `persen_sangat_baik`, `persen_baik`, `persen_cukup`, `persen_kurang`, `rencana_tindak_lanjut`, `deleted_at`, `deleted_by`) VALUES
+(3, 4, 2025, 'Kerjasama Tim', 25, 25, 25, 25, 'Pertahankan', NULL, NULL),
+(4, 4, 2025, 'Keahlian di Bidang Prodi', 30, 20, 30, 20, 'Pertahankan', NULL, NULL),
+(5, 5, 2025, 'Keahlian di Bidang Prodi', 30, 20, 30, 20, 'lkdfns', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1463,6 +1480,107 @@ CREATE TABLE `tabel_3a1_sarpras_penelitian` (
   `kepemilikan` enum('M','W') DEFAULT NULL COMMENT 'Milik sendiri (M), Sewa (W)',
   `lisensi` enum('L','P','T') DEFAULT NULL COMMENT 'Berlisensi (L), Public Domain (P), atau Tidak Berlisensi (T)',
   `perangkat_detail` text DEFAULT NULL COMMENT 'Detail perangkat (keras, lunak, bandwidth, dll)',
+  `link_bukti` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_3a1_sarpras_penelitian`
+--
+
+INSERT INTO `tabel_3a1_sarpras_penelitian` (`id`, `id_unit_prodi`, `nama_sarpras`, `daya_tampung`, `luas_ruang_m2`, `kepemilikan`, `lisensi`, `perangkat_detail`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 11, 'Komputer', 30, 50, 'M', 'L', 'Hardware, Software', 'https://youtube.com', '2025-11-03 04:37:28', '2025-11-03 05:04:44', NULL, NULL),
+(2, 11, 'Basis Data', 20, 100, 'W', 'T', 'Komputer, Kursi', 'https://youtube.com', '2025-11-03 05:05:24', '2025-11-03 05:05:24', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3a2_pendanaan`
+--
+
+CREATE TABLE `tabel_3a2_pendanaan` (
+  `id_pendanaan` int(11) NOT NULL,
+  `id_penelitian` int(11) NOT NULL COMMENT 'FK ke tabel_3a2_penelitian.id',
+  `id_tahun` int(11) NOT NULL,
+  `jumlah_dana` bigint(20) NOT NULL DEFAULT 0,
+  `link_bukti` text DEFAULT NULL COMMENT 'Link bukti untuk dana di tahun ini',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_3a2_pendanaan`
+--
+
+INSERT INTO `tabel_3a2_pendanaan` (`id_pendanaan`, `id_penelitian`, `id_tahun`, `jumlah_dana`, `link_bukti`, `created_at`, `updated_at`) VALUES
+(3, 1, 2024, 10, 'https://youtube.com1', '2025-11-05 04:10:27', '2025-11-05 04:10:27'),
+(4, 2, 2026, 11, 'https://youtube.com1', '2025-11-05 04:15:38', '2025-11-05 04:15:38'),
+(6, 3, 2031, 1, 'https://youtube.com1', '2025-11-05 04:39:29', '2025-11-05 04:39:29');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3a2_penelitian`
+--
+
+CREATE TABLE `tabel_3a2_penelitian` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'FK ke unit_kerja.id_unit (Kemahasiswaan, dll.)',
+  `link_roadmap` text DEFAULT NULL,
+  `id_dosen_ketua` int(11) NOT NULL COMMENT 'FK ke tabel dosen.id_dosen',
+  `judul_penelitian` text NOT NULL,
+  `jml_mhs_terlibat` int(11) DEFAULT 0,
+  `jenis_hibah` varchar(255) DEFAULT NULL,
+  `sumber_dana` enum('L','N','I') DEFAULT NULL COMMENT 'L=Lokal, N=Nasional, I=Internasional',
+  `durasi_tahun` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_3a2_penelitian`
+--
+
+INSERT INTO `tabel_3a2_penelitian` (`id`, `id_unit`, `link_roadmap`, `id_dosen_ketua`, `judul_penelitian`, `jml_mhs_terlibat`, `jenis_hibah`, `sumber_dana`, `durasi_tahun`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 2, 'https://www.youtube.com/', 12, 'Testing', 2, 'Terapan', 'L', 1, '2025-11-04 09:28:58', '2025-11-05 04:06:18', NULL, NULL),
+(2, 12, 'https://www.youtube.com/', 3, 'Tes 2', 1, 'Hibah Dasar', 'N', 2, '2025-11-05 04:15:38', '2025-11-05 04:15:38', NULL, NULL),
+(3, 12, 'https://www.youtube1.com/', 1, 'Tes 3', 0, 'Hibah Dasar', 'I', 3, '2025-11-05 04:28:57', '2025-11-05 04:39:29', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3a3_dtpr_tahunan`
+--
+
+CREATE TABLE `tabel_3a3_dtpr_tahunan` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL,
+  `id_tahun` int(11) NOT NULL COMMENT 'Tahun data (TS, TS-1, atau TS-2)',
+  `jumlah_dtpr` int(11) DEFAULT 0,
+  `link_bukti` text DEFAULT NULL COMMENT 'Link bukti untuk 1 baris/tahun ini',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3a3_pengembangan`
+--
+
+CREATE TABLE `tabel_3a3_pengembangan` (
+  `id_pengembangan` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL,
+  `id_dosen` int(11) NOT NULL,
+  `jenis_pengembangan` varchar(255) NOT NULL,
+  `id_tahun` int(11) NOT NULL COMMENT 'Tahun pelaksanaan (bisa TS, TS-1, atau TS-2)',
   `link_bukti` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -1660,7 +1778,8 @@ INSERT INTO `users` (`id_user`, `id_pegawai`, `username`, `password`, `id_unit`,
 (5, 5, 'kepegawaian', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 10, 'kepegawaian', 1, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
 (6, 7, 'tpm', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 9, 'tpm', 1, '2025-08-21 23:54:41', '2025-09-29 08:12:54', NULL, NULL),
 (7, 6, 'prodi_mi', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 5, 'prodi', 1, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(8, 4, 'sarpras', '$2b$10$ohecv6usneiCe.L0G258H.wBQWme11K4Dwk99RIspsatdJUyJnqMm', 11, 'SARPRAS', 1, '2025-10-29 06:19:51', '2025-10-29 06:19:51', NULL, NULL);
+(8, 4, 'sarpras', '$2b$10$ohecv6usneiCe.L0G258H.wBQWme11K4Dwk99RIspsatdJUyJnqMm', 11, 'SARPRAS', 1, '2025-10-29 06:19:51', '2025-10-29 06:19:51', NULL, NULL),
+(9, 1, 'kemahasiswaan', '$2b$10$DIdZNEjirnWlE90bb7P/nu4dazkXzb8H5z4rxVKg1rrOGYkJuBWyu', 8, 'KEMAHASISWAAN', 1, '2025-11-03 05:14:47', '2025-11-03 05:14:47', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -1922,6 +2041,40 @@ ALTER TABLE `tabel_3a1_sarpras_penelitian`
   ADD KEY `id_unit_prodi` (`id_unit_prodi`);
 
 --
+-- Indeks untuk tabel `tabel_3a2_pendanaan`
+--
+ALTER TABLE `tabel_3a2_pendanaan`
+  ADD PRIMARY KEY (`id_pendanaan`),
+  ADD KEY `id_penelitian` (`id_penelitian`),
+  ADD KEY `id_tahun` (`id_tahun`);
+
+--
+-- Indeks untuk tabel `tabel_3a2_penelitian`
+--
+ALTER TABLE `tabel_3a2_penelitian`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_unit` (`id_unit`),
+  ADD KEY `id_dosen_ketua` (`id_dosen_ketua`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_3a3_dtpr_tahunan`
+--
+ALTER TABLE `tabel_3a3_dtpr_tahunan`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_3a3_dtpr_tahunan_unit_idx` (`id_unit`),
+  ADD KEY `fk_3a3_dtpr_tahunan_tahun_idx` (`id_tahun`);
+
+--
+-- Indeks untuk tabel `tabel_3a3_pengembangan`
+--
+ALTER TABLE `tabel_3a3_pengembangan`
+  ADD PRIMARY KEY (`id_pengembangan`),
+  ADD KEY `fk_3a3_pengembangan_unit_idx` (`id_unit`),
+  ADD KEY `fk_3a3_pengembangan_dosen_idx` (`id_dosen`),
+  ADD KEY `fk_3a3_pengembangan_tahun_idx` (`id_tahun`);
+
+--
 -- Indeks untuk tabel `tahun_akademik`
 --
 ALTER TABLE `tahun_akademik`
@@ -2096,7 +2249,7 @@ ALTER TABLE `tabel_2a3_kondisi_mahasiswa`
 -- AUTO_INCREMENT untuk tabel `tabel_2b4_masa_tunggu`
 --
 ALTER TABLE `tabel_2b4_masa_tunggu`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_2b5_kesesuaian_kerja`
@@ -2108,13 +2261,37 @@ ALTER TABLE `tabel_2b5_kesesuaian_kerja`
 -- AUTO_INCREMENT untuk tabel `tabel_2b6_kepuasan_pengguna`
 --
 ALTER TABLE `tabel_2b6_kepuasan_pengguna`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_3a1_sarpras_penelitian`
 --
 ALTER TABLE `tabel_3a1_sarpras_penelitian`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3a2_pendanaan`
+--
+ALTER TABLE `tabel_3a2_pendanaan`
+  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3a2_penelitian`
+--
+ALTER TABLE `tabel_3a2_penelitian`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3a3_dtpr_tahunan`
+--
+ALTER TABLE `tabel_3a3_dtpr_tahunan`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3a3_pengembangan`
+--
+ALTER TABLE `tabel_3a3_pengembangan`
+  MODIFY `id_pengembangan` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `tenaga_kependidikan`
@@ -2132,7 +2309,7 @@ ALTER TABLE `unit_kerja`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
@@ -2325,6 +2502,35 @@ ALTER TABLE `tabel_2b6_kepuasan_pengguna`
 --
 ALTER TABLE `tabel_3a1_sarpras_penelitian`
   ADD CONSTRAINT `tabel_3a1_sarpras_penelitian_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3a2_pendanaan`
+--
+ALTER TABLE `tabel_3a2_pendanaan`
+  ADD CONSTRAINT `tabel_3a2_pendanaan_ibfk_1` FOREIGN KEY (`id_penelitian`) REFERENCES `tabel_3a2_penelitian` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tabel_3a2_pendanaan_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3a2_penelitian`
+--
+ALTER TABLE `tabel_3a2_penelitian`
+  ADD CONSTRAINT `tabel_3a2_penelitian_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `tabel_3a2_penelitian_ibfk_2` FOREIGN KEY (`id_dosen_ketua`) REFERENCES `dosen` (`id_dosen`) ON UPDATE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3a3_dtpr_tahunan`
+--
+ALTER TABLE `tabel_3a3_dtpr_tahunan`
+  ADD CONSTRAINT `fk_3a3_dtpr_tahunan_tahun` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_3a3_dtpr_tahunan_unit` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON UPDATE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3a3_pengembangan`
+--
+ALTER TABLE `tabel_3a3_pengembangan`
+  ADD CONSTRAINT `fk_3a3_pengembangan_dosen` FOREIGN KEY (`id_dosen`) REFERENCES `dosen` (`id_dosen`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_3a3_pengembangan_tahun` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_3a3_pengembangan_unit` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `tenaga_kependidikan`

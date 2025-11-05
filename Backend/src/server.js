@@ -51,6 +51,7 @@ import pemetaanCpmkCplRoutes from './routes/pemetaanCpmkCpl.route.js';
 // ==== C3 ROUTES ====
 import tabel3a1SarprasPenelitianRouter from './routes/tabel3a1SarprasPenelitian.route.js';
 import tabel3a2PenelitianRouter from './routes/tabel3a2Penelitian.route.js';
+import tabel3a3PengembanganDtprRouter from './routes/tabel3a3PengembanganDtpr.route.js';
 // TODO: import route lain setelah dikonversi
 
 const app = express();
@@ -139,6 +140,7 @@ app.use('/api/pemetaan-cpmk-cpl', pemetaanCpmkCplRoutes);
 // ===== C3 =====
 app.use('/api/tabel-3a1-sarpras-penelitian', tabel3a1SarprasPenelitianRouter);
 app.use('/api/tabel-3a2-penelitian', tabel3a2PenelitianRouter);
+app.use('/api/tabel-3a3-pengembangan-dtpr', tabel3a3PengembanganDtprRouter);
 
 
 // ===== 404 FALLBACK =====
