@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { apiFetch } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
@@ -64,46 +64,99 @@ export default function Tabel2B6({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    // Jangan fetch jika selectedTahun atau selectedUnit belum di-set
+    if (!selectedTahun || !selectedUnit) {
+      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit });
+      return;
+    }
+
     try {
       setLoading(true);
-      let params = "";
-      if (selectedTahun) params += `?id_tahun=${selectedTahun}`;
-      if (selectedUnit) params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
-      if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
+      let params = `?id_tahun=${selectedTahun}&id_unit_prodi=${selectedUnit}`;
+      if (showDeleted) params += "&include_deleted=1";
 
-      const result = await apiFetch(`/tabel2b6-kepuasan-pengguna${params}`);
+      const url = `/tabel2b6-kepuasan-pengguna${params}`;
+      console.log("Tabel2B6 - Fetching data:", {
+        url,
+        selectedTahun,
+        selectedUnit,
+        showDeleted
+      });
+
+      const result = await apiFetch(url);
       
-      const rows = Array.isArray(result?.data) ? result.data : [];
+      console.log("Tabel2B6 - API Response received:", {
+        hasData: !!result?.data,
+        dataLength: Array.isArray(result?.data) ? result.data.length : 0,
+        hasStatistik: !!result?.statistik,
+        result
+      });
+      
+      // Handle response - bisa berupa array langsung atau object dengan property data
+      let rows = [];
+      if (Array.isArray(result)) {
+        rows = result;
+      } else if (Array.isArray(result?.data)) {
+        rows = result.data;
+      } else if (result?.data) {
+        rows = [result.data];
+      }
+      
       setData(rows);
       setStatistik(result?.statistik || null);
     } catch (error) {
-      console.error("Error fetching data:", error);
-      Swal.fire("Error", "Gagal mengambil data", "error");
+      console.error("Tabel2B6 - Error fetching data:", {
+        message: error.message,
+        stack: error.stack,
+        error: error
+      });
+      
+      // Tampilkan error yang lebih detail
+      const errorMessage = error.message || "Gagal mengambil data dari server";
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errorMessage,
+        footer: "Periksa console browser untuk detail lebih lanjut"
+      });
+      
+      setData([]);
+      setStatistik(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTahun, selectedUnit, showDeleted]);
 
+  // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
     if (!selectedTahun && availableYears.length > 0) {
       const nowYear = new Date().getFullYear();
       const found = availableYears.find(y => (`${y.tahun}`.startsWith(nowYear.toString())));
-      if (found) setSelectedTahun(found.id);
-      else setSelectedTahun(availableYears[availableYears.length - 1].id);
+      if (found) {
+        console.log("Tabel2B6 - Auto-selecting tahun:", found.id);
+        setSelectedTahun(found.id);
+      } else {
+        console.log("Tabel2B6 - Auto-selecting last tahun:", availableYears[availableYears.length - 1].id);
+        setSelectedTahun(availableYears[availableYears.length - 1].id);
+      }
     }
   }, [availableYears, selectedTahun]);
 
-  useEffect(() => { 
-    fetchData(); 
-  }, [selectedTahun, selectedUnit, showDeleted]);
-
-  // Pastikan selalu ada Prodi terpilih (TI/MI), hilangkan opsi "Semua Prodi"
+  // Set selectedUnit saat availableUnits tersedia
   useEffect(() => {
     if (!selectedUnit && Array.isArray(availableUnits) && availableUnits.length > 0) {
+      console.log("Tabel2B6 - Auto-selecting unit:", availableUnits[0].id);
       setSelectedUnit(parseInt(availableUnits[0].id));
     }
   }, [availableUnits, selectedUnit]);
+
+  // Fetch data saat filter berubah (pastikan kedua filter sudah ter-set)
+  useEffect(() => { 
+    if (selectedTahun && selectedUnit) {
+      fetchData();
+    }
+  }, [selectedTahun, selectedUnit, showDeleted, fetchData]);
 
   // Transform data untuk tampilan tabel
   const tableData = useMemo(() => {

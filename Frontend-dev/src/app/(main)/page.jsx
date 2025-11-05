@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
 
 // --- FUNGSI DAN IKON LOKAL ---
 const useRouter = () => {
@@ -25,6 +26,7 @@ const FiTrendingUp = (props) => (<svg stroke="currentColor" fill="none" strokeWi
 const FiGrid = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>);
 const FiTarget = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>);
 const FiSettings = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m19-4.24a3.5 3.5 0 0 0-4.93-4.93l-4.13 4.14M8.06 8.06l-4.13-4.14A3.5 3.5 0 0 0 1 6.76m13.94 9.3l4.13 4.14a3.5 3.5 0 0 1-4.93 4.93l-4.14-4.13M8.94 15.94l-4.14 4.13a3.5 3.5 0 0 1-4.93-4.93l4.14-4.14"></path></svg>);
+const FiNewspaper = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6z"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -466,14 +468,382 @@ const QuickActions = () => {
     );
 };
 
+// Komponen Statistik Cards untuk Dashboard - Style seperti Layanan Cepat
+const StatistikCards = () => {
+    const [stats, setStats] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setStats([
+                { 
+                    title: 'Total Tabel', 
+                    value: '97', 
+                    icon: FiDatabase, 
+                    color: 'from-blue-500 to-cyan-500',
+                    change: '+12%',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Data Terisi', 
+                    value: '1,248', 
+                    icon: FiFileText, 
+                    color: 'from-green-500 to-emerald-500',
+                    change: '+8%',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Tabel Aktif', 
+                    value: '24', 
+                    icon: FiBarChart, 
+                    color: 'from-purple-500 to-violet-500',
+                    change: '+3',
+                    trend: 'up'
+                },
+                { 
+                    title: 'Update Hari Ini', 
+                    value: '156', 
+                    icon: FiTrendingUp, 
+                    color: 'from-orange-500 to-red-500',
+                    change: '+45',
+                    trend: 'up'
+                }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
+                        <div className="h-6 bg-slate-200 rounded mb-4"></div>
+                        <div className="h-8 bg-slate-200 rounded mb-2"></div>
+                        <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                ))
+            ) : (
+                stats.map((stat, index) => {
+                    const IconComponent = stat.icon;
+                    return (
+                        <motion.div
+                            key={index}
+                            variants={slideUp}
+                            initial="hidden"
+                            animate="visible"
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ y: -8, scale: 1.02 }}
+                            className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100/50 backdrop-blur-sm overflow-hidden"
+                        >
+                            <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                            <div className="relative z-10 mb-6">
+                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <IconComponent className="w-8 h-8" />
+                                </div>
+                            </div>
+                            <div className="relative z-10">
+                                <div className="mb-2">
+                                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                                        stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        {stat.change}
+                                    </span>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-3 text-slate-900">
+                                    {stat.value}
+                                </h3>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {stat.title}
+                                </p>
+                            </div>
+                        </motion.div>
+                    );
+                })
+            )}
+        </div>
+    );
+};
+
+// Komponen Berita Terbaru - Style seperti Layanan Cepat
+const BeritaTerbaru = () => {
+    const router = useRouter();
+    const [berita, setBerita] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const tpmNewsData = [
+        {
+            id: 1,
+            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
+            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
+            date: "2025-10-02",
+            color: "from-blue-500 to-cyan-500",
+            icon: FiNewspaper
+        },
+        {
+            id: 2,
+            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
+            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
+            date: "2025-09-28",
+            color: "from-green-500 to-emerald-500",
+            icon: FiFileText
+        }
+    ];
+
+    useEffect(() => {
+        setTimeout(() => {
+            setBerita(tpmNewsData);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="space-y-6"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Berita Terbaru</h3>
+                <button 
+                    onClick={() => router.push('/berita')}
+                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="space-y-6">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50">
+                            <div className="h-6 bg-slate-200 rounded mb-4 w-3/4"></div>
+                            <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {berita.map((item) => {
+                        const IconComponent = item.icon;
+                        return (
+                            <motion.div
+                                key={item.id}
+                                variants={slideUp}
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                onClick={() => router.push('/berita')}
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className="relative z-10 mb-6">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="w-8 h-8" />
+                                    </div>
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="mb-2">
+                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
+                                            {formatDate(item.date)}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
+                                        {item.title}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                        {item.excerpt}
+                                    </p>
+                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                                        <span>Baca selengkapnya</span>
+                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// Komponen Grafik Semua Tabel - Style seperti Layanan Cepat
+const GrafikTabel = () => {
+    const router = useRouter();
+    const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setChartData([
+                { name: 'C1', count: 12, color: 'from-blue-500 to-cyan-500', icon: FiBarChart, description: 'Standar C1' },
+                { name: 'C2', count: 8, color: 'from-purple-500 to-violet-500', icon: FiTrendingUp, description: 'Standar C2' },
+                { name: 'Data Dosen', count: 45, color: 'from-green-500 to-emerald-500', icon: FiUsers, description: 'Master Data' },
+                { name: 'Data Pegawai', count: 32, color: 'from-orange-500 to-red-500', icon: FiUsers, description: 'Master Data' }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const maxCount = Math.max(...chartData.map(d => d.count), 1);
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+        >
+            <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-slate-900">Grafik Data Tabel</h3>
+                <button 
+                    onClick={() => router.push('/tables')}
+                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
+                            <div className="h-6 bg-slate-200 rounded mb-4"></div>
+                            <div className="h-32 bg-slate-200 rounded-2xl"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <motion.div 
+                    variants={staggerContainer}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                >
+                    {chartData.map((item, index) => {
+                        const IconComponent = item.icon;
+                        return (
+                            <motion.div
+                                key={index}
+                                variants={slideUp}
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                onClick={() => router.push(`/tables?table=${item.name}`)}
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className="relative z-10 mb-6">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="w-8 h-8" />
+                                    </div>
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="mb-2">
+                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
+                                            {item.description}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
+                                        {item.name}
+                                    </h3>
+                                    
+                                    {/* Mini Chart */}
+                                    <div className="relative h-32 bg-gradient-to-b from-slate-50 to-slate-100 rounded-2xl overflow-hidden mb-4 group-hover:shadow-lg transition-shadow duration-300">
+                                        <motion.div 
+                                            initial={{ height: 0 }}
+                                            animate={{ height: `${(item.count / maxCount) * 100}%` }}
+                                            transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
+                                            className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${item.color} shadow-lg`}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent"></div>
+                                        </motion.div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-3xl font-bold text-slate-800 z-10 drop-shadow-sm">
+                                                {item.count}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                                        <span>Lihat Detail</span>
+                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </motion.div>
+            )}
+        </motion.div>
+    );
+};
+
 
 // ----- [TIDAK DIUBAH] KOMPONEN UTAMA APP -----
 export default function App() {
   const [mounted, setMounted] = useState(false);
+  const { authUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  
+  // Inisialisasi showHero berdasarkan status di sessionStorage
+  // Jika hero sudah pernah ditampilkan di session ini, langsung set false
+  const getInitialShowHero = () => {
+    if (typeof window === 'undefined') return true;
+    
+    // Cek apakah hero sudah pernah ditampilkan di session ini
+    const heroShown = sessionStorage.getItem('hero_shown_after_login');
+    // Jika sudah pernah ditampilkan, jangan tampilkan lagi (false)
+    // Jika belum pernah, akan ditentukan oleh useEffect berdasarkan status login
+    return heroShown !== 'true';
+  };
+  
+  const [showHero, setShowHero] = useState(getInitialShowHero);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Logika untuk hide hero setelah 3-4 detik jika user sudah login
+  // Hero hanya muncul sekali setelah login, tidak muncul lagi saat pindah page
+  useEffect(() => {
+    if (!mounted) return; // Tunggu sampai component mounted
+    
+    if (authUser && !authLoading) {
+      // User sudah login
+      // Cek apakah hero sudah pernah ditampilkan di session ini
+      const heroShown = sessionStorage.getItem('hero_shown_after_login');
+      
+      if (!heroShown) {
+        // Hero belum pernah ditampilkan setelah login, tampilkan sekarang
+        setShowHero(true);
+        
+        // Hero tampil 3.5 detik (antara 3-4 detik)
+        const timer = setTimeout(() => {
+          setShowHero(false);
+          // Simpan status bahwa hero sudah pernah ditampilkan
+          sessionStorage.setItem('hero_shown_after_login', 'true');
+        }, 3500);
+
+        return () => clearTimeout(timer);
+      } else {
+        // Hero sudah pernah ditampilkan, pastikan tidak tampil
+        setShowHero(false);
+      }
+    } else if (!authUser && !authLoading) {
+      // User belum login, hero tampil
+      setShowHero(true);
+      // Reset status jika user logout
+      sessionStorage.removeItem('hero_shown_after_login');
+    }
+  }, [authUser, authLoading, mounted]);
 
   return (
     <>
@@ -557,14 +927,108 @@ export default function App() {
                   </div>
                 ) : (
                   <>
-                    <Hero />
-                    <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
-                        <MobileTablesSection />
-                        <div className="hidden md:block">
-                            <TablesSection />
-                        </div>
-                        <QuickActions />
-                    </div>
+                    <AnimatePresence mode="wait">
+                      {showHero && authUser ? (
+                        <motion.div
+                          key="hero"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                        >
+                          <Hero />
+                        </motion.div>
+                      ) : authUser ? (
+                        <motion.div
+                          key="content"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                          className="min-h-screen bg-slate-50"
+                        >
+                          <div className="pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+                            <div className="container mx-auto max-w-7xl">
+                              {/* Header Dashboard */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-8"
+                              >
+                                <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+                                <p className="text-slate-600">Selamat datang kembali! Berikut ringkasan data Anda.</p>
+                              </motion.div>
+
+                              {/* Statistik Cards */}
+                              <StatistikCards />
+
+                              {/* Berita & Akses Cepat dalam Grid Layout */}
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                                {/* Berita Terbaru - 2 kolom */}
+                                <div className="lg:col-span-2">
+                                  <BeritaTerbaru />
+                                </div>
+                                
+                                {/* Widget Quick Actions - 1 kolom */}
+                                <div className="lg:col-span-1">
+                                  <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    variants={slideUp}
+                                    className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100/50 backdrop-blur-sm h-full"
+                                  >
+                                    <div className="mb-6">
+                                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg mb-4">
+                                        <FiTarget className="w-8 h-8" />
+                                      </div>
+                                      <h3 className="text-xl font-bold mb-3 text-slate-900">Akses Cepat</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                      {[
+                                        { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500' },
+                                        { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500' },
+                                        { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500' },
+                                        { label: 'Berita', path: '/berita', icon: FiNewspaper, color: 'from-orange-500 to-red-500' }
+                                      ].map((item, i) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                          <motion.button
+                                            key={i}
+                                            whileHover={{ x: 4 }}
+                                            onClick={() => router.push(item.path)}
+                                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                          >
+                                            <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} opacity-80 group-hover:opacity-100 transition-opacity`}>
+                                              <IconComponent className="w-4 h-4 text-white" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700 group-hover:text-[#043975] transition-colors flex-1">{item.label}</span>
+                                            <FiArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all" />
+                                          </motion.button>
+                                        );
+                                      })}
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              </div>
+
+                              {/* Grafik Data Tabel */}
+                              <GrafikTabel />
+                            </div>
+                          </div>
+                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
+                            <QuickActions />
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <>
+                          <Hero />
+                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
+                              <MobileTablesSection />
+                              <div className="hidden md:block">
+                                  <TablesSection />
+                              </div>
+                              <QuickActions />
+                          </div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
             </main>
