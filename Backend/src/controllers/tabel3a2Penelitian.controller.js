@@ -59,18 +59,28 @@ const getPivotClauses = (reqQuery) => {
 export const listTabel3a2Penelitian = async (req, res) => {
   try {
     const { selectSql, params: pivotParams } = getPivotClauses(req.query);
-    // [PERBAIKAN] Gunakan 'p' sebagai alias untuk buildWhere
     const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
+
+    // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
+    const tahunList = pivotParams.slice(0, 5); // TS, TS-1, TS-2, TS-3, TS-4
+
+    // Build WHERE clause dengan filter tahun
+    const whereClauses = [...where];
+    // Filter: Hanya tampilkan penelitian yang memiliki pendanaan dalam rentang TS sampai TS-4
+    whereClauses.push(`EXISTS (
+      SELECT 1 FROM tabel_3a2_pendanaan pd2 
+      WHERE pd2.id_penelitian = p.id 
+      AND pd2.id_tahun IN (?, ?, ?, ?, ?)
+    )`);
 
     const sql = `
       SELECT 
         p.id, p.id_unit, uk.nama_unit AS nama_unit_prodi,
         p.id_dosen_ketua, pg.nama_lengkap AS nama_dosen_ketua,
         p.judul_penelitian, p.jml_mhs_terlibat, p.jenis_hibah,
-        p.sumber_dana, p.durasi_tahun, p.deleted_at
-        
-        -- [PERBAIKAN] p.link_bukti dihapus dari sini
+        p.sumber_dana, p.durasi_tahun, p.deleted_at,
+        p.link_roadmap -- [PERBAIKAN] Ambil link_roadmap
         
         -- Tambahkan query PIVOT 5 TAHUN di sini
         ${selectSql}
@@ -81,15 +91,15 @@ export const listTabel3a2Penelitian = async (req, res) => {
       LEFT JOIN pegawai pg ON d.id_pegawai = pg.id_pegawai
       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
       
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ${whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : ''}
       
       GROUP BY
         p.id, uk.nama_unit, pg.nama_lengkap
       ORDER BY ${orderBy}
     `;
 
-    // Gabungkan params: pivot dulu, baru where
-    const allParams = [...pivotParams, ...whereParams];
+    // Gabungkan params: pivot dulu, baru where, lalu tahun filter
+    const allParams = [...pivotParams, ...whereParams, ...tahunList];
     const [rows] = await pool.query(sql, allParams);
     
     // Ganti link_bukti (per baris) dengan link_bukti_display (pivot)
@@ -128,7 +138,6 @@ export const getTabel3a2PenelitianById = async (req, res) => {
         }
         
         // 2. Ambil data children (pendanaan)
-        // [PERBAIKAN] Ambil juga link_bukti
         const [childrenRows] = await pool.query(
             `SELECT id_tahun, jumlah_dana, link_bukti 
              FROM tabel_3a2_pendanaan 
@@ -139,9 +148,10 @@ export const getTabel3a2PenelitianById = async (req, res) => {
         // 3. Gabungkan
         const result = {
             ...parentRows[0],
-            // [PERBAIKAN] Cari 1 link_bukti dari array children untuk ditampilkan di form
+            // Cari 1 link_bukti dari array children untuk ditampilkan di form
             link_bukti: childrenRows.find(c => c.link_bukti)?.link_bukti || null,
             pendanaan: childrenRows // Kirim sebagai array
+            // link_roadmap sudah termasuk di parentRows[0] karena SELECT p.*
         };
         
         res.json(result);
@@ -162,8 +172,9 @@ export const createTabel3a2Penelitian = async (req, res) => {
     const { 
       id_unit, id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
-      link_bukti, // Tetap ambil dari body
-      pendanaan // Ini adalah JSON string
+      link_bukti,
+      pendanaan, // Ini adalah JSON string
+      link_roadmap // <-- [PERBAIKAN] 1. Ambil link_roadmap dari body
     } = req.body;
 
     // Validasi
@@ -171,12 +182,12 @@ export const createTabel3a2Penelitian = async (req, res) => {
     if (!id_dosen_ketua) { return res.status(400).json({ error: 'Dosen Ketua wajib diisi.' }); }
     if (!judul_penelitian) { return res.status(400).json({ error: 'Judul Penelitian wajib diisi.' }); }
     
-    // [PERBAIKAN] Menggunakan id_unit, dan HAPUS link_bukti dari parentData
+    // [PERBAIKAN] 2. Tambahkan link_roadmap ke parentData
     const parentData = {
       id_unit: id_unit, 
       id_dosen_ketua, judul_penelitian,
-      jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun
-      // link_bukti dihapus dari sini
+      jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
+      link_roadmap // <-- [PERBAIKAN] 2. Tambahkan di sini
     };
     if (await hasColumn('tabel_3a2_penelitian', 'created_by') && req.user?.id_user) {
       parentData.created_by = req.user.id_user;
@@ -203,7 +214,6 @@ export const createTabel3a2Penelitian = async (req, res) => {
 
     // 2. Insert ke tabel Child (Pendanaan)
     if (pendanaanArray.length > 0) {
-        // [PERBAIKAN] Tambahkan link_bukti ke baris pertama (index 0)
         const pendanaanValues = pendanaanArray.map((item, index) => [
             insertedPenelitianId,
             item.id_tahun,
@@ -211,7 +221,6 @@ export const createTabel3a2Penelitian = async (req, res) => {
             (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
         ]);
         
-        // [PERBAIKAN] Tambahkan kolom link_bukti ke query INSERT
         await connection.query(
             'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?', 
             [pendanaanValues]
@@ -246,19 +255,20 @@ export const updateTabel3a2Penelitian = async (req, res) => {
       id_unit, id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
       link_bukti, // Tetap ambil dari body
-      pendanaan // JSON string
+      pendanaan, // JSON string
+      link_roadmap // <-- [PERBAIKAN] 1. Ambil link_roadmap dari body
     } = req.body;
 
     // Validasi
     if (!id_unit) { return res.status(400).json({ error: 'Unit/Prodi wajib dipilih.' }); }
     // ... (validasi lain)
 
-    // [PERBAIKAN] Menggunakan id_unit, dan HAPUS link_bukti dari parentData
+    // [PERBAIKAN] 2. Tambahkan link_roadmap ke parentData
     const parentData = {
       id_unit: id_unit,
       id_dosen_ketua, judul_penelitian,
-      jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun
-      // link_bukti dihapus dari sini
+      jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
+      link_roadmap // <-- [PERBAIKAN] 2. Tambahkan di sini
     };
     if (await hasColumn('tabel_3a2_penelitian', 'updated_by') && req.user?.id_user) {
       parentData.updated_by = req.user.id_user;
@@ -290,7 +300,6 @@ export const updateTabel3a2Penelitian = async (req, res) => {
 
     // 3. Insert ulang data pendanaan (Child)
     if (pendanaanArray.length > 0) {
-        // [PERBAIKAN] Tambahkan link_bukti ke baris pertama (index 0)
         const pendanaanValues = pendanaanArray.map((item, index) => [
             id, // ID dari params
             item.id_tahun,
@@ -298,7 +307,6 @@ export const updateTabel3a2Penelitian = async (req, res) => {
             (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
         ]);
         
-        // [PERBAIKAN] Tambahkan kolom link_bukti ke query INSERT
         await connection.query(
             'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?', 
             [pendanaanValues]
@@ -377,14 +385,25 @@ export const exportTabel3a2Penelitian = async (req, res) => {
         const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
         const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
 
+        // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
+        const tahunList = pivotParams.slice(0, 5); // TS, TS-1, TS-2, TS-3, TS-4
+
+        // Build WHERE clause dengan filter tahun
+        const whereClauses = [...where];
+        // Filter: Hanya tampilkan penelitian yang memiliki pendanaan dalam rentang TS sampai TS-4
+        whereClauses.push(`EXISTS (
+          SELECT 1 FROM tabel_3a2_pendanaan pd2 
+          WHERE pd2.id_penelitian = p.id 
+          AND pd2.id_tahun IN (?, ?, ?, ?, ?)
+        )`);
+
         const sql = `
           SELECT 
             pg.nama_lengkap AS nama_dosen_ketua,
             p.judul_penelitian, p.jml_mhs_terlibat, p.jenis_hibah,
-            p.sumber_dana, p.durasi_tahun
+            p.sumber_dana, p.durasi_tahun,
+            p.link_roadmap -- [PERBAIKAN] Ambil link_roadmap
             
-            -- [PERBAIKAN] p.link_bukti dihapus dari sini
-
             ${selectSql}
 
           FROM tabel_3a2_penelitian p
@@ -393,14 +412,14 @@ export const exportTabel3a2Penelitian = async (req, res) => {
           LEFT JOIN pegawai pg ON d.id_pegawai = pg.id_pegawai
           LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
           
-          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+          ${whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : ''}
           
           GROUP BY
             p.id, uk.nama_unit, pg.nama_lengkap
           ORDER BY ${orderBy}
         `;
         
-        const allParams = [...pivotParams, ...whereParams];
+        const allParams = [...pivotParams, ...whereParams, ...tahunList];
         const [rows] = await pool.query(sql, allParams);
         
         // Ganti link_bukti (per baris) dengan link_bukti_display (pivot)
@@ -416,6 +435,8 @@ export const exportTabel3a2Penelitian = async (req, res) => {
 
         // 3. Definisikan Header (Update 5 TAHUN)
         sheet.columns = [
+            // [PERBAIKAN] Tambahkan kolom Link Roadmap
+            { header: 'Link Roadmap', key: 'link_roadmap', width: 30 },
             { header: 'Nama DTPR (Ketua)', key: 'nama_dosen_ketua', width: 30 },
             { header: 'Judul Penelitian', key: 'judul_penelitian', width: 45 },
             { header: 'Jumlah Mahasiswa yang Terlibat', key: 'jml_mhs_terlibat', width: 20 },
@@ -458,4 +479,3 @@ export const exportTabel3a2Penelitian = async (req, res) => {
         res.status(500).json({ error: 'Gagal mengekspor data penelitian', details: err.message });
     }
 };
-

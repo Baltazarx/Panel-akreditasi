@@ -138,6 +138,7 @@ export const AccessMatrix = {
     'ref_jabatan_fungsional': { R: true }, // Untuk dropdown jabatan fungsional
     'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
     'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
+    'dosen': { R: true }, // Untuk dropdown dosen di form Tabel 3.A.2
     
     // === USER MANAGEMENT: Izin Baca untuk UserManagementPage ===
     'users': { R: true }, // Untuk UserManagementPage

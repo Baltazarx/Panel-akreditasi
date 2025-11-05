@@ -4,7 +4,7 @@ import { hasColumn } from '../utils/queryHelper.js';
 // ===== LIST dengan scope unit =====
 export const listDosen = async (req, res) => {
   try {
-    const { role, id_unit } = req.user || {};
+    const { role, id_unit, id_unit_prodi } = req.user || {};
     const { include_deleted } = req.query;
     const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Fixed: no hyphen in role names
 
@@ -45,10 +45,16 @@ export const listDosen = async (req, res) => {
     }
 
     // check role case-insensitive
-    if (!superRoles.has(role?.toLowerCase())) {
-      sql += ` AND u.id_unit = ?`;
-      params.push(id_unit);
+    // Khusus role lppm: bisa melihat semua dosen tanpa filter unit (untuk keperluan form penelitian)
+    if (!superRoles.has(role?.toLowerCase()) && role?.toLowerCase() !== 'lppm') {
+      // Gunakan id_unit_prodi jika ada, fallback ke id_unit
+      const userUnit = id_unit_prodi || id_unit;
+      if (userUnit) {
+        sql += ` AND u.id_unit = ?`;
+        params.push(userUnit);
+      }
     }
+    // Role lppm akan melihat semua dosen tanpa filter unit (tidak ada filter tambahan)
 
     sql += ` ORDER BY d.id_dosen ASC`;
 
