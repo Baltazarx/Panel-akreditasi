@@ -280,7 +280,7 @@ export default function Header() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200/60 bg-white/95 backdrop-blur-lg shadow-xl focus:outline-none"
+                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200 bg-white shadow-xl focus:outline-none"
                     >
                       <div className="p-3 relative">
                         {/* Arrow */}

@@ -28,6 +28,9 @@ const FiGrid = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2
 const FiTarget = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>);
 const FiSettings = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m19-4.24a3.5 3.5 0 0 0-4.93-4.93l-4.13 4.14M8.06 8.06l-4.13-4.14A3.5 3.5 0 0 0 1 6.76m13.94 9.3l4.13 4.14a3.5 3.5 0 0 1-4.93 4.93l-4.14-4.13M8.94 15.94l-4.14 4.13a3.5 3.5 0 0 1-4.93-4.93l4.14-4.14"></path></svg>);
 const FiNewspaper = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6z"></path></svg>);
+const FiDownload = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>);
+const FiFile = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>);
+const FiFolder = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -403,11 +406,89 @@ const TablesSection = () => {
 
 const QuickActions = () => {
     const router = useRouter();
-    const quickActions = [
-        { title: "SIAKAD & Jadwal", description: "Akses sistem akademik dan lihat jadwal mengajar terbaru", icon: FiCalendar, color: "from-blue-500 to-cyan-500" },
-        { title: "E-Learning", description: "Platform pembelajaran digital untuk mengelola materi kuliah", icon: FiBookOpen, color: "from-green-500 to-emerald-500" },
-        { title: "Layanan Kepegawaian", description: "Informasi, dokumen, dan layanan terkait kepegawaian", icon: FiUsers, color: "from-purple-500 to-violet-500" },
-        { title: "Bantuan & IT Support", description: "Butuh bantuan teknis? Hubungi tim IT Support kami", icon: FiHelpCircle, color: "from-orange-500 to-red-500" }
+    
+    const handleDownload = (url, filename) => {
+        if (url) {
+            window.open(url, '_blank');
+        } else {
+            // Jika tidak ada URL, bisa menampilkan pesan atau redirect ke halaman download
+            console.log('Download:', filename);
+        }
+    };
+
+    const dokumenList = [
+        { 
+            title: "Template Dokumen Akreditasi", 
+            description: "Template dan format dokumen standar untuk proses akreditasi", 
+            icon: FiFile, 
+            color: "from-blue-500 to-cyan-500",
+            downloadUrl: "#",
+            fileType: "PDF",
+            fileSize: "2.5 MB"
+        },
+        { 
+            title: "Panduan Pengisian Tabel", 
+            description: "Panduan lengkap untuk mengisi semua tabel penjaminan mutu", 
+            icon: FiBookOpen, 
+            color: "from-green-500 to-emerald-500",
+            downloadUrl: "#",
+            fileType: "PDF",
+            fileSize: "1.8 MB"
+        },
+        { 
+            title: "Dokumen Standar C1", 
+            description: "Kumpulan dokumen standar C1 (Visi, Misi, Tujuan, dan Sasaran)", 
+            icon: FiFolder, 
+            color: "from-purple-500 to-violet-500",
+            downloadUrl: "#",
+            fileType: "ZIP",
+            fileSize: "5.2 MB"
+        },
+        { 
+            title: "Dokumen Standar C2", 
+            description: "Kumpulan dokumen standar C2 (Mahasiswa, Lulusan, dan Pengguna)", 
+            icon: FiFolder, 
+            color: "from-indigo-500 to-purple-500",
+            downloadUrl: "#",
+            fileType: "ZIP",
+            fileSize: "4.7 MB"
+        },
+        { 
+            title: "Format Laporan AMI", 
+            description: "Template laporan Audit Mutu Internal (AMI) terbaru", 
+            icon: FiFileText, 
+            color: "from-orange-500 to-red-500",
+            downloadUrl: "#",
+            fileType: "DOCX",
+            fileSize: "850 KB"
+        },
+        { 
+            title: "Regulasi & SK", 
+            description: "Regulasi dan Surat Keputusan terkait penjaminan mutu", 
+            icon: FiFile, 
+            color: "from-pink-500 to-rose-500",
+            downloadUrl: "#",
+            fileType: "PDF",
+            fileSize: "3.1 MB"
+        },
+        { 
+            title: "Checklist Dokumen", 
+            description: "Checklist dokumen yang diperlukan untuk akreditasi", 
+            icon: FiFileText, 
+            color: "from-teal-500 to-cyan-500",
+            downloadUrl: "#",
+            fileType: "XLSX",
+            fileSize: "650 KB"
+        },
+        { 
+            title: "Arsip Dokumen Lama", 
+            description: "Arsip dokumen-dokumen dari periode sebelumnya", 
+            icon: FiFolder, 
+            color: "from-gray-500 to-slate-600",
+            downloadUrl: "#",
+            fileType: "ZIP",
+            fileSize: "12.5 MB"
+        }
     ];
     
     return (
@@ -422,18 +503,18 @@ const QuickActions = () => {
             <div className="container mx-auto max-w-7xl">
                 <motion.div variants={fadeIn} className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: '#043975' }}>
-                        Layanan Cepat
+                        Unduh Dokumen
                     </h2>
                     <p className="max-w-3xl mx-auto text-lg" style={{ color: '#0384d6' }}>
-                        Akses layanan dan sistem informasi penting yang Anda butuhkan
+                        Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu
                     </p>
                 </motion.div>
                 <motion.div 
                     variants={staggerContainer}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
                 >
-                    {quickActions.map((action, index) => {
-                        const IconComponent = action.icon;
+                    {dokumenList.map((dokumen, index) => {
+                        const IconComponent = dokumen.icon;
                         return (
                             <motion.div
                                 key={index}
@@ -441,22 +522,29 @@ const QuickActions = () => {
                                 whileHover={{ y: -8, scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                onClick={() => handleDownload(dokumen.downloadUrl, dokumen.title)}
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${dokumen.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                                 <div className="relative z-10 mb-6">
-                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${action.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${dokumen.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                                         <IconComponent className="w-8 h-8" />
                                     </div>
                                 </div>
                                 <div className="relative z-10">
+                                    <div className="mb-2">
+                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                            {dokumen.fileType} • {dokumen.fileSize}
+                                        </span>
+                                    </div>
                                     <h3 className="text-xl font-bold mb-3" style={{ color: '#043975' }}>
-                                        {action.title}
+                                        {dokumen.title}
                                     </h3>
                                     <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                        {action.description}
+                                        {dokumen.description}
                                     </p>
                                     <div className="flex items-center text-sm font-medium" style={{ color: '#0384d6' }}>
-                                        <span>Akses Layanan</span>
+                                        <FiDownload className="w-4 h-4 mr-2" />
+                                        <span>Unduh Dokumen</span>
                                         <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                                     </div>
                                 </div>
