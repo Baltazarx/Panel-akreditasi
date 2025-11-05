@@ -83,6 +83,7 @@ const C2_TABLES = [
 const C3_TABLES = [
   { key: "3a1", label: "Tabel 3A-1", endpoint: "/tabel-3a1-sarpras-penelitian", accessKey: "tabel_3a1_sarpras_penelitian", description: "Sarana Prasarana Penelitian" },
   { key: "3a2", label: "Tabel 3A-2", endpoint: "/tabel-3a2-penelitian", accessKey: "tabel_3a2_penelitian", description: "Penelitian" },
+  { key: "3a3", label: "Tabel 3A-3", endpoint: "/tabel-3a3-pengembangan-dtpr/detail", accessKey: "tabel_3a3_pengembangan_dtpr", description: "Pengembangan DTPR di Bidang Penelitian" },
 ];
 
 // Komponen Grafik Card untuk setiap tabel - Design sesuai gambar
@@ -312,7 +313,8 @@ export default function ReportPage() {
 
   const c3AccessKeys = [
     "tabel_3a1_sarpras_penelitian",
-    "tabel_3a2_penelitian"
+    "tabel_3a2_penelitian",
+    "tabel_3a3_pengembangan_dtpr"
   ];
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
