@@ -6,7 +6,8 @@ import {
   createOrUpdateRekognisi,
   exportRekognisi,
   softDeleteRekognisi,  // <-- Tambahkan fungsi soft delete
-  hardDeleteRekognisi   // <-- Tambahkan fungsi hard delete
+  hardDeleteRekognisi,   // <-- Tambahkan fungsi hard delete
+  restoreRekognisi       // <-- Tambahkan fungsi restore
 } from '../controllers/tabel2dRekognisiLulusan.controller.js';
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.get('/export', requireAuth, permit(resourceKey, 'R'), exportRekognisi);
 
 // Rute untuk Soft Delete (izin 'D')
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteRekognisi);
+
+// Rute untuk Restore (pulihkan data yang sudah di-soft delete, izin 'U')
+router.put('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreRekognisi);
 
 // Rute untuk Hard Delete (izin 'H')
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteRekognisi);
