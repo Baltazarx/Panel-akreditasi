@@ -124,9 +124,20 @@ export const ACCESS_MATRIX = {
   'lppm': {
     'tabel_1a2':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_1a3':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    'tabel_3a2_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.A.2 Penelitian DTPR
     'penelitian': { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'pkm':        { c: true, r: true, u: true, d: true }, // Dari backend roles.js
-    'sumber_pendanaan_summary': { R: true },
+    'sumber_pendanaan_summary': { r: true },
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { r: true },
+    'pegawai': { r: true },
+    'tahun_akademik': { r: true },
+    'ref_jabatan_struktural': { r: true },
+    'ref_jabatan_fungsional': { r: true },
+    'tenaga_kependidikan': { r: true },
+    'audit_mutu_internal': { r: true },
+    'dosen': { r: true }, // Untuk dropdown dosen di form Tabel 3.A.2
+    'users': { r: true }, // Untuk UserManagementPage
   },
 
   // ========== KEPEGAWAIAN (sesuai aturan baru C1) ==========
