@@ -122,8 +122,7 @@ export const AccessMatrix = {
   'lppm': {
     'tabel_1a2':  { C: true, R: true, U: true, D: true },
     'tabel_1a3':  { C: true, R: true, U: true, D: true },
-    'penelitian': { C: true, R: true, U: true, D: true },
-    'pkm':        { C: true, R: true, U: true, D: true },
+    'tabel_3a2_penelitian': { C: true, R: true, U: true, D: true },
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
     'sumber_pendanaan':           { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)

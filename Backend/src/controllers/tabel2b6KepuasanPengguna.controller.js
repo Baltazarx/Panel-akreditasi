@@ -4,37 +4,42 @@ import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 // === HELPER FUNCTION UNTUK STATISTIK ===
 const getStatistikData = async (id_unit_prodi, id_tahun) => {
   try {
+    // Cek apakah kolom deleted_at ada di tabel-tabel yang digunakan
+    const hasDeletedAt2a3 = await hasColumn('tabel_2a3_kondisi_mahasiswa', 'deleted_at');
+    const hasDeletedAt2a1 = await hasColumn('tabel_2a1_mahasiswa_baru_aktif', 'deleted_at');
+    const hasDeletedAt2b6 = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    
     // 1. Jumlah alumni/lulusan dalam 3 tahun terakhir
-    const [alumniData] = await pool.query(
-      `SELECT SUM(jml_lulus) as total_alumni_3_tahun
+    let sqlAlumni = `SELECT SUM(jml_lulus) as total_alumni_3_tahun
        FROM tabel_2a3_kondisi_mahasiswa 
        WHERE id_unit_prodi = ? 
        AND id_tahun >= ? - 2 
-       AND id_tahun <= ?
-       AND deleted_at IS NULL`,
-      [id_unit_prodi, id_tahun, id_tahun]
-    );
+       AND id_tahun <= ?`;
+    if (hasDeletedAt2a3) {
+      sqlAlumni += ` AND deleted_at IS NULL`;
+    }
+    const [alumniData] = await pool.query(sqlAlumni, [id_unit_prodi, id_tahun, id_tahun]);
 
     // 2. Jumlah mahasiswa aktif pada tahun TS
-    const [mahasiswaAktifData] = await pool.query(
-      `SELECT SUM(jumlah_total) as total_mahasiswa_aktif
+    let sqlMahasiswa = `SELECT SUM(jumlah_total) as total_mahasiswa_aktif
        FROM tabel_2a1_mahasiswa_baru_aktif 
        WHERE id_unit_prodi = ? 
        AND id_tahun = ?
-       AND jenis = 'aktif'
-       AND deleted_at IS NULL`,
-      [id_unit_prodi, id_tahun]
-    );
+       AND jenis = 'aktif'`;
+    if (hasDeletedAt2a1) {
+      sqlMahasiswa += ` AND deleted_at IS NULL`;
+    }
+    const [mahasiswaAktifData] = await pool.query(sqlMahasiswa, [id_unit_prodi, id_tahun]);
 
     // 3. Jumlah responden
-    const [respondenData] = await pool.query(
-      `SELECT COUNT(DISTINCT jenis_kemampuan) as jumlah_responden
+    let sqlResponden = `SELECT COUNT(DISTINCT jenis_kemampuan) as jumlah_responden
        FROM tabel_2b6_kepuasan_pengguna 
        WHERE id_unit_prodi = ? 
-       AND id_tahun = ?
-       AND deleted_at IS NULL`,
-      [id_unit_prodi, id_tahun]
-    );
+       AND id_tahun = ?`;
+    if (hasDeletedAt2b6) {
+      sqlResponden += ` AND deleted_at IS NULL`;
+    }
+    const [respondenData] = await pool.query(sqlResponden, [id_unit_prodi, id_tahun]);
 
     return {
       jumlah_alumni_3_tahun: alumniData[0]?.total_alumni_3_tahun || 0,
@@ -52,7 +57,16 @@ const getStatistikData = async (id_unit_prodi, id_tahun) => {
 // === LIST TABEL 2B6 KEPUASAN PENGGUNA ===
 export const listTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Cek apakah kolom-kolom opsional ada di tabel
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
+    
     let { where, params } = await buildWhere(req, 'tabel_2b6_kepuasan_pengguna', 't2b6');
+
+    // Jika kolom deleted_at tidak ada, hapus filter deleted_at dari WHERE clause
+    if (!hasDeletedAt) {
+      where = where.filter(clause => !/\bt2b6\.deleted_at\s+IS\s+NULL/i.test(clause));
+    }
 
     // Khusus role kemahasiswaan: tampilkan semua prodi (jangan batasi id_unit_prodi)
     if (String(req.user?.role).toLowerCase() === 'kemahasiswaan') {
@@ -68,7 +82,10 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
         const isDeletedNull = /\bt2b6\.deleted_at\s+IS\s+NULL/i.test(clause);
 
         if (isDeletedNull) {
-          newWhere.push(clause);
+          // Skip jika kolom deleted_at tidak ada
+          if (hasDeletedAt) {
+            newWhere.push(clause);
+          }
           continue; // tidak konsumsi param
         }
 
@@ -121,9 +138,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
         t2b6.persen_sangat_baik,
         t2b6.persen_baik,
         t2b6.persen_cukup,
-        t2b6.persen_kurang,
-        t2b6.rencana_tindak_lanjut,
-        t2b6.deleted_at
+        t2b6.persen_kurang${hasRencanaTindakLanjut ? ', t2b6.rencana_tindak_lanjut' : ', NULL AS rencana_tindak_lanjut'}${hasDeletedAt ? ', t2b6.deleted_at' : ', NULL AS deleted_at'}
       FROM tabel_2b6_kepuasan_pengguna t2b6
       LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
       LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
@@ -160,15 +175,39 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     res.json(response);
   } catch (err) {
     console.error("Error listTabel2b6KepuasanPengguna:", err);
-    res.status(500).json({ error: 'List failed' });
+    console.error("Error details:", {
+      message: err.message,
+      stack: err.stack,
+      sqlState: err.sqlState,
+      sqlMessage: err.sqlMessage
+    });
+    res.status(500).json({ 
+      error: 'List failed',
+      message: err.message || 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 };
 
 // === DETAIL TABEL 2B6 KEPUASAN PENGGUNA ===
 export const getTabel2b6KepuasanPenggunaById = async (req, res) => {
   try {
+    // Cek apakah kolom-kolom opsional ada di tabel
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
+    
     const [rows] = await pool.query(
-      `SELECT t2b6.*, uk.nama_unit AS nama_unit_prodi, ta.tahun AS tahun_akademik
+      `SELECT 
+        t2b6.id,
+        t2b6.id_unit_prodi,
+        t2b6.id_tahun,
+        t2b6.jenis_kemampuan,
+        t2b6.persen_sangat_baik,
+        t2b6.persen_baik,
+        t2b6.persen_cukup,
+        t2b6.persen_kurang${hasRencanaTindakLanjut ? ', t2b6.rencana_tindak_lanjut' : ', NULL AS rencana_tindak_lanjut'}${hasDeletedAt ? ', t2b6.deleted_at' : ', NULL AS deleted_at'},
+        uk.nama_unit AS nama_unit_prodi, 
+        ta.tahun AS tahun_akademik
        FROM tabel_2b6_kepuasan_pengguna t2b6
        LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
        LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
@@ -188,13 +227,16 @@ export const getTabel2b6KepuasanPenggunaById = async (req, res) => {
     res.json(response);
   } catch (err) {
     console.error("Error getTabel2b6KepuasanPenggunaById:", err);
-    res.status(500).json({ error: 'Get failed' });
+    res.status(500).json({ error: 'Get failed', message: err.message });
   }
 };
 
 // === CREATE TABEL 2B6 KEPUASAN PENGGUNA ===
 export const createTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Cek apakah kolom-kolom opsional ada di tabel
+    const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
+    
     const { 
       id_unit_prodi, 
       id_tahun, 
@@ -226,8 +268,12 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
       persen_baik: persen_baik || 0,
       persen_cukup: persen_cukup || 0,
       persen_kurang: persen_kurang || 0,
-      rencana_tindak_lanjut: rencana_tindak_lanjut || null,
     };
+    
+    // Hanya tambahkan rencana_tindak_lanjut jika kolom ada
+    if (hasRencanaTindakLanjut && rencana_tindak_lanjut !== undefined) {
+      data.rencana_tindak_lanjut = rencana_tindak_lanjut || null;
+    }
 
     // multi-prodi aware - khusus untuk role kemahasiswaan
     if (!data.id_unit_prodi && req.user?.role === 'kemahasiswaan') {
@@ -243,8 +289,23 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     const [r] = await pool.query(`INSERT INTO tabel_2b6_kepuasan_pengguna SET ?`, [data]);
+    
+    // Cek apakah kolom-kolom opsional ada untuk query SELECT setelah insert
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    // hasRencanaTindakLanjut sudah dideklarasikan di atas
+    
     const [row] = await pool.query(
-      `SELECT t2b6.*, uk.nama_unit AS nama_unit_prodi, ta.tahun AS tahun_akademik
+      `SELECT 
+        t2b6.id,
+        t2b6.id_unit_prodi,
+        t2b6.id_tahun,
+        t2b6.jenis_kemampuan,
+        t2b6.persen_sangat_baik,
+        t2b6.persen_baik,
+        t2b6.persen_cukup,
+        t2b6.persen_kurang${hasRencanaTindakLanjut ? ', t2b6.rencana_tindak_lanjut' : ', NULL AS rencana_tindak_lanjut'}${hasDeletedAt ? ', t2b6.deleted_at' : ', NULL AS deleted_at'},
+        uk.nama_unit AS nama_unit_prodi, 
+        ta.tahun AS tahun_akademik
        FROM tabel_2b6_kepuasan_pengguna t2b6
        LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
        LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
@@ -261,6 +322,9 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
 // === UPDATE TABEL 2B6 KEPUASAN PENGGUNA ===
 export const updateTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Cek apakah kolom-kolom opsional ada di tabel
+    const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
+    
     const { 
       id_unit_prodi, 
       id_tahun, 
@@ -292,8 +356,12 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
       persen_baik: persen_baik,
       persen_cukup: persen_cukup,
       persen_kurang: persen_kurang,
-      rencana_tindak_lanjut: rencana_tindak_lanjut,
     };
+    
+    // Hanya tambahkan rencana_tindak_lanjut jika kolom ada dan nilai diberikan
+    if (hasRencanaTindakLanjut && rencana_tindak_lanjut !== undefined) {
+      data.rencana_tindak_lanjut = rencana_tindak_lanjut;
+    }
 
     // Hapus properti yang tidak didefinisikan agar tidak menimpa data yang ada dengan NULL
     Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
@@ -307,8 +375,23 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET ? WHERE id = ?`, [data, req.params.id]);
+    
+    // Cek apakah kolom-kolom opsional ada untuk query SELECT setelah update
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    // hasRencanaTindakLanjut sudah dideklarasikan di atas
+    
     const [row] = await pool.query(
-      `SELECT t2b6.*, uk.nama_unit AS nama_unit_prodi, ta.tahun AS tahun_akademik
+      `SELECT 
+        t2b6.id,
+        t2b6.id_unit_prodi,
+        t2b6.id_tahun,
+        t2b6.jenis_kemampuan,
+        t2b6.persen_sangat_baik,
+        t2b6.persen_baik,
+        t2b6.persen_cukup,
+        t2b6.persen_kurang${hasRencanaTindakLanjut ? ', t2b6.rencana_tindak_lanjut' : ', NULL AS rencana_tindak_lanjut'}${hasDeletedAt ? ', t2b6.deleted_at' : ', NULL AS deleted_at'},
+        uk.nama_unit AS nama_unit_prodi, 
+        ta.tahun AS tahun_akademik
        FROM tabel_2b6_kepuasan_pengguna t2b6
        LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
        LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
@@ -326,6 +409,15 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
 // === SOFT DELETE ===
 export const softDeleteTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    
+    if (!hasDeletedAt) {
+      // Jika kolom deleted_at tidak ada, gunakan hard delete sebagai fallback
+      await pool.query(`DELETE FROM tabel_2b6_kepuasan_pengguna WHERE id = ?`, [req.params.id]);
+      return res.json({ ok: true, hardDeleted: true, message: 'Soft delete not supported, using hard delete' });
+    }
+    
     const payload = { deleted_at: new Date() };
     if (await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_by')) {
       payload.deleted_by = req.user?.id_user || null;
@@ -334,18 +426,32 @@ export const softDeleteTabel2b6KepuasanPengguna = async (req, res) => {
     res.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error("Error softDeleteTabel2b6KepuasanPengguna:", err);
-    res.status(500).json({ error: 'Delete failed' });
+    res.status(500).json({ error: 'Delete failed', message: err.message });
   }
 };
 
 // === RESTORE ===
 export const restoreTabel2b6KepuasanPengguna = async (req, res) => {
   try {
-    await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET deleted_at=NULL, deleted_by=NULL WHERE id=?`, [req.params.id]);
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore not supported. Table does not have deleted_at column.' });
+    }
+    
+    const hasDeletedBy = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_by');
+    
+    if (hasDeletedBy) {
+      await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET deleted_at=NULL, deleted_by=NULL WHERE id = ?`, [req.params.id]);
+    } else {
+      await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET deleted_at=NULL WHERE id = ?`, [req.params.id]);
+    }
+    
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreTabel2b6KepuasanPengguna:", err);
-    res.status(500).json({ error: 'Restore failed' });
+    res.status(500).json({ error: 'Restore failed', message: err.message });
   }
 };
 
@@ -363,6 +469,9 @@ export const hardDeleteTabel2b6KepuasanPengguna = async (req, res) => {
 // === SUMMARY DATA ===
 export const summaryTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
+    
     const { id_unit_prodi, id_tahun } = req.query;
     
     let sql = `
@@ -377,8 +486,13 @@ export const summaryTabel2b6KepuasanPengguna = async (req, res) => {
       FROM tabel_2b6_kepuasan_pengguna t2b6
       LEFT JOIN unit_kerja uk ON t2b6.id_unit_prodi = uk.id_unit
       LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
-      WHERE t2b6.deleted_at IS NULL
+      WHERE 1=1
     `;
+    
+    // Hanya tambahkan filter deleted_at jika kolom ada
+    if (hasDeletedAt) {
+      sql += ` AND t2b6.deleted_at IS NULL`;
+    }
     
     const params = [];
     

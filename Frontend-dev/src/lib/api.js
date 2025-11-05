@@ -25,11 +25,24 @@ export async function apiFetch(path, opts = {}) {
 
   if (!res.ok) {
     const text = await res.text();
+    console.error('API Error Response:', {
+      url: `${BASE_URL}${path}`,
+      status: res.status,
+      statusText: res.statusText,
+      body: text
+    });
     try {
       const j = JSON.parse(text);
-      throw new Error(j?.error || j?.message || `HTTP ${res.status}`);
-    } catch {
-      throw new Error(text || `HTTP ${res.status}`);
+      const errorMsg = j?.error || j?.message || `HTTP ${res.status}: ${res.statusText}`;
+      const error = new Error(errorMsg);
+      error.status = res.status;
+      error.response = j;
+      throw error;
+    } catch (parseError) {
+      const error = new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+      error.status = res.status;
+      error.responseText = text;
+      throw error;
     }
   }
 
