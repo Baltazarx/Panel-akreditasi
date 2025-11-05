@@ -767,7 +767,7 @@ const BeritaTerbaru = () => {
     );
 };
 
-// Komponen Grafik Semua Tabel - Style seperti Layanan Cepat
+// Komponen Grafik Semua Tabel - Style seperti Report Page dengan Progress Bar Stick
 const GrafikTabel = () => {
     const router = useRouter();
     const [chartData, setChartData] = useState([]);
@@ -785,7 +785,9 @@ const GrafikTabel = () => {
         }, 500);
     }, []);
 
-    const maxCount = Math.max(...chartData.map(d => d.count), 1);
+    // Hitung persentase untuk progress bar (max 100 untuk scaling yang lebih baik)
+    const maxValue = 100;
+    const calculatePercentage = (count) => Math.min((count / maxValue) * 100, 100);
 
     return (
         <motion.div
@@ -805,65 +807,94 @@ const GrafikTabel = () => {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
-                            <div className="h-6 bg-slate-200 rounded mb-4"></div>
-                            <div className="h-32 bg-slate-200 rounded-2xl"></div>
+                        <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-sm border border-gray-100/80 animate-pulse">
+                            <div className="h-8 bg-gray-100 rounded-full mb-4"></div>
+                            <div className="h-4 bg-gray-100 rounded w-1/3"></div>
                         </div>
                     ))}
                 </div>
             ) : (
                 <motion.div 
                     variants={staggerContainer}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
                 >
                     {chartData.map((item, index) => {
                         const IconComponent = item.icon;
+                        const percentage = calculatePercentage(item.count);
                         return (
                             <motion.div
                                 key={index}
                                 variants={slideUp}
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                whileHover={{ y: -2 }}
+                                className="group relative bg-white rounded-3xl shadow-sm border border-gray-100/80 p-6 cursor-pointer hover:shadow-xl hover:border-gray-200 transition-all duration-300 overflow-hidden"
                                 onClick={() => router.push(`/tables?table=${item.name}`)}
                             >
+                                {/* Background gradient on hover */}
                                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                                <div className="relative z-10 mb-6">
-                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <IconComponent className="w-8 h-8" />
-                                    </div>
-                                </div>
+                                
                                 <div className="relative z-10">
-                                    <div className="mb-2">
-                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
-                                            {item.description}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
-                                        {item.name}
-                                    </h3>
-                                    
-                                    {/* Mini Chart */}
-                                    <div className="relative h-32 bg-gradient-to-b from-slate-50 to-slate-100 rounded-2xl overflow-hidden mb-4 group-hover:shadow-lg transition-shadow duration-300">
-                                        <motion.div 
-                                            initial={{ height: 0 }}
-                                            animate={{ height: `${(item.count / maxCount) * 100}%` }}
-                                            transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
-                                            className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${item.color} shadow-lg`}
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent"></div>
-                                        </motion.div>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-3xl font-bold text-slate-800 z-10 drop-shadow-sm">
-                                                {item.count}
-                                            </span>
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-6">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className={`p-2.5 bg-gradient-to-br ${item.color} rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                                    <IconComponent size={18} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
+                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.description}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    
-                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
-                                        <span>Lihat Detail</span>
-                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+
+                                    <div className="space-y-5">
+                                        {/* Data Count */}
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-extrabold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                                                {item.count.toLocaleString()}
+                                            </span>
+                                            <span className="text-sm font-medium text-gray-500">Data</span>
+                                        </div>
+                                        
+                                        {/* Progress Bar Stick */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-500 font-medium">Progress</span>
+                                                <span className={`font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
+                                                    {percentage.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${percentage}%` }}
+                                                    transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
+                                                    className={`h-full bg-gradient-to-r ${item.color} rounded-full shadow-sm relative overflow-hidden`}
+                                                >
+                                                    {/* Shine effect overlay */}
+                                                    <motion.div
+                                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                                        animate={{
+                                                            x: ['-100%', '100%']
+                                                        }}
+                                                        transition={{
+                                                            duration: 2,
+                                                            repeat: Infinity,
+                                                            ease: "linear"
+                                                        }}
+                                                        style={{ width: '50%' }}
+                                                    />
+                                                </motion.div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center text-sm font-medium text-[#0384d6] pt-2">
+                                            <span>Lihat Detail</span>
+                                            <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
