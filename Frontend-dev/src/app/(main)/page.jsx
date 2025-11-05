@@ -790,27 +790,60 @@ const GrafikTabel = () => {
 // ----- [TIDAK DIUBAH] KOMPONEN UTAMA APP -----
 export default function App() {
   const [mounted, setMounted] = useState(false);
-  const [showHero, setShowHero] = useState(true);
   const { authUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  
+  // Inisialisasi showHero berdasarkan status di sessionStorage
+  // Jika hero sudah pernah ditampilkan di session ini, langsung set false
+  const getInitialShowHero = () => {
+    if (typeof window === 'undefined') return true;
+    
+    // Cek apakah hero sudah pernah ditampilkan di session ini
+    const heroShown = sessionStorage.getItem('hero_shown_after_login');
+    // Jika sudah pernah ditampilkan, jangan tampilkan lagi (false)
+    // Jika belum pernah, akan ditentukan oleh useEffect berdasarkan status login
+    return heroShown !== 'true';
+  };
+  
+  const [showHero, setShowHero] = useState(getInitialShowHero);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   // Logika untuk hide hero setelah 3-4 detik jika user sudah login
+  // Hero hanya muncul sekali setelah login, tidak muncul lagi saat pindah page
   useEffect(() => {
+    if (!mounted) return; // Tunggu sampai component mounted
+    
     if (authUser && !authLoading) {
-      // Hero tampil 3.5 detik (antara 3-4 detik)
-      const timer = setTimeout(() => {
-        setShowHero(false);
-      }, 3500);
+      // User sudah login
+      // Cek apakah hero sudah pernah ditampilkan di session ini
+      const heroShown = sessionStorage.getItem('hero_shown_after_login');
+      
+      if (!heroShown) {
+        // Hero belum pernah ditampilkan setelah login, tampilkan sekarang
+        setShowHero(true);
+        
+        // Hero tampil 3.5 detik (antara 3-4 detik)
+        const timer = setTimeout(() => {
+          setShowHero(false);
+          // Simpan status bahwa hero sudah pernah ditampilkan
+          sessionStorage.setItem('hero_shown_after_login', 'true');
+        }, 3500);
 
-      return () => clearTimeout(timer);
-    } else {
-      // Jika belum login, hero tetap tampil
+        return () => clearTimeout(timer);
+      } else {
+        // Hero sudah pernah ditampilkan, pastikan tidak tampil
+        setShowHero(false);
+      }
+    } else if (!authUser && !authLoading) {
+      // User belum login, hero tampil
       setShowHero(true);
+      // Reset status jika user logout
+      sessionStorage.removeItem('hero_shown_after_login');
     }
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading, mounted]);
 
   return (
     <>
