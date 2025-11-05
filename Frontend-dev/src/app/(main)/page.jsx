@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
+import { roleCan } from "../../lib/role";
 
 // --- FUNGSI DAN IKON LOKAL ---
 const useRouter = () => {
@@ -792,6 +793,49 @@ export default function App() {
   const [mounted, setMounted] = useState(false);
   const { authUser, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const role = authUser?.role;
+
+  // Tentukan akses C1, C2, C3 berdasarkan role (sama seperti di tables/page.jsx)
+  const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
+  const hasC1Access = useMemo(() => c1AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c2AccessKeys = [
+    "tabel_2a1_pendaftaran",
+    "tabel_2a2_keragaman_asal", 
+    "tabel_2a3_kondisi_mahasiswa",
+    "pemetaan2b1",
+    "tabel_2b4_masa_tunggu",
+    "tabel_2b5_kesesuaian_kerja",
+    "tabel_2b6_kepuasan_pengguna"
+  ];
+  const hasC2Access = useMemo(() => c2AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c3AccessKeys = [
+    "tabel_3a1_sarpras_penelitian"
+  ];
+  const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  // Akses Data Dosen
+  const hasDosenAccess = useMemo(() => roleCan(role, "dosen", "r"), [role]);
+
+  // Cek apakah user bisa melihat grafik tabel (hanya untuk super admin, waket 1&2, tpm)
+  const canSeeGrafikTabel = useMemo(() => {
+    const roleLower = (role || '').toLowerCase();
+    const allowedRoles = ['super admin', 'admin', 'waket-1', 'waket1', 'waket-2', 'waket2', 'tpm'];
+    return allowedRoles.includes(roleLower);
+  }, [role]);
+
+  // Filter quick actions berdasarkan akses role
+  const quickActions = useMemo(() => {
+    const allQuickActions = [
+      { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
+      { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
+      { label: 'Tabel C3', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
+      { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess },
+      { label: 'Berita', path: '/berita', icon: FiNewspaper, color: 'from-orange-500 to-red-500', hasAccess: true } // Berita selalu bisa diakses
+    ];
+    return allQuickActions.filter(item => item.hasAccess);
+  }, [hasC1Access, hasC2Access, hasC3Access, hasDosenAccess]);
   
   // Inisialisasi showHero berdasarkan status di sessionStorage
   // Jika hero sudah pernah ditampilkan di session ini, langsung set false
@@ -981,12 +1025,7 @@ export default function App() {
                                       <h3 className="text-xl font-bold mb-3 text-slate-900">Akses Cepat</h3>
                                     </div>
                                     <div className="space-y-3">
-                                      {[
-                                        { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500' },
-                                        { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500' },
-                                        { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500' },
-                                        { label: 'Berita', path: '/berita', icon: FiNewspaper, color: 'from-orange-500 to-red-500' }
-                                      ].map((item, i) => {
+                                      {quickActions.map((item, i) => {
                                         const IconComponent = item.icon;
                                         return (
                                           <motion.button
@@ -1008,8 +1047,8 @@ export default function App() {
                                 </div>
                               </div>
 
-                              {/* Grafik Data Tabel */}
-                              <GrafikTabel />
+                              {/* Grafik Data Tabel - Hanya untuk role super admin, waket 1&2, tpm */}
+                              {canSeeGrafikTabel && <GrafikTabel />}
                             </div>
                           </div>
                           <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
