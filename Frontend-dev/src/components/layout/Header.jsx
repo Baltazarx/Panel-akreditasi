@@ -5,13 +5,14 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Table, Book, User, LogOut, X, Menu, Newspaper } from 'lucide-react';
+import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3 } from 'lucide-react';
 import Image from 'next/image'; // Import komponen Image dari Next.js
 
 // Konstanta item navigasi (hindari re-create tiap render)
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/tables", label: "Tabel", icon: Table },
+  { href: "/report", label: "Report", icon: BarChart3 },
   { href: "/panduan", label: "Panduan", icon: Book },
   { href: "/berita", label: "Berita", icon: Newspaper },
 ];
