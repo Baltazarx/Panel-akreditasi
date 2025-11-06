@@ -41,6 +41,11 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
     }
   }, [initialData, authUser]);
 
+  const unitOptions = useMemo(() => {
+    const units = maps?.units || maps?.unit_kerja || {};
+    return Object.values(units);
+  }, [maps]);
+
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -51,11 +56,6 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
     e.preventDefault();
     onSave(form);
   };
-
-  const unitOptions = useMemo(() => {
-    const units = maps?.units || maps?.unit_kerja || {};
-    return Object.values(units);
-  }, [maps]);
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
@@ -186,13 +186,27 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
       try {
         const data = await apiFetch("/dosen");
         const list = Array.isArray(data) ? data : [];
-        setDosenList(list);
+        // Filter duplicate ID dan pastikan unique dengan Map
+        const dosenMap = new Map();
+        list.forEach((d, idx) => {
+          const id = d.id_dosen;
+          if (!dosenMap.has(id)) {
+            dosenMap.set(id, {
+              id_dosen: id,
+              nama: d.nama_lengkap || d.nama || `${d.nama_depan || ""} ${d.nama_belakang || ""}`.trim() || `Dosen ${id}`,
+              originalIndex: idx
+            });
+          }
+        });
+        
+        setDosenList(Array.from(dosenMap.values()).sort((a, b) => (a.nama || "").localeCompare(b.nama || "")));
       } catch (err) {
         console.error("Error fetching dosen:", err);
+        setDosenList([]);
       }
     };
-    fetchDosen();
-  }, []);
+    if (isOpen) fetchDosen();
+  }, [isOpen]);
 
   useEffect(() => {
     if (initialData) {
@@ -215,6 +229,11 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
     }
   }, [initialData, authUser]);
 
+  const unitOptions = useMemo(() => {
+    const units = maps?.units || maps?.unit_kerja || {};
+    return Object.values(units);
+  }, [maps]);
+
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -225,11 +244,6 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
     e.preventDefault();
     onSave(form);
   };
-
-  const unitOptions = useMemo(() => {
-    const units = maps?.units || maps?.unit_kerja || {};
-    return Object.values(units);
-  }, [maps]);
 
   const jenisPengembanganOptions = [
     "Tugas Belajar",
@@ -291,7 +305,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                 <option value="">Pilih Dosen</option>
                 {dosenList.map((dosen) => (
                   <option key={dosen.id_dosen} value={dosen.id_dosen}>
-                    {dosen.nama || `${dosen.nama_depan || ""} ${dosen.nama_belakang || ""}`.trim()}
+                    {dosen.nama || `${dosen.nama_depan || ""} ${dosen.nama_belakang || ""}`.trim() || `Dosen ${dosen.id_dosen}`}
                   </option>
                 ))}
               </select>
@@ -385,6 +399,7 @@ function SummaryTable({
   canDelete,
   onEdit,
   onDelete,
+  showDeleted,
   tahunTS,
   tahunTS1,
   tahunTS2,
@@ -406,59 +421,83 @@ function SummaryTable({
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          {/* Baris 1: Header utama - Tahun Akademik */}
           <tr>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit/Prodi</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Tahun Akademik
+            </th>
+            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              Tahun Akademik
+            </th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Link Bukti
+            </th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Aksi
+            </th>
+          </tr>
+          {/* Baris 2: Sub-header TS-2, TS-1, TS */}
+          <tr>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+          </tr>
+          {/* Baris 3: Label untuk Summary Section */}
+          <tr className="bg-white/10">
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              Jumlah Dosen DTPR
+            </th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
-          <tr className="bg-white hover:bg-slate-50">
+          <tr className="bg-yellow-50 hover:bg-yellow-100 border-t-2 border-yellow-300">
             <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">
-              {getUnitName(summaryData.id_unit)}
+              Jumlah Dosen DTPR
             </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
               {summaryData.jumlah_ts_2 || 0}
             </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
               {summaryData.jumlah_ts_1 || 0}
             </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
               {summaryData.jumlah_ts || 0}
             </td>
             <td className="px-4 py-3 border border-slate-200 text-slate-700">
-              <div className="space-y-1">
-                {summaryData.link_bukti_ts_2 && (
-                  <a href={summaryData.link_bukti_ts_2} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975] text-xs block">
-                    TS-2
-                  </a>
-                )}
-                {summaryData.link_bukti_ts_1 && (
-                  <a href={summaryData.link_bukti_ts_1} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975] text-xs block">
-                    TS-1
-                  </a>
-                )}
-                {summaryData.link_bukti_ts && (
-                  <a href={summaryData.link_bukti_ts} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975] text-xs block">
-                    TS
-                  </a>
-                )}
-                {!summaryData.link_bukti_ts_2 && !summaryData.link_bukti_ts_1 && !summaryData.link_bukti_ts && (
-                  <span className="text-slate-400 text-xs">-</span>
-                )}
-              </div>
+              {summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 ? (
+                <a
+                  href={summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#0384d6] underline hover:text-[#043975]"
+                >
+                  Lihat Bukti
+                </a>
+              ) : (
+                <span className="text-slate-400">-</span>
+              )}
             </td>
             <td className="px-4 py-3 text-center border border-slate-200">
               <div className="flex items-center justify-center gap-2">
-                {canUpdate && (
+                {!showDeleted && canUpdate && (
                   <button
                     onClick={() => onEdit(summaryData)}
                     className="font-medium text-[#0384d6] hover:underline"
                   >
                     Edit
+                  </button>
+                )}
+                {!showDeleted && canDelete && (
+                  <button
+                    onClick={() => onDelete(summaryData)}
+                    className="font-medium text-red-600 hover:underline"
+                  >
+                    Hapus
                   </button>
                 )}
               </div>
@@ -497,9 +536,10 @@ function DetailTable({
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          {/* Baris 1: Tahun Akademik */}
           <tr>
             {showDeleted && (
-              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+              <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16 align-middle">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -508,22 +548,34 @@ function DetailTable({
                 />
               </th>
             )}
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit/Prodi</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Pengembangan</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Jenis Pengembangan DTPR
+            </th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Nama DTPR
+            </th>
+            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              Jumlah
+            </th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Link Bukti
+            </th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+              Aksi
+            </th>
+          </tr>
+          {/* Baris 2: TS-2, TS-1, TS */}
+          <tr>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
           {filteredRows.length === 0 ? (
             <tr>
               <td
-                colSpan={showDeleted ? 10 : 9}
+                colSpan={showDeleted ? 7 : 6}
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -554,10 +606,8 @@ function DetailTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{getUnitName(r.id_unit)}</td>
-                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_dtpr || "-"}</td>
                 <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.jenis_pengembangan || "-"}</td>
+                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_dtpr || "-"}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_2 || 0}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_1 || 0}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts || 0}</td>
@@ -625,8 +675,6 @@ export default function Tabel3A3({ auth, role }) {
   const { authUser } = useAuth();
   const { maps: mapsFromHook } = useMaps(auth?.user || authUser || true);
   const maps = mapsFromHook ?? { units: {}, unit_kerja: {}, tahun: {} };
-
-  const [activeTab, setActiveTab] = useState("summary"); // "summary" or "detail"
   
   // Summary state
   const [summaryData, setSummaryData] = useState(null);
@@ -637,6 +685,7 @@ export default function Tabel3A3({ auth, role }) {
   const [detailLoading, setDetailLoading] = useState(false);
   
   const [showDeleted, setShowDeleted] = useState(false);
+  const [showDeletedSummary, setShowDeletedSummary] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState(null);
 
@@ -645,6 +694,25 @@ export default function Tabel3A3({ auth, role }) {
   const [modalDetailOpen, setModalDetailOpen] = useState(false);
   const [editingSummary, setEditingSummary] = useState(null);
   const [editingDetail, setEditingDetail] = useState(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (modalSummaryOpen || modalDetailOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [modalSummaryOpen, modalDetailOpen]);
 
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
@@ -701,7 +769,7 @@ export default function Tabel3A3({ auth, role }) {
       setSummaryLoading(true);
       try {
         let url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}`;
-        if (showDeleted) {
+        if (showDeletedSummary) {
           url += "&include_deleted=1";
         }
         const data = await apiFetch(url);
@@ -719,10 +787,8 @@ export default function Tabel3A3({ auth, role }) {
       }
     };
 
-    if (activeTab === "summary") {
       fetchSummary();
-    }
-  }, [activeTab, showDeleted, tahunTS, tahunTS1, tahunTS2]);
+  }, [showDeletedSummary, tahunTS, tahunTS1, tahunTS2]);
 
   // Fetch Detail data
   useEffect(() => {
@@ -750,10 +816,8 @@ export default function Tabel3A3({ auth, role }) {
       }
     };
 
-    if (activeTab === "detail") {
       fetchDetail();
-    }
-  }, [activeTab, showDeleted, tahunTS, tahunTS1, tahunTS2]);
+  }, [showDeleted, tahunTS, tahunTS1, tahunTS2]);
 
   // Handle Save Summary
   const handleSaveSummary = async (form) => {
@@ -806,7 +870,7 @@ export default function Tabel3A3({ auth, role }) {
       setEditingSummary(null);
 
       // Refresh data
-      const url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeleted ? "&include_deleted=1" : ""}`;
+      const url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeletedSummary ? "&include_deleted=1" : ""}`;
       const data = await apiFetch(url);
       setSummaryData(data);
     } catch (err) {
@@ -908,6 +972,58 @@ export default function Tabel3A3({ auth, role }) {
       link_bukti: data.link_bukti_ts || "",
     });
     setModalSummaryOpen(true);
+  };
+
+  // Handle Delete Summary
+  const handleDeleteSummary = async (data) => {
+    Swal.fire({
+      title: 'Anda yakin?',
+      text: `Data jumlah DTPR untuk unit ini akan dihapus (soft delete) untuk tahun TS, TS-1, dan TS-2.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          // Ambil data RAW mode untuk mendapatkan ID per tahun
+          const rawUrl = `${ENDPOINT_SUMMARY}?id_unit=${data.id_unit}`;
+          const rawData = await apiFetch(rawUrl);
+          
+          // Filter hanya tahun yang relevan (TS, TS-1, TS-2)
+          const tahunList = [tahunTS, tahunTS1, tahunTS2].filter(Boolean);
+          const relevantData = Array.isArray(rawData) 
+            ? rawData.filter(item => tahunList.includes(item.id_tahun) && !item.deleted_at)
+            : [];
+          
+          if (relevantData.length === 0) {
+            Swal.fire('Info', 'Tidak ada data yang bisa dihapus.', 'info');
+            return;
+          }
+          
+          // Hapus setiap record
+          const deletePromises = relevantData.map(async (item) => {
+            if (item.id) {
+              await apiFetch(`${ENDPOINT_SUMMARY}/${item.id}`, { method: "DELETE" });
+            }
+          });
+          
+          await Promise.all(deletePromises);
+          
+          // Refresh data
+          const refreshUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeletedSummary ? "&include_deleted=1" : ""}`;
+          const refreshedData = await apiFetch(refreshUrl);
+          setSummaryData(refreshedData);
+
+          Swal.fire('Dihapus!', 'Data summary telah dihapus (soft delete).', 'success');
+        } catch (err) {
+          console.error("Delete summary error:", err);
+          Swal.fire('Gagal!', `Gagal menghapus data summary: ${err.message}`, 'error');
+        }
+      }
+    });
   };
 
   // Handle Edit Detail
@@ -1064,50 +1180,42 @@ export default function Tabel3A3({ auth, role }) {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Summary Section - Jumlah Dosen DTPR */}
       <div className="bg-white rounded-2xl shadow-md border">
-        <div className="border-b border-gray-200">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab("summary")}
-              className={`px-6 py-4 font-medium text-sm transition-colors ${
-                activeTab === "summary"
-                  ? "text-[#0384d6] border-b-2 border-[#0384d6]"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Summary (Jumlah DTPR)
-            </button>
-            <button
-              onClick={() => setActiveTab("detail")}
-              className={`px-6 py-4 font-medium text-sm transition-colors ${
-                activeTab === "detail"
-                  ? "text-[#0384d6] border-b-2 border-[#0384d6]"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Detail (Pengembangan DTPR)
-            </button>
-          </div>
-        </div>
-
         <div className="p-6">
-          {/* Summary Tab */}
-          {activeTab === "summary" && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-slate-900">Jumlah Dosen DTPR</h2>
-                {canCreate && tahunTS && tahunTS1 && tahunTS2 && (
+              <div className="flex gap-2">
+                {canDelete && (
+                  <button
+                    onClick={() => setShowDeletedSummary(!showDeletedSummary)}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      showDeletedSummary
+                        ? "bg-[#0384d6] text-white"
+                        : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+                    }`}
+                  >
+                    {showDeletedSummary ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+                  </button>
+                )}
+                {canCreate && (
                   <button
                     onClick={() => {
                       setEditingSummary(null);
                       setModalSummaryOpen(true);
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+                    className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
+                      !tahunTS || !tahunTS1 || !tahunTS2
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
+                    }`}
+                    disabled={!tahunTS || !tahunTS1 || !tahunTS2}
                   >
-                    + Tambah Summary
+                    + Tambah Jumlah DTPR
                   </button>
                 )}
+              </div>
               </div>
 
               {summaryLoading ? (
@@ -1126,39 +1234,50 @@ export default function Tabel3A3({ auth, role }) {
                   canUpdate={canUpdate}
                   canDelete={canDelete}
                   onEdit={handleEditSummary}
-                  onDelete={() => {}}
+                onDelete={handleDeleteSummary}
+                showDeleted={showDeletedSummary}
                   tahunTS={tahunTS}
                   tahunTS1={tahunTS1}
                   tahunTS2={tahunTS2}
                 />
               )}
             </div>
-          )}
+        </div>
+      </div>
 
-          {/* Detail Tab */}
-          {activeTab === "detail" && (
+      {/* Detail Section - Pengembangan DTPR */}
+      <div className="bg-white rounded-2xl shadow-md border">
+        <div className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-slate-900">Detail Pengembangan DTPR</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Pengembangan DTPR</h2>
                 <div className="flex gap-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={showDeleted}
-                      onChange={(e) => setShowDeleted(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                    />
-                    Tampilkan yang dihapus
-                  </label>
-                  {canCreate && tahunTS && tahunTS1 && tahunTS2 && (
+                {canDelete && (
+                  <button
+                    onClick={() => setShowDeleted(!showDeleted)}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      showDeleted
+                        ? "bg-[#0384d6] text-white"
+                        : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+                    }`}
+                  >
+                    {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+                  </button>
+                )}
+                {canCreate && (
                     <button
                       onClick={() => {
                         setEditingDetail(null);
                         setModalDetailOpen(true);
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
-                    >
-                      + Tambah Detail
+                    className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
+                      !tahunTS || !tahunTS1 || !tahunTS2
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
+                    }`}
+                    disabled={!tahunTS || !tahunTS1 || !tahunTS2}
+                  >
+                    + Tambah Pengembangan DTPR
                     </button>
                   )}
                 </div>
@@ -1191,7 +1310,6 @@ export default function Tabel3A3({ auth, role }) {
                 />
               )}
             </div>
-          )}
         </div>
       </div>
 

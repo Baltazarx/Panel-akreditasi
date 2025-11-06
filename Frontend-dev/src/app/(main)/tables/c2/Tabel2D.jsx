@@ -34,6 +34,25 @@ export default function Tabel2D({ role }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingDetail, setEditingDetail] = useState(null);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+      if (showAddModal) {
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        
+        return () => {
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          window.scrollTo(0, scrollY);
+        };
+      }
+    }, [showAddModal]);
     const [detailsToSubmit, setDetailsToSubmit] = useState([]); // Daftar rincian yang akan di-submit
 
     const isProdiUser = ['prodi'].includes(role?.toLowerCase());

@@ -311,6 +311,28 @@ export default function Tabel1A2({ auth, role }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (modalOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Lock body scroll
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scroll position when modal closes
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [modalOpen]);
+
   // Permission flags
   const canCreate = roleCan(role, "tabel_1a2", "C");
   const canUpdate = roleCan(role, "tabel_1a2", "U");

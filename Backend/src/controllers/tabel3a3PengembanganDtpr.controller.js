@@ -56,6 +56,7 @@ const getPivotClausesDetail = (reqQuery) => {
     const params = [];
     const selectJumlah = [];
     const selectLinkBukti = [];
+    const selectLinkBuktiForCoalesce = []; // Untuk COALESCE tanpa alias (prioritas TS > TS-1 > TS-2)
 
     for (const year of years) {
         const idTahunKey = `id_tahun_${year}`;
@@ -73,20 +74,35 @@ const getPivotClausesDetail = (reqQuery) => {
             `COUNT(CASE WHEN p.id_tahun = ? THEN 1 END) AS jumlah_${year}`
         );
 
-        // Ambil link bukti (prioritas TS)
+        // Ambil link bukti dengan alias untuk kolom individual
         selectLinkBukti.push(
             `MAX(CASE WHEN p.id_tahun = ? THEN p.link_bukti ELSE NULL END) AS link_bukti_${year}`
         );
     }
 
+    // Buat urutan untuk COALESCE dengan prioritas TS > TS-1 > TS-2 (urutan dibalik)
+    const yearsForCoalesce = ['ts', 'ts_1', 'ts_2']; // Urutan prioritas: TS dulu
+    const paramsForCoalesce = [];
+    for (const year of yearsForCoalesce) {
+        const idTahunKey = `id_tahun_${year}`;
+        const idTahunVal = reqQuery[idTahunKey];
+        const idTahunInt = parseInt(idTahunVal);
+        paramsForCoalesce.push(idTahunInt);
+        
+        selectLinkBuktiForCoalesce.push(
+            `MAX(CASE WHEN p.id_tahun = ? THEN p.link_bukti ELSE NULL END)`
+        );
+    }
+
     let allSelects = [
         ...selectJumlah,
-        // Ambil 1 link bukti (prioritas TS)
-        `COALESCE(${selectLinkBukti.join(', ')}) AS link_bukti_display`
+        ...selectLinkBukti, // Kolom individual untuk setiap tahun
+        // Ambil 1 link bukti (prioritas TS > TS-1 > TS-2)
+        `COALESCE(${selectLinkBuktiForCoalesce.join(', ')}) AS link_bukti_display`
     ];
 
-    // Params untuk jumlah (3) + params untuk link (3)
-    let allParams = [...params, ...params];
+    // Params untuk jumlah (3) + params untuk link dengan alias (3) + params untuk COALESCE (3, urutan TS > TS-1 > TS-2)
+    let allParams = [...params, ...params, ...paramsForCoalesce];
     
     return {
         selectSql: `, ${allSelects.join(',\n')}`, 
@@ -114,8 +130,12 @@ export const listSummaryDtpr = async (req, res) => {
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_dtpr_tahunan', 't');
       const orderBy = buildOrderBy(req.query?.order_by, 'id', 't');
 
-      // Ambil tahun-tahun dari pivot params (3 tahun)
-      const tahunList = pivotParams.slice(0, 3); // TS-2, TS-1, TS
+      // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
+      const tahunList = [
+        parseInt(req.query.id_tahun_ts_2),
+        parseInt(req.query.id_tahun_ts_1),
+        parseInt(req.query.id_tahun_ts)
+      ];
 
       // Build WHERE clause dengan filter tahun
       const whereClauses = [...where];
@@ -315,8 +335,12 @@ export const listDetailPengembangan = async (req, res) => {
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_pengembangan', 'p');
       const orderBy = buildOrderBy(req.query?.order_by, 'id_pengembangan', 'p');
 
-      // Ambil tahun-tahun dari pivot params (3 tahun)
-      const tahunList = pivotParams.slice(0, 3); // TS-2, TS-1, TS
+      // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
+      const tahunList = [
+        parseInt(req.query.id_tahun_ts_2),
+        parseInt(req.query.id_tahun_ts_1),
+        parseInt(req.query.id_tahun_ts)
+      ];
 
       // Build WHERE clause dengan filter tahun
       const whereClauses = [...where];
