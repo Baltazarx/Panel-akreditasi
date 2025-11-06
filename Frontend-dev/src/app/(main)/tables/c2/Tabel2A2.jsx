@@ -464,7 +464,7 @@ export default function Tabel2A2() {
   const isAllSelected = filteredData.length > 0 && selectedRows.length === filteredData.length;
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-10">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       
       {/* Loading State */}
       {mapsLoading && (

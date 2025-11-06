@@ -561,7 +561,7 @@ export default function Tabel3A1({ auth, role }) {
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl overflow-visible">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
         <p className="text-sm text-slate-500 mt-1">

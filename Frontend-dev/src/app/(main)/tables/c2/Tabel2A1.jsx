@@ -1413,7 +1413,7 @@ export default function Tabel2A1({ role }) {
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-10">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       
       {/* Loading State */}
       {mapsLoading && (

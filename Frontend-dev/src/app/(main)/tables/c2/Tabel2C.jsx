@@ -536,7 +536,7 @@ export default function Tabel2C({ role }) {
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-6">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-6">
       {/* Header */}
       <header className="pb-6 mb-2 border-b border-slate-200">
         <h2 className="text-2xl font-bold text-slate-800">Tabel 2.C Fleksibilitas Dalam Proses Pembelajaran</h2>

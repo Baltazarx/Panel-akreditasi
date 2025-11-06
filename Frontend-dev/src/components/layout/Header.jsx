@@ -9,7 +9,7 @@ import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3 } from '
 import Image from 'next/image'; // Import komponen Image dari Next.js
 
 // Konstanta item navigasi (hindari re-create tiap render)
-const NAV_ITEMS = [
+const ALL_NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/tables", label: "Tabel", icon: Table },
   { href: "/report", label: "Report", icon: BarChart3 },
@@ -17,10 +17,28 @@ const NAV_ITEMS = [
   { href: "/berita", label: "Berita", icon: Newspaper },
 ];
 
+// Helper function untuk cek apakah role boleh melihat Report
+const canViewReport = (role) => {
+  if (!role) return false;
+  const roleLower = role.toLowerCase();
+  return ['superadmin', 'super admin', 'waket1', 'waket-1', 'waket2', 'waket-2', 'tpm'].includes(roleLower);
+};
+
 export default function Header() {
   const { authUser, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Filter NAV_ITEMS berdasarkan role user
+  const NAV_ITEMS = useMemo(() => {
+    if (!authUser) return ALL_NAV_ITEMS.filter(item => item.href !== "/report");
+    return ALL_NAV_ITEMS.filter(item => {
+      if (item.href === "/report") {
+        return canViewReport(authUser.role);
+      }
+      return true;
+    });
+  }, [authUser]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);

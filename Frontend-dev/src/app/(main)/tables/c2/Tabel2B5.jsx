@@ -306,7 +306,7 @@ export default function Tabel2B5({ role }) {
   );
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-10">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       {mapsLoading && (
         <div className="flex justify-center items-center py-8">
           <div className="text-slate-600">Memuat data...</div>
