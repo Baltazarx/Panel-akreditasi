@@ -603,13 +603,14 @@ const StatistikCards = () => {
     }, []);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-3 h-full">
             {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50 backdrop-blur-sm">
-                        <div className="h-6 bg-slate-200 rounded mb-4"></div>
-                        <div className="h-8 bg-slate-200 rounded mb-2"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                    <div key={i} className="group relative bg-white p-4 rounded-xl shadow-md border border-gray-100 animate-pulse">
+                        <div className="h-10 w-10 bg-slate-200 rounded-lg mb-3"></div>
+                        <div className="h-4 bg-slate-200 rounded mb-2 w-1/2"></div>
+                        <div className="h-6 bg-slate-200 rounded mb-1"></div>
+                        <div className="h-3 bg-slate-200 rounded w-2/3"></div>
                     </div>
                 ))
             ) : (
@@ -622,27 +623,25 @@ const StatistikCards = () => {
                             initial="hidden"
                             animate="visible"
                             transition={{ delay: index * 0.1 }}
-                            whileHover={{ y: -8, scale: 1.02 }}
-                            className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100/50 backdrop-blur-sm overflow-hidden"
+                            whileHover={{ y: -4, scale: 1.02 }}
+                            className="group relative bg-white p-4 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 ease-in-out overflow-hidden"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                            <div className="relative z-10 mb-6">
-                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                    <IconComponent className="w-8 h-8" />
-                                </div>
-                            </div>
                             <div className="relative z-10">
-                                <div className="mb-2">
-                                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} text-white shadow-md`}>
+                                        <IconComponent className="w-5 h-5" />
+                                    </div>
+                                    <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
                                         stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                     }`}>
                                         {stat.change}
                                     </span>
                                 </div>
-                                <h3 className="text-2xl font-bold mb-3 text-slate-900">
+                                <h3 className="text-2xl font-bold mb-1 text-slate-900">
                                     {stat.value}
                                 </h3>
-                                <p className="text-gray-600 text-sm leading-relaxed">
+                                <p className="text-xs text-gray-500 leading-relaxed">
                                     {stat.title}
                                 </p>
                             </div>
@@ -654,11 +653,12 @@ const StatistikCards = () => {
     );
 };
 
-// Komponen Berita Terbaru - Style seperti Layanan Cepat
-const BeritaTerbaru = () => {
+// Komponen Berita - Style seperti Portfolio (card besar dengan chart)
+const BeritaPortfolio = () => {
     const router = useRouter();
     const [berita, setBerita] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTimeframe, setSelectedTimeframe] = useState('1W');
 
     const tpmNewsData = [
         {
@@ -695,74 +695,145 @@ const BeritaTerbaru = () => {
         });
     };
 
+    // Data untuk chart (simulasi)
+    const chartData = [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 40, 42];
+
     return (
         <motion.div
             initial="hidden"
             animate="visible"
-            variants={staggerContainer}
-            className="space-y-6"
+            variants={fadeIn}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
         >
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-slate-900">Berita Terbaru</h3>
+                <h3 className="text-xl font-bold text-slate-900">Berita</h3>
                 <button 
                     onClick={() => router.push('/berita')}
-                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                    Lihat Semua
-                    <FiArrowRight className="w-4 h-4" />
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
                 </button>
             </div>
 
             {loading ? (
-                <div className="space-y-6">
-                    {[1, 2].map((i) => (
-                        <div key={i} className="bg-white p-6 rounded-3xl shadow-lg animate-pulse border border-gray-100/50">
-                            <div className="h-6 bg-slate-200 rounded mb-4 w-3/4"></div>
-                            <div className="h-4 bg-slate-200 rounded mb-2"></div>
-                            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
-                        </div>
-                    ))}
+                <div className="animate-pulse space-y-4">
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-32 bg-gray-200 rounded"></div>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    {berita.map((item) => {
-                        const IconComponent = item.icon;
+                <div className="space-y-4">
+                    {/* Berita 1 - Atas */}
+                    {berita[0] && (() => {
+                        const IconComponent = berita[0].icon;
                         return (
-                            <motion.div
-                                key={item.id}
-                                variants={slideUp}
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
-                                onClick={() => router.push('/berita')}
-                            >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                                <div className="relative z-10 mb-6">
-                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <IconComponent className="w-8 h-8" />
+                            <div className="pb-4 border-b border-gray-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${berita[0].color} text-white`}>
+                                        <IconComponent className="w-4 h-4" />
                                     </div>
+                                    <span className="text-xs text-gray-500">{formatDate(berita[0].date)}</span>
                                 </div>
-                                <div className="relative z-10">
-                                    <div className="mb-2">
-                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-[#f1f5f9] text-[#0384d6]">
-                                            {formatDate(item.date)}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl font-bold mb-3 text-slate-900">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                        {item.excerpt}
-                                    </p>
-                                    <div className="flex items-center text-sm font-medium text-[#0384d6]">
-                                        <span>Baca selengkapnya</span>
-                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                                    </div>
-                                </div>
-                            </motion.div>
+                                <h4 className="text-base font-bold text-slate-900 mb-2 line-clamp-2">{berita[0].title}</h4>
+                                <p className="text-xs text-gray-600 line-clamp-2">{berita[0].excerpt}</p>
+                            </div>
                         );
-                    })}
+                    })()}
+
+                    {/* Berita 2 - Bawah */}
+                    {berita[1] && (() => {
+                        const IconComponent = berita[1].icon;
+                        return (
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${berita[1].color} text-white`}>
+                                        <IconComponent className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs text-gray-500">{formatDate(berita[1].date)}</span>
+                                </div>
+                                <h4 className="text-base font-bold text-slate-900 mb-2 line-clamp-2">{berita[1].title}</h4>
+                                <p className="text-xs text-gray-600 line-clamp-2">{berita[1].excerpt}</p>
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
+        </motion.div>
+    );
+};
+
+// Komponen Akses Cepat - Style seperti Market (list dengan filter)
+const AksesCepatMarket = ({ quickActions }) => {
+    const router = useRouter();
+    const [selectedFilter, setSelectedFilter] = useState('24h');
+    const [selectedCategory, setSelectedCategory] = useState('Top gainers');
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
+        >
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-slate-900">Akses Cepat</h3>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-2 mb-4">
+                <button
+                    onClick={() => setSelectedFilter('24h')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        selectedFilter === '24h'
+                            ? 'bg-gray-100 text-slate-900'
+                            : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                >
+                    24h
+                </button>
+                <button
+                    onClick={() => setSelectedCategory('Top gainers')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        selectedCategory === 'Top gainers'
+                            ? 'bg-gray-100 text-slate-900'
+                            : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                >
+                    Top gainers
+                </button>
+            </div>
+
+            {/* Quick Actions List */}
+            <div className="max-h-[400px] overflow-y-auto pr-2 space-y-3">
+                {quickActions && quickActions.length > 0 ? (
+                    quickActions.map((item, i) => {
+                        const IconComponent = item.icon;
+                        return (
+                            <motion.button
+                                key={i}
+                                whileHover={{ x: 4 }}
+                                onClick={() => router.push(item.path)}
+                                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors text-left group"
+                            >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className={`p-2.5 rounded-lg bg-gradient-to-br ${item.color} text-white flex-shrink-0`}>
+                                        <IconComponent className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-slate-900 text-base truncate">{item.label}</div>
+                                        <div className="text-xs text-gray-500">Akses cepat</div>
+                                    </div>
+                                </div>
+                                <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 group-hover:translate-x-1" />
+                            </motion.button>
+                        );
+                    })
+                ) : (
+                    <div className="text-center py-4 text-gray-500 text-sm">Tidak ada akses cepat tersedia</div>
+                )}
+            </div>
         </motion.div>
     );
 };
@@ -934,8 +1005,24 @@ export default function App() {
   ];
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
+  // Akses C4, C5, C6
+  const c4AccessKeys = ["tabel_4a1", "tabel_4a2"];
+  const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c5AccessKeys = ["tabel_5a1", "tabel_5a2"];
+  const hasC5Access = useMemo(() => c5AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c6AccessKeys = ["tabel_6a1", "tabel_6a2"];
+  const hasC6Access = useMemo(() => c6AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
   // Akses Data Dosen
   const hasDosenAccess = useMemo(() => roleCan(role, "dosen", "r"), [role]);
+
+  // Akses Data Pegawai
+  const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
+
+  // Akses Management Akun
+  const hasUsersAccess = useMemo(() => roleCan(role, "users", "r"), [role]);
 
   // Cek apakah user bisa melihat grafik tabel (hanya untuk super admin, waket 1&2, tpm)
   const canSeeGrafikTabel = useMemo(() => {
@@ -950,11 +1037,15 @@ export default function App() {
       { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
       { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
       { label: 'Tabel C3', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
+      { label: 'Tabel C4', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
+      { label: 'Tabel C5', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
+      { label: 'Tabel C6', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
       { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess },
-      { label: 'Berita', path: '/berita', icon: FiNewspaper, color: 'from-orange-500 to-red-500', hasAccess: true } // Berita selalu bisa diakses
+      { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess },
+      { label: 'Management Akun', path: '/users', icon: FiSettings, color: 'from-pink-500 to-rose-500', hasAccess: hasUsersAccess }
     ];
     return allQuickActions.filter(item => item.hasAccess);
-  }, [hasC1Access, hasC2Access, hasC3Access, hasDosenAccess]);
+  }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasUsersAccess]);
   
   // Inisialisasi showHero berdasarkan status di sessionStorage
   // Jika hero sudah pernah ditampilkan di session ini, langsung set false
@@ -1119,48 +1210,54 @@ export default function App() {
                                 <p className="text-slate-600">Selamat datang kembali! Berikut ringkasan data Anda.</p>
                               </motion.div>
 
-                              {/* Statistik Cards */}
-                              <StatistikCards />
-
-                              {/* Berita & Akses Cepat dalam Grid Layout */}
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                                {/* Berita Terbaru - 2 kolom */}
-                                <div className="lg:col-span-2">
-                                  <BeritaTerbaru />
+                              {/* Dashboard Grid Layout 2x2 */}
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                                {/* Kiri Atas: Berita (Portfolio Style) */}
+                                <div className="lg:col-span-1">
+                                  <BeritaPortfolio />
                                 </div>
                                 
-                                {/* Widget Quick Actions - 1 kolom */}
+                                {/* Kanan Atas: Statistik Cards */}
+                                <div className="lg:col-span-1">
+                                  <StatistikCards />
+                                </div>
+
+                                {/* Kiri Bawah: Akses Cepat (Market Style) */}
+                                <div className="lg:col-span-1">
+                                  <AksesCepatMarket quickActions={quickActions} />
+                                </div>
+
+                                {/* Kanan Bawah: Unduh Dokumen (Advertisement Style) */}
                                 <div className="lg:col-span-1">
                                   <motion.div
                                     initial="hidden"
                                     animate="visible"
                                     variants={slideUp}
-                                    className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100/50 backdrop-blur-sm h-full"
+                                    className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-lg p-6 h-full text-white relative overflow-hidden"
                                   >
-                                    <div className="mb-6">
-                                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg mb-4">
-                                        <FiTarget className="w-8 h-8" />
+                                    <div className="relative z-10">
+                                      <div className="mb-4">
+                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white mb-2">
+                                          Unduh Gratis
+                                        </span>
+                                        <h3 className="text-xl font-bold mb-2">Dokumen & Template</h3>
+                                        <p className="text-sm text-white/80 mb-4">
+                                          Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu.
+                                        </p>
                                       </div>
-                                      <h3 className="text-xl font-bold mb-3 text-slate-900">Akses Cepat</h3>
+                                      <button
+                                        onClick={() => router.push('/')}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm"
+                                      >
+                                        Unduh Sekarang
+                                      </button>
                                     </div>
-                                    <div className="space-y-3">
-                                      {quickActions.map((item, i) => {
-                                        const IconComponent = item.icon;
-                                        return (
-                                          <motion.button
-                                            key={i}
-                                            whileHover={{ x: 4 }}
-                                            onClick={() => router.push(item.path)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group"
-                                          >
-                                            <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} opacity-80 group-hover:opacity-100 transition-opacity`}>
-                                              <IconComponent className="w-4 h-4 text-white" />
-                                            </div>
-                                            <span className="text-sm font-medium text-slate-700 group-hover:text-[#043975] transition-colors flex-1">{item.label}</span>
-                                            <FiArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all" />
-                                          </motion.button>
-                                        );
-                                      })}
+                                    {/* Decorative lines */}
+                                    <div className="absolute bottom-0 right-0 w-32 h-32 opacity-10">
+                                      <svg viewBox="0 0 100 100" className="w-full h-full">
+                                        <path d="M0,50 Q25,25 50,50 T100,50" stroke="white" strokeWidth="2" fill="none" />
+                                        <path d="M0,70 Q25,45 50,70 T100,70" stroke="white" strokeWidth="2" fill="none" />
+                                      </svg>
                                     </div>
                                   </motion.div>
                                 </div>
