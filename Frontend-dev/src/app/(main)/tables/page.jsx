@@ -62,7 +62,7 @@ const Tooltip = ({ children, text, isVisible }) => {
   if (!isVisible) return children;
   
   return (
-    <div className="relative group">
+    <div className="relative group pointer-events-auto">
       {children}
       <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
         {text}
@@ -226,7 +226,12 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       borderRadius: "16px", 
       transition: { type: "spring", stiffness: 120, damping: 20 } 
     },
-    closed: { width: "64px", height: "64px", borderRadius: "16px", transition: { type: "spring", stiffness: 300, damping: 30 }, },
+    closed: { 
+      width: "64px", 
+      height: "64px", 
+      borderRadius: "20px", 
+      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    },
   };
 
   const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
@@ -322,7 +327,7 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
         onClick={() => setIsOpen(!isOpen)} 
         className={`absolute z-20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
           !isOpen 
-            ? 'inset-0 w-full h-full flex items-center justify-center hover:bg-slate-50 rounded-2xl text-[#043975]' 
+            ? 'top-0 left-0 w-full h-full flex items-center justify-center rounded-[20px] text-[#043975] hover:bg-slate-50' 
             : 'top-4 right-4 p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-[#043975] flex items-center justify-center'
         }`}
         aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
@@ -337,7 +342,11 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
             <FaXmark size={20} />
           </motion.div>
         ) : (
-          <FaBars size={24} className="flex-shrink-0" />
+          <div className="flex flex-col items-center justify-center gap-1.5 translate-y-[32px]">
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+          </div>
         )}
       </button>
     </Tooltip>
@@ -348,7 +357,9 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       variants={sidebarVariants} 
       initial={false} 
       animate={isOpen ? "open" : "closed"} 
-      className="bg-white shadow-2xl flex flex-col overflow-hidden m-4 relative self-start"
+      className={`bg-white flex flex-col overflow-hidden m-4 relative self-start ${
+        isOpen ? 'shadow-2xl' : 'shadow-lg'
+      }`}
       role="complementary"
       aria-label="Sidebar navigasi tabel"
     >
