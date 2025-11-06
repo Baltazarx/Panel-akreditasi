@@ -19,6 +19,25 @@ export default function Tabel2A2() {
   
   const [showModal, setShowModal] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showModal]);
   const [form, setForm] = useState({
     id_unit_prodi: "",
     id_tahun: "",

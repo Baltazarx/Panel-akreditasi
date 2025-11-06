@@ -20,6 +20,25 @@ export default function Tabel2C({ role }) {
   const [showModal, setShowModal] = useState(false);
   const [editingYear, setEditingYear] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false); // Flag untuk membedakan mode tambah/edit
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showModal]);
   const [formState, setFormState] = useState({
     id_unit_prodi: "",
     jumlah_mahasiswa_aktif: "",

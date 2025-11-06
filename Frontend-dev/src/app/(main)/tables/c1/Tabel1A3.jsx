@@ -289,6 +289,25 @@ export default function Tabel1A3({ role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeYear, setActiveYear] = useState("");
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showCreateModal, showEditModal]);
+
   const [newIdTahun, setNewIdTahun] = useState("");
   const [newJenis, setNewJenis] = useState("");
   const [newJumlah, setNewJumlah] = useState("");

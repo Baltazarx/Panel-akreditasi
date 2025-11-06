@@ -121,6 +121,25 @@ export default function Tabel1A1({ role }) {
   const [relational] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showCreateModal, showEditModal]);
+
   const getUnitName = (row) =>
     row?.unit_kerja || row?.unit?.nama || row?.unit_nama || row?.nama_unit || maps.units[row?.id_unit]?.nama || maps.units[row?.unit_id]?.nama || maps.units[row?.id_unit]?.nama_unit || maps.units[row?.unit_id]?.nama_unit || row?.unit || "";
   const getKetuaName = (row) =>
