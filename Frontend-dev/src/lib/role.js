@@ -46,6 +46,7 @@ export const ACCESS_MATRIX = {
     'tenaga_kependidikan': { r: true },
     'audit_mutu_internal': { r: true },
     'users': { r: true },
+    'ref_kabupaten_kota': { r: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   },
 
   // ========== PRODI TI ==========
@@ -82,6 +83,7 @@ export const ACCESS_MATRIX = {
     'tenaga_kependidikan': { r: true },
     'audit_mutu_internal': { r: true },
     'users': { r: true },
+    'ref_kabupaten_kota': { r: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   },
 
   // ========== PRODI MI ==========
@@ -118,6 +120,7 @@ export const ACCESS_MATRIX = {
     'tenaga_kependidikan': { r: true },
     'audit_mutu_internal': { r: true },
     'users': { r: true },
+    'ref_kabupaten_kota': { r: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   },
 
   // ========== LPPM (sesuai aturan baru C1 + aturan backend) ==========
@@ -169,6 +172,8 @@ export const ACCESS_MATRIX = {
      // ...
   },
   'kemahasiswaan': {
+     // Tabel 2.A.2
+     'tabel_2a2_keragaman_asal': { c: true, r: true, u: true, d: true },
      // Tabel 2.B.4 sampai 2.B.6
      'tabel_2b4_masa_tunggu': { c: true, r: true, u: true, d: true },
      'tabel_2b5_kesesuaian_kerja': { c: true, r: true, u: true, d: true },
@@ -181,6 +186,7 @@ export const ACCESS_MATRIX = {
      'ref_jabatan_fungsional': { r: true },
      'tenaga_kependidikan': { r: true },
      'audit_mutu_internal': { r: true },
+     'ref_kabupaten_kota': { r: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   },
 };
 
