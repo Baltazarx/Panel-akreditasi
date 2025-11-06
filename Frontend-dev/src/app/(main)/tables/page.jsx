@@ -236,7 +236,8 @@ export default function TablesPage() {
   // Akses C3: jika ada akses ke tabel C3
   const c3AccessKeys = [
     "tabel_3a1_sarpras_penelitian",
-    "tabel_3a2_penelitian"
+    "tabel_3a2_penelitian",
+    "tabel_3a3_pengembangan_dtpr"
   ]; // tabel-tabel yang ada di C3
   const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 

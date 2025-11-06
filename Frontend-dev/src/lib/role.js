@@ -125,6 +125,7 @@ export const ACCESS_MATRIX = {
     'tabel_1a2':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_1a3':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_3a2_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.A.2 Penelitian DTPR
+    'tabel_3a3_pengembangan_dtpr': { c: true, r: true, u: true, d: true }, // Tabel 3.A.3 Pengembangan DTPR
     'penelitian': { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'pkm':        { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'sumber_pendanaan_summary': { r: true },
