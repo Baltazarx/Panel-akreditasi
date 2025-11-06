@@ -478,9 +478,21 @@ export default function Tabel2B5({ role }) {
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">Batal</button>
-                  <button type="submit" className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white" disabled={saving}>{saving ? "Menyimpan..." : (editing ? "Perbarui" : "Simpan")}</button>
+                <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+                  <button 
+                      type="button" 
+                      onClick={() => setShowAddModal(false)} 
+                      className="px-6 py-3 rounded-xl border-2 border-red-500 text-red-500 font-medium bg-white hover:bg-red-500 hover:border-red-500 hover:text-white active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                      Batal
+                  </button>
+                  <button 
+                      type="submit" 
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0384d6] to-[#043975] hover:from-[#043975] hover:to-[#0384d6] text-white font-semibold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      disabled={saving}
+                  >
+                      {saving ? "Menyimpan..." : (editing ? "Perbarui" : "Simpan")}
+                  </button>
                 </div>
               </form>
             </div>

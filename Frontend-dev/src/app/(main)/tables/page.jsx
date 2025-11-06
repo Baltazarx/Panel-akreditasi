@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { roleCan } from "../../../lib/role";
 
-// Ikon-ikon
-import { FaBars, FaXmark, FaTable, FaGrip, FaUserGroup } from "react-icons/fa6";
+// Ikon-ikon - Variasi icon untuk setiap menu
+import { 
+  FaBars, FaXmark, FaTable, FaGrip, FaUserGroup, 
+  FaUserTie, FaGraduationCap, FaFlask, FaBook, 
+  FaChartLine, FaShield, FaChalkboard
+} from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Impor halaman C1, C2, C3, C4, C5, C6
@@ -39,17 +43,33 @@ const useMediaQuery = (query) => {
     return matches;
 };
 
-// Map menu ke komponen
+
+// Map menu ke komponen dengan icon yang bervariasi
 const menuMap = {
-  C1: { name: "C1", Component: C1Page, icon: FaTable },
-  C2: { name: "C2", Component: C2Page, icon: FaTable },
-  C3: { name: "C3", Component: C3Page, icon: FaTable },
-  C4: { name: "C4", Component: C4Page, icon: FaTable },
-  C5: { name: "C5", Component: C5Page, icon: FaTable },
-  C6: { name: "C6", Component: C6Page, icon: FaTable },
-  ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaUserGroup },
-  TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaUserGroup },
-  TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserGroup },
+  C1: { name: "C1", Component: C1Page, icon: FaUserTie, description: "Data Dosen dan Pegawai" },
+  C2: { name: "C2", Component: C2Page, icon: FaGraduationCap, description: "Data Mahasiswa" },
+  C3: { name: "C3", Component: C3Page, icon: FaFlask, description: "Penelitian dan Pengabdian" },
+  C4: { name: "C4", Component: C4Page, icon: FaBook, description: "Pendidikan" },
+  C5: { name: "C5", Component: C5Page, icon: FaUserGroup, description: "Kerjasama" },
+  C6: { name: "C6", Component: C6Page, icon: FaChartLine, description: "Luaran dan Capaian" },
+  ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaShield, description: "Kelola Pengguna Sistem" },
+  TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaChalkboard, description: "Data Dosen" },
+  TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserTie, description: "Data Pegawai" },
+};
+
+// Tooltip component
+const Tooltip = ({ children, text, isVisible }) => {
+  if (!isVisible) return children;
+  
+  return (
+    <div className="relative group">
+      {children}
+      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
+        {text}
+        <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+      </div>
+    </div>
+  );
 };
 
 const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt }) => {
@@ -64,6 +84,10 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
         },
     };
 
+    const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
+
+    // Removed stagger animation to prevent flickering
+
     return (
         <motion.div
             variants={menuVariants}
@@ -74,6 +98,16 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
             <div 
                 className="flex items-center justify-between p-4 flex-shrink-0 cursor-pointer h-14" 
                 onClick={() => setIsOpen(!isOpen)}
+                role="button"
+                aria-label={isOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+                aria-expanded={isOpen}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsOpen(!isOpen);
+                  }
+                }}
             >
                 <div className="flex items-center gap-3">
                     <FaGrip className="h-6 w-6 text-[#043975]" />
@@ -96,12 +130,17 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                         exit={{ opacity: 0, transition: { duration: 0.1 } }}
                         className="flex-1 flex flex-col"
                     >
-                        <nav className="flex-1 px-2 py-4 space-y-6">
+                        <nav className="flex-1 px-2 py-4 space-y-8 overflow-y-auto" role="navigation" aria-label="Menu navigasi tabel">
                             <div>
-                                <h3 className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
-                                <ul className="space-y-1">
-                                    {sidebarItems.map((key) => {
-                                        const { name, icon: Icon } = menuMap[key];
+                                <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
+                                <ul className="space-y-1.5">
+                                    {sidebarItems.map((key, index) => {
+                                        const menuItem = menuMap[key];
+                                        if (!menuItem) {
+                                          console.warn(`Menu item not found for key: ${key}`);
+                                          return null;
+                                        }
+                                        const { name, icon: Icon, description } = menuItem;
                                         const isActive = activeTable === key;
                                         return (
                                             <li key={key}>
@@ -110,28 +149,58 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                                     updateActiveTable(key);
                                                     setIsOpen(false);
                                                 }} 
-                                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-[#0384d6] text-white" : "text-[#043975] hover:bg-[#eaf3ff]"}`}
+                                                className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group ${
+                                                  isActive 
+                                                    ? "bg-[#0384d6] text-white shadow-md" 
+                                                    : "text-[#043975] hover:bg-[#eaf3ff]"
+                                                }`}
+                                                aria-label={`${name} - ${description}`}
+                                                aria-current={isActive ? 'page' : undefined}
                                             >
-                                                <Icon className="h-5 w-5" />
-                                                <span className="truncate">{name}</span>
+                                                {/* Active indicator */}
+                                                {isActive && (
+                                                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                                )}
+                                                <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                                                <span className="truncate flex-1 text-left">{name}</span>
                                             </button>
                                             </li>
                                         );
-                                    })}
+                                      })}
                                 </ul>
                             </div>
-                            {canSeeUserMgmt && (
+                            {canSeeUserMgmt && adminItems.length > 0 && (
                               <div>
-                                <h3 className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
-                                <ul className="space-y-1">
-                                  {['ManajemenAkun','TabelDosen','TabelPegawai'].map((key)=>{
-                                    const { name, icon: Icon } = menuMap[key];
+                                <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
+                                <ul className="space-y-1.5">
+                                  {adminItems.map((key, index) => {
+                                    const menuItem = menuMap[key];
+                                    if (!menuItem) {
+                                      console.warn(`Menu item not found for key: ${key}`);
+                                      return null;
+                                    }
+                                    const { name, icon: Icon, description } = menuItem;
                                     const isActive = activeTable === key;
                                     return (
                                       <li key={key}>
-                                        <button onClick={()=>{updateActiveTable(key); setIsOpen(false);}} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-[#0384d6] text-white" : "text-[#043975] hover:bg-[#eaf3ff]"}`}>
-                                          <Icon className="h-5 w-5" />
-                                          <span className="truncate">{name}</span>
+                                        <button 
+                                          onClick={()=>{
+                                            updateActiveTable(key); 
+                                            setIsOpen(false);
+                                          }} 
+                                          className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
+                                            isActive 
+                                              ? "bg-[#0384d6] text-white shadow-md" 
+                                              : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                                          }`}
+                                          aria-label={`${name} - ${description}`}
+                                          aria-current={isActive ? 'page' : undefined}
+                                        >
+                                          {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                          )}
+                                          <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                                          <span className="truncate flex-1 text-left">{name}</span>
                                         </button>
                                       </li>
                                     );
@@ -157,55 +226,150 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       borderRadius: "16px", 
       transition: { type: "spring", stiffness: 120, damping: 20 } 
     },
-    closed: { width: "56px", height: "56px", borderRadius: "100%", transition: { type: "spring", stiffness: 300, damping: 30 }, },
+    closed: { width: "64px", height: "64px", borderRadius: "16px", transition: { type: "spring", stiffness: 300, damping: 30 }, },
   };
-  const SidebarContent = ({ activeTable, updateActiveTable }) => (
-    <div className="flex flex-col min-h-full pt-16">
-        <div className="flex items-center gap-3 px-4 pb-4 flex-shrink-0 border-b"><FaTable className="h-8 w-8 text-[#043975]" /><h2 className="font-bold text-[#043975] text-xl">Tabel</h2></div>
-        <nav className="flex-1 px-2 py-4 space-y-6">
-            <div>
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
-              <ul className="space-y-1">
-                {sidebarItems.map((key) => {
-                  const { name, icon: Icon } = menuMap[key];
-                  const isActive = activeTable === key;
-                  return (
-                    <li key={key}>
-                      <button onClick={() => updateActiveTable(key)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-[#0384d6] text-white" : "text-[#043975] hover:bg-[#eaf3ff]"}`} aria-current={isActive ? 'page' : undefined}>
-                        <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
-                        <span className="truncate">{name}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            {canSeeUserMgmt && (
+
+  const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
+
+  const SidebarContent = React.memo(({ activeTable, updateActiveTable, sidebarItems, adminItems }) => {
+    return (
+      <div className="flex flex-col min-h-full pt-16">
+          <div className="flex items-center gap-3 px-5 pb-5 flex-shrink-0 border-b border-slate-200">
+            <FaTable className="h-8 w-8 text-[#043975]" />
+            <h2 className="font-bold text-[#043975] text-xl">Tabel</h2>
+          </div>
+          
+          <nav className="flex-1 px-2 py-4 space-y-8 overflow-y-auto" role="navigation" aria-label="Menu navigasi tabel">
               <div>
-                <h3 className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
-                <ul className="space-y-1">
-                  {['ManajemenAkun','TabelDosen','TabelPegawai'].map((key)=>{
-                    const { name, icon: Icon } = menuMap[key];
-                    const isActive = activeTable === key;
-                    return (
-                      <li key={key}>
-                        <button onClick={()=>updateActiveTable(key)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-[#0384d6] text-white" : "text-[#043975] hover:bg-[#eaf3ff]"}`} aria-current={isActive ? 'page' : undefined}>
-                          <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
-                          <span className="truncate">{name}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
+                <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
+                <ul className="space-y-1.5">
+                  {sidebarItems.map((key, index) => {
+                      const menuItem = menuMap[key];
+                      if (!menuItem) {
+                        console.warn(`Menu item not found for key: ${key}`);
+                        return null;
+                      }
+                      const { name, icon: Icon, description } = menuItem;
+                      const isActive = activeTable === key;
+                      return (
+                        <li key={key}>
+                          <button 
+                            onClick={() => updateActiveTable(key)} 
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                              isActive 
+                                ? "bg-[#0384d6] text-white shadow-md" 
+                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                            }`}
+                            aria-label={`${name} - ${description}`}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            {/* Active indicator */}
+                            {isActive && (
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                            )}
+                            <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                            <span className="truncate flex-1 text-left">{name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
                 </ul>
               </div>
-            )}
-        </nav>
-    </div>
+              {canSeeUserMgmt && adminItems.length > 0 && (
+                <div>
+                  <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
+                  <ul className="space-y-1.5">
+                    {adminItems.map((key, index) => {
+                      const menuItem = menuMap[key];
+                      if (!menuItem) {
+                        console.warn(`Menu item not found for key: ${key}`);
+                        return null;
+                      }
+                      const { name, icon: Icon, description } = menuItem;
+                      const isActive = activeTable === key;
+                      return (
+                        <li key={key}>
+                          <button 
+                            onClick={()=>updateActiveTable(key)} 
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                              isActive 
+                                ? "bg-[#0384d6] text-white shadow-md" 
+                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                            }`}
+                            aria-label={`${name} - ${description}`}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                                          {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                          )}
+                            <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                            <span className="truncate flex-1 text-left">{name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+          </nav>
+      </div>
+    );
+  });
+
+  const toggleButton = (
+    <Tooltip text={isOpen ? "Tutup sidebar" : "Buka sidebar"} isVisible={!isOpen}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className={`absolute z-20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+          !isOpen 
+            ? 'inset-0 w-full h-full flex items-center justify-center hover:bg-slate-50 rounded-2xl text-[#043975]' 
+            : 'top-4 right-4 p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-[#043975] flex items-center justify-center'
+        }`}
+        aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+        aria-expanded={isOpen}
+      >
+        {isOpen ? (
+          <motion.div
+            animate={{ rotate: 90 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center"
+          >
+            <FaXmark size={20} />
+          </motion.div>
+        ) : (
+          <FaBars size={24} className="flex-shrink-0" />
+        )}
+      </button>
+    </Tooltip>
   );
+
   return (
-    <motion.aside variants={sidebarVariants} initial={false} animate={isOpen ? "open" : "closed"} className="bg-white shadow-2xl flex flex-col overflow-hidden m-4 relative self-start">
-      <button onClick={() => setIsOpen(!isOpen)} className={`absolute z-20 text-slate-500 hover:text-[#043975] transition-colors ${!isOpen ? 'w-full h-full top-0 left-0 flex items-center justify-center' : 'top-4 right-4'}`}>{isOpen ? <FaXmark size={20} /> : <FaBars size={20} />}</button>
-      <AnimatePresence>{isOpen && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }} exit={{ opacity: 0, transition: { duration: 0.1 } }} className="flex flex-col min-h-full"><SidebarContent activeTable={activeTable} updateActiveTable={updateActiveTable} /></motion.div>)}</AnimatePresence>
+    <motion.aside 
+      variants={sidebarVariants} 
+      initial={false} 
+      animate={isOpen ? "open" : "closed"} 
+      className="bg-white shadow-2xl flex flex-col overflow-hidden m-4 relative self-start"
+      role="complementary"
+      aria-label="Sidebar navigasi tabel"
+    >
+      {toggleButton}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }} 
+            exit={{ opacity: 0, transition: { duration: 0.1 } }} 
+            className="flex flex-col min-h-full"
+          >
+            <SidebarContent 
+              activeTable={activeTable} 
+              updateActiveTable={updateActiveTable}
+              sidebarItems={sidebarItems}
+              adminItems={adminItems}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.aside>
   );
 };
@@ -276,24 +440,27 @@ export default function TablesPage() {
     || roleCan(authUser?.role, "pegawai", "r")
   );
 
-  // Susun item sidebar sesuai akses
-  const sidebarItems = [
+  // Susun item sidebar sesuai akses - Memoized untuk performance
+  const sidebarItems = useMemo(() => [
     ...(hasC1Access ? ["C1"] : []),
     ...(hasC2Access ? ["C2"] : []),
     ...(hasC3Access ? ["C3"] : []),
     ...(hasC4Access ? ["C4"] : []),
     ...(hasC5Access ? ["C5"] : []),
     ...(hasC6Access ? ["C6"] : []),
-    // Manajemen Akun dipindah ke panel admin, bukan list tabel utama
-  ];
+  ], [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access]);
 
   // Initialize component state after mount to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
     
-    // Initialize mobile detection
+    // Initialize mobile detection with debounce
+    let resizeTimer;
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 1023);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setIsMobile(window.innerWidth <= 1023);
+      }, 150);
     };
     
     checkMobile();
@@ -306,7 +473,10 @@ export default function TablesPage() {
     setActiveTable(savedTable);
     setLastC1TabFromStore(savedC1Tab);
     
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      clearTimeout(resizeTimer);
+    };
   }, []);
 
   // Handle URL params and sidebar items changes
@@ -325,12 +495,13 @@ export default function TablesPage() {
     if (initial && initial !== activeTable) {
       setActiveTable(initial);
     }
-  }, [searchParams, sidebarItems, mounted, canSeeUserMgmt]);
+  }, [searchParams, sidebarItems, mounted, canSeeUserMgmt, activeTable]);
 
-  const updateActiveTable = (key) => {
+  const updateActiveTable = useCallback((key) => {
+    if (key === activeTable) return;
     setActiveTable(key);
     localStorage.setItem('lastActiveTable', key);
-  };
+  }, [activeTable]);
 
   // Set sidebar state based on mobile detection
   useEffect(() => {
@@ -347,16 +518,20 @@ export default function TablesPage() {
     }
   }, [activeTable, mounted]);
 
-  // Measure content height and update sidebar
+  // Measure content height and update sidebar with debounce
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
+    let resizeTimer;
     const measureContentHeight = () => {
-      const contentElement = document.querySelector('.main-content-area');
-      if (contentElement) {
-        const height = contentElement.scrollHeight;
-        setContentHeight(height);
-      }
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const contentElement = document.querySelector('.main-content-area');
+        if (contentElement) {
+          const height = contentElement.scrollHeight;
+          setContentHeight(height);
+        }
+      }, 100);
     };
 
     // Initial measurement
@@ -378,12 +553,13 @@ export default function TablesPage() {
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', measureContentHeight);
+      clearTimeout(resizeTimer);
     };
   }, [mounted, activeTable]);
 
   const { Component: ActiveComponent } = activeTable ? (menuMap[activeTable] || menuMap.C1) : { Component: () => null };
 
-  const activeProps = (() => {
+  const activeProps = useMemo(() => {
     if (activeTable === 'C1') {
       return { lastC1Tab: lastC1TabFromStore };
     }
@@ -391,7 +567,7 @@ export default function TablesPage() {
       return { role: authUser?.role };
     }
     return {};
-  })();
+  }, [activeTable, lastC1TabFromStore, authUser?.role]);
 
   if (isMobile) {
     return (
@@ -458,9 +634,10 @@ export default function TablesPage() {
             ) : (
               <motion.div
                 key={activeTable}
-                initial={false}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
               >
                 {activeTable && (activeTable === 'C1' ? (
                   <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
@@ -521,9 +698,10 @@ export default function TablesPage() {
             ) : (
               <motion.div
                 key={activeTable}
-                initial={false}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
               >
                 {activeTable && (activeTable === 'C1' ? (
                   <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
