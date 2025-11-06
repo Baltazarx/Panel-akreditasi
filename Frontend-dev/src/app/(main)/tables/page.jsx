@@ -415,7 +415,7 @@ export default function TablesPage() {
             }
           }
         `}</style>
-        <div className="mobile-viewport bg-slate-100 overflow-x-hidden relative">
+        <div className="mobile-viewport bg-gradient-to-br from-[#f5f9ff] via-white to-white overflow-x-hidden relative">
           {/* Background Pattern - Same as Hero */}
           <div className="absolute inset-0 opacity-10 pointer-events-none select-none">
             {/* Grid Pattern */}
@@ -476,7 +476,7 @@ export default function TablesPage() {
   }
 
   return (
-    <div className="flex items-start min-h-screen bg-slate-100 relative">
+    <div className="flex items-start min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white relative">
       {/* Background Pattern - Same as Hero */}
       <div className="absolute inset-0 opacity-10 pointer-events-none select-none">
         {/* Grid Pattern */}

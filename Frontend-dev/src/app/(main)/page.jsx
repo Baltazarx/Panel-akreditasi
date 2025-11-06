@@ -1104,7 +1104,7 @@ export default function App() {
                           key="content"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1, transition: { duration: 0.5 } }}
-                          className="min-h-screen bg-slate-50"
+                          className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white"
                         >
                           <div className="pt-6 pb-12 px-4 sm:px-6 lg:px-8">
                             <div className="container mx-auto max-w-7xl">

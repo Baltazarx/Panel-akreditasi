@@ -959,7 +959,7 @@ export default function Tabel2C({ role }) {
             </div>
             <div className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {isSuperAdmin && (
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">
@@ -1007,26 +1007,26 @@ export default function Tabel2C({ role }) {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 col-span-1 md:col-span-3">
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Jumlah Mahasiswa untuk Setiap Bentuk Pembelajaran
                     </label>
-                    <div className="space-y-3">
+                    <div className="max-h-96 overflow-y-auto pr-2 space-y-3">
                       {bentukList.map((b) => (
-                        <div key={b.id_bentuk} className="flex items-center gap-3">
+                        <div key={b.id_bentuk} className="flex items-center gap-2 p-2.5 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
                           {editingBentukId === b.id_bentuk ? (
                             // Mode edit: tampilkan input field untuk nama
                             <input
                               type="text"
                               value={editingBentukName}
                               onChange={(e) => setEditingBentukName(e.target.value)}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                              className="flex-1 min-w-0 px-2.5 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                               placeholder="Nama bentuk pembelajaran"
                               autoFocus
                             />
                           ) : (
                             // Mode normal: tampilkan label
-                            <label className="flex-1 text-sm text-slate-700">
+                            <label className="flex-1 min-w-0 text-sm text-slate-700 font-medium truncate">
                               {b.nama_bentuk}
                             </label>
                           )}
@@ -1043,62 +1043,64 @@ export default function Tabel2C({ role }) {
                               }
                               setFormState({...formState, details: newDetails});
                             }}
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                            className="w-20 px-2.5 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                             placeholder="0"
                           />
-                          {editingBentukId === b.id_bentuk ? (
-                            // Mode edit: tampilkan tanda centang dan silang di tempat icon edit dan hapus
-                            <>
-                              {canUpdate && (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {editingBentukId === b.id_bentuk ? (
+                              // Mode edit: tampilkan tanda centang dan silang di tempat icon edit dan hapus
+                              <>
+                                {canUpdate && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateBentuk(b.id_bentuk, editingBentukName)}
+                                    className="w-8 h-8 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center border border-green-200 hover:border-green-300 flex-shrink-0"
+                                    title="Simpan perubahan"
+                                  >
+                                    <span className="text-base font-bold">✓</span>
+                                  </button>
+                                )}
                                 <button
                                   type="button"
-                                  onClick={() => handleUpdateBentuk(b.id_bentuk, editingBentukName)}
-                                  className="w-10 h-10 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center text-xl font-medium leading-none"
-                                  title="Simpan perubahan"
+                                  onClick={handleCancelEditBentuk}
+                                  className="w-8 h-8 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center border border-red-200 hover:border-red-300 flex-shrink-0"
+                                  title="Batal"
                                 >
-                                  ✓
+                                  <span className="text-base font-bold">✕</span>
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={handleCancelEditBentuk}
-                                className="w-10 h-10 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center text-xl font-medium leading-none"
-                                title="Batal"
-                              >
-                                ✕
-                              </button>
-                            </>
-                          ) : (
-                            // Mode normal: tampilkan icon edit dan hapus
-                            <>
-                              {canUpdate && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleStartEditBentuk(b.id_bentuk, b.nama_bentuk)}
-                                  className="w-10 h-10 text-[#0384d6] hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center text-xl leading-none"
-                                  title="Edit nama bentuk pembelajaran"
-                                >
-                                  ✏️
-                                </button>
-                              )}
-                              {canDeleteBentuk && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteBentuk(b.id_bentuk, b.nama_bentuk)}
-                                  className="w-10 h-10 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center text-xl leading-none"
-                                  title="Hapus bentuk pembelajaran dari master"
-                                >
-                                  🗑️
-                                </button>
-                              )}
-                            </>
-                          )}
+                              </>
+                            ) : (
+                              // Mode normal: tampilkan icon edit dan hapus
+                              <>
+                                {canUpdate && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditBentuk(b.id_bentuk, b.nama_bentuk)}
+                                    className="w-8 h-8 text-[#0384d6] hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center border border-blue-200 hover:border-blue-300 flex-shrink-0"
+                                    title="Edit nama bentuk pembelajaran"
+                                  >
+                                    <span className="text-sm">✏️</span>
+                                  </button>
+                                )}
+                                {canDeleteBentuk && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteBentuk(b.id_bentuk, b.nama_bentuk)}
+                                    className="w-8 h-8 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center border border-red-200 hover:border-red-300 flex-shrink-0"
+                                    title="Hapus bentuk pembelajaran dari master"
+                                  >
+                                    <span className="text-sm">🗑️</span>
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       ))}
                       
                       {/* Custom bentuk pembelajaran yang ditambahkan dinamis */}
                       {customBentukList.map((customBentuk, idx) => (
-                        <div key={`custom-${idx}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div key={`custom-${idx}`} className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
                           <input
                             type="text"
                             value={customBentuk.nama}
@@ -1107,7 +1109,7 @@ export default function Tabel2C({ role }) {
                               updated[idx].nama = e.target.value;
                               setCustomBentukList(updated);
                             }}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                            className="flex-1 min-w-0 px-2.5 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                             placeholder="Nama bentuk pembelajaran"
                             required
                           />
@@ -1120,7 +1122,7 @@ export default function Tabel2C({ role }) {
                               updated[idx].jumlah = e.target.value === "" ? "" : Number(e.target.value);
                               setCustomBentukList(updated);
                             }}
-                            className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                            className="w-20 px-2.5 py-2 border border-gray-300 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                             placeholder="0"
                           />
                           <button
@@ -1129,10 +1131,10 @@ export default function Tabel2C({ role }) {
                               const updated = customBentukList.filter((_, i) => i !== idx);
                               setCustomBentukList(updated);
                             }}
-                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="w-8 h-8 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center border border-red-200 hover:border-red-300 flex-shrink-0"
                             title="Hapus bentuk pembelajaran"
                           >
-                            ✕
+                            <span className="text-base font-bold">✕</span>
                           </button>
                         </div>
                       ))}
@@ -1143,7 +1145,7 @@ export default function Tabel2C({ role }) {
                         onClick={() => {
                           setCustomBentukList([...customBentukList, { nama: "", jumlah: "" }]);
                         }}
-                        className="w-full px-4 py-2 border-2 border-dashed border-[#0384d6] text-[#0384d6] rounded-lg hover:bg-[#eaf3ff] transition-colors font-medium flex items-center justify-center gap-2"
+                        className="w-full px-4 py-2 border-2 border-dashed border-[#0384d6] text-[#0384d6] rounded-lg hover:bg-[#eaf3ff] transition-colors font-medium flex items-center justify-center gap-2 sticky bottom-0 bg-white z-10"
                       >
                         + Tambah Bentuk Pembelajaran
                       </button>
