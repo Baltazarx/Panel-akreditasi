@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { FiBookOpen, FiGrid, FiUser, FiShield, FiSearch, FiHome, FiArrowRight, FiCheckCircle } from "react-icons/fi";
+import { FiBookOpen, FiGrid, FiUser, FiShield, FiSearch, FiHome, FiArrowRight, FiCheckCircle, FiBarChart, FiTrendingUp, FiDatabase, FiFileText, FiDownload, FiSettings } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
 const fadeIn = {
@@ -32,44 +32,65 @@ export default function PanduanPage() {
   const sections = [
     {
       icon: FiHome,
-      title: "Beranda",
-      desc: "Gambaran umum portal, akses cepat ke tabel data dan layanan.",
-      features: ["Dashboard utama", "Navigasi cepat", "Status sistem"],
+      title: "Dashboard",
+      desc: "Halaman utama setelah login menampilkan ringkasan data, berita terbaru, statistik, dan akses cepat ke semua fitur.",
+      features: ["Berita terbaru (2 item)", "Statistik cards (Total Tabel, Data Terisi, dll)", "Akses cepat ke tabel C1-C6", "Unduh dokumen & template"],
       color: "from-blue-500 to-blue-600"
     },
     {
       icon: FiGrid,
       title: "Akses Tabel Data",
-      desc: "Klik kartu untuk masuk ke tabel. Gunakan sidebar untuk berpindah tabel.",
-      features: ["Navigasi sidebar", "Kartu akses cepat", "Filter tabel"],
+      desc: "Akses semua tabel penjaminan mutu (C1, C2, C3, C4, C5, C6) melalui sidebar. Setiap tabel memiliki fitur CRUD lengkap.",
+      features: ["Navigasi sidebar", "Tabel C1-C6", "Data Dosen & Pegawai", "Filter berdasarkan tahun & unit"],
       color: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: FiBarChart,
+      title: "Report & Grafik",
+      desc: "Halaman report menampilkan grafik progress bar untuk semua tabel. Hanya tersedia untuk role Super Admin, Waket 1&2, dan TPM.",
+      features: ["Grafik progress bar", "Ringkasan data tabel", "Filter berdasarkan kategori", "Export ke PDF"],
+      color: "from-indigo-500 to-indigo-600"
     },
     {
       icon: FiBookOpen,
       title: "Pengisian Data",
-      desc: "Gunakan tombol Tambah/Ubah/Hapus di setiap tabel sesuai hak akses Anda.",
-      features: ["Form input data", "Validasi otomatis", "Konfirmasi aksi"],
+      desc: "Gunakan tombol Tambah/Ubah/Hapus di setiap tabel sesuai hak akses Anda. Form akan terkunci scroll background saat modal terbuka.",
+      features: ["Form input data", "Validasi otomatis", "Soft delete & restore", "Konfirmasi aksi"],
       color: "from-green-500 to-green-600"
     },
     {
       icon: FiUser,
-      title: "Akun & Peran",
-      desc: "Sebagian fitur menyesuaikan peran Anda (Admin, Dosen, Pegawai).",
-      features: ["Role-based access", "Permission control", "User management"],
+      title: "Management Akun",
+      desc: "Kelola pengguna dan akses sistem. Tersedia di menu Akses Cepat atau melalui halaman /users.",
+      features: ["User management", "Role-based access", "Permission control", "Akses cepat dari dashboard"],
       color: "from-orange-500 to-orange-600"
+    },
+    {
+      icon: FiFileText,
+      title: "Berita & Pengumuman",
+      desc: "Akses berita terbaru dan pengumuman penting. Tersedia di dashboard dan halaman berita terpisah.",
+      features: ["Berita terbaru", "Pengumuman penting", "Akses dari dashboard", "Halaman berita lengkap"],
+      color: "from-cyan-500 to-cyan-600"
+    },
+    {
+      icon: FiDownload,
+      title: "Unduh Dokumen",
+      desc: "Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu. Tersedia di dashboard dan halaman terpisah.",
+      features: ["Template dokumen", "Panduan pengisian", "Dokumen standar C1-C2", "Format laporan AMI"],
+      color: "from-teal-500 to-teal-600"
     },
     {
       icon: FiSearch,
       title: "Pencarian & Filter",
-      desc: "Gunakan kolom pencarian dan filter untuk menemukan data dengan cepat.",
-      features: ["Search functionality", "Advanced filters", "Quick results"],
-      color: "from-teal-500 to-teal-600"
+      desc: "Gunakan kolom pencarian dan filter untuk menemukan data dengan cepat. Filter berdasarkan tahun, unit, dan status.",
+      features: ["Search functionality", "Filter tahun & unit", "Show deleted data", "Quick results"],
+      color: "from-pink-500 to-pink-600"
     },
     {
       icon: FiShield,
-      title: "Keamanan",
-      desc: "Selalu keluar (logout) setelah selesai dan jangan bagikan kredensial.",
-      features: ["Secure login", "Session management", "Data protection"],
+      title: "Keamanan & Akses",
+      desc: "Setiap fitur memiliki kontrol akses berdasarkan role. Selalu keluar (logout) setelah selesai dan jangan bagikan kredensial.",
+      features: ["Role-based access", "Secure login", "Session management", "Data protection"],
       color: "from-red-500 to-red-600"
     },
   ];
