@@ -1001,7 +1001,9 @@ export default function App() {
   const hasC2Access = useMemo(() => c2AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   const c3AccessKeys = [
-    "tabel_3a1_sarpras_penelitian"
+    "tabel_3a1_sarpras_penelitian",
+    "tabel_3a2_penelitian",
+    "tabel_3a3_pengembangan_dtpr"
   ];
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 

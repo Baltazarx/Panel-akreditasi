@@ -163,6 +163,8 @@ export const AccessMatrix = {
 
   // ========== KEMAHASISWAAN ==========
   'kemahasiswaan': {
+    // Tabel 2.A.2
+    'tabel_2a2_keragaman_asal': { C: true, R: true, U: true, D: true },
     // Tabel 2.B.4 sampai 2.B.6
     'tabel_2b4_masa_tunggu': { C: true, R: true, U: true, D: true },
     'tabel_2b5_kesesuaian_kerja': { C: true, R: true, U: true, D: true },
@@ -175,6 +177,7 @@ export const AccessMatrix = {
     'ref_jabatan_fungsional': { R: true },
     'tenaga_kependidikan': { R: true },
     'audit_mutu_internal': { R: true },
+    'ref_kabupaten_kota': { R: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   }
 
   // Catatan: Akses untuk waket1/waket2/tpm ke tabel 1A1, 1A2, 1A3, 1A4, 1A5, 1B
