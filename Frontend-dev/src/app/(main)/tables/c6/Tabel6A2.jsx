@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { apiFetch } from "../../../../lib/api";
+import React, { useState } from "react";
+// import { apiFetch } from "../../../../lib/api";
 
-const ENDPOINT = "/tabel-6a2";
+// const ENDPOINT = "/tabel-6a2";
 const LABEL = "6.A.2 Tabel C6 - A2";
 
 export default function Tabel6A2() {
@@ -9,22 +9,23 @@ export default function Tabel6A2() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function fetchRows() {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await apiFetch(ENDPOINT);
-      setRows(Array.isArray(data) ? data : data?.items || []);
-    } catch (e) {
-      setError(e?.message || "Gagal memuat data");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Endpoint belum tersedia - fetch data dinonaktifkan sementara
+  // async function fetchRows() {
+  //   try {
+  //     setLoading(true);
+  //     setError("");
+  //     const data = await apiFetch(ENDPOINT);
+  //     setRows(Array.isArray(data) ? data : data?.items || []);
+  //   } catch (e) {
+  //     setError(e?.message || "Gagal memuat data");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    fetchRows();
-  }, []);
+  // useEffect(() => {
+  //   fetchRows();
+  // }, []);
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
