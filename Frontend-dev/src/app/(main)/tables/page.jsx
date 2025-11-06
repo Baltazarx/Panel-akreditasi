@@ -9,10 +9,13 @@ import { roleCan } from "../../../lib/role";
 import { FaBars, FaXmark, FaTable, FaGrip, FaUserGroup } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Impor halaman C1 & C2
+// Impor halaman C1, C2, C3, C4, C5, C6
 import C1Page from "./c1/c1";
 import C2Page from "./c2/c2";
 import C3Page from "./c3/c3";
+import C4Page from "./c4/c4";
+import C5Page from "./c5/c5";
+import C6Page from "./c6/c6";
 import UserManagementPage from "../../../components/UserManagementPage";
 import TabelDosen from "./c1/TabelDosen";
 import TabelPegawai from "./c1/TabelPegawai";
@@ -41,6 +44,9 @@ const menuMap = {
   C1: { name: "C1", Component: C1Page, icon: FaTable },
   C2: { name: "C2", Component: C2Page, icon: FaTable },
   C3: { name: "C3", Component: C3Page, icon: FaTable },
+  C4: { name: "C4", Component: C4Page, icon: FaTable },
+  C5: { name: "C5", Component: C5Page, icon: FaTable },
+  C6: { name: "C6", Component: C6Page, icon: FaTable },
   ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaUserGroup },
   TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaUserGroup },
   TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserGroup },
@@ -241,6 +247,27 @@ export default function TablesPage() {
   ]; // tabel-tabel yang ada di C3
   const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
+  // Akses C4: jika ada akses ke tabel C4
+  const c4AccessKeys = [
+    "tabel_4a1",
+    "tabel_4a2"
+  ]; // tabel-tabel yang ada di C4
+  const hasC4Access = c4AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+
+  // Akses C5: jika ada akses ke tabel C5
+  const c5AccessKeys = [
+    "tabel_5a1",
+    "tabel_5a2"
+  ]; // tabel-tabel yang ada di C5
+  const hasC5Access = c5AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+
+  // Akses C6: jika ada akses ke tabel C6
+  const c6AccessKeys = [
+    "tabel_6a1",
+    "tabel_6a2"
+  ]; // tabel-tabel yang ada di C6
+  const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
   // KECUALI role kemahasiswaan yang tidak boleh akses Panel Admin
   const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && (
@@ -254,6 +281,9 @@ export default function TablesPage() {
     ...(hasC1Access ? ["C1"] : []),
     ...(hasC2Access ? ["C2"] : []),
     ...(hasC3Access ? ["C3"] : []),
+    ...(hasC4Access ? ["C4"] : []),
+    ...(hasC5Access ? ["C5"] : []),
+    ...(hasC6Access ? ["C6"] : []),
     // Manajemen Akun dipindah ke panel admin, bukan list tabel utama
   ];
 
@@ -385,7 +415,7 @@ export default function TablesPage() {
             }
           }
         `}</style>
-        <div className="mobile-viewport bg-slate-100 overflow-x-hidden relative">
+        <div className="mobile-viewport bg-gradient-to-br from-[#f5f9ff] via-white to-white overflow-x-hidden relative">
           {/* Background Pattern - Same as Hero */}
           <div className="absolute inset-0 opacity-10 pointer-events-none select-none">
             {/* Grid Pattern */}
@@ -446,7 +476,7 @@ export default function TablesPage() {
   }
 
   return (
-    <div className="flex items-start min-h-screen bg-slate-100 relative">
+    <div className="flex items-start min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white relative">
       {/* Background Pattern - Same as Hero */}
       <div className="absolute inset-0 opacity-10 pointer-events-none select-none">
         {/* Grid Pattern */}

@@ -34,6 +34,25 @@ export default function Tabel2D({ role }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingDetail, setEditingDetail] = useState(null);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+      if (showAddModal) {
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        
+        return () => {
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          window.scrollTo(0, scrollY);
+        };
+      }
+    }, [showAddModal]);
     const [detailsToSubmit, setDetailsToSubmit] = useState([]); // Daftar rincian yang akan di-submit
 
     const isProdiUser = ['prodi'].includes(role?.toLowerCase());
@@ -523,7 +542,7 @@ export default function Tabel2D({ role }) {
 
     // --- Render ---
     return (
-        <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-8">
+        <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-8">
             <header className="pb-6 mb-2 border-b border-slate-200">
                 <h2 className="text-2xl font-bold text-slate-800">Tabel 2.D Rekognisi Lulusan</h2>
                 <p className="text-sm text-slate-600 mt-1">Menampilkan TS-4 hingga TS berdasarkan tahun akademik terpilih.</p>

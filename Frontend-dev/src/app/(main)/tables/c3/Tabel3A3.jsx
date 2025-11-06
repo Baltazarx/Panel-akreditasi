@@ -695,6 +695,25 @@ export default function Tabel3A3({ auth, role }) {
   const [editingSummary, setEditingSummary] = useState(null);
   const [editingDetail, setEditingDetail] = useState(null);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (modalSummaryOpen || modalDetailOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [modalSummaryOpen, modalDetailOpen]);
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");

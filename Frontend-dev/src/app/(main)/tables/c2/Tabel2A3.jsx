@@ -125,6 +125,25 @@ export default function Tabel2A3() {
   const [modalMode, setModalMode] = useState('add');
   const [editingData, setEditingData] = useState(null);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isModalOpen]);
+
   const tahunList = useMemo(() => {
     return Object.values(maps.tahun || {}).sort((a, b) => a.id_tahun - b.id_tahun);
   }, [maps.tahun]);
@@ -412,7 +431,7 @@ export default function Tabel2A3() {
   );
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">Tabel 2.A.3 Kondisi Jumlah Mahasiswa</h1>
         <p className="text-sm text-slate-500 mt-1">

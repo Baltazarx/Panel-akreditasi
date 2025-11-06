@@ -19,6 +19,25 @@ export default function TabelPegawai({ role }) {
   const { maps } = useMaps(true);
   const [formState, setFormState] = useState({});
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showModal]);
+
   // Cek hak akses
   const canCreate = roleCan(role, table.key, "C");
   const canUpdate = roleCan(role, table.key, "U");
@@ -202,7 +221,7 @@ export default function TabelPegawai({ role }) {
   }
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{table.label}</h1>
         <p className="text-sm text-slate-500 mt-1">

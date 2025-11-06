@@ -18,6 +18,25 @@ export default function Tabel2B4({ role }) {
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showAddModal) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showAddModal]);
   const [formState, setFormState] = useState({
     id_unit_prodi: "",
     id_tahun_lulus: "",
@@ -338,7 +357,7 @@ export default function Tabel2B4({ role }) {
   );
 
   return (
-    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl space-y-10">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       
       {/* Loading State */}
       {mapsLoading && (

@@ -42,7 +42,7 @@ export default function Tabel2B({ role }) {
   ];
 
   return (
-    <div className="p-4 sm:p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-[#fff6cc] rounded-2xl shadow-xl">
+    <div className="p-4 sm:p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-4 sm:pb-6 mb-4 sm:mb-6 border-b border-slate-200">
         <h1 className="text-lg sm:text-2xl font-bold text-slate-800">Tabel 2B - Pemetaan Kurikulum</h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
