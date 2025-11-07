@@ -3,18 +3,18 @@ import { pool } from '../db.js';
 // Cek apakah tabel punya kolom tertentu
 export const hasColumn = async (table, col) => {
   const [rows] = await pool.query(
-    `SELECT 1 FROM information_schema.COLUMNS 
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+    `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
     [table, col]
   );
   return rows.length > 0;
 };
 
-// Build filter (id_tahun, id_unit_prodi, soft delete, dll.)
+// Build filter (id_tahun, id_unit_prodi, id_unit, soft delete, dll.)
 export const buildWhere = async (req, table, alias = 'm') => {
   const where = [];
   const params = [];
 
+  // (Tidak ada perubahan)
   // ===== Filter Tahun Akademik =====
   if (await hasColumn(table, 'id_tahun')) {
     const q = req.query || {};
@@ -33,12 +33,18 @@ export const buildWhere = async (req, table, alias = 'm') => {
     }
   }
 
-  // ===== Filter Unit/Prodi Otomatis =====
+  // ===== MODIFIKASI - Filter Unit/Prodi Otomatis =====
+  // Logika ini SEKARANG HANYA berlaku untuk user level PRODI
   if (await hasColumn(table, 'id_unit_prodi')) {
-    // Cek role user — kalau bukan superadmin, hanya boleh lihat datanya sendiri
+    // Cek role user
     const isSuperAdmin =
       ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
-    
+
+    // Definisikan role level prodi
+    // (SESUAIKAN DAFTAR INI dengan role prodi Anda, misal: 'prodi_ti', 'kaprodi_mi', 'dosen_ti', dll.)
+    const isProdiLevelUser =
+      ['prodi_ti', 'prodi_mi'].includes(req.user?.role?.toLowerCase()); // <-- GANTI INI
+
     // Jika ada query param id_unit_prodi_in (untuk filter multiple prodi)
     if (req.query?.id_unit_prodi_in) {
       const arr = String(req.query.id_unit_prodi_in)
@@ -55,14 +61,51 @@ export const buildWhere = async (req, table, alias = 'm') => {
       where.push(`${alias}.id_unit_prodi = ?`);
       params.push(req.query.id_unit_prodi);
     }
-    // Jika bukan superadmin dan tidak ada query param, default ke prodi mereka sendiri
-    else if (!isSuperAdmin) {
+    // Filter default: HANYA jika BUKAN superadmin DAN DIA ADALAH user prodi
+    else if (!isSuperAdmin && isProdiLevelUser) {
       where.push(`${alias}.id_unit_prodi = ?`);
       params.push(req.user?.id_unit_prodi || 0);
     }
-    // Superadmin tanpa query param = lihat semua prodi (tidak perlu filter)
+    // Superadmin / User LPPM yg melihat tabel ini = bisa lihat semua prodi
   }
 
+  // ===== TAMBAHAN BARU - Filter Unit Kerja (LPPM, Kerjasama, dll.) =====
+  // Logika ini berlaku untuk tabel yang punya `id_unit`
+  if (await hasColumn(table, 'id_unit')) {
+    // Cek role user
+    const isSuperAdmin =
+      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
+
+    // Definisikan role yang filternya per-unit (bukan prodi)
+    // (SESUAIKAN DAFTAR INI dengan role unit Anda)
+    const isUnitLevelUser =
+      ['lppm', 'kerjasama'].includes(req.user?.role?.toLowerCase()); // <-- GANTI INI JIKA PERLU
+
+    // Jika ada query param id_unit_in (untuk filter multiple unit)
+    if (req.query?.id_unit_in) {
+      const arr = String(req.query.id_unit_in)
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (arr.length) {
+        where.push(`${alias}.id_unit IN (${arr.map(() => '?').join(',')})`);
+        params.push(...arr);
+      }
+    }
+    // Jika ada query param id_unit (filter single unit)
+    else if (req.query?.id_unit) {
+      where.push(`${alias}.id_unit = ?`);
+      params.push(req.query.id_unit);
+    }
+    // Filter default: HANYA jika BUKAN superadmin DAN DIA ADALAH user unit
+    else if (!isSuperAdmin && isUnitLevelUser) {
+      where.push(`${alias}.id_unit = ?`);
+      params.push(req.user?.id_unit || 0); // Asumsi user LPPM punya `req.user.id_unit`
+    }
+    // Superadmin / User Prodi yg melihat tabel ini = bisa lihat semua unit
+  }
+
+  // (Tidak ada perubahan)
   // ===== Soft Delete Handling =====
   if (await hasColumn(table, 'deleted_at')) {
     const includeDeleted = req.query?.include_deleted;
@@ -74,11 +117,13 @@ export const buildWhere = async (req, table, alias = 'm') => {
   return { where, params };
 };
 
+// (Tidak ada perubahan)
 // Build order_by
 export const buildOrderBy = (raw, idCol, alias = 'm') => {
   const def = `${alias}.${idCol} DESC`;
   if (!raw) return def;
-  const ok = /^[a-zA-Z0-9_,\s\.]+(ASC|DESC)?(\s*,\s*[a-zA-Z0-9_\.\s]+(ASC|DESC)?)*$/.test(raw);
+  // Izin sedikit memodifikasi regex agar lebih aman & memperbolehkan alias
+  const ok = /^[a-zA-Z0-9_,\s\.]+( (ASC|DESC))?(\s*,\s*[a-zA-Z0-9_\.\s]+( (ASC|DESC))?)*$/.test(raw);
   if (!ok) return def;
   return raw
     .split(',')
