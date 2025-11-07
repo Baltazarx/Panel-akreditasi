@@ -987,7 +987,13 @@ export default function App() {
 
   // Tentukan akses C1, C2, C3 berdasarkan role (sama seperti di tables/page.jsx)
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = useMemo(() => c1AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+  const hasC1Access = useMemo(() => {
+    const roleLower = (role || '').toLowerCase();
+    if (roleLower === "ala" || roleLower === "kemahasiswaan") {
+      return false;
+    }
+    return c1AccessKeys.some((k) => roleCan(role, k, "r"));
+  }, [role]);
 
   const c2AccessKeys = [
     "tabel_2a1_pendaftaran",
@@ -1023,8 +1029,14 @@ export default function App() {
   // Akses Data Pegawai
   const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
 
-  // Akses Management Akun
-  const hasUsersAccess = useMemo(() => roleCan(role, "users", "r"), [role]);
+  // Akses Management Akun (kecuali untuk role ALA dan kemahasiswaan)
+  const hasUsersAccess = useMemo(() => {
+    const roleLower = (role || '').toLowerCase();
+    if (roleLower === "ala" || roleLower === "kemahasiswaan") {
+      return false;
+    }
+    return roleCan(role, "users", "r");
+  }, [role]);
 
   // Cek apakah user bisa melihat grafik tabel (hanya untuk super admin, waket 1&2, tpm)
   const canSeeGrafikTabel = useMemo(() => {

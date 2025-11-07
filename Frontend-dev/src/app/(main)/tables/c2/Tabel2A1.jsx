@@ -16,12 +16,13 @@ export default function Tabel2A1({ role }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Filter states
+  // Filter states - Global filters
+  const [selectedYear, setSelectedYear] = useState(''); // Global filter tahun
+  const [selectedUnitProdi, setSelectedUnitProdi] = useState('4'); // Default: TI
+  
+  // Local states untuk show deleted
   const [showDeletedPend, setShowDeletedPend] = useState(false);
   const [showDeletedMaba, setShowDeletedMaba] = useState(false);
-  const [selectedYearPend, setSelectedYearPend] = useState('');
-  const [selectedYearMaba, setSelectedYearMaba] = useState('');
-  const [selectedUnitProdi, setSelectedUnitProdi] = useState('4'); // Default TI
   
   // Flag untuk memastikan tahun default hanya di-set sekali
   const hasSetDefaultYear = useRef(false);
@@ -123,6 +124,14 @@ export default function Tabel2A1({ role }) {
   const canUMaba = roleCan(role, tableMaba.key, "U");
   const canDMaba = roleCan(role, tableMaba.key, "D");
   
+  // Pastikan showDeleted selalu false untuk role ALA
+  useEffect(() => {
+    if (role?.toLowerCase() === "ala") {
+      setShowDeletedPend(false);
+      setShowDeletedMaba(false);
+    }
+  }, [role]);
+  
 
   const fetchPend = async () => {
     try {
@@ -130,10 +139,14 @@ export default function Tabel2A1({ role }) {
       setError("");
       const params = new URLSearchParams();
       
+      // Filter berdasarkan prodi (selalu ada karena default adalah TI)
+      const unitProdi = selectedUnitProdi || '4';
+      params.append("id_unit_prodi", unitProdi);
+      
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
-      if (selectedYearPend && maps?.tahun) {
+      if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
-        const currentYearId = parseInt(selectedYearPend);
+        const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
         
         if (currentYearIndex !== -1) {
@@ -184,10 +197,14 @@ export default function Tabel2A1({ role }) {
       setError("");
       const params = new URLSearchParams();
       
+      // Filter berdasarkan prodi (selalu ada karena default adalah TI)
+      const unitProdi = selectedUnitProdi || '4';
+      params.append("id_unit_prodi", unitProdi);
+      
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
-      if (selectedYearMaba && maps?.tahun) {
+      if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
-        const currentYearId = parseInt(selectedYearMaba);
+        const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
         
         if (currentYearIndex !== -1) {
@@ -247,10 +264,10 @@ export default function Tabel2A1({ role }) {
 
   // Fungsi untuk memproses data menjadi format TS-3, TS-2, TS-1, TS
   const processDataForTable = (unitProdiId) => {
-    if (!selectedYearPend || !maps?.tahun) return [];
+    if (!selectedYear || !maps?.tahun) return [];
 
     const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
-    const currentYearId = parseInt(selectedYearPend);
+    const currentYearId = parseInt(selectedYear);
     const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
     
     if (currentYearIndex === -1) return [];
@@ -412,8 +429,7 @@ export default function Tabel2A1({ role }) {
         }
         
         if (tahunTerpilih) {
-          setSelectedYearPend(String(tahunTerpilih.id_tahun));
-          setSelectedYearMaba(String(tahunTerpilih.id_tahun));
+          setSelectedYear(String(tahunTerpilih.id_tahun));
           hasSetDefaultYear.current = true;
         }
       }
@@ -425,14 +441,14 @@ export default function Tabel2A1({ role }) {
       fetchPend(); 
       setSelectedRowsPend([]);
     }
-  }, [showDeletedPend, selectedYearPend, mapsLoading, maps?.tahun]);
+  }, [showDeletedPend, selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun]);
   
   useEffect(() => { 
     if (!mapsLoading && maps?.tahun) {
       fetchMaba(); 
       setSelectedRowsMaba([]);
     }
-  }, [showDeletedMaba, selectedYearMaba, mapsLoading, maps?.tahun]);
+  }, [showDeletedMaba, selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun]);
 
   // Helper functions untuk mendapatkan nama dari maps
   const getUnitName = (id) => {
@@ -739,6 +755,22 @@ export default function Tabel2A1({ role }) {
     </div>
   );
 
+  const UnitSelector = ({ selectedUnit, setSelectedUnit, label }) => (
+    <div className="flex items-center gap-2">
+      <label htmlFor={`filter-unit-${label}`} className="text-sm font-medium text-slate-700">{label}:</label>
+      <select
+        id={`filter-unit-${label}`}
+        value={selectedUnit || '4'}
+        onChange={(e) => setSelectedUnit(e.target.value)}
+        className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
+        disabled={loading}
+      >
+        <option value="4">Teknik Informatika (TI)</option>
+        <option value="5">Manajemen Informatika (MI)</option>
+      </select>
+    </div>
+  );
+
   // Fungsi render khusus untuk tabel Pendaftaran dengan struktur header kompleks
   const renderTablePendaftaran = () => {
     const selectedRows = selectedRowsPend;
@@ -747,11 +779,11 @@ export default function Tabel2A1({ role }) {
     const showDeleted = showDeletedPend;
     const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
     
-    // Proses data untuk ditampilkan per TS jika selectedYearPend ada
+    // Proses data untuk ditampilkan per TS jika selectedYear ada
     let displayRows = [];
-    if (selectedYearPend && maps?.tahun) {
+    if (selectedYear && maps?.tahun) {
       const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
-      const currentYearId = parseInt(selectedYearPend);
+      const currentYearId = parseInt(selectedYear);
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
       
       if (currentYearIndex !== -1) {
@@ -775,14 +807,18 @@ export default function Tabel2A1({ role }) {
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
           
-          // Cari data pendaftaran untuk semua unit prodi atau unit prodi tertentu
+          // Filter berdasarkan prodi yang dipilih
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          // Cari data pendaftaran untuk unit prodi tertentu
           // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
           const pendData = rows.find(p => {
             const matchesYear = p.id_tahun === yearId;
+            const matchesProdi = p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId);
             if (showDeleted) {
-              return matchesYear && p.deleted_at;
+              return matchesYear && matchesProdi && p.deleted_at;
             } else {
-              return matchesYear && !p.deleted_at;
+              return matchesYear && matchesProdi && !p.deleted_at;
             }
           });
           
@@ -800,12 +836,14 @@ export default function Tabel2A1({ role }) {
       }
     } else {
       // Jika tidak ada filter tahun, tampilkan semua data
-      // Filter berdasarkan showDeleted
+      // Filter berdasarkan prodi yang dipilih dan showDeleted
+      const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
       const filteredRows = rows.filter(row => {
+        const matchesProdi = row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId);
         if (showDeleted) {
-          return row.deleted_at;
+          return matchesProdi && row.deleted_at;
         } else {
-          return !row.deleted_at;
+          return matchesProdi && !row.deleted_at;
         }
       });
       
@@ -960,11 +998,11 @@ export default function Tabel2A1({ role }) {
     const showDeleted = showDeletedMaba;
     const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
     
-    // Proses data untuk ditampilkan per TS jika selectedYearMaba ada
+    // Proses data untuk ditampilkan per TS jika selectedYear ada
     let displayRows = [];
-    if (selectedYearMaba && maps?.tahun) {
+    if (selectedYear && maps?.tahun) {
       const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
-      const currentYearId = parseInt(selectedYearMaba);
+      const currentYearId = parseInt(selectedYear);
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
       
       if (currentYearIndex !== -1) {
@@ -997,14 +1035,18 @@ export default function Tabel2A1({ role }) {
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
           
-          // Cari data mahasiswa baru dan aktif untuk semua unit prodi atau unit prodi tertentu
+          // Filter berdasarkan prodi yang dipilih
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          // Cari data mahasiswa baru dan aktif untuk unit prodi tertentu
           // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
           const mabaData = rows.filter(m => {
             const matchesYear = m.id_tahun === yearId;
+            const matchesProdi = m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId);
             if (showDeleted) {
-              return matchesYear && m.deleted_at;
+              return matchesYear && matchesProdi && m.deleted_at;
             } else {
-              return matchesYear && !m.deleted_at;
+              return matchesYear && matchesProdi && !m.deleted_at;
             }
           });
           
@@ -1039,12 +1081,14 @@ export default function Tabel2A1({ role }) {
       }
     } else {
       // Jika tidak ada filter tahun, tampilkan semua data dalam format yang sama
-      // Filter berdasarkan showDeleted
+      // Filter berdasarkan prodi yang dipilih dan showDeleted
+      const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
       const filteredRows = rows.filter(row => {
+        const matchesProdi = row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId);
         if (showDeleted) {
-          return row.deleted_at;
+          return matchesProdi && row.deleted_at;
         } else {
-          return !row.deleted_at;
+          return matchesProdi && !row.deleted_at;
         }
       });
       
@@ -1286,11 +1330,110 @@ export default function Tabel2A1({ role }) {
                         </button>
                       </div>
                     )}
-                    {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
-                      <div className="text-center italic text-red-600">Dihapus</div>
-                    )}
-                    {(!row.rowData || row.rowData.length === 0) && (
-                      <span className="text-center text-slate-400">-</span>
+                  </td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    {row.rowData && row.rowData.length > 0 ? (
+                      <div className="flex items-center justify-center gap-2">
+                        {!showDeleted && canUMaba && (
+                          <button
+                            onClick={async () => {
+                              // Jika hanya ada 1 data, langsung edit
+                              if (row.rowData.length === 1) {
+                                setEditingMaba(row.rowData[0]);
+                                setFormMaba(row.rowData[0]);
+                                setShowModalMaba(true);
+                              } else {
+                                // Jika ada multiple data, tampilkan dialog untuk memilih data yang ingin diedit
+                                const options = {};
+                                row.rowData.forEach((data, index) => {
+                                  const jenisLabel = data.jenis === 'baru' ? 'Baru' : 'Aktif';
+                                  const jalurLabel = data.jalur === 'reguler' ? 'Reguler' : 'RPL';
+                                  const tahunName = maps?.tahun?.[data.id_tahun]?.tahun || data.id_tahun;
+                                  options[`data_${index}`] = `${jenisLabel} - ${jalurLabel} (${tahunName})`;
+                                });
+                                
+                                const { value: selectedData } = await Swal.fire({
+                                  title: 'Pilih Data untuk Diedit',
+                                  text: `Terdapat ${row.rowData.length} data untuk tahun ini. Pilih data yang ingin diedit:`,
+                                  input: 'select',
+                                  inputOptions: options,
+                                  inputPlaceholder: 'Pilih data...',
+                                  showCancelButton: true,
+                                  confirmButtonText: 'Edit',
+                                  cancelButtonText: 'Batal',
+                                  inputValidator: (value) => {
+                                    if (!value) {
+                                      return 'Anda harus memilih data terlebih dahulu';
+                                    }
+                                  }
+                                });
+                                
+                                if (selectedData) {
+                                  const selectedIndex = parseInt(selectedData.replace('data_', ''));
+                                  const selectedRowData = row.rowData[selectedIndex];
+                                  if (selectedRowData) {
+                                    setEditingMaba(selectedRowData);
+                                    setFormMaba(selectedRowData);
+                                    setShowModalMaba(true);
+                                  }
+                                }
+                              }
+                            }}
+                            className="font-medium text-[#0384d6] hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {!showDeleted && canDMaba && (
+                          <button
+                            onClick={() => {
+                              // Hapus semua data untuk TS ini
+                              const firstData = row.rowData[0];
+                              if (firstData) {
+                                doDelete(firstData, tableMaba);
+                              }
+                            }}
+                            className="font-medium text-red-600 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        )}
+                        {showDeleted && canUMaba && (
+                          <button
+                            onClick={() => {
+                              // Pulihkan semua data untuk TS ini
+                              if (row.rowData.length > 0) {
+                                doRestore(row.rowData[0], tableMaba);
+                              }
+                            }}
+                            className="font-medium text-green-600 hover:underline"
+                          >
+                            Pulihkan
+                          </button>
+                        )}
+                        {showDeleted && canDMaba && (
+                          <button
+                            onClick={() => {
+                              // Hapus permanen semua data untuk TS ini
+                              if (row.rowData.length > 0) {
+                                doHardDelete(row.rowData[0], tableMaba);
+                              }
+                            }}
+                            className="font-medium text-red-800 hover:underline"
+                          >
+                            Hapus Permanen
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
+                          <div className="text-center italic text-red-600">Dihapus</div>
+                        )}
+                        {(!row.rowData || row.rowData.length === 0) && (
+                          <span className="text-center text-slate-400">-</span>
+                        )}
+                      </>
                     )}
                   </td>
                 </tr>
@@ -1474,12 +1617,17 @@ export default function Tabel2A1({ role }) {
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <YearSelector 
-              selectedYear={selectedYearPend} 
-              setSelectedYear={setSelectedYearPend} 
+              selectedYear={selectedYear} 
+              setSelectedYear={setSelectedYear} 
               label="Tahun" 
             />
+            <UnitSelector 
+              selectedUnit={selectedUnitProdi} 
+              setSelectedUnit={setSelectedUnitProdi} 
+              label="Prodi" 
+            />
             
-            {canDPend && (
+            {canDPend && role?.toLowerCase() !== "ala" && (
               <button
                 onClick={() => setShowDeletedPend((prev) => !prev)}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -1617,13 +1765,7 @@ export default function Tabel2A1({ role }) {
 
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <YearSelector 
-              selectedYear={selectedYearMaba} 
-              setSelectedYear={setSelectedYearMaba} 
-              label="Tahun" 
-            />
-            
-            {canDMaba && (
+            {canDMaba && role?.toLowerCase() !== "ala" && (
               <button
                 onClick={() => setShowDeletedMaba((prev) => !prev)}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -1755,8 +1897,8 @@ export default function Tabel2A1({ role }) {
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <YearSelector 
-              selectedYear={selectedYearPend} 
-              setSelectedYear={setSelectedYearPend} 
+              selectedYear={selectedYear} 
+              setSelectedYear={setSelectedYear} 
               label="Tahun TS" 
             />
             <select
