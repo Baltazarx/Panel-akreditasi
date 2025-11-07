@@ -78,6 +78,41 @@ export default function Tabel6A1({ auth, role: propRole }) {
   //   fetchRows();
   // }, []);
 
+  // Data dummy untuk preview design aksi
+  useEffect(() => {
+    const dummyData = [
+      {
+        id: 1,
+        nama: "Data Dummy 1",
+        deskripsi: "Ini adalah data dummy untuk testing",
+        created_at: new Date().toISOString(),
+        deleted_at: null
+      },
+      {
+        id: 2,
+        nama: "Data Dummy 2",
+        deskripsi: "Ini adalah data dummy untuk testing",
+        created_at: new Date().toISOString(),
+        deleted_at: null
+      },
+      {
+        id: 3,
+        nama: "Data Dummy 3 (Dihapus)",
+        deskripsi: "Ini adalah data dummy yang sudah dihapus",
+        created_at: new Date().toISOString(),
+        deleted_at: new Date().toISOString()
+      },
+      {
+        id: 4,
+        nama: "Data Dummy 4",
+        deskripsi: "Ini adalah data dummy untuk testing",
+        created_at: new Date().toISOString(),
+        deleted_at: null
+      }
+    ];
+    setRows(dummyData);
+  }, []);
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       {/* Header */}
@@ -135,7 +170,10 @@ export default function Tabel6A1({ auth, role: propRole }) {
                     {i + 1}.
                   </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                    {JSON.stringify(r)}
+                    <div className="space-y-1">
+                      <div className="font-medium text-slate-800">{r.nama || "Data " + (i + 1)}</div>
+                      <div className="text-xs text-slate-500">{r.deskripsi || "Deskripsi data"}</div>
+                    </div>
                   </td>
                   {(canUpdate || canDelete) && (
                     <td className="px-6 py-4 border border-slate-200">

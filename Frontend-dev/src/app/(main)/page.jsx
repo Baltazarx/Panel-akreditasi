@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { roleCan } from "../../lib/role";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 // --- FUNGSI DAN IKON LOKAL ---
 const useRouter = () => {
@@ -20,6 +21,8 @@ const FiBookOpen = (props) => (<svg stroke="currentColor" fill="none" strokeWidt
 const FiUsers = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>);
 const FiHelpCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>);
 const FiArrowRight = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>);
+const FiChevronLeft = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="15 18 9 12 15 6"></polyline></svg>);
+const FiChevronRight = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="9 18 15 12 9 6"></polyline></svg>);
 const FiBarChart = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>);
 const FiFileText = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>);
 const FiDatabase = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>);
@@ -603,10 +606,10 @@ const StatistikCards = () => {
     }, []);
 
     return (
-        <div className="grid grid-cols-2 gap-3 h-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="group relative bg-white p-4 rounded-xl shadow-md border border-gray-100 animate-pulse">
+                    <div key={i} className="group relative bg-white p-5 rounded-xl shadow-md border border-gray-100 animate-pulse">
                         <div className="h-10 w-10 bg-slate-200 rounded-lg mb-3"></div>
                         <div className="h-4 bg-slate-200 rounded mb-2 w-1/2"></div>
                         <div className="h-6 bg-slate-200 rounded mb-1"></div>
@@ -624,7 +627,7 @@ const StatistikCards = () => {
                             animate="visible"
                             transition={{ delay: index * 0.1 }}
                             whileHover={{ y: -4, scale: 1.02 }}
-                            className="group relative bg-white p-4 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 ease-in-out overflow-hidden"
+                            className="group relative bg-white p-5 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 ease-in-out overflow-hidden"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                             <div className="relative z-10">
@@ -632,9 +635,18 @@ const StatistikCards = () => {
                                     <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} text-white shadow-md`}>
                                         <IconComponent className="w-5 h-5" />
                                     </div>
-                                    <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full ${
                                         stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                     }`}>
+                                        {stat.trend === 'up' ? (
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                        )}
                                         {stat.change}
                                     </span>
                                 </div>
@@ -653,12 +665,343 @@ const StatistikCards = () => {
     );
 };
 
-// Komponen Berita - Style seperti Portfolio (card besar dengan chart)
-const BeritaPortfolio = () => {
+// Komponen Unduh Dokumen - Table Design
+const UnduhDokumenSection = () => {
+    const router = useRouter();
+    const [documents, setDocuments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setDocuments([
+                {
+                    id: 1,
+                    code: "DOC-001",
+                    name: "Template Dokumen Akreditasi",
+                    date: "15 Des, 2024",
+                    size: "2.5 MB",
+                    status: "Available"
+                },
+                {
+                    id: 2,
+                    code: "DOC-002",
+                    name: "Panduan Pengisian Tabel",
+                    date: "10 Des, 2024",
+                    size: "1.8 MB",
+                    status: "Available"
+                },
+                {
+                    id: 3,
+                    code: "DOC-003",
+                    name: "Dokumen Standar C1",
+                    date: "5 Des, 2024",
+                    size: "5.2 MB",
+                    status: "Available"
+                },
+                {
+                    id: 4,
+                    code: "DOC-004",
+                    name: "Dokumen Standar C2",
+                    date: "1 Des, 2024",
+                    size: "4.7 MB",
+                    status: "Available"
+                },
+                {
+                    id: 5,
+                    code: "DOC-005",
+                    name: "Format Laporan AMI",
+                    date: "28 Nov, 2024",
+                    size: "850 KB",
+                    status: "Available"
+                },
+                {
+                    id: 6,
+                    code: "DOC-006",
+                    name: "Regulasi & SK",
+                    date: "25 Nov, 2024",
+                    size: "3.1 MB",
+                    status: "Available"
+                },
+                {
+                    id: 7,
+                    code: "DOC-007",
+                    name: "Checklist Dokumen",
+                    date: "20 Nov, 2024",
+                    size: "650 KB",
+                    status: "Available"
+                },
+                {
+                    id: 8,
+                    code: "DOC-008",
+                    name: "Arsip Dokumen Lama",
+                    date: "15 Nov, 2024",
+                    size: "12.5 MB",
+                    status: "Archived"
+                }
+            ]);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const getStatusBadge = (status) => {
+        const statusConfig = {
+            "Available": { bg: "bg-green-100", text: "text-green-700", label: "Available" },
+            "Archived": { bg: "bg-gray-100", text: "text-gray-700", label: "Archived" },
+            "Pending": { bg: "bg-yellow-100", text: "text-yellow-700", label: "Pending" },
+            "Outdated": { bg: "bg-red-100", text: "text-red-700", label: "Outdated" }
+        };
+        const config = statusConfig[status] || statusConfig["Available"];
+        return (
+            <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-semibold ${config.bg} ${config.text}`}>
+                {config.label}
+            </span>
+        );
+    };
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={slideUp}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Unduh Dokumen</h3>
+                <button 
+                    onClick={() => router.push('/')}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="space-y-3">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                        <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                    ))}
+                </div>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">No</th>
+                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Dokumen</th>
+                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ukuran</th>
+                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Unduhan</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {documents.map((doc) => (
+                                <tr 
+                                    key={doc.id} 
+                                    className="hover:bg-gray-50 transition-colors"
+                                >
+                                    <td className="py-3 px-2">
+                                        <div className="font-medium text-slate-900">{doc.code}</div>
+                                    </td>
+                                    <td className="py-3 px-2 text-gray-600">{doc.date}</td>
+                                    <td className="py-3 px-2">
+                                        <div className="font-medium text-slate-900">{doc.name}</div>
+                                    </td>
+                                    <td className="py-3 px-2 text-gray-600">{doc.size}</td>
+                                    <td className="py-3 px-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log('Download:', doc.name);
+                                                // TODO: Implement download functionality
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#0384d6] hover:text-[#043975] hover:bg-blue-50 rounded-md transition-colors"
+                                        >
+                                            <FiDownload className="w-3.5 h-3.5" />
+                                            <span>Unduh</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// Komponen Welcome Section - Modern & Clean Design
+const WelcomeSection = ({ authUser }) => {
+    const [greeting, setGreeting] = useState("");
+    const [currentTime, setCurrentTime] = useState("");
+
+    useEffect(() => {
+        const getGreeting = () => {
+            const currentHour = new Date().getHours();
+            if (currentHour >= 5 && currentHour < 12) {
+                return "Selamat Pagi";
+            } else if (currentHour >= 12 && currentHour < 18) {
+                return "Selamat Siang";
+            } else {
+                return "Selamat Malam";
+            }
+        };
+
+        const updateTime = () => {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            setCurrentTime(timeString);
+        };
+
+        setGreeting(getGreeting());
+        updateTime();
+        const timeInterval = setInterval(updateTime, 1000);
+
+        return () => clearInterval(timeInterval);
+    }, []);
+
+    const userName = authUser?.username || authUser?.pegawai_name || "Pengguna";
+    const userRole = authUser?.role || "User";
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={slideUp}
+            className="bg-gradient-to-br from-[#043975] via-[#0384d6] to-[#043975] rounded-2xl shadow-xl p-6 h-full text-white relative overflow-hidden"
+        >
+            {/* Background Grid Pattern - White Lines */}
+            <div className="absolute inset-0 opacity-30">
+                <div className="absolute inset-0" style={{
+                    backgroundImage: `
+                        linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '35px 35px',
+                    backgroundPosition: '0 0'
+                }}></div>
+            </div>
+
+            {/* Decorative Circle */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-[#ffbf1b]/10 rounded-full blur-2xl"></div>
+
+            <div className="relative z-10 h-full flex flex-col justify-between">
+                <div>
+                    {/* Greeting Badge */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm mb-4"
+                    >
+                        <div className="w-2 h-2 bg-[#ffbf1b] rounded-full animate-pulse"></div>
+                        <span className="text-xs font-semibold text-white/90">{greeting}</span>
+                    </motion.div>
+
+                    {/* Welcome Message */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        <h2 className="text-2xl md:text-3xl font-bold mb-2 leading-tight">
+                            Selamat Datang,
+                        </h2>
+                        <h3 className="text-xl md:text-2xl font-bold mb-3 text-[#ffbf1b]">
+                            {userName}
+                        </h3>
+                        <p className="text-sm text-white/80 mb-4 leading-relaxed">
+                            Anda login sebagai <span className="font-semibold text-white">{userRole}</span>
+                        </p>
+                    </motion.div>
+                </div>
+
+                {/* Bottom Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mt-6 pt-6 border-t border-white/20"
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs text-white/60 mb-1">Waktu Saat Ini</p>
+                            <p className="text-lg font-bold text-white">{currentTime}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-white/60 mb-1">Status</p>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <p className="text-sm font-semibold text-white">Online</p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        </motion.div>
+    );
+};
+
+// Komponen Berita - Card terpisah untuk setiap berita
+const BeritaCard = ({ berita, index }) => {
+    const router = useRouter();
+    const IconComponent = berita.icon;
+    const shouldReduceMotion = useReducedMotion();
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    return (
+        <motion.div
+            variants={slideUp}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: index * 0.1 }}
+            whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.02 }}
+            className="group relative bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden"
+            onClick={() => router.push('/berita')}
+        >
+            {/* Background gradient on hover */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${berita.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${berita.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <IconComponent className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium">{formatDate(berita.date)}</span>
+                </div>
+                <h4 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-[#0384d6] transition-colors">
+                    {berita.title}
+                </h4>
+                <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-4">
+                    {berita.excerpt}
+                </p>
+                <div className="flex items-center text-sm font-medium text-[#0384d6]">
+                    <span>Baca Selengkapnya</span>
+                    <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const BeritaSection = () => {
     const router = useRouter();
     const [berita, setBerita] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedTimeframe, setSelectedTimeframe] = useState('1W');
 
     const tpmNewsData = [
         {
@@ -686,78 +1029,39 @@ const BeritaPortfolio = () => {
         }, 500);
     }, []);
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    // Data untuk chart (simulasi)
-    const chartData = [20, 25, 22, 28, 30, 27, 32, 35, 33, 38, 40, 42];
-
     return (
         <motion.div
             initial="hidden"
             animate="visible"
-            variants={fadeIn}
-            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
+            variants={staggerContainer}
+            className="space-y-4"
         >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-slate-900">Berita</h3>
                 <button 
                     onClick={() => router.push('/berita')}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
                 </button>
             </div>
 
             {loading ? (
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-32 bg-gray-200 rounded"></div>
+                <div className="grid grid-cols-1 gap-4">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 animate-pulse">
+                            <div className="h-12 bg-gray-200 rounded-lg mb-4"></div>
+                            <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                    ))}
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {/* Berita 1 - Atas */}
-                    {berita[0] && (() => {
-                        const IconComponent = berita[0].icon;
-                        return (
-                            <div className="pb-4 border-b border-gray-200">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${berita[0].color} text-white`}>
-                                        <IconComponent className="w-4 h-4" />
-                                    </div>
-                                    <span className="text-xs text-gray-500">{formatDate(berita[0].date)}</span>
-                                </div>
-                                <h4 className="text-base font-bold text-slate-900 mb-2 line-clamp-2">{berita[0].title}</h4>
-                                <p className="text-xs text-gray-600 line-clamp-2">{berita[0].excerpt}</p>
-                            </div>
-                        );
-                    })()}
-
-                    {/* Berita 2 - Bawah */}
-                    {berita[1] && (() => {
-                        const IconComponent = berita[1].icon;
-                        return (
-                            <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${berita[1].color} text-white`}>
-                                        <IconComponent className="w-4 h-4" />
-                                    </div>
-                                    <span className="text-xs text-gray-500">{formatDate(berita[1].date)}</span>
-                                </div>
-                                <h4 className="text-base font-bold text-slate-900 mb-2 line-clamp-2">{berita[1].title}</h4>
-                                <p className="text-xs text-gray-600 line-clamp-2">{berita[1].excerpt}</p>
-                            </div>
-                        );
-                    })()}
+                <div className="grid grid-cols-1 gap-4">
+                    {berita.map((item, index) => (
+                        <BeritaCard key={item.id} berita={item} index={index} />
+                    ))}
                 </div>
             )}
         </motion.div>
@@ -838,140 +1142,365 @@ const AksesCepatMarket = ({ quickActions }) => {
     );
 };
 
-// Komponen Grafik Semua Tabel - Style seperti Report Page dengan Progress Bar Stick
+// Komponen Grafik Semua Tabel - Carousel/Slider Design
 const GrafikTabel = () => {
     const router = useRouter();
+    const { authUser } = useAuth();
+    const role = authUser?.role;
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const shouldReduceMotion = useReducedMotion();
 
+    // Definisi tabel untuk setiap standar
+    const C1_TABLES = [
+        { key: '1a1', label: '1A-1', endpoint: '/pimpinan-upps-ps', accessKey: 'tabel_1a1' },
+        { key: '1a2', label: '1A-2', endpoint: '/sumber-pendanaan', accessKey: 'tabel_1a2' },
+        { key: '1a3', label: '1A-3', endpoint: '/penggunaan-dana', accessKey: 'tabel_1a3' },
+        { key: '1a4', label: '1A-4', endpoint: '/beban-kerja-dosen', accessKey: 'tabel_1a4' },
+        { key: '1a5', label: '1A-5', endpoint: '/kualifikasi-tendik', accessKey: 'tabel_1a5' },
+        { key: '1b', label: '1B', endpoint: '/audit-mutu-internal', accessKey: 'tabel_1b' }
+    ];
+
+    const C2_TABLES = [
+        { key: '2a2', label: '2A-2', endpoint: '/tabel2a2-keragaman-asal', accessKey: 'tabel_2a2_keragaman_asal' },
+        { key: '2a3', label: '2A-3', endpoint: '/tabel2a3-kondisi-mahasiswa', accessKey: 'tabel_2a3_kondisi_mahasiswa' },
+        { key: '2b', label: '2B', endpoint: '/pemetaan-2b1', accessKey: 'pemetaan2b1' },
+        { key: '2b4', label: '2B-4', endpoint: '/tabel2b4-masa-tunggu', accessKey: 'tabel_2b4_masa_tunggu' },
+        { key: '2b5', label: '2B-5', endpoint: '/tabel2b5-kesesuaian-kerja', accessKey: 'tabel_2b5_kesesuaian_kerja' },
+        { key: '2b6', label: '2B-6', endpoint: '/tabel2b6-kepuasan-pengguna', accessKey: 'tabel_2b6_kepuasan_pengguna' }
+    ];
+
+    const C3_TABLES = [
+        { key: '3a1', label: '3A-1', endpoint: '/tabel-3a1-sarpras-penelitian', accessKey: 'tabel_3a1_sarpras_penelitian' },
+        { key: '3a2', label: '3A-2', endpoint: '/tabel-3a2-penelitian', accessKey: 'tabel_3a2_penelitian' },
+        { key: '3a3', label: '3A-3', endpoint: '/tabel-3a3-pengembangan-dtpr/detail', accessKey: 'tabel_3a3_pengembangan_dtpr' }
+    ];
+
+    // Fungsi untuk fetch data count dari API
+    const fetchTableDataCount = async (endpoint) => {
+        try {
+            const BASE_URL = "http://localhost:3000/api";
+            const response = await fetch(`${BASE_URL}${endpoint}`, {
+                credentials: "include",
+                mode: "cors",
+            });
+            
+            if (!response.ok) {
+                return 0;
+            }
+            
+            const data = await response.json();
+            
+            // Handle berbagai format response
+            if (data?.total !== undefined) {
+                return data.total;
+            } else if (data?.count !== undefined) {
+                return data.count;
+            } else if (Array.isArray(data)) {
+                return data.length;
+            } else if (data?.items && Array.isArray(data.items)) {
+                return data.items.length;
+            } else if (data?.data && Array.isArray(data.data)) {
+                return data.data.length;
+            }
+            
+            return 0;
+        } catch (error) {
+            console.warn(`Failed to fetch data for ${endpoint}:`, error);
+            return 0;
+        }
+    };
+
+    // Fetch data untuk semua tabel
     useEffect(() => {
-        setTimeout(() => {
-            setChartData([
-                { name: 'C1', count: 12, color: 'from-blue-500 to-cyan-500', icon: FiBarChart, description: 'Standar C1' },
-                { name: 'C2', count: 8, color: 'from-purple-500 to-violet-500', icon: FiTrendingUp, description: 'Standar C2' },
-                { name: 'Data Dosen', count: 45, color: 'from-green-500 to-emerald-500', icon: FiUsers, description: 'Master Data' },
-                { name: 'Data Pegawai', count: 32, color: 'from-orange-500 to-red-500', icon: FiUsers, description: 'Master Data' }
+        const fetchAllData = async () => {
+            setLoading(true);
+            
+            // Fetch data untuk C1
+            const c1DataPromises = C1_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+            
+            // Fetch data untuk C2
+            const c2DataPromises = C2_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+            
+            // Fetch data untuk C3
+            const c3DataPromises = C3_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+
+            const [c1Results, c2Results, c3Results] = await Promise.all([
+                Promise.all(c1DataPromises),
+                Promise.all(c2DataPromises),
+                Promise.all(c3DataPromises)
             ]);
+
+            // Filter null values dan buat barData
+            const c1BarData = c1Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
+            const c2BarData = c2Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
+            const c3BarData = c3Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
+            // Hitung total count
+            const c1Total = c1Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+            const c2Total = c2Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+            const c3Total = c3Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+
+            setChartData([
+                { 
+                    name: 'C1', 
+                    count: c1Total, 
+                    color: 'from-blue-500 to-cyan-500', 
+                    icon: FiBarChart, 
+                    description: 'Standar C1',
+                    barData: c1BarData.length > 0 ? c1BarData : [
+                        { category: '1A-1', value: 0 },
+                        { category: '1A-2', value: 0 },
+                        { category: '1A-3', value: 0 }
+                    ]
+                },
+                { 
+                    name: 'C2', 
+                    count: c2Total, 
+                    color: 'from-purple-500 to-violet-500', 
+                    icon: FiTrendingUp, 
+                    description: 'Standar C2',
+                    barData: c2BarData.length > 0 ? c2BarData : [
+                        { category: '2A-2', value: 0 },
+                        { category: '2A-3', value: 0 },
+                        { category: '2B', value: 0 }
+                    ]
+                },
+                { 
+                    name: 'C3', 
+                    count: c3Total, 
+                    color: 'from-green-500 to-emerald-500', 
+                    icon: FiUsers, 
+                    description: 'Standar C3',
+                    barData: c3BarData.length > 0 ? c3BarData : [
+                        { category: '3A-1', value: 0 },
+                        { category: '3A-2', value: 0 },
+                        { category: '3A-3', value: 0 }
+                    ]
+                }
+            ]);
+            
             setLoading(false);
-        }, 500);
-    }, []);
+        };
+
+        if (role) {
+            fetchAllData();
+        } else {
+            setLoading(false);
+        }
+    }, [role]);
 
     // Hitung persentase untuk progress bar (max 100 untuk scaling yang lebih baik)
     const maxValue = 100;
     const calculatePercentage = (count) => Math.min((count / maxValue) * 100, 100);
 
+    // Items per slide (1 item per slide)
+    const itemsPerSlide = 1;
+    const totalSlides = Math.ceil(chartData.length / itemsPerSlide);
+
+    const nextSlide = () => {
+        setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+    };
+
     return (
         <motion.div
             initial="hidden"
             animate="visible"
-            variants={staggerContainer}
+            variants={fadeIn}
         >
-            <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-bold text-slate-900">Grafik Data Tabel</h3>
-                <button 
-                    onClick={() => router.push('/tables')}
-                    className="text-sm font-medium text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-1"
-                >
-                    Lihat Semua
-                    <FiArrowRight className="w-4 h-4" />
-                </button>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Grafik Data Tabel</h3>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => router.push('/tables')}
+                        className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                    >
+                        Lihat Semua
+                        <FiArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="group relative bg-white p-6 rounded-3xl shadow-sm border border-gray-100/80 animate-pulse">
-                            <div className="h-8 bg-gray-100 rounded-full mb-4"></div>
-                            <div className="h-4 bg-gray-100 rounded w-1/3"></div>
-                        </div>
-                    ))}
-                </div>
+                <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
             ) : (
-                <motion.div 
-                    variants={staggerContainer}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
-                >
-                    {chartData.map((item, index) => {
-                        const IconComponent = item.icon;
-                        const percentage = calculatePercentage(item.count);
-                        return (
-                            <motion.div
-                                key={index}
-                                variants={slideUp}
-                                whileHover={{ y: -2 }}
-                                className="group relative bg-white rounded-3xl shadow-sm border border-gray-100/80 p-6 cursor-pointer hover:shadow-xl hover:border-gray-200 transition-all duration-300 overflow-hidden"
-                                onClick={() => router.push(`/tables?table=${item.name}`)}
-                            >
-                                {/* Background gradient on hover */}
-                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                                
-                                <div className="relative z-10">
-                                    {/* Header */}
-                                    <div className="flex items-start justify-between mb-6">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className={`p-2.5 bg-gradient-to-br ${item.color} rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                                    <IconComponent size={18} />
+                <div className="relative">
+                    {/* Carousel Container */}
+                    <div className="overflow-hidden rounded-xl">
+                        <motion.div
+                            animate={{
+                                x: `-${currentSlide * (100 / totalSlides)}%`
+                            }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30
+                            }}
+                            className="flex"
+                            style={{ width: `${totalSlides * 100}%` }}
+                        >
+                            {Array.from({ length: totalSlides }).map((_, slideIndex) => (
+                                <div
+                                    key={slideIndex}
+                                    className="w-full"
+                                    style={{ width: `${100 / totalSlides}%`, flexShrink: 0 }}
+                                >
+                                    {chartData.slice(slideIndex * itemsPerSlide, slideIndex * itemsPerSlide + itemsPerSlide).map((item, itemIndex) => {
+                                        const IconComponent = item.icon;
+                                        const percentage = calculatePercentage(item.count);
+                                        const globalIndex = slideIndex * itemsPerSlide + itemIndex;
+                                        return (
+                                            <div key={globalIndex} className="space-y-4">
+                                                {/* Line Chart Section */}
+                                                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                                                    <ResponsiveContainer width="100%" height={200}>
+                                                        <LineChart data={item.barData || []} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+                                                            <XAxis 
+                                                                dataKey="category" 
+                                                                tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 500 }}
+                                                                axisLine={false}
+                                                                tickLine={false}
+                                                            />
+                                                            <YAxis 
+                                                                tick={{ fill: '#6b7280', fontSize: 11 }}
+                                                                axisLine={false}
+                                                                tickLine={false}
+                                                                domain={[0, 'dataMax']}
+                                                            />
+                                                            <Tooltip 
+                                                                contentStyle={{ 
+                                                                    backgroundColor: 'white', 
+                                                                    border: '1px solid #e5e7eb',
+                                                                    borderRadius: '6px',
+                                                                    padding: '6px 10px',
+                                                                    fontSize: '12px'
+                                                                }}
+                                                                cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+                                                            />
+                                                            <Line 
+                                                                type="monotone"
+                                                                dataKey="value" 
+                                                                stroke={item.name === 'C1' ? '#3b82f6' : item.name === 'C2' ? '#8b5cf6' : '#10b981'}
+                                                                strokeWidth={2}
+                                                                dot={{ fill: item.name === 'C1' ? '#3b82f6' : item.name === 'C2' ? '#8b5cf6' : '#10b981', r: 4 }}
+                                                                activeDot={{ r: 6 }}
+                                                                name="Jumlah Data"
+                                                            />
+                                                        </LineChart>
+                                                    </ResponsiveContainer>
                                                 </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
-                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.description}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="space-y-5">
-                                        {/* Data Count */}
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-4xl font-extrabold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                                                {item.count.toLocaleString()}
-                                            </span>
-                                            <span className="text-sm font-medium text-gray-500">Data</span>
-                                        </div>
-                                        
-                                        {/* Progress Bar Stick */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="text-gray-500 font-medium">Progress</span>
-                                                <span className={`font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
-                                                    {percentage.toFixed(1)}%
-                                                </span>
-                                            </div>
-                                            <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                                                {/* Card Section - Design seperti gambar 2 */}
                                                 <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${percentage}%` }}
-                                                    transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
-                                                    className={`h-full bg-gradient-to-r ${item.color} rounded-full shadow-sm relative overflow-hidden`}
+                                                    whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+                                                    className="group relative bg-white rounded-xl border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all duration-300"
+                                                    onClick={() => router.push(`/tables?table=${item.name}`)}
                                                 >
-                                                    {/* Shine effect overlay */}
-                                                    <motion.div
-                                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                                                        animate={{
-                                                            x: ['-100%', '100%']
-                                                        }}
-                                                        transition={{
-                                                            duration: 2,
-                                                            repeat: Infinity,
-                                                            ease: "linear"
-                                                        }}
-                                                        style={{ width: '50%' }}
-                                                    />
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        {/* Icon dan Label */}
+                                                        <div className="flex items-center gap-3 flex-1">
+                                                            <div className={`p-3 rounded-lg bg-gradient-to-br ${item.color} text-white shadow-md flex-shrink-0`}>
+                                                                <IconComponent className="w-5 h-5" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="font-bold text-slate-900 text-lg">{item.name}</div>
+                                                                <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Bottom Section dengan Navigation, Data, Progress */}
+                                                    <div className="flex items-end justify-between gap-4">
+                                                        {/* Left Navigation */}
+                                                        {totalSlides > 1 && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    prevSlide();
+                                                                }}
+                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
+                                                                aria-label="Previous slide"
+                                                            >
+                                                                <FiChevronLeft className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+
+                                                        {/* Data Section */}
+                                                        <div className="flex-1">
+                                                            <div className="text-4xl font-extrabold text-slate-900 mb-1">{item.count}</div>
+                                                            <div className="text-xs text-gray-500 mb-3">Data</div>
+                                                            
+                                                            {/* Progress Bar */}
+                                                            <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                                                <motion.div
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${percentage}%` }}
+                                                                    transition={{ duration: 1, delay: globalIndex * 0.1, ease: "easeOut" }}
+                                                                    className={`h-full bg-gradient-to-r ${item.color} rounded-full`}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Progress Percentage */}
+                                                        <div className="text-right flex-shrink-0">
+                                                            <div className={`text-base font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
+                                                                {percentage.toFixed(0)}%
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">Progress</div>
+                                                        </div>
+
+                                                        {/* Right Navigation */}
+                                                        {totalSlides > 1 && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    nextSlide();
+                                                                }}
+                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
+                                                                aria-label="Next slide"
+                                                            >
+                                                                <FiChevronRight className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </motion.div>
                                             </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center text-sm font-medium text-[#0384d6] pt-2">
-                                            <span>Lihat Detail</span>
-                                            <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                                        </div>
-                                    </div>
+                                        );
+                                    })}
                                 </div>
-                            </motion.div>
-                        );
-                    })}
-                </motion.div>
+                            ))}
+                        </motion.div>
+                    </div>
+                </div>
             )}
         </motion.div>
     );
@@ -1218,67 +1747,68 @@ export default function App() {
                                 initial="hidden"
                                 animate="visible"
                                 variants={fadeIn}
-                                className="mb-8"
+                                className="mb-6"
                               >
                                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
                                 <p className="text-slate-600">Selamat datang kembali! Berikut ringkasan data Anda.</p>
                               </motion.div>
 
-                              {/* Dashboard Grid Layout 2x2 */}
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                                {/* Kiri Atas: Berita (Portfolio Style) */}
-                                <div className="lg:col-span-1">
-                                  <BeritaPortfolio />
-                                </div>
-                                
-                                {/* Kanan Atas: Statistik Cards */}
-                                <div className="lg:col-span-1">
-                                  <StatistikCards />
+                              {/* Top Row: Statistik Cards (4 cards) */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-6"
+                              >
+                                <StatistikCards />
+                              </motion.div>
+
+                              {/* Middle Row: Grafik Tabel (Wide) & Selamat Datang (Small) */}
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                                {/* Left: Grafik Tabel - Lebih Lebar */}
+                                <div className="lg:col-span-2">
+                                  {canSeeGrafikTabel ? (
+                                    <motion.div
+                                      initial="hidden"
+                                      animate="visible"
+                                      variants={slideUp}
+                                      className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
+                                    >
+                                      <GrafikTabel />
+                                    </motion.div>
+                                  ) : (
+                                    <motion.div
+                                      initial="hidden"
+                                      animate="visible"
+                                      variants={slideUp}
+                                      className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full flex items-center justify-center"
+                                    >
+                                      <div className="text-center">
+                                        <h3 className="text-xl font-bold text-slate-900 mb-2">Grafik Data Tabel</h3>
+                                        <p className="text-sm text-gray-500">Grafik hanya tersedia untuk admin dan waket.</p>
+                                      </div>
+                                    </motion.div>
+                                  )}
                                 </div>
 
-                                {/* Kiri Bawah: Akses Cepat (Market Style) */}
+                                {/* Right: Selamat Datang - Lebih Kecil */}
+                                <div className="lg:col-span-1">
+                                  <WelcomeSection authUser={authUser} />
+                                </div>
+                              </div>
+
+                              {/* Bottom Row: Akses Cepat (Small) & Unduh Dokumen (Wide) */}
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                                {/* Left: Akses Cepat - Lebih Kecil */}
                                 <div className="lg:col-span-1">
                                   <AksesCepatMarket quickActions={quickActions} />
                                 </div>
 
-                                {/* Kanan Bawah: Unduh Dokumen (Advertisement Style) */}
-                                <div className="lg:col-span-1">
-                                  <motion.div
-                                    initial="hidden"
-                                    animate="visible"
-                                    variants={slideUp}
-                                    className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-lg p-6 h-full text-white relative overflow-hidden"
-                                  >
-                                    <div className="relative z-10">
-                                      <div className="mb-4">
-                                        <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white mb-2">
-                                          Unduh Gratis
-                                        </span>
-                                        <h3 className="text-xl font-bold mb-2">Dokumen & Template</h3>
-                                        <p className="text-sm text-white/80 mb-4">
-                                          Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu.
-                                        </p>
-                                      </div>
-                                      <button
-                                        onClick={() => router.push('/')}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm"
-                                      >
-                                        Unduh Sekarang
-                                      </button>
-                                    </div>
-                                    {/* Decorative lines */}
-                                    <div className="absolute bottom-0 right-0 w-32 h-32 opacity-10">
-                                      <svg viewBox="0 0 100 100" className="w-full h-full">
-                                        <path d="M0,50 Q25,25 50,50 T100,50" stroke="white" strokeWidth="2" fill="none" />
-                                        <path d="M0,70 Q25,45 50,70 T100,70" stroke="white" strokeWidth="2" fill="none" />
-                                      </svg>
-                                    </div>
-                                  </motion.div>
+                                {/* Right: Unduh Dokumen - Lebih Lebar */}
+                                <div className="lg:col-span-2">
+                                  <UnduhDokumenSection />
                                 </div>
                               </div>
-
-                              {/* Grafik Data Tabel - Hanya untuk role super admin, waket 1&2, tpm */}
-                              {canSeeGrafikTabel && <GrafikTabel />}
                             </div>
                           </div>
                           <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
