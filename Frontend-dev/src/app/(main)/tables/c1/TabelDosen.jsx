@@ -403,8 +403,17 @@ export default function TabelDosen({ role }) {
           <tbody className="divide-y divide-slate-200">
             {rows
               .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
-              .map((row, index) => (
-              <tr key={row.id_dosen || index} className={`transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+              .map((row, index) => {
+                const idField = getIdField(row);
+                // Pastikan key selalu unik dengan menggabungkan ID dan index
+                const uniqueKey = idField && row[idField] !== undefined && row[idField] !== null 
+                  ? `dosen-${row[idField]}-${index}` 
+                  : `dosen-no-id-${index}`;
+                const rowId = idField && row[idField] !== undefined && row[idField] !== null 
+                  ? row[idField] 
+                  : `dosen-no-id-${index}`;
+                return (
+              <tr key={uniqueKey} className={`transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nidn || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nuptk || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
@@ -417,7 +426,6 @@ export default function TabelDosen({ role }) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const rowId = getIdField(row) ? row[getIdField(row)] : i;
                         if (openDropdownId !== rowId) {
                           const rect = e.currentTarget.getBoundingClientRect();
                           const dropdownWidth = 192;
@@ -432,14 +440,14 @@ export default function TabelDosen({ role }) {
                       }}
                       className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                       aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : i)}
+                      aria-expanded={openDropdownId === rowId}
                     >
                       <FiMoreVertical size={18} />
                     </button>
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
                 <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
@@ -456,7 +464,10 @@ export default function TabelDosen({ role }) {
       {openDropdownId !== null && (() => {
         const filteredRows = rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at);
         const currentRow = filteredRows.find((row, idx) => {
-          const rowId = getIdField(row) ? row[getIdField(row)] : idx;
+          const idField = getIdField(row);
+          const rowId = idField && row[idField] !== undefined && row[idField] !== null 
+            ? row[idField] 
+            : `dosen-no-id-${idx}`;
           return rowId === openDropdownId;
         });
         if (!currentRow) return null;
