@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiFetch } from "../../../lib/api"; // Path disesuaikan
+import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import Swal from 'sweetalert2';
+import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 
 // ============================================================
 // PROFIL LULUSAN CRUD
@@ -13,6 +14,10 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
+  
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   
   // === PERBAIKAN: State filter menyimpan id_unit_prodi ===
   const [selectedProdi, setSelectedProdi] = useState(""); 
@@ -113,6 +118,45 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
     fetchRows();
   }, []);
 
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownId]);
+
+  // Close dropdown when modal opens
+  useEffect(() => {
+    if (showModal) {
+      setOpenDropdownId(null);
+    }
+  }, [showModal]);
+
   useEffect(() => {
     if (editing) {
       setFormState({
@@ -191,24 +235,30 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_pl}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.deskripsi_pl}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_unit_prodi}</td>
-                <td className="px-4 py-3 text-center border border-slate-200">
-                  <div className="flex items-center justify-center gap-2">
-                    {canUpdate && (
-                      <button
-                        onClick={() => { setEditing(row); setShowModal(true); }}
-                        className="font-medium text-[#0384d6] hover:underline"
-                      >
-                        Edit
-                      </button>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => handleDelete(row)}
-                        className="font-medium text-red-600 hover:underline"
-                      >
-                        Hapus
-                      </button>
-                    )}
+                <td className="px-4 py-3 border border-slate-200">
+                  <div className="flex items-center justify-center dropdown-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rowId = getIdField(row) ? row[getIdField(row)] : idx;
+                        if (openDropdownId !== rowId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(rowId);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : idx)}
+                    >
+                      <FiMoreVertical size={18} />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -216,6 +266,55 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
           </tbody>
         </table>
       </div>
+
+      {/* Dropdown Menu - Fixed Position */}
+      {openDropdownId !== null && (() => {
+        const currentRow = filteredRows.find((r, idx) => {
+          const rowId = getIdField(r) ? r[getIdField(r)] : idx;
+          return rowId === openDropdownId;
+        });
+        if (!currentRow) return null;
+
+        return (
+          <div 
+            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(currentRow);
+                  setShowModal(true);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                aria-label={`Edit data ${currentRow.kode_pl}`}
+              >
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                aria-label={`Hapus data ${currentRow.kode_pl}`}
+              >
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Hapus</span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Modal Form */}
       {showModal && (
