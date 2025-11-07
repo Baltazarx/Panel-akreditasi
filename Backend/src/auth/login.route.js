@@ -18,7 +18,7 @@ loginRouter.post('/login', async (req, res) => {
   }
 
   try {
-    // Cek username, is_active = 1, dan deleted_at IS NULL (double safety)
+    // Query sudah benar (SELECT * mengambil semua kolom)
     const [rows] = await pool.query(
       'SELECT * FROM users WHERE username = ? AND is_active = 1 AND deleted_at IS NULL LIMIT 1',
       [username]
@@ -34,10 +34,15 @@ loginRouter.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Password salah' });
     }
 
+    // ==========================================================
+    // PERBAIKAN PAYLOAD:
+    // Kita kirim KEDUA ID (id_unit dan id_unit_prodi)
+    // ==========================================================
     const payload = {
       id_user: user.id_user,
       username: user.username,
-      id_unit_prodi: user.id_unit, // <--- ubah nama field-nya di sini bro
+      id_unit: user.id_unit, // <-- AMBIL id_unit DARI DATABASE
+      id_unit_prodi: user.id_unit_prodi, // <-- AMBIL id_unit_prodi DARI DATABASE
       role: user.role
     };
 
@@ -46,6 +51,7 @@ loginRouter.post('/login', async (req, res) => {
     });
 
     res.cookie('token', token, { httpOnly: true });
+    // Kirim payload yang sama ke frontend
     res.json({
       token,
       user: payload
@@ -73,10 +79,16 @@ loginRouter.get('/me', (req, res) => {
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
+
+    // ==========================================================
+    // PERBAIKAN /me:
+    // Sesuaikan dengan payload token yang baru
+    // ==========================================================
     res.json({
       id_user: decoded.id_user,
       username: decoded.username,
-      id_unit_prodi: decoded.id_unit,
+      id_unit: decoded.id_unit, // <-- Kirim id_unit
+      id_unit_prodi: decoded.id_unit_prodi, // <-- Kirim id_unit_prodi
       role: decoded.role
     });
   } catch (err) {
