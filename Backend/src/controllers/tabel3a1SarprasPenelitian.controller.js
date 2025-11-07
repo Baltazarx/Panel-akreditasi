@@ -13,11 +13,7 @@ export const listTabel3a1SarprasPenelitian = async (req, res) => {
     // Nama tabel dan alias disesuaikan
     const { where, params } = await buildWhere(req, 'tabel_3a1_sarpras_penelitian', 't3a1');
     
-    // Jika role sarpras, hapus filter id_unit_prodi yang ditambahkan oleh buildWhere
-    // Sarpras harus bisa melihat semua data sarana prasarana dari semua unit/prodi
     if (isSarpras && !isSuperAdmin) {
-      // Hapus filter id_unit_prodi dari where clause jika ada
-      // Pattern: "t3a1.id_unit_prodi = ?" (dengan alias t3a1)
       const unitProdiFilterIndex = where.findIndex(w => w.includes('t3a1.id_unit_prodi') || w.includes('.id_unit_prodi'));
       if (unitProdiFilterIndex !== -1) {
         where.splice(unitProdiFilterIndex, 1);

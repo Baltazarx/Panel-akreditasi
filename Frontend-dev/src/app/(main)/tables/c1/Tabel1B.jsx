@@ -4,6 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 const ENDPOINT = "/audit-mutu-internal";
 const TABLE_KEY = "tabel_1b";
@@ -31,7 +32,7 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
   );
 }
 
-function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, showDeleted, doRestore, selectedRows, setSelectedRows, isAllSelected, handleSelectAll }) {
+function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, showDeleted, doRestore, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition }) {
   const getUnitName = (id) => maps.units[id]?.nama_unit || id;
   const getYearName = (id) => maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
 
@@ -110,28 +111,30 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                         "-"
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center border border-slate-200">
-                      <div className="flex items-center justify-center gap-2">
-                        {!showDeleted && canUpdate && (
-                          <button className="font-medium text-[#0384d6] hover:underline" onClick={() => setEditing(r)}>
-                            Edit
-                          </button>
-                        )}
-                        {!showDeleted && canDelete && (
-                          <button className="font-medium text-red-600 hover:underline" onClick={() => doDelete(r)}>
-                            Hapus
-                          </button>
-                        )}
-                        {showDeleted && canDelete && (
-                          <button className="font-medium text-red-800 hover:underline" onClick={() => doHardDelete(r)}>
-                            Hapus Permanen
-                          </button>
-                        )}
-                        {showDeleted && canUpdate && (
-                          <button className="font-medium text-green-600 hover:underline" onClick={() => doRestore(r)}>
-                            Pulihkan
-                          </button>
-                        )}
+                    <td className="px-6 py-4 border border-slate-200">
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rowId = getIdField(r) ? r[getIdField(r)] : i;
+                            if (openDropdownId !== rowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownId(rowId);
+                            } else {
+                              setOpenDropdownId(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -160,6 +163,51 @@ export default function Tabel1B({ role }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [activeYear, setActiveYear] = useState("");
+  const [selectedRows, setSelectedRows] = useState([]);
+  
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownId]);
+
+  // Close dropdown when modal opens
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      setOpenDropdownId(null);
+    }
+  }, [showCreateModal, showEditModal]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -179,8 +227,6 @@ export default function Tabel1B({ role }) {
       };
     }
   }, [showCreateModal, showEditModal]);
-  const [activeYear, setActiveYear] = useState("");
-  const [selectedRows, setSelectedRows] = useState([]);
 
   const [newIdUnit, setNewIdUnit] = useState("");
   const [newIdTahun, setNewIdTahun] = useState("");
@@ -559,7 +605,87 @@ export default function Tabel1B({ role }) {
         setSelectedRows={setSelectedRows}
         isAllSelected={isAllSelected}
         handleSelectAll={handleSelectAll}
+        openDropdownId={openDropdownId}
+        setOpenDropdownId={setOpenDropdownId}
+        setDropdownPosition={setDropdownPosition}
       />
+
+      {/* Dropdown Menu - Fixed Position */}
+      {openDropdownId !== null && (() => {
+        const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+        const currentRow = filteredRows.find((r, idx) => {
+          const rowId = getIdField(r) ? r[getIdField(r)] : idx;
+          return rowId === openDropdownId;
+        });
+        if (!currentRow) return null;
+        
+        return (
+          <div 
+            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {!showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                aria-label={`Edit data ${maps.units[currentRow.id_unit]?.nama_unit || 'audit mutu internal'}`}
+              >
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
+              </button>
+            )}
+            {!showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                aria-label={`Hapus data ${maps.units[currentRow.id_unit]?.nama_unit || 'audit mutu internal'}`}
+              >
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Hapus</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${maps.units[currentRow.id_unit]?.nama_unit || 'audit mutu internal'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doRestore(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${maps.units[currentRow.id_unit]?.nama_unit || 'audit mutu internal'}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
       
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">

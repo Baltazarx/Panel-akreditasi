@@ -3,6 +3,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function Tabel2A1({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -34,6 +35,61 @@ export default function Tabel2A1({ role }) {
   const [editingMaba, setEditingMaba] = useState(null);
   const [showModalPend, setShowModalPend] = useState(false);
   const [showModalMaba, setShowModalMaba] = useState(false);
+  
+  // Dropdown menu state - untuk setiap bagian tabel
+  const [openDropdownIdPend, setOpenDropdownIdPend] = useState(null);
+  const [openDropdownIdMaba, setOpenDropdownIdMaba] = useState(null);
+  const [openDropdownIdGabungan, setOpenDropdownIdGabungan] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if ((openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) && 
+          !event.target.closest('.dropdown-container') && 
+          !event.target.closest('.fixed')) {
+        setOpenDropdownIdPend(null);
+        setOpenDropdownIdMaba(null);
+        setOpenDropdownIdGabungan(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+        setOpenDropdownIdPend(null);
+        setOpenDropdownIdMaba(null);
+        setOpenDropdownIdGabungan(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+        setOpenDropdownIdPend(null);
+        setOpenDropdownIdMaba(null);
+        setOpenDropdownIdGabungan(null);
+      }
+    };
+
+    if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownIdPend, openDropdownIdMaba, openDropdownIdGabungan]);
+
+  // Close dropdown when modal opens
+  useEffect(() => {
+    if (showModalPend || showModalMaba) {
+      setOpenDropdownIdPend(null);
+      setOpenDropdownIdMaba(null);
+      setOpenDropdownIdGabungan(null);
+    }
+  }, [showModalPend, showModalMaba]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -886,49 +942,35 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftarKebutuhanKhusus || '-'}
                   </td>
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    {row.rowData && (
-                      <div className="flex items-center justify-center gap-2">
-                        {!showDeleted && canUPend && (
-                          <button
-                            onClick={() => {
-                              setEditingPend(row.rowData);
-                              setFormPend(row.rowData);
-                              setShowModalPend(true);
-                            }}
-                            className="font-medium text-[#0384d6] hover:underline"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {!showDeleted && canDPend && (
-                          <button
-                            onClick={() => doDelete(row.rowData, tablePend)}
-                            className="font-medium text-red-600 hover:underline"
-                          >
-                            Hapus
-                          </button>
-                        )}
-                        {showDeleted && canUPend && (
-                          <button
-                            onClick={() => doRestore(row.rowData, tablePend)}
-                            className="font-medium text-green-600 hover:underline"
-                          >
-                            Pulihkan
-                          </button>
-                        )}
-                        {showDeleted && canDPend && (
-                          <button
-                            onClick={() => doHardDelete(row.rowData, tablePend)}
-                            className="font-medium text-red-800 hover:underline"
-                          >
-                            Hapus Permanen
-                          </button>
-                        )}
+                  <td className="px-6 py-4 border border-slate-200">
+                    {row.rowData && !row.rowData.deleted_at && (
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rowId = getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx;
+                            if (openDropdownIdPend !== rowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownIdPend(rowId);
+                            } else {
+                              setOpenDropdownIdPend(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
                       </div>
                     )}
                     {row.rowData && row.rowData.deleted_at && (
-                      <div className="italic text-slate-500">Dihapus</div>
+                      <div className="text-center italic text-red-600">Dihapus</div>
                     )}
                   </td>
                 </tr>
@@ -1260,6 +1302,32 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.aktifRPLKebutuhanKhusus || '-'}
                   </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    {row.rowData && row.rowData.length > 0 && !row.rowData[0]?.deleted_at && (
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const firstData = row.rowData[0];
+                            const rowId = getIdField(firstData) ? firstData[getIdField(firstData)] : idx;
+                            if (openDropdownIdMaba !== rowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownIdMaba(rowId);
+                            } else {
+                              setOpenDropdownIdMaba(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownIdMaba === (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : idx)}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
                   <td className="px-6 py-4 text-center border border-slate-200">
                     {row.rowData && row.rowData.length > 0 ? (
                       <div className="flex items-center justify-center gap-2">
@@ -1354,11 +1422,12 @@ export default function Tabel2A1({ role }) {
                           </button>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-slate-400">-</span>
                     )}
-                    {row.rowData && row.rowData.length > 0 && row.rowData.some(r => r.deleted_at) && (
-                      <div className="italic text-slate-500">Dihapus</div>
+                    {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
+                      <div className="text-center italic text-red-600">Dihapus</div>
+                    )}
+                    {(!row.rowData || row.rowData.length === 0) && (
+                      <span className="text-center text-slate-400">-</span>
                     )}
                   </td>
                 </tr>
@@ -1456,34 +1525,36 @@ export default function Tabel2A1({ role }) {
                       <td key={j} className="px-6 py-4 text-slate-700 border border-slate-200">{displayValue}</td>
                     );
                   })}
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    <div className="flex items-center justify-center gap-2">
-                      {!showDeleted && canUpdate && (
-                        <button onClick={()=>{
-                          console.log('Edit clicked:', r);
-                          setEditing(r);
-                          setForm(r);
-                          setShowModal(true);
-                        }} className="font-medium text-[#0384d6] hover:underline">
-                          Edit
+                  <td className="px-6 py-4 border border-slate-200">
+                    {!r.deleted_at && (
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rowId = getIdField(r) ? r[getIdField(r)] : j;
+                            if (openDropdownIdGabungan !== rowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownIdGabungan(rowId);
+                            } else {
+                              setOpenDropdownIdGabungan(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownIdGabungan === (getIdField(r) ? r[getIdField(r)] : j)}
+                        >
+                          <FiMoreVertical size={18} />
                         </button>
-                      )}
-                      {!showDeleted && canDelete && (
-                        <button onClick={()=>doDelete(r,table)} className="font-medium text-red-600 hover:underline">
-                          Hapus
-                        </button>
-                      )}
-                      {showDeleted && canUpdate && (
-                        <button onClick={()=>doRestore(r,table)} className="font-medium text-green-600 hover:underline">
-                          Pulihkan
-                        </button>
-                      )}
-                      {showDeleted && canDelete && (
-                        <button onClick={()=>doHardDelete(r,table)} className="font-medium text-red-800 hover:underline">
-                          Hapus Permanen
-                        </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                    {r.deleted_at && (
+                      <div className="text-center italic text-red-600">Dihapus</div>
+                    )}
                   </td>
                 </tr>
               );
@@ -1587,6 +1658,85 @@ export default function Tabel2A1({ role }) {
         </div>
 
         {renderTablePendaftaran()}
+
+        {/* Dropdown Menu Pendaftaran - Fixed Position */}
+        {openDropdownIdPend !== null && (() => {
+          const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
+          const currentRow = filteredRows.find((r, idx) => {
+            const rowId = getIdField(r) ? r[getIdField(r)] : idx;
+            return rowId === openDropdownIdPend;
+          });
+          if (!currentRow) return null;
+          
+          return (
+            <div 
+              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
+              {!showDeletedPend && canUPend && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingPend(currentRow);
+                    setFormPend(currentRow);
+                    setShowModalPend(true);
+                    setOpenDropdownIdPend(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                  aria-label={`Edit data pendaftaran`}
+                >
+                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                  <span>Edit</span>
+                </button>
+              )}
+              {!showDeletedPend && canDPend && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doDelete(currentRow, tablePend);
+                    setOpenDropdownIdPend(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                  aria-label={`Hapus data pendaftaran`}
+                >
+                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                  <span>Hapus</span>
+                </button>
+              )}
+              {showDeletedPend && canUPend && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doRestore(currentRow, tablePend);
+                    setOpenDropdownIdPend(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                  aria-label={`Pulihkan data pendaftaran`}
+                >
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
+                </button>
+              )}
+              {showDeletedPend && canDPend && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doHardDelete(currentRow, tablePend);
+                    setOpenDropdownIdPend(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                  aria-label={`Hapus permanen data pendaftaran`}
+                >
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
       </section>
 
       {/* Mahasiswa Baru & Aktif */}
@@ -1646,6 +1796,86 @@ export default function Tabel2A1({ role }) {
         </div>
 
         {renderTableMaba()}
+
+        {/* Dropdown Menu Maba - Fixed Position */}
+        {openDropdownIdMaba !== null && (() => {
+          // Cari row yang sesuai dengan openDropdownIdMaba dari rowsMaba langsung
+          const currentRowData = rowsMaba.find((r) => {
+            const rowId = getIdField(r) ? r[getIdField(r)] : null;
+            return rowId === openDropdownIdMaba;
+          });
+          
+          if (!currentRowData) return null;
+          
+          return (
+            <div 
+              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
+              {!showDeletedMaba && canUMaba && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingMaba(currentRowData);
+                    setFormMaba(currentRowData);
+                    setShowModalMaba(true);
+                    setOpenDropdownIdMaba(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                  aria-label={`Edit data mahasiswa baru & aktif`}
+                >
+                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                  <span>Edit</span>
+                </button>
+              )}
+              {!showDeletedMaba && canDMaba && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doDelete(currentRowData, tableMaba);
+                    setOpenDropdownIdMaba(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                  aria-label={`Hapus data mahasiswa baru & aktif`}
+                >
+                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                  <span>Hapus</span>
+                </button>
+              )}
+              {showDeletedMaba && canUMaba && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doRestore(currentRowData, tableMaba);
+                    setOpenDropdownIdMaba(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                  aria-label={`Pulihkan data mahasiswa baru & aktif`}
+                >
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
+                </button>
+              )}
+              {showDeletedMaba && canDMaba && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doHardDelete(currentRowData, tableMaba);
+                    setOpenDropdownIdMaba(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                  aria-label={`Hapus permanen data mahasiswa baru & aktif`}
+                >
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
       </section>
 
       {/* Tabel Data Mahasiswa - Struktur Kompleks */}
@@ -1764,6 +1994,93 @@ export default function Tabel2A1({ role }) {
             </tbody>
           </table>
         </div>
+
+        {/* Dropdown Menu Gabungan - Fixed Position */}
+        {openDropdownIdGabungan !== null && (() => {
+          // Cari row yang sesuai dengan openDropdownIdGabungan
+          // Tabel gabungan menggunakan renderTable function
+          const currentRow = rowsGabungan.find((r, idx) => {
+            const rowId = getIdField(r) ? r[getIdField(r)] : idx;
+            return rowId === openDropdownIdGabungan;
+          });
+          if (!currentRow) return null;
+          
+          // Tentukan table berdasarkan context
+          const table = tablePend; // Default, bisa disesuaikan
+          const canUpdate = roleCan(role, table.key, "U");
+          const canDelete = roleCan(role, table.key, "D");
+          const showDeleted = showDeletedPend; // Default, bisa disesuaikan
+          
+          return (
+            <div 
+              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
+              {!showDeleted && canUpdate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Tentukan setEditing dan setForm berdasarkan context
+                    setEditingPend(currentRow);
+                    setFormPend(currentRow);
+                    setShowModalPend(true);
+                    setOpenDropdownIdGabungan(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                  aria-label={`Edit data gabungan`}
+                >
+                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                  <span>Edit</span>
+                </button>
+              )}
+              {!showDeleted && canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doDelete(currentRow, table);
+                    setOpenDropdownIdGabungan(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                  aria-label={`Hapus data gabungan`}
+                >
+                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                  <span>Hapus</span>
+                </button>
+              )}
+              {showDeleted && canUpdate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doRestore(currentRow, table);
+                    setOpenDropdownIdGabungan(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                  aria-label={`Pulihkan data gabungan`}
+                >
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
+                </button>
+              )}
+              {showDeleted && canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    doHardDelete(currentRow, table);
+                    setOpenDropdownIdGabungan(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                  aria-label={`Hapus permanen data gabungan`}
+                >
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
       </section>
 
       {/* Modal Form Pendaftaran */}

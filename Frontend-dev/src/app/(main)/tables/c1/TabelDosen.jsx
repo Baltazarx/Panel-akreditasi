@@ -5,6 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function TabelDosen({ role }) {
   const table = { key: "dosen", label: "Manajemen Data Dosen", path: "/dosen" };
@@ -18,10 +19,53 @@ export default function TabelDosen({ role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const { maps } = useMaps(true);
   const [formState, setFormState] = useState({});
+  
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [ptCustom, setPtCustom] = useState("");
   const [showPtInput, setShowPtInput] = useState(false);
   const [pegawaiSearch, setPegawaiSearch] = useState("");
   const [showPegawaiDropdown, setShowPegawaiDropdown] = useState(false);
+
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownId]);
+
+  // Close dropdown when modal opens
+  useEffect(() => {
+    if (showModal) {
+      setOpenDropdownId(null);
+    }
+  }, [showModal]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -368,36 +412,30 @@ export default function TabelDosen({ role }) {
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_fungsional || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.homebase || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{(row.beban_sks !== null && row.beban_sks !== undefined) ? row.beban_sks : '-'}</td>
-                <td className="px-6 py-4 text-center border border-slate-200">
-                  <div className="flex items-center justify-center gap-2">
-                    {!showDeleted && canUpdate && (
-                      <button 
-                        className="font-medium text-[#0384d6] hover:underline" 
-                        onClick={() => {
-                          console.log('Edit button clicked for row:', row);
-                          setEditing(row);
-                          setShowModal(true);
-                        }}
-                      >
-                        Edit
-                      </button>
-                    )}
-                    {!showDeleted && !canUpdate && (
-                      <span className="text-gray-400 text-xs">No edit permission</span>
-                    )}
-                    {!showDeleted && canDelete && (
-                      <button className="font-medium text-red-600 hover:underline" onClick={() => doDelete(row)}>Hapus</button>
-                    )}
-                    {showDeleted && canDelete && (
-                      <button className="font-medium text-red-600 hover:underline" onClick={() => doHardDelete(row)}>
-                        Hapus Permanen
-                      </button>
-                    )}
-                    {showDeleted && canUpdate && (
-                      <button className="font-medium text-green-600 hover:underline" onClick={() => doRestore(row)}>
-                        Pulihkan
-                      </button>
-                    )}
+                <td className="px-6 py-4 border border-slate-200">
+                  <div className="flex items-center justify-center dropdown-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rowId = getIdField(row) ? row[getIdField(row)] : i;
+                        if (openDropdownId !== rowId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(rowId);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : i)}
+                    >
+                      <FiMoreVertical size={18} />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -413,6 +451,84 @@ export default function TabelDosen({ role }) {
           </tbody>
         </table>
       </div>
+
+      {/* Dropdown Menu - Fixed Position */}
+      {openDropdownId !== null && (() => {
+        const filteredRows = rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at);
+        const currentRow = filteredRows.find((row, idx) => {
+          const rowId = getIdField(row) ? row[getIdField(row)] : idx;
+          return rowId === openDropdownId;
+        });
+        if (!currentRow) return null;
+        
+        return (
+          <div 
+            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {!showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(currentRow);
+                  setShowModal(true);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                aria-label={`Edit data ${currentRow.nama_lengkap || 'dosen'}`}
+              >
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
+              </button>
+            )}
+            {!showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                aria-label={`Hapus data ${currentRow.nama_lengkap || 'dosen'}`}
+              >
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Hapus</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.nama_lengkap || 'dosen'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doRestore(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${currentRow.nama_lengkap || 'dosen'}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Modal */}
       {showModal && (

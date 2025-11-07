@@ -124,6 +124,8 @@ export const AccessMatrix = {
     'tabel_1a3':  { C: true, R: true, U: true, D: true },
     'tabel_3a2_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
+    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
+
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
     'sumber_pendanaan':           { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
@@ -194,6 +196,23 @@ export const AccessMatrix = {
     'ref_jabatan_struktural': { R: true },
     'tenaga_kependidikan': { R: true },
     'ref_jabatan_fungsional': { R: true },
+  },
+
+// ========== KERJASAMA ==========
+  'kerjasama': {
+    // ---- Tabel 3C1 (CRUD + Hard Delete) ----
+    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
+
+    // === MASTER DATA: Izin Baca untuk useMaps hook ===
+    'unit_kerja': { R: true },
+    'pegawai': { R: true },
+    'tahun_akademik': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'ref_jabatan_fungsional': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'audit_mutu_internal': { R: true },
+    'dosen': { R: true },
+    'users': { R: true }
   }
 
   // Catatan: Akses untuk waket1/waket2/tpm ke tabel 1A1, 1A2, 1A3, 1A4, 1A5, 1B
