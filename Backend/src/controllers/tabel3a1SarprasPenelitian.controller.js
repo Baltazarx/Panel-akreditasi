@@ -149,6 +149,54 @@ export const softDeleteTabel3a1SarprasPenelitian = async (req, res) => {
   }
 };
 
+export const restoreTabel3a1SarprasPenelitian = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_3a1_sarpras_penelitian', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_3a1_sarpras_penelitian', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_3a1_sarpras_penelitian SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data sarpras penelitian berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_3a1_sarpras_penelitian SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data sarpras penelitian berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel3a1SarprasPenelitian:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
+  }
+};
+
 export const hardDeleteTabel3a1SarprasPenelitian = async (req, res) => {
   try {
     const [result] = await pool.query('DELETE FROM tabel_3a1_sarpras_penelitian WHERE id = ?', [req.params.id]);

@@ -8,6 +8,7 @@ import {
   createTabel3a1SarprasPenelitian,
   updateTabel3a1SarprasPenelitian,
   softDeleteTabel3a1SarprasPenelitian,
+  restoreTabel3a1SarprasPenelitian,
   hardDeleteTabel3a1SarprasPenelitian,
   exportTabel3a1SarprasPenelitian // <-- Tambahkan fungsi export
 } from '../controllers/tabel3a1SarprasPenelitian.controller.js'; // Nama file disesuaikan
@@ -22,6 +23,7 @@ router.get('/:id', requireAuth, permit(resourceKey, 'R'), getTabel3a1SarprasPene
 router.post('/', requireAuth, permit(resourceKey, 'C'), createTabel3a1SarprasPenelitian);
 router.put('/:id', requireAuth, permit(resourceKey, 'U'), updateTabel3a1SarprasPenelitian);
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteTabel3a1SarprasPenelitian);
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreTabel3a1SarprasPenelitian);
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteTabel3a1SarprasPenelitian);
 
 // === RUTE BARU UNTUK EXPORT ===
