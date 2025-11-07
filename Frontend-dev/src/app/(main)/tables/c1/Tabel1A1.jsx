@@ -1,113 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
-import Swal from 'sweetalert2'; // Impor SweetAlert2
-
-/** Pretty table renderer */
-function PrettyTable1A1({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, doRestore, showDeleted }) {
-  const getUnitName = (row) =>
-    row?.unit_kerja ||
-    row?.unit?.nama ||
-    row?.unit_nama ||
-    row?.nama_unit ||
-    maps.units[row?.id_unit]?.nama ||
-    maps.units[row?.unit_id]?.nama ||
-    maps.units[row?.id_unit]?.nama_unit ||
-    maps.units[row?.unit_id]?.nama_unit ||
-    row?.unit ||
-    "";
-
-  const getKetuaName = (row) =>
-    row?.nama_ketua ||
-    row?.nama_lengkap ||
-    row?.ketua?.nama ||
-    row?.ketua?.nama_ketua ||
-    maps.pegawai[row?.id_pegawai]?.nama ||
-    row?.ketua ||
-    "";
-
-  const getPeriode = (row) => {
-    if (row?.periode_mulai && row?.periode_selesai) {
-      const tahunMulai = row.periode_mulai.substring(0, 4);
-      const tahunSelesai = row.periode_selesai.substring(0, 4);
-      return `${tahunMulai}/${tahunSelesai}`;
-    }
-    return row?.periode || "";
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 shadow-md rounded-2xl">
-      <div className="overflow-x-auto rounded-2xl">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0 z-10">
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Unit Kerja</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Nama Ketua</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Periode Jabatan</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Pendidikan Terakhir</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Jabatan Struktural</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Tugas Pokok dan Fungsi</th>
-              <th className="px-4 py-3 text-left font-semibold tracking-wide">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {rows
-              .filter(r => showDeleted ? r.deleted_at : !r.deleted_at)
-              .map((r, i) => (
-              <tr key={i} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800/80 dark:even:bg-gray-700/80 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 transition">
-                <td className="px-4 py-3 align-top"><span className="font-medium">{getUnitName(r)}</span></td>
-                <td className="px-4 py-3 align-top">{getKetuaName(r)}</td>
-                <td className="px-4 py-3 align-top">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                    {getPeriode(r)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 align-top">{r.pendidikan_terakhir || ""}</td>
-                <td className="px-4 py-3 align-top">{r.jabatan_struktural || ""}</td>
-                <td className="px-4 py-3 align-top whitespace-pre-wrap">{r.tupoksi || ""}</td>
-                <td className="px-4 py-3 align-top">
-                  {!showDeleted && canUpdate && (
-                    <button className="mr-2 mb-1 px-3 py-1.5 rounded-lg font-semibold text-xs bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff] dark:bg-indigo-500/20 dark:text-indigo-300 dark:hover:bg-indigo-500/30 transition" onClick={() => setEditing(r)}>Edit</button>
-                  )}
-                  {!showDeleted && canDelete && (
-                    <button className="mr-2 mb-1 px-3 py-1.5 rounded-lg font-semibold text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition" onClick={() => doDelete(r)}>Hapus</button>
-                  )}
-                  {showDeleted && canDelete && (
-                    <button className="mr-2 mb-1 px-3 py-1.5 rounded-lg font-semibold text-xs text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-500/20 transition flex-shrink-0" onClick={() => doHardDelete(r)}>
-                      Hapus Permanen
-                    </button>
-                  )}
-                  {showDeleted && canUpdate && (
-                    <button className="mb-1 px-3 py-1.5 rounded-lg font-semibold text-xs text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-500/20 transition flex-shrink-0" onClick={() => doRestore(r)}>
-                      Pulihkan
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length === 0 && (
-              <tr>
-                <td className="px-4" colSpan={7}>
-                  <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                    <p className="font-medium">Data tidak ditemukan</p>
-                    <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+import Swal from 'sweetalert2';
+import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 
 export default function Tabel1A1({ role }) {
   const table = { key: "tabel_1a1", label: "1.A.1 Pimpinan & Tupoksi UPPS/PS", path: "/pimpinan-upps-ps" };
+  const COLUMN_COUNT = 7; // Jumlah kolom untuk colSpan
 
   const { maps: mapsFromHook } = useMaps(true);
   const maps = mapsFromHook ?? { units: {}, pegawai: {}, tahun: {}, ref_jabatan_struktural: {} };
@@ -120,6 +23,17 @@ export default function Tabel1A1({ role }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [relational] = useState(true);
   const [showDeleted, setShowDeleted] = useState(false);
+  
+  // Sorting
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -152,6 +66,126 @@ export default function Tabel1A1({ role }) {
     }
     return row?.periode || "";
   };
+
+  // Handle sorting
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Processed rows with search, filter, and sort
+  const processedRows = useMemo(() => {
+    let filtered = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+
+    // Helper functions inside useMemo to avoid dependency issues
+    const getUnitNameLocal = (row) =>
+      row?.unit_kerja || row?.unit?.nama || row?.unit_nama || row?.nama_unit || maps.units[row?.id_unit]?.nama || maps.units[row?.unit_id]?.nama || maps.units[row?.id_unit]?.nama_unit || maps.units[row?.unit_id]?.nama_unit || row?.unit || "";
+    const getKetuaNameLocal = (row) =>
+      row?.nama_ketua || row?.nama_lengkap || row?.ketua?.nama || row?.ketua?.nama_ketua || maps.pegawai[row?.id_pegawai]?.nama || row?.ketua || "";
+    const getPeriodeLocal = (row) => {
+      if (row?.periode_mulai && row?.periode_selesai) {
+        const tahunMulai = row.periode_mulai.substring(0, 4);
+        const tahunSelesai = row.periode_selesai.substring(0, 4);
+        return `${tahunMulai}/${tahunSelesai}`;
+      }
+      return row?.periode || "";
+    };
+
+    // Sorting
+    if (sortConfig.key) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortConfig.key) {
+          case 'unit':
+            aValue = getUnitNameLocal(a).toLowerCase();
+            bValue = getUnitNameLocal(b).toLowerCase();
+            break;
+          case 'ketua':
+            aValue = getKetuaNameLocal(a).toLowerCase();
+            bValue = getKetuaNameLocal(b).toLowerCase();
+            break;
+          case 'periode':
+            aValue = getPeriodeLocal(a).toLowerCase();
+            bValue = getPeriodeLocal(b).toLowerCase();
+            break;
+          case 'pendidikan':
+            aValue = (a.pendidikan_terakhir || "").toLowerCase();
+            bValue = (b.pendidikan_terakhir || "").toLowerCase();
+            break;
+          case 'jabatan':
+            aValue = (a.jabatan_struktural || "").toLowerCase();
+            bValue = (b.jabatan_struktural || "").toLowerCase();
+            break;
+          case 'tupoksi':
+            aValue = (a.tupoksi || "").toLowerCase();
+            bValue = (b.tupoksi || "").toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+        
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [rows, showDeleted, sortConfig, maps]);
+
+  // Pagination
+  const totalPages = Math.ceil(processedRows.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRows = processedRows.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showDeleted]);
+
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownId]);
+
+  // Close dropdown when modal opens
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      setOpenDropdownId(null);
+    }
+  }, [showCreateModal, showEditModal]);
 
   const [newIdUnit, setNewIdUnit] = useState("");
   const [newIdPegawai, setNewIdPegawai] = useState("");
@@ -390,16 +424,26 @@ export default function Tabel1A1({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {loading ? "Memuat..." : `${rows.length} baris`}
+            {loading ? "Memuat..." : `${processedRows.length} baris`}
           </span>
-          <button onClick={() => setShowDeleted(!showDeleted)} className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-          }`} disabled={loading}>
+          <button 
+            onClick={() => setShowDeleted(!showDeleted)} 
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+            }`} 
+            disabled={loading}
+            aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
+          >
             {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
           </button>
         </div>
         {canCreate && (
-          <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
+          <button 
+            onClick={() => setShowCreateModal(true)} 
+            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+            disabled={loading}
+            aria-label="Tambah data baru"
+          >
             + Tambah Data
           </button>
         )}
@@ -415,63 +459,295 @@ export default function Tabel1A1({ role }) {
         <table className="w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr className="sticky top-0">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Ketua</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Periode Jabatan</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Struktural</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tugas Pokok dan Fungsi</th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('unit')}
+                aria-label="Sort by Unit Kerja"
+              >
+                <div className="flex items-center gap-2">
+                  Unit Kerja
+                  {sortConfig.key === 'unit' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('ketua')}
+                aria-label="Sort by Nama Ketua"
+              >
+                <div className="flex items-center gap-2">
+                  Nama Ketua
+                  {sortConfig.key === 'ketua' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('periode')}
+                aria-label="Sort by Periode Jabatan"
+              >
+                <div className="flex items-center gap-2">
+                  Periode Jabatan
+                  {sortConfig.key === 'periode' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('pendidikan')}
+                aria-label="Sort by Pendidikan Terakhir"
+              >
+                <div className="flex items-center gap-2">
+                  Pendidikan Terakhir
+                  {sortConfig.key === 'pendidikan' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('jabatan')}
+                aria-label="Sort by Jabatan Struktural"
+              >
+                <div className="flex items-center gap-2">
+                  Jabatan Struktural
+                  {sortConfig.key === 'jabatan' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
+              <th 
+                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => handleSort('tupoksi')}
+                aria-label="Sort by Tugas Pokok dan Fungsi"
+              >
+                <div className="flex items-center gap-2">
+                  Tugas Pokok dan Fungsi
+                  {sortConfig.key === 'tupoksi' && (
+                    sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
+                  )}
+                </div>
+              </th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {rows
-              .filter(r => showDeleted ? r.deleted_at : !r.deleted_at)
-              .map((r, i) => (
-              <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getUnitName(r)}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{getKetuaName(r)}</td>
-                <td className="px-6 py-4 text-slate-600 border border-slate-200">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                    {getPeriode(r)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.pendidikan_terakhir || ""}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.jabatan_struktural || ""}</td>
-                <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap border border-slate-200">{r.tupoksi || ""}</td>
-                <td className="px-6 py-4 text-center border border-slate-200">
-                  <div className="flex items-center justify-center gap-2">
-                    {!showDeleted && canUpdate && (
-                      <button className="font-medium text-[#0384d6] hover:underline" onClick={() => setEditing(r)}>Edit</button>
-                    )}
-                    {!showDeleted && canDelete && (
-                      <button className="font-medium text-red-600 hover:underline" onClick={() => doDelete(r)}>Hapus</button>
-                    )}
-                    {showDeleted && canDelete && (
-                      <button className="font-medium text-red-600 hover:underline" onClick={() => doHardDelete(r)}>
-                        Hapus Permanen
-                      </button>
-                    )}
-                    {showDeleted && canUpdate && (
-                      <button className="font-medium text-green-600 hover:underline" onClick={() => doRestore(r)}>
-                        Pulihkan
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length === 0 && (
+            {loading ? (
+              // Loading Skeleton
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className="bg-white">
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-16"></div>
+                  </td>
+                </tr>
+              ))
+            ) : paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={COLUMN_COUNT} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
               </tr>
+            ) : (
+              paginatedRows.map((r, i) => (
+                <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getUnitName(r)}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{getKetuaName(r)}</td>
+                  <td className="px-6 py-4 text-slate-600 border border-slate-200">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                      {getPeriode(r)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.pendidikan_terakhir || ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.jabatan_struktural || ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                    <div className="max-w-md md:max-w-lg lg:max-w-xl">
+                      <p className="whitespace-pre-wrap break-words line-clamp-3" title={r.tupoksi || ""}>
+                        {r.tupoksi || ""}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="flex items-center justify-center dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rowId = getIdField(r) ? r[getIdField(r)] : i;
+                          if (openDropdownId !== rowId) {
+                            // Calculate position for fixed dropdown - align right edge
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192; // w-48 = 192px
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth) // Align right, but ensure it doesn't go off-screen
+                            });
+                            setOpenDropdownId(rowId);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Dropdown Menu - Fixed Position (Outside table to prevent scroll) */}
+      {openDropdownId !== null && (
+        <div 
+          className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`
+          }}
+        >
+          {(() => {
+            const currentRow = paginatedRows.find((r, idx) => {
+              const rowId = getIdField(r) ? r[getIdField(r)] : idx;
+              return rowId === openDropdownId;
+            });
+            if (!currentRow) return null;
+            
+            return (
+              <>
+                {!showDeleted && canUpdate && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditing(currentRow);
+                      setOpenDropdownId(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                    aria-label={`Edit data ${getUnitName(currentRow)}`}
+                  >
+                    <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                    <span>Edit</span>
+                  </button>
+                )}
+                {!showDeleted && canDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doDelete(currentRow);
+                      setOpenDropdownId(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                    aria-label={`Hapus data ${getUnitName(currentRow)}`}
+                  >
+                    <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                    <span>Hapus</span>
+                  </button>
+                )}
+                {showDeleted && canDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doHardDelete(currentRow);
+                      setOpenDropdownId(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                    aria-label={`Hapus permanen data ${getUnitName(currentRow)}`}
+                  >
+                    <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                    <span>Hapus Permanen</span>
+                  </button>
+                )}
+                {showDeleted && canUpdate && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doRestore(currentRow);
+                      setOpenDropdownId(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                    aria-label={`Pulihkan data ${getUnitName(currentRow)}`}
+                  >
+                    <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                    <span>Pulihkan</span>
+                  </button>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && processedRows.length > 0 && totalPages > 1 && (
+        <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+              aria-label="Pilih jumlah baris per halaman"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">
+              Halaman {currentPage} dari {totalPages} ({processedRows.length} data)
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
