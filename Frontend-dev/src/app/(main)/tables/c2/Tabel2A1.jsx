@@ -1328,6 +1328,9 @@ export default function Tabel2A1({ role }) {
                         >
                           <FiMoreVertical size={18} />
                         </button>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-center border border-slate-200">
                     {row.rowData && row.rowData.length > 0 ? (
                       <div className="flex items-center justify-center gap-2">
@@ -1422,12 +1425,15 @@ export default function Tabel2A1({ role }) {
                           </button>
                         )}
                       </div>
-                    )}
-                    {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
-                      <div className="text-center italic text-red-600">Dihapus</div>
-                    )}
-                    {(!row.rowData || row.rowData.length === 0) && (
-                      <span className="text-center text-slate-400">-</span>
+                    ) : (
+                      <>
+                        {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
+                          <div className="text-center italic text-red-600">Dihapus</div>
+                        )}
+                        {(!row.rowData || row.rowData.length === 0) && (
+                          <span className="text-center text-slate-400">-</span>
+                        )}
+                      </>
                     )}
                   </td>
                 </tr>
