@@ -654,8 +654,15 @@ export default function Tabel3A1({ auth, role }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Asumsikan ada endpoint restore, jika tidak bisa gunakan update
-          await apiFetch(`${ENDPOINT}/${row.id}/restore`, { method: "POST" });
+          // Gunakan getIdField untuk mendapatkan ID yang benar
+          const idField = getIdField(row);
+          const rowId = idField ? row[idField] : row.id;
+          
+          if (!rowId) {
+            throw new Error('ID data tidak valid. Silakan refresh halaman dan coba lagi.');
+          }
+
+          await apiFetch(`${ENDPOINT}/${rowId}/restore`, { method: "POST" });
           
           // Refresh data
           const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
@@ -665,7 +672,8 @@ export default function Tabel3A1({ auth, role }) {
           Swal.fire('Dipulihkan!', 'Data telah dipulihkan.', 'success');
         } catch (err) {
           console.error("Restore error:", err);
-          Swal.fire('Gagal!', `Gagal memulihkan data: ${err.message}`, 'error');
+          const errorMessage = err.message || err.error || 'Terjadi kesalahan saat memulihkan data';
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${errorMessage}`, 'error');
         }
       }
     });
