@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useApi } from "../hooks/useApi";
-import Swal from 'sweetalert2'; // Penambahan notifikasi
+import Swal from 'sweetalert2';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function UserManagementPage() {
   const api = useApi();
@@ -14,6 +15,42 @@ export default function UserManagementPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Close dropdown when clicking outside, scrolling, or resizing
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleScroll = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    const handleResize = () => {
+      if (openDropdownId) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [openDropdownId]);
 
   const [formData, setFormData] = useState({
     id_user: null,
@@ -268,37 +305,29 @@ export default function UserManagementPage() {
                     {!u.is_active || u.deleted_at ? "Nonaktif" : "Aktif"}
                   </span>
                 </td>
-                <td className="px-6 py-4 border border-slate-200 text-center">
-                  <div className="flex items-center justify-center gap-3">
+                <td className="px-6 py-4 border border-slate-200">
+                  <div className="flex items-center justify-center dropdown-container">
                     <button
-                      onClick={() => handleEdit(u)}
-                      className="text-[#0384d6] hover:underline text-sm font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (openDropdownId !== u.id_user) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(u.id_user);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === u.id_user}
                     >
-                      Edit
+                      <FiMoreVertical size={18} />
                     </button>
-                    {u.deleted_at ? (
-                      <>
-                        <button
-                          onClick={() => handleRestore(u.id_user)}
-                          className="text-green-600 hover:underline text-sm font-medium"
-                        >
-                          Aktifkan
-                        </button>
-                        <button
-                          onClick={() => handleHardDelete(u.id_user)}
-                          className="text-red-700 hover:underline text-sm font-medium"
-                        >
-                          Hapus Permanen
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleDelete(u.id_user)}
-                        className="text-red-600 hover:underline text-sm font-medium"
-                      >
-                        Nonaktifkan
-                      </button>
-                    )}
                   </div>
                 </td>
               </tr>
@@ -306,6 +335,81 @@ export default function UserManagementPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Dropdown Menu - Fixed Position */}
+      {openDropdownId !== null && (() => {
+        const currentUser = users.find(u => u.id_user === openDropdownId);
+        if (!currentUser) return null;
+
+        const isDeleted = currentUser.deleted_at || !currentUser.is_active;
+
+        return (
+          <div 
+            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`
+            }}
+          >
+            {!isDeleted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEdit(currentUser);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                aria-label="Edit akun"
+              >
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
+              </button>
+            )}
+            {!isDeleted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(currentUser.id_user);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                aria-label="Nonaktifkan akun"
+              >
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Nonaktifkan</span>
+              </button>
+            )}
+            {isDeleted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestore(currentUser.id_user);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label="Aktifkan akun"
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Aktifkan</span>
+              </button>
+            )}
+            {isDeleted && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHardDelete(currentUser.id_user);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label="Hapus permanen akun"
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
