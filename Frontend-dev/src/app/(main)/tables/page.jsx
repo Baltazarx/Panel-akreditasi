@@ -387,7 +387,7 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
 
 export default function TablesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTable, setActiveTable] = useState('C1');
+  const [activeTable, setActiveTable] = useState(null); // Changed from 'C1' to null to prevent defaulting to C1
   const [lastC1TabFromStore, setLastC1TabFromStore] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -397,10 +397,10 @@ export default function TablesPage() {
 
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
-  // KECUALI role kemahasiswaan yang tidak boleh akses C1
+  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses C1
   const loweredRole = (authUser?.role || "").toLowerCase();
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = loweredRole !== "kemahasiswaan" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
   const c2AccessKeys = [
@@ -444,8 +444,8 @@ export default function TablesPage() {
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
-  // KECUALI role kemahasiswaan yang tidak boleh akses Panel Admin
-  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && (
+  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses Panel Admin
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")
@@ -477,12 +477,11 @@ export default function TablesPage() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
-    // Initialize active table from localStorage
-    const savedTable = localStorage.getItem('lastActiveTable') || 'C1';
+    // Initialize C1 tab from localStorage (if user has C1 access)
     const savedC1Tab = localStorage.getItem('c1_active_tab') || localStorage.getItem('lastActiveC1Tab') || '';
-    
-    setActiveTable(savedTable);
     setLastC1TabFromStore(savedC1Tab);
+    
+    // Don't set activeTable here - let the useEffect handle it based on access
     
     return () => {
       window.removeEventListener('resize', checkMobile);
@@ -496,15 +495,20 @@ export default function TablesPage() {
     
     const tableFromUrl = searchParams.get("table");
     const lastTable = localStorage.getItem("lastActiveTable");
-    const candidate = tableFromUrl || lastTable || "C1";
     const adminKeys = canSeeUserMgmt ? ["ManajemenAkun", "TabelDosen", "TabelPegawai"] : [];
     const allowed = new Set([...(sidebarItems || []), ...adminKeys]);
-    const initial = allowed.has(candidate)
+    
+    // Determine candidate table - prioritize URL, then last saved, then first available
+    const candidate = tableFromUrl || lastTable;
+    const initial = candidate && allowed.has(candidate)
       ? candidate
       : (sidebarItems[0] || (adminKeys[0] || null));
 
     if (initial && initial !== activeTable) {
       setActiveTable(initial);
+    } else if (!initial && activeTable) {
+      // If no valid table found and activeTable is set, clear it
+      setActiveTable(null);
     }
   }, [searchParams, sidebarItems, mounted, canSeeUserMgmt, activeTable]);
 

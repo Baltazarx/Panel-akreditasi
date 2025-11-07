@@ -162,3 +162,71 @@ export const hardDeleteKeragamanAsal = async (req, res) => {
     res.status(500).json({ error: "Hard delete failed" });
   }
 };
+
+// ===== DELETE MULTIPLE (SOFT DELETE) =====
+export const softDeleteMultipleKeragamanAsal = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty array of IDs' });
+    }
+    
+    const payload = { deleted_at: new Date() };
+    if (await hasColumn("tabel_2a2_keragaman_asal", "deleted_by")) {
+      payload.deleted_by = req.user?.id_user || null;
+    }
+    
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(
+      `UPDATE tabel_2a2_keragaman_asal SET deleted_at=?, deleted_by=? WHERE id IN (${placeholders})`,
+      [payload.deleted_at, payload.deleted_by, ...ids]
+    );
+    
+    res.json({ ok: true, softDeleted: true, count: ids.length });
+  } catch (err) {
+    console.error("Error softDeleteMultipleKeragamanAsal:", err);
+    res.status(500).json({ error: "Delete multiple failed" });
+  }
+};
+
+// ===== HARD DELETE MULTIPLE =====
+export const hardDeleteMultipleKeragamanAsal = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty array of IDs' });
+    }
+    
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(
+      `DELETE FROM tabel_2a2_keragaman_asal WHERE id IN (${placeholders})`,
+      ids
+    );
+    
+    res.json({ ok: true, hardDeleted: true, count: ids.length });
+  } catch (err) {
+    console.error("Error hardDeleteMultipleKeragamanAsal:", err);
+    res.status(500).json({ error: "Hard delete multiple failed" });
+  }
+};
+
+// ===== RESTORE MULTIPLE =====
+export const restoreMultipleKeragamanAsal = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty array of IDs' });
+    }
+    
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(
+      `UPDATE tabel_2a2_keragaman_asal SET deleted_at=NULL, deleted_by=NULL WHERE id IN (${placeholders})`,
+      ids
+    );
+    
+    res.json({ ok: true, restored: true, count: ids.length });
+  } catch (err) {
+    console.error("Error restoreMultipleKeragamanAsal:", err);
+    res.status(500).json({ error: "Restore multiple failed" });
+  }
+};

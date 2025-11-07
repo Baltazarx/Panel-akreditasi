@@ -10,6 +10,9 @@ import {
   softDeleteKeragamanAsal,
   restoreKeragamanAsal,
   hardDeleteKeragamanAsal,
+  softDeleteMultipleKeragamanAsal,
+  hardDeleteMultipleKeragamanAsal,
+  restoreMultipleKeragamanAsal,
 } from '../controllers/tabel2a2KeragamanAsal.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
@@ -23,6 +26,15 @@ const router = express.Router();
 
 // LIST
 router.get('/', requireAuth, permit('tabel_2a2_keragaman_asal', 'R'), listKeragamanAsal);
+
+// DELETE MULTIPLE (SOFT DELETE) - harus sebelum route :id
+router.post('/delete-multiple', requireAuth, permit('tabel_2a2_keragaman_asal', 'D'), softDeleteMultipleKeragamanAsal);
+
+// HARD DELETE MULTIPLE - harus sebelum route :id
+router.post('/hard-delete-multiple', requireAuth, permit('tabel_2a2_keragaman_asal', 'H'), hardDeleteMultipleKeragamanAsal);
+
+// RESTORE MULTIPLE - harus sebelum route :id
+router.post('/restore-multiple', requireAuth, permit('tabel_2a2_keragaman_asal', 'U'), restoreMultipleKeragamanAsal);
 
 // DETAIL
 router.get('/:id', requireAuth, permit('tabel_2a2_keragaman_asal', 'R'), getKeragamanAsalById);

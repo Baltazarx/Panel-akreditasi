@@ -161,10 +161,18 @@ export const ACCESS_MATRIX = {
   // apakah mereka punya akses ke tabel C1 atau tidak sesuai aturan baru.
   // Untuk sementara, saya hapus akses C1 dari mereka di sini.
   'ala': {
-    // Hapus/sesuaikan akses tabel C1 jika tidak relevan
-    // Hapus/sesuaikan akses tabel 2B jika tidak relevan
-     pemetaan2b1: { r: true }, // Contoh: biarkan jika ALA perlu lihat
-     // ...
+    // ---- Tabel 2A1 ----
+    'tabel_2a1_pendaftaran': { c: true, r: true, u: true, d: true },
+    'tabel_2a1_mahasiswa_baru_aktif': { c: true, r: true, u: true, d: true },
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { r: true },
+    'tahun_akademik': { r: true },
+    'users': { r: true },
+    'pegawai': { r: true },
+    'audit_mutu_internal': { r: true },
+    'ref_jabatan_struktural': { r: true },
+    'tenaga_kependidikan': { r: true },
+    'ref_jabatan_fungsional': { r: true },
   },
   'pmb': {
     // Hapus/sesuaikan akses tabel C1 jika tidak relevan

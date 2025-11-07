@@ -178,6 +178,22 @@ export const AccessMatrix = {
     'tenaga_kependidikan': { R: true },
     'audit_mutu_internal': { R: true },
     'ref_kabupaten_kota': { R: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
+  },
+
+  // ========== ALA ==========
+  'ala': {
+    // ---- Tabel 2A1 ----
+    'tabel_2a1_pendaftaran': { C: true, R: true, U: true, D: true },
+    'tabel_2a1_mahasiswa_baru_aktif': { C: true, R: true, U: true, D: true },
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { R: true },
+    'tahun_akademik': { R: true },
+    'users': { R: true },
+    'pegawai': { R: true },
+    'audit_mutu_internal': { R: true },
+    'ref_jabatan_struktural': { R: true },
+    'tenaga_kependidikan': { R: true },
+    'ref_jabatan_fungsional': { R: true },
   }
 
   // Catatan: Akses untuk waket1/waket2/tpm ke tabel 1A1, 1A2, 1A3, 1A4, 1A5, 1B
