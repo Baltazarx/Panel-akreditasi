@@ -54,6 +54,7 @@ import tabel3a1SarprasPenelitianRouter from './routes/tabel3a1SarprasPenelitian.
 import tabel3a2PenelitianRouter from './routes/tabel3a2Penelitian.route.js';
 import tabel3a3PengembanganDtprRouter from './routes/tabel3a3PengembanganDtpr.route.js';
 import tabel3c1KerjasamaRoutes from './routes/tabel3c1Kerjasama.route.js';
+import tabel3c2PublikasiRoutes from './routes/tabel3c2Publikasi.route.js';
 // TODO: import route lain setelah dikonversi
 
 const app = express();
@@ -145,6 +146,7 @@ app.use('/api/tabel-3a1-sarpras-penelitian', tabel3a1SarprasPenelitianRouter);
 app.use('/api/tabel-3a2-penelitian', tabel3a2PenelitianRouter);
 app.use('/api/tabel-3a3-pengembangan-dtpr', tabel3a3PengembanganDtprRouter);
 app.use('/api/tabel-3c1-kerjasama', tabel3c1KerjasamaRoutes);
+app.use('/api/tabel-3c2-publikasi', tabel3c2PublikasiRoutes);
 
 
 // ===== 404 FALLBACK =====

@@ -1,11 +1,12 @@
 /*
 ============================================================
  FILE: tabel3c1Kerjasama.controller.js
- (VERSI REVISI 13: Perbaikan newline di helper pivotPendanaanSQL)
+ (VERSI ROMBAKAN TOTAL: Mendukung TS Dinamis dari Frontend)
  
- [PERBAIKAN GEMINI]: Semua indentasi aneh (non-breaking space) 
- di dalam template literal SQL ( `` ) telah dihapus 
- dan diganti dengan spasi standar untuk memperbaiki ER_PARSE_ERROR.
+ [PERUBAHAN BESAR]:
+ - `getTahunAkademik` dirombak total untuk menerima `ts_id` dinamis.
+ - `listTabel3c1Kerjasama` dan `exportTabel3c1Kerjasama` 
+   sekarang WAJIB menerima query parameter `?ts_id=TAHUN`.
 ============================================================
 */
 
@@ -13,9 +14,9 @@ import { pool } from '../db.js';
 import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 import ExcelJS from 'exceljs';
 
-// ==========================================================
-// REVISI 13: Menghapus newline di awal string helper
-// [PERBAIKAN GEMINI]: Indentasi diketik ulang
+// =l========================================================
+// HELPER pivotPendanaanSQL (TIDAK BERUBAH)
+// Helper ini generik dan tidak perlu diubah.
 // ==========================================================
 const pivotPendanaanSQL = (tahunIds, aliasPendanaan = 'p', aliasTahun = 't') => `SUM(CASE 
     WHEN ${aliasTahun}.id_tahun = ${tahunIds.id_ts4} THEN ${aliasPendanaan}.jumlah_dana
@@ -37,47 +38,66 @@ const pivotPendanaanSQL = (tahunIds, aliasPendanaan = 'p', aliasTahun = 't') => 
     WHEN ${aliasTahun}.id_tahun = ${tahunIds.id_ts} THEN ${aliasPendanaan}.jumlah_dana
     ELSE 0 
   END) AS pendanaan_ts
-`; // <-- String helper selesai di sini
+`;
 
 
-// Helper getTahunAkademik (dari Revisi 10, sudah benar)
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
-const getTahunAkademik = async (connection) => {
-    const [rows] = await (connection || pool).query(
-      `(SELECT id_tahun, tahun 
-        FROM tahun_akademik 
-        WHERE id_tahun < 2050
-        ORDER BY id_tahun DESC 
-        LIMIT 5)
-        ORDER BY id_tahun ASC`
-    );
-
-    if (rows.length < 5) {
-        console.error("DEBUG: Data tahun akademik (valid) di database kurang dari 5 baris.");
-        return {}; 
+// ==========================================================
+// [ROMBAKAN BESAR] HELPER getTahunAkademik
+// Fungsi ini sekarang menerima `ts_id` dari query frontend
+// dan menghitung 5 tahun (TS s/d TS-4) secara dinamis.
+// ==========================================================
+const getTahunAkademik = async (ts_id_terpilih, connection) => {
+    
+    // 1. Validasi dan konversi ts_id yang dipilih
+    const ts = parseInt(ts_id_terpilih, 10);
+    if (isNaN(ts)) {
+        console.error(`DEBUG: ts_id '${ts_id_terpilih}' tidak valid.`);
+        throw new Error('ts_id tidak valid atau tidak disediakan.');
     }
 
+    // 2. Hitung 5 ID tahun secara dinamis
+    const id_ts = ts;
+    const id_ts1 = ts - 1;
+    const id_ts2 = ts - 2;
+    const id_ts3 = ts - 3;
+    const id_ts4 = ts - 4;
+    
+    const tahunIdsList = [id_ts4, id_ts3, id_ts2, id_ts1, id_ts];
+
+    // 3. Ambil nama tahun dari DB untuk 5 ID yang dihitung
+    const [rows] = await (connection || pool).query(
+      `SELECT id_tahun, tahun 
+       FROM tahun_akademik 
+       WHERE id_tahun IN (?)
+       ORDER BY id_tahun ASC`,
+      [tahunIdsList] // mysql2/promise akan mengubah [1,2,3] menjadi "1,2,3"
+    );
+
+    // 4. Buat Map untuk pencarian nama tahun (lebih efisien)
+    const tahunMap = new Map(rows.map(row => [row.id_tahun, row.tahun]));
+
+    // 5. Kembalikan objek 5 tahun yang lengkap
     return {
-        id_ts4: rows[0]?.id_tahun, // Tahun terlama (TS-4)
-        id_ts3: rows[1]?.id_tahun,
-        id_ts2: rows[2]?.id_tahun,
-        id_ts1: rows[3]?.id_tahun,
-        id_ts:  rows[4]?.id_tahun, // Tahun terbaru (TS)
-        nama_ts4: rows[0]?.tahun,
-        nama_ts3: rows[1]?.tahun,
-        nama_ts2: rows[2]?.tahun,
-        nama_ts1: rows[3]?.tahun,
-        nama_ts:  rows[4]?.tahun,
+        id_ts4: id_ts4,
+        id_ts3: id_ts3,
+        id_ts2: id_ts2,
+        id_ts1: id_ts1,
+        id_ts:  id_ts,
+        // Ambil nama dari Map. Jika tidak ada di DB, tampilkan ID-nya sbg fallback.
+        nama_ts4: tahunMap.get(id_ts4) || `${id_ts4}`,
+        nama_ts3: tahunMap.get(id_ts3) || `${id_ts3}`,
+        nama_ts2: tahunMap.get(id_ts2) || `${id_ts2}`,
+        nama_ts1: tahunMap.get(id_ts1) || `${id_ts1}`,
+        nama_ts:  tahunMap.get(id_ts)  || `${id_ts}`,
     };
 };
 
 
 /*
 ================================
- GET ALL (LIST)
+ GET ALL (LIST) - [DIROMBAK]
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const listTabel3c1Kerjasama = async (req, res) => {
   try {
     const { where, params } = await buildWhere(req, 'tabel_3c1_kerjasama_penelitian', 'k');
@@ -86,10 +106,22 @@ export const listTabel3c1Kerjasama = async (req, res) => {
       ? buildOrderBy(customOrder, 'id', 'k')
       : 'k.id ASC';
 
-    const tahunIds = await getTahunAkademik();
+    // ==========================================================
+    // [ROMBAKAN BESAR] Ambil ts_id dari query parameter
+    // ==========================================================
+    const { ts_id } = req.query;
+    if (!ts_id) {
+        return res.status(400).json({ 
+            error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk melihat laporan.' 
+        });
+    }
+
+    // Panggil helper BARU dengan ts_id yang dipilih
+    const tahunIds = await getTahunAkademik(ts_id);
+    // ==========================================================
 
     if (!tahunIds.id_ts) { 
-        return res.status(500).json({ error: 'Gagal mengambil data tahun akademik. Pastikan tabel tahun_akademik terisi (minimal 5 tahun valid).' });
+        return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
     }
 
     const sql = `SELECT
@@ -112,16 +144,21 @@ export const listTabel3c1Kerjasama = async (req, res) => {
 
   } catch (err) {
     console.error("Error listTabel3c1Kerjasama:", err);
+    // Tangkap error spesifik dari helper baru
+    if (err.message.includes('ts_id tidak valid')) {
+        return res.status(400).json({ error: err.message });
+    }
     res.status(500).json({ error: 'Gagal mengambil daftar kerjasama penelitian', details: err.sqlMessage || err.message });
   }
 };
 
 /*
 ================================
- GET BY ID
+ GET BY ID (TIDAK BERUBAH)
+ Fungsi ini hanya mengambil data mentah, tidak perlu
+ logika laporan 5 tahun.
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const getTabel3c1KerjasamaById = async (req, res) => {
     try {
         const [parentRows] = await pool.query(
@@ -155,10 +192,11 @@ export const getTabel3c1KerjasamaById = async (req, res) => {
 
 /*
 ================================
- CREATE
+ CREATE (TIDAK BERUBAH)
+ Fungsi ini hanya menyimpan data mentah, tidak perlu
+ logika laporan 5 tahun.
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const createTabel3c1Kerjasama = async (req, res) => {
   let connection;
   try {
@@ -197,7 +235,8 @@ export const createTabel3c1Kerjasama = async (req, res) => {
     const newKerjasamaId = resultParent.insertId;
 
     for (const item of pendanaan) {
-        if (item.id_tahun && item.jumlah_dana > 0) { 
+        // Simpan hanya jika ada dana (atau > 0)
+        if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) { 
             await connection.query(
                 'INSERT INTO tabel_3c1_pendanaan_kerjasama (id_kerjasama, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
                 [newKerjasamaId, item.id_tahun, item.jumlah_dana]
@@ -220,10 +259,11 @@ export const createTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- UPDATE
+ UPDATE (TIDAK BERUBAH)
+ Fungsi ini hanya menyimpan data mentah, tidak perlu
+ logika laporan 5 tahun.
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const updateTabel3c1Kerjasama = async (req, res) => {
   let connection;
   const { id } = req.params;
@@ -265,10 +305,12 @@ export const updateTabel3c1Kerjasama = async (req, res) => {
         throw new Error('Data kerjasama tidak ditemukan atau tidak ada perubahan.');
     }
 
+    // Hapus data pendanaan lama
     await connection.query('DELETE FROM tabel_3c1_pendanaan_kerjasama WHERE id_kerjasama = ?', [id]);
 
+    // Masukkan data pendanaan baru
     for (const item of pendanaan) {
-        if (item.id_tahun && item.jumlah_dana > 0) { 
+        if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) { 
             await connection.query(
                 'INSERT INTO tabel_3c1_pendanaan_kerjasama (id_kerjasama, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
                 [id, item.id_tahun, item.jumlah_dana]
@@ -294,10 +336,9 @@ export const updateTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- SOFT DELETE
+ SOFT DELETE (TIDAK BERUBAH)
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const softDeleteTabel3c1Kerjasama = async (req, res) => {
   try {
     const payload = { deleted_at: new Date() };
@@ -318,10 +359,9 @@ export const softDeleteTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- HARD DELETE
+ HARD DELETE (TIDAK BERUBAH)
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const hardDeleteTabel3c1Kerjasama = async (req, res) => {
   try {
     const [result] = await pool.query(
@@ -338,18 +378,30 @@ export const hardDeleteTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- EXPORT EXCEL
+ EXPORT EXCEL - [DIROMBAK]
 ================================
 */
-// [PERBAIKAN GEMINI]: Indentasi SQL diketik ulang
 export const exportTabel3c1Kerjasama = async (req, res) => {
     try {
         const { where, params } = await buildWhere(req, 'tabel_3c1_kerjasama_penelitian', 'k');
         const orderBy = 'k.id ASC';
 
-        const tahunIds = await getTahunAkademik();
+        // ==========================================================
+        // [ROMBAKAN BESAR] Ambil ts_id dari query parameter
+        // ==========================================================
+        const { ts_id } = req.query;
+        if (!ts_id) {
+            return res.status(400).json({ 
+                error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk export.' 
+            });
+        }
+
+        // Panggil helper BARU dengan ts_id yang dipilih
+        const tahunIds = await getTahunAkademik(ts_id);
+        // ==========================================================
+
         if (!tahunIds.id_ts) {
-            return res.status(500).json({ error: 'Gagal mengambil data tahun akademik. Pastikan tabel tahun_akademik terisi (minimal 5 tahun valid).' });
+            return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
         }
 
         const sql = `SELECT 
@@ -431,6 +483,10 @@ export const exportTabel3c1Kerjasama = async (req, res) => {
 
     } catch (err) {
         console.error("Error exportTabel3c1Kerjasama:", err);
+        // Tangkap error spesifik dari helper baru
+        if (err.message.includes('ts_id tidak valid')) {
+            return res.status(400).json({ error: err.message });
+        }
         res.status(500).json({ error: 'Gagal mengekspor data kerjasama' });
     }
 };

@@ -125,7 +125,7 @@ export const AccessMatrix = {
     'tabel_3a2_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
-
+    'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true, H: true },
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
     'sumber_pendanaan':           { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
