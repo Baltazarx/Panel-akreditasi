@@ -34,6 +34,12 @@ const FiNewspaper = (props) => (<svg stroke="currentColor" fill="none" strokeWid
 const FiDownload = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>);
 const FiFile = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>);
 const FiFolder = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>);
+const FiActivity = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>);
+const FiCheckCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>);
+const FiPlusCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>);
+const FiEdit = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>);
+const FiTrash = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
+const FiClock = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -409,90 +415,38 @@ const TablesSection = () => {
 
 const QuickActions = () => {
     const router = useRouter();
-    
-    const handleDownload = (url, filename) => {
-        if (url) {
-            window.open(url, '_blank');
-        } else {
-            // Jika tidak ada URL, bisa menampilkan pesan atau redirect ke halaman download
-            console.log('Download:', filename);
-        }
-    };
+    const [berita, setBerita] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const shouldReduceMotion = useReducedMotion();
 
-    const dokumenList = [
-        { 
-            title: "Template Dokumen Akreditasi", 
-            description: "Template dan format dokumen standar untuk proses akreditasi", 
-            icon: FiFile, 
+    const tpmNewsData = [
+        {
+            id: 1,
+            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
+            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
+            date: "2025-10-02",
+            time: "2 Okt 2025",
             color: "from-blue-500 to-cyan-500",
-            downloadUrl: "#",
-            fileType: "PDF",
-            fileSize: "2.5 MB"
+            icon: FiNewspaper
         },
-        { 
-            title: "Panduan Pengisian Tabel", 
-            description: "Panduan lengkap untuk mengisi semua tabel penjaminan mutu", 
-            icon: FiBookOpen, 
+        {
+            id: 2,
+            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
+            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
+            date: "2025-09-28",
+            time: "28 Sep 2025",
             color: "from-green-500 to-emerald-500",
-            downloadUrl: "#",
-            fileType: "PDF",
-            fileSize: "1.8 MB"
-        },
-        { 
-            title: "Dokumen Standar C1", 
-            description: "Kumpulan dokumen standar C1 (Visi, Misi, Tujuan, dan Sasaran)", 
-            icon: FiFolder, 
-            color: "from-purple-500 to-violet-500",
-            downloadUrl: "#",
-            fileType: "ZIP",
-            fileSize: "5.2 MB"
-        },
-        { 
-            title: "Dokumen Standar C2", 
-            description: "Kumpulan dokumen standar C2 (Mahasiswa, Lulusan, dan Pengguna)", 
-            icon: FiFolder, 
-            color: "from-indigo-500 to-purple-500",
-            downloadUrl: "#",
-            fileType: "ZIP",
-            fileSize: "4.7 MB"
-        },
-        { 
-            title: "Format Laporan AMI", 
-            description: "Template laporan Audit Mutu Internal (AMI) terbaru", 
-            icon: FiFileText, 
-            color: "from-orange-500 to-red-500",
-            downloadUrl: "#",
-            fileType: "DOCX",
-            fileSize: "850 KB"
-        },
-        { 
-            title: "Regulasi & SK", 
-            description: "Regulasi dan Surat Keputusan terkait penjaminan mutu", 
-            icon: FiFile, 
-            color: "from-pink-500 to-rose-500",
-            downloadUrl: "#",
-            fileType: "PDF",
-            fileSize: "3.1 MB"
-        },
-        { 
-            title: "Checklist Dokumen", 
-            description: "Checklist dokumen yang diperlukan untuk akreditasi", 
-            icon: FiFileText, 
-            color: "from-teal-500 to-cyan-500",
-            downloadUrl: "#",
-            fileType: "XLSX",
-            fileSize: "650 KB"
-        },
-        { 
-            title: "Arsip Dokumen Lama", 
-            description: "Arsip dokumen-dokumen dari periode sebelumnya", 
-            icon: FiFolder, 
-            color: "from-gray-500 to-slate-600",
-            downloadUrl: "#",
-            fileType: "ZIP",
-            fileSize: "12.5 MB"
+            icon: FiFileText
         }
     ];
+
+    useEffect(() => {
+        setTimeout(() => {
+            // Ambil 2 berita terbaru
+            setBerita(tpmNewsData.slice(0, 2));
+            setLoading(false);
+        }, 500);
+    }, []);
     
     return (
         <motion.section 
@@ -506,55 +460,70 @@ const QuickActions = () => {
             <div className="container mx-auto max-w-7xl">
                 <motion.div variants={fadeIn} className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ color: '#043975' }}>
-                        Unduh Dokumen
+                        Akses Cepat Berita
                     </h2>
                     <p className="max-w-3xl mx-auto text-lg" style={{ color: '#0384d6' }}>
-                        Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu
+                        Dapatkan informasi terbaru dan update terkini dari Tim Penjaminan Mutu
                     </p>
                 </motion.div>
-                <motion.div 
-                    variants={staggerContainer}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                >
-                    {dokumenList.map((dokumen, index) => {
-                        const IconComponent = dokumen.icon;
-                        return (
-                            <motion.div
-                                key={index}
-                                variants={slideUp}
-                                whileHover={{ y: -8, scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
-                                onClick={() => handleDownload(dokumen.downloadUrl, dokumen.title)}
-                            >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${dokumen.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                                <div className="relative z-10 mb-6">
-                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${dokumen.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <IconComponent className="w-8 h-8" />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-white rounded-3xl shadow-lg border border-gray-100/50 p-6 animate-pulse">
+                                <div className="h-16 bg-gray-200 rounded-2xl mb-4"></div>
+                                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                                <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
+                                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <motion.div 
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
+                        {berita.map((item, index) => {
+                            const IconComponent = item.icon;
+                            return (
+                                <motion.div
+                                    key={item.id}
+                                    variants={slideUp}
+                                    whileHover={shouldReduceMotion ? undefined : { y: -8, scale: 1.02 }}
+                                    whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                                    onClick={() => router.push('/berita')}
+                                    className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                >
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                    <div className="relative z-10 mb-6">
+                                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                            <IconComponent className="w-8 h-8" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="mb-2">
-                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
-                                            {dokumen.fileType} • {dokumen.fileSize}
-                                        </span>
+                                    <div className="relative z-10">
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                                {item.time}
+                                            </span>
+                                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                Update
+                                            </span>
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-3" style={{ color: '#043975' }}>
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                            {item.excerpt}
+                                        </p>
+                                        <div className="flex items-center text-sm font-medium" style={{ color: '#0384d6' }}>
+                                            <span>Baca Selengkapnya</span>
+                                            <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                        </div>
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3" style={{ color: '#043975' }}>
-                                        {dokumen.title}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                        {dokumen.description}
-                                    </p>
-                                    <div className="flex items-center text-sm font-medium" style={{ color: '#0384d6' }}>
-                                        <FiDownload className="w-4 h-4 mr-2" />
-                                        <span>Unduh Dokumen</span>
-                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                                    </div>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </motion.div>
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                )}
             </div>
         </motion.section>
     );
@@ -998,6 +967,295 @@ const BeritaCard = ({ berita, index }) => {
     );
 };
 
+// Komponen Akses Cepat Berita untuk Dashboard
+const AksesCepatBeritaDashboard = () => {
+    const router = useRouter();
+    const [berita, setBerita] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const shouldReduceMotion = useReducedMotion();
+
+    const tpmNewsData = [
+        {
+            id: 1,
+            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
+            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
+            date: "2025-10-02",
+            time: "2 Okt 2025",
+            color: "from-blue-500 to-cyan-500",
+            icon: FiNewspaper
+        },
+        {
+            id: 2,
+            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
+            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
+            date: "2025-09-28",
+            time: "28 Sep 2025",
+            color: "from-green-500 to-emerald-500",
+            icon: FiFileText
+        }
+    ];
+
+    useEffect(() => {
+        setTimeout(() => {
+            setBerita(tpmNewsData);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={slideUp}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Akses Cepat Berita</h3>
+                <button 
+                    onClick={() => router.push('/berita')}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
+                            <div className="h-16 bg-gray-200 rounded-2xl mb-4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                            <div className="h-5 bg-gray-200 rounded w-full mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {berita.map((item, index) => {
+                        const IconComponent = item.icon;
+                        return (
+                            <motion.div
+                                key={item.id}
+                                variants={slideUp}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: index * 0.1 }}
+                                whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
+                                onClick={() => router.push('/berita')}
+                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                                <div className="relative z-10 mb-6">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="w-8 h-8" />
+                                    </div>
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                            {item.time}
+                                        </span>
+                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                            Update
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3" style={{ color: '#043975' }}>
+                                        {item.title}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                        {item.excerpt}
+                                    </p>
+                                    <div className="flex items-center text-sm font-medium" style={{ color: '#0384d6' }}>
+                                        <span>Baca Selengkapnya</span>
+                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// Komponen Aktivitas Website
+const AktivitasWebsite = () => {
+    const router = useRouter();
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const shouldReduceMotion = useReducedMotion();
+
+    const activityData = [
+        {
+            id: 1,
+            type: 'table_update',
+            activity: 'Tabel 3A-1 telah diupdate',
+            detail: 'Data sarana prasarana penelitian telah diperbarui',
+            user: 'Admin TPM',
+            date: "2025-10-02",
+            time: "2 Okt 2025",
+            color: "from-blue-500 to-cyan-500",
+            icon: FiEdit,
+            tag: 'Update Tabel'
+        },
+        {
+            id: 2,
+            type: 'berita_update',
+            activity: 'Berita baru ditambahkan',
+            detail: 'Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12 telah dipublikasikan',
+            user: 'Admin TPM',
+            date: "2025-09-28",
+            time: "28 Sep 2025",
+            color: "from-green-500 to-emerald-500",
+            icon: FiNewspaper,
+            tag: 'Update Berita'
+        },
+        {
+            id: 3,
+            type: 'profile_update',
+            activity: 'Profile user diupdate',
+            detail: 'Profile Dr. Ahmad Hidayat telah diperbarui',
+            user: 'Admin TPM',
+            date: "2025-09-27",
+            time: "27 Sep 2025",
+            color: "from-purple-500 to-pink-500",
+            icon: FiUsers,
+            tag: 'Update Profile'
+        },
+        {
+            id: 4,
+            type: 'table_create',
+            activity: 'Data baru ditambahkan',
+            detail: 'Data baru telah ditambahkan ke Tabel 2A-1',
+            user: 'Admin TPM',
+            date: "2025-09-26",
+            time: "26 Sep 2025",
+            color: "from-orange-500 to-red-500",
+            icon: FiPlusCircle,
+            tag: 'Tambah Data'
+        },
+        {
+            id: 5,
+            type: 'table_delete',
+            activity: 'Data dihapus',
+            detail: 'Data dari Tabel 1A-1 telah dihapus',
+            user: 'Admin TPM',
+            date: "2025-09-25",
+            time: "25 Sep 2025",
+            color: "from-red-500 to-rose-500",
+            icon: FiTrash,
+            tag: 'Hapus Data'
+        },
+        {
+            id: 6,
+            type: 'login',
+            activity: 'User login',
+            detail: 'User berhasil login ke sistem',
+            user: 'Admin TPM',
+            date: "2025-09-24",
+            time: "24 Sep 2025",
+            color: "from-teal-500 to-cyan-500",
+            icon: FiActivity,
+            tag: 'Login'
+        }
+    ];
+
+    useEffect(() => {
+        setTimeout(() => {
+            setActivities(activityData);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={slideUp}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 overflow-hidden"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Aktivitas Website</h3>
+                <button 
+                    onClick={() => router.push('/activity')}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="space-y-2 overflow-x-hidden">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                            <div className="flex gap-3">
+                                <div className="h-8 w-8 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-1"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-2 max-h-[600px] overflow-y-auto overflow-x-hidden">
+                    {activities.map((item, index) => {
+                        const IconComponent = item.icon;
+                        return (
+                            <motion.div
+                                key={item.id}
+                                variants={slideUp}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={shouldReduceMotion ? undefined : {}}
+                                onClick={() => router.push('/activity')}
+                                className="group relative bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out cursor-pointer border border-gray-100 hover:border-gray-200 overflow-hidden"
+                            >
+                                <div className="flex gap-3">
+                                    {/* Icon Section - Left */}
+                                    <div className="flex-shrink-0">
+                                        <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br ${item.color} text-white shadow-sm transition-opacity duration-300`}>
+                                            <IconComponent className="w-4 h-4" />
+                                        </div>
+                                    </div>
+
+                                    {/* Content Section - Right */}
+                                    <div className="flex-1 min-w-0 overflow-hidden">
+                                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                            <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
+                                                {item.tag}
+                                            </span>
+                                            <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                                {item.time}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-sm font-bold mb-0.5 leading-tight truncate" style={{ color: '#043975' }}>
+                                            {item.activity}
+                                        </h4>
+                                        <p className="text-xs text-gray-600 leading-relaxed mb-0.5 line-clamp-1">
+                                            {item.detail}
+                                        </p>
+                                        <p className="text-[10px] text-gray-500 truncate">
+                                            oleh {item.user}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
 const BeritaSection = () => {
     const router = useRouter();
     const [berita, setBerita] = useState([]);
@@ -1062,6 +1320,158 @@ const BeritaSection = () => {
                     {berita.map((item, index) => (
                         <BeritaCard key={item.id} berita={item} index={index} />
                     ))}
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// Komponen Update Status Terkini (tidak digunakan lagi, sudah digabung ke AksesCepatBeritaDashboard)
+const UpdateStatusTerkini_OLD = () => {
+    const router = useRouter();
+    const [updates, setUpdates] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const shouldReduceMotion = useReducedMotion();
+
+    const dummyUpdates = [
+        {
+            id: 1,
+            type: 'create',
+            action: 'Menambahkan data baru',
+            table: 'Tabel 3A-1',
+            user: 'Admin TPM',
+            time: '2 menit yang lalu',
+            icon: FiPlusCircle,
+            color: 'text-green-600',
+            bgColor: 'bg-green-100'
+        },
+        {
+            id: 2,
+            type: 'update',
+            action: 'Memperbarui data',
+            table: 'Tabel 2B-4',
+            user: 'Ketua Prodi',
+            time: '15 menit yang lalu',
+            icon: FiEdit,
+            color: 'text-blue-600',
+            bgColor: 'bg-blue-100'
+        },
+        {
+            id: 3,
+            type: 'delete',
+            action: 'Menghapus data',
+            table: 'Tabel 1A-2',
+            user: 'Admin TPM',
+            time: '1 jam yang lalu',
+            icon: FiTrash,
+            color: 'text-red-600',
+            bgColor: 'bg-red-100'
+        },
+        {
+            id: 4,
+            type: 'complete',
+            action: 'Menyelesaikan pengisian',
+            table: 'Tabel 4A-1',
+            user: 'Staff TPM',
+            time: '2 jam yang lalu',
+            icon: FiCheckCircle,
+            color: 'text-purple-600',
+            bgColor: 'bg-purple-100'
+        },
+        {
+            id: 5,
+            type: 'update',
+            action: 'Memperbarui data',
+            table: 'Tabel 5A-2',
+            user: 'Admin TPM',
+            time: '3 jam yang lalu',
+            icon: FiEdit,
+            color: 'text-blue-600',
+            bgColor: 'bg-blue-100'
+        }
+    ];
+
+    useEffect(() => {
+        setTimeout(() => {
+            setUpdates(dummyUpdates);
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    const getTimeAgo = (timeString) => {
+        return timeString;
+    };
+
+    return (
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={slideUp}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+                        <FiActivity className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900">Update Status Terkini</h3>
+                </div>
+                <button 
+                    onClick={() => router.push('/activity')}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="space-y-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex items-start gap-4 animate-pulse">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                            <div className="flex-1">
+                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {updates.map((update, index) => {
+                        const IconComponent = update.icon;
+                        return (
+                            <motion.div
+                                key={update.id}
+                                variants={slideUp}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: index * 0.05 }}
+                                className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                            >
+                                <div className={`p-2 rounded-full ${update.bgColor} flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                                    <IconComponent className={`w-4 h-4 ${update.color}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-semibold text-slate-900">{update.action}</span>
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                                            {update.table}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <span>{update.user}</span>
+                                        <span>•</span>
+                                        <div className="flex items-center gap-1">
+                                            <FiClock className="w-3 h-3" />
+                                            <span>{getTimeAgo(update.time)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             )}
         </motion.div>
@@ -1168,13 +1578,30 @@ const GrafikTabel = () => {
         { key: '2b', label: '2B', endpoint: '/pemetaan-2b1', accessKey: 'pemetaan2b1' },
         { key: '2b4', label: '2B-4', endpoint: '/tabel2b4-masa-tunggu', accessKey: 'tabel_2b4_masa_tunggu' },
         { key: '2b5', label: '2B-5', endpoint: '/tabel2b5-kesesuaian-kerja', accessKey: 'tabel_2b5_kesesuaian_kerja' },
-        { key: '2b6', label: '2B-6', endpoint: '/tabel2b6-kepuasan-pengguna', accessKey: 'tabel_2b6_kepuasan_pengguna' }
+        { key: '2b6', label: '2B-6', endpoint: '/tabel2b6-kepuasan-pengguna', accessKey: 'tabel_2b6_kepuasan_pengguna' },
+        { key: '2c', label: '2C', endpoint: '/tabel2c-fleksibilitas-pembelajaran', accessKey: 'fleksibilitas_pembelajaran' },
+        { key: '2d', label: '2D', endpoint: '/tabel2d-rekognisi-lulusan', accessKey: 'rekognisi_lulusan' }
     ];
 
     const C3_TABLES = [
         { key: '3a1', label: '3A-1', endpoint: '/tabel-3a1-sarpras-penelitian', accessKey: 'tabel_3a1_sarpras_penelitian' },
         { key: '3a2', label: '3A-2', endpoint: '/tabel-3a2-penelitian', accessKey: 'tabel_3a2_penelitian' },
         { key: '3a3', label: '3A-3', endpoint: '/tabel-3a3-pengembangan-dtpr/detail', accessKey: 'tabel_3a3_pengembangan_dtpr' }
+    ];
+
+    const C4_TABLES = [
+        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1', accessKey: 'tabel_4a1' },
+        { key: '4a2', label: '4A-2', endpoint: '/tabel-4a2', accessKey: 'tabel_4a2' }
+    ];
+
+    const C5_TABLES = [
+        { key: '5a1', label: '5A-1', endpoint: '/tabel-5a1', accessKey: 'tabel_5a1' },
+        { key: '5a2', label: '5A-2', endpoint: '/tabel-5a2', accessKey: 'tabel_5a2' }
+    ];
+
+    const C6_TABLES = [
+        { key: '6a1', label: '6A-1', endpoint: '/tabel-6a1', accessKey: 'tabel_6a1' },
+        { key: '6a2', label: '6A-2', endpoint: '/tabel-6a2', accessKey: 'tabel_6a2' }
     ];
 
     // Fungsi untuk fetch data count dari API
@@ -1238,10 +1665,34 @@ const GrafikTabel = () => {
                 return { label: table.label, count };
             });
 
-            const [c1Results, c2Results, c3Results] = await Promise.all([
+            // Fetch data untuk C4
+            const c4DataPromises = C4_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+
+            // Fetch data untuk C5
+            const c5DataPromises = C5_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+
+            // Fetch data untuk C6
+            const c6DataPromises = C6_TABLES.map(async (table) => {
+                if (!roleCan(role, table.accessKey, 'r')) return null;
+                const count = await fetchTableDataCount(table.endpoint);
+                return { label: table.label, count };
+            });
+
+            const [c1Results, c2Results, c3Results, c4Results, c5Results, c6Results] = await Promise.all([
                 Promise.all(c1DataPromises),
                 Promise.all(c2DataPromises),
-                Promise.all(c3DataPromises)
+                Promise.all(c3DataPromises),
+                Promise.all(c4DataPromises),
+                Promise.all(c5DataPromises),
+                Promise.all(c6DataPromises)
             ]);
 
             // Filter null values dan buat barData
@@ -1260,12 +1711,44 @@ const GrafikTabel = () => {
                 value: item.count
             }));
 
+            const c4BarData = c4Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
+            const c5BarData = c5Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
+            const c6BarData = c6Results.filter(Boolean).map((item) => ({
+                category: item.label,
+                value: item.count
+            }));
+
             // Hitung total count
             const c1Total = c1Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
             const c2Total = c2Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
             const c3Total = c3Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+            const c4Total = c4Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+            const c5Total = c5Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+            const c6Total = c6Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
 
-            setChartData([
+            // Fetch data untuk Dosen dan Pegawai (Panel Admin)
+            let dosenCount = 0;
+            let pegawaiCount = 0;
+            const hasDosenAccess = roleCan(role, 'dosen', 'r');
+            const hasPegawaiAccess = roleCan(role, 'pegawai', 'r');
+            
+            if (hasDosenAccess) {
+                dosenCount = await fetchTableDataCount('/dosen');
+            }
+            
+            if (hasPegawaiAccess) {
+                pegawaiCount = await fetchTableDataCount('/pegawai');
+            }
+
+            const chartDataArray = [
                 { 
                     name: 'C1', 
                     count: c1Total, 
@@ -1302,7 +1785,79 @@ const GrafikTabel = () => {
                         { category: '3A-3', value: 0 }
                     ]
                 }
-            ]);
+            ];
+
+            // Tambahkan grafik C4 jika user punya akses
+            if (c4Results.filter(Boolean).length > 0) {
+                chartDataArray.push({
+                    name: 'C4',
+                    count: c4Total,
+                    color: 'from-teal-500 to-cyan-500',
+                    icon: FiTarget,
+                    description: 'Standar C4',
+                    barData: c4BarData.length > 0 ? c4BarData : [
+                        { category: '4A-1', value: 0 },
+                        { category: '4A-2', value: 0 }
+                    ]
+                });
+            }
+
+            // Tambahkan grafik C5 jika user punya akses
+            if (c5Results.filter(Boolean).length > 0) {
+                chartDataArray.push({
+                    name: 'C5',
+                    count: c5Total,
+                    color: 'from-amber-500 to-orange-500',
+                    icon: FiDatabase,
+                    description: 'Standar C5',
+                    barData: c5BarData.length > 0 ? c5BarData : [
+                        { category: '5A-1', value: 0 },
+                        { category: '5A-2', value: 0 }
+                    ]
+                });
+            }
+
+            // Tambahkan grafik C6 jika user punya akses
+            if (c6Results.filter(Boolean).length > 0) {
+                chartDataArray.push({
+                    name: 'C6',
+                    count: c6Total,
+                    color: 'from-rose-500 to-pink-500',
+                    icon: FiFileText,
+                    description: 'Standar C6',
+                    barData: c6BarData.length > 0 ? c6BarData : [
+                        { category: '6A-1', value: 0 },
+                        { category: '6A-2', value: 0 }
+                    ]
+                });
+            }
+
+            // Tambahkan grafik Panel Admin jika user punya akses ke dosen atau pegawai
+            if (hasDosenAccess || hasPegawaiAccess) {
+                const panelAdminBarData = [];
+                if (hasDosenAccess) {
+                    panelAdminBarData.push({ category: 'Dosen', value: dosenCount });
+                }
+                if (hasPegawaiAccess) {
+                    panelAdminBarData.push({ category: 'Pegawai', value: pegawaiCount });
+                }
+                
+                const panelAdminTotal = dosenCount + pegawaiCount;
+                
+                chartDataArray.push({
+                    name: 'Panel Admin',
+                    count: panelAdminTotal,
+                    color: 'from-pink-500 to-rose-500',
+                    icon: FiSettings,
+                    description: 'Panel Administrasi',
+                    barData: panelAdminBarData.length > 0 ? panelAdminBarData : [
+                        { category: 'Dosen', value: 0 },
+                        { category: 'Pegawai', value: 0 }
+                    ]
+                });
+            }
+
+            setChartData(chartDataArray);
             
             setLoading(false);
         };
@@ -1409,9 +1964,28 @@ const GrafikTabel = () => {
                                                             <Line 
                                                                 type="monotone"
                                                                 dataKey="value" 
-                                                                stroke={item.name === 'C1' ? '#3b82f6' : item.name === 'C2' ? '#8b5cf6' : '#10b981'}
+                                                                stroke={
+                                                                    item.name === 'C1' ? '#3b82f6' : 
+                                                                    item.name === 'C2' ? '#8b5cf6' : 
+                                                                    item.name === 'C3' ? '#10b981' :
+                                                                    item.name === 'C4' ? '#14b8a6' :
+                                                                    item.name === 'C5' ? '#f59e0b' :
+                                                                    item.name === 'C6' ? '#f43f5e' :
+                                                                    item.name === 'Panel Admin' ? '#ec4899' :
+                                                                    '#3b82f6'
+                                                                }
                                                                 strokeWidth={2}
-                                                                dot={{ fill: item.name === 'C1' ? '#3b82f6' : item.name === 'C2' ? '#8b5cf6' : '#10b981', r: 4 }}
+                                                                dot={{ 
+                                                                    fill: item.name === 'C1' ? '#3b82f6' : 
+                                                                          item.name === 'C2' ? '#8b5cf6' : 
+                                                                          item.name === 'C3' ? '#10b981' :
+                                                                          item.name === 'C4' ? '#14b8a6' :
+                                                                          item.name === 'C5' ? '#f59e0b' :
+                                                                          item.name === 'C6' ? '#f43f5e' :
+                                                                          item.name === 'Panel Admin' ? '#ec4899' :
+                                                                          '#3b82f6', 
+                                                                    r: 4 
+                                                                }}
                                                                 activeDot={{ r: 6 }}
                                                                 name="Jumlah Data"
                                                             />
@@ -1423,7 +1997,14 @@ const GrafikTabel = () => {
                                                 <motion.div
                                                     whileHover={shouldReduceMotion ? undefined : { y: -2 }}
                                                     className="group relative bg-white rounded-xl border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all duration-300"
-                                                    onClick={() => router.push(`/tables?table=${item.name}`)}
+                                                    onClick={() => {
+                                                        if (item.name === 'Panel Admin') {
+                                                            // Redirect ke halaman tables dengan parameter untuk menampilkan panel admin
+                                                            router.push('/tables');
+                                                        } else {
+                                                            router.push(`/tables?table=${item.name}`);
+                                                        }
+                                                    }}
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
                                                         {/* Icon dan Label */}
@@ -1531,7 +2112,9 @@ export default function App() {
     "pemetaan2b1",
     "tabel_2b4_masa_tunggu",
     "tabel_2b5_kesesuaian_kerja",
-    "tabel_2b6_kepuasan_pengguna"
+    "tabel_2b6_kepuasan_pengguna",
+    "fleksibilitas_pembelajaran",
+    "rekognisi_lulusan"
   ];
   const hasC2Access = useMemo(() => c2AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
@@ -1590,57 +2173,9 @@ export default function App() {
     return allQuickActions.filter(item => item.hasAccess);
   }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasUsersAccess]);
   
-  // Inisialisasi showHero berdasarkan status di sessionStorage
-  // Jika hero sudah pernah ditampilkan di session ini, langsung set false
-  const getInitialShowHero = () => {
-    if (typeof window === 'undefined') return true;
-    
-    // Cek apakah hero sudah pernah ditampilkan di session ini
-    const heroShown = sessionStorage.getItem('hero_shown_after_login');
-    // Jika sudah pernah ditampilkan, jangan tampilkan lagi (false)
-    // Jika belum pernah, akan ditentukan oleh useEffect berdasarkan status login
-    return heroShown !== 'true';
-  };
-  
-  const [showHero, setShowHero] = useState(getInitialShowHero);
-
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Logika untuk hide hero setelah 3-4 detik jika user sudah login
-  // Hero hanya muncul sekali setelah login, tidak muncul lagi saat pindah page
-  useEffect(() => {
-    if (!mounted) return; // Tunggu sampai component mounted
-    
-    if (authUser && !authLoading) {
-      // User sudah login
-      // Cek apakah hero sudah pernah ditampilkan di session ini
-      const heroShown = sessionStorage.getItem('hero_shown_after_login');
-      
-      if (!heroShown) {
-        // Hero belum pernah ditampilkan setelah login, tampilkan sekarang
-        setShowHero(true);
-        
-        // Hero tampil 3.5 detik (antara 3-4 detik)
-        const timer = setTimeout(() => {
-          setShowHero(false);
-          // Simpan status bahwa hero sudah pernah ditampilkan
-          sessionStorage.setItem('hero_shown_after_login', 'true');
-        }, 3500);
-
-        return () => clearTimeout(timer);
-      } else {
-        // Hero sudah pernah ditampilkan, pastikan tidak tampil
-        setShowHero(false);
-      }
-    } else if (!authUser && !authLoading) {
-      // User belum login, hero tampil
-      setShowHero(true);
-      // Reset status jika user logout
-      sessionStorage.removeItem('hero_shown_after_login');
-    }
-  }, [authUser, authLoading, mounted]);
 
   return (
     <>
@@ -1725,15 +2260,7 @@ export default function App() {
                 ) : (
                   <>
                     <AnimatePresence mode="wait">
-                      {showHero && authUser ? (
-                        <motion.div
-                          key="hero"
-                          initial={{ opacity: 1 }}
-                          exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                        >
-                          <Hero />
-                        </motion.div>
-                      ) : authUser ? (
+                      {authUser ? (
                         <motion.div
                           key="content"
                           initial={{ opacity: 0 }}
@@ -1809,10 +2336,27 @@ export default function App() {
                                   <UnduhDokumenSection />
                                 </div>
                               </div>
+
+                              {/* Update Terkini - Full Width */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-6"
+                              >
+                                <AksesCepatBeritaDashboard />
+                              </motion.div>
+
+                              {/* Aktivitas Website - Full Width */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-6"
+                              >
+                                <AktivitasWebsite />
+                              </motion.div>
                             </div>
-                          </div>
-                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '2rem' }}>
-                            <QuickActions />
                           </div>
                         </motion.div>
                       ) : (
