@@ -40,6 +40,7 @@ const FiPlusCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWi
 const FiEdit = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>);
 const FiTrash = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 const FiClock = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
+const FiRefreshCw = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -1593,7 +1594,7 @@ const GrafikTabel = () => {
     ];
 
     const C4_TABLES = [
-        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1', accessKey: 'tabel_4a1' },
+        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1-sarpras-pkm', accessKey: 'tabel_4a1' },
         { key: '4a2', label: '4A-2', endpoint: '/tabel-4a2', accessKey: 'tabel_4a2' }
     ];
 
@@ -1978,6 +1979,16 @@ const GrafikTabel = () => {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-900">Grafik Data Tabel</h3>
                 <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => {
+                            fetchAllChartData();
+                        }}
+                        disabled={loading}
+                        className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        title="Refresh data grafik"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
                     <button 
                         onClick={() => router.push('/tables')}
                         className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"

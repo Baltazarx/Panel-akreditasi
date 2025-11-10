@@ -936,7 +936,7 @@ export default function Tabel3C2({ auth, role }) {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
+      <div>
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>

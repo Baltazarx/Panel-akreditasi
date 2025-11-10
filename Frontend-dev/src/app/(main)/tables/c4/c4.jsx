@@ -73,7 +73,7 @@ export default function C4WithTopNav() {
   return (
     <div className="space-y-6">
       {/* Top navigation (tabs) dengan pill bergeser dan mobile scrollable */}
-      <div className="w-full bg-white rounded-2xl shadow-md border px-3 sm:px-4 py-3">
+      <div className="w-full bg-white rounded-2xl shadow-md px-3 sm:px-4 py-3">
         <div className="flex items-center gap-2 mb-3">
           <h3 className="text-sm font-semibold text-slate-700">Navigasi C4</h3>
         </div>
@@ -93,7 +93,7 @@ export default function C4WithTopNav() {
                     <>
                       <motion.div
                         layoutId="c4-tab-pill"
-                        className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200"
+                        className="absolute inset-0 bg-blue-50 rounded-xl"
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                       />
                       <motion.div

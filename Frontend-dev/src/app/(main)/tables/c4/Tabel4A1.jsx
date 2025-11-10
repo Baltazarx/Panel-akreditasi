@@ -213,14 +213,16 @@ function ModalForm({ isOpen, onClose, onSave, initialData }) {
 function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, onEdit, onDelete, onRestore, onHardDelete, canUpdate, canDelete, openDropdownId, setOpenDropdownId, dropdownPosition, setDropdownPosition }) {
   const filteredRows = useMemo(() => {
     if (showDeleted) {
-      return rows;
+      // Hanya tampilkan data yang benar-benar dihapus (deleted_at IS NOT NULL)
+      return rows.filter(r => r.deleted_at);
     }
+    // Tampilkan data yang tidak dihapus (deleted_at IS NULL)
     return rows.filter(r => !r.deleted_at);
   }, [rows, showDeleted]);
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-md border p-6">
+      <div>
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
           <p className="mt-4 text-slate-600">Memuat data...</p>
@@ -230,7 +232,7 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-slate-300 p-6">
+    <div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
@@ -430,6 +432,20 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
               >
                 <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
                 <span>Hapus</span>
+              </button>
+            )}
+            {isDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestore(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${currentRow.nama_sarpras || ''}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
               </button>
             )}
             {isDeleted && canDelete && (
@@ -645,7 +661,64 @@ export default function Tabel4A1({ auth, role: propRole }) {
     });
   };
 
-  // Restore handler - Not available in backend, removed
+  // Restore handler
+  const handleRestore = async (row) => {
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: `Data "${row.nama_sarpras || 'data ini'}" akan dipulihkan.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          // Restore menggunakan PUT dengan semua field yang ada + deleted_at = null
+          // Karena controller update memerlukan nama_sarpras sebagai field wajib
+          const restoreData = {
+            nama_sarpras: row.nama_sarpras || "",
+            daya_tampung: row.daya_tampung || "",
+            luas_ruang_m2: row.luas_ruang_m2 || "",
+            kepemilikan: row.kepemilikan || "",
+            lisensi: row.lisensi || "",
+            perangkat_detail: row.perangkat_detail || "",
+            link_bukti: row.link_bukti || "",
+            deleted_at: null
+          };
+          
+          await apiFetch(`${ENDPOINT}/${row.id}`, {
+            method: "PUT",
+            body: JSON.stringify(restoreData),
+          });
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Dipulihkan!',
+            text: 'Data telah berhasil dipulihkan.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          
+          // Refresh data
+          const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
+          const data = await apiFetch(url);
+          setRows(Array.isArray(data) ? data : data?.items || []);
+        } catch (err) {
+          console.error("Restore error:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal memulihkan data',
+            text: err.message || 'Terjadi kesalahan saat memulihkan data.'
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
 
   // Hard delete handler
   const handleHardDelete = (row) => {
@@ -766,7 +839,7 @@ export default function Tabel4A1({ auth, role: propRole }) {
                 setModalOpen(true);
               }}
               disabled={loading}
-              className="px-4 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <FiPlus size={18} />
               Tambah Data
@@ -795,7 +868,7 @@ export default function Tabel4A1({ auth, role: propRole }) {
           setModalOpen(true);
         }}
         onDelete={handleDelete}
-        onRestore={() => {}}
+        onRestore={handleRestore}
         onHardDelete={handleHardDelete}
         canUpdate={canUpdate}
         canDelete={canDelete}

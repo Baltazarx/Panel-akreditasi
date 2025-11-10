@@ -152,7 +152,8 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
       kepemilikan,
       lisensi,
       perangkat_detail,
-      link_bukti
+      link_bukti,
+      deleted_at
     } = req.body;
 
     // 1. Validasi Input
@@ -182,12 +183,21 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
       link_bukti
     };
 
-    // 4. Tambah audit columns
+    // 4. Handle restore (deleted_at = null)
+    if (deleted_at === null && await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_at')) {
+      dataToUpdate.deleted_at = null;
+      // Jika ada kolom deleted_by, set ke null juga
+      if (await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_by')) {
+        dataToUpdate.deleted_by = null;
+      }
+    }
+
+    // 5. Tambah audit columns
     if (await hasColumn('tabel_4a1_sarpras_pkm', 'updated_by') && id_user) { 
       dataToUpdate.updated_by = id_user; 
     }
 
-    // 5. Eksekusi Query
+    // 6. Eksekusi Query
     const [result] = await pool.query(
         'UPDATE tabel_4a1_sarpras_pkm SET ? WHERE id = ?', 
         [dataToUpdate, id]
@@ -197,14 +207,18 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
         return res.status(404).json({ error: 'Data Sarpras PkM tidak ditemukan atau tidak ada perubahan.' });
     }
     
-    // 6. Ambil data baru untuk dikembalikan
+    // 7. Ambil data baru untuk dikembalikan
     const [rows] = await pool.query(
         `SELECT * FROM tabel_4a1_sarpras_pkm WHERE id = ?`,
         [id]
     );
 
+    const message = deleted_at === null 
+      ? 'Data Sarpras PkM berhasil dipulihkan'
+      : 'Data Sarpras PkM berhasil diperbarui';
+
     res.json({ 
-        message: 'Data Sarpras PkM berhasil diperbarui',
+        message: message,
         data: rows[0]
     });
 

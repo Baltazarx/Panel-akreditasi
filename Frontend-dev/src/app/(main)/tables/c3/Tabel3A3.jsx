@@ -1398,7 +1398,7 @@ export default function Tabel3A3({ auth, role }) {
       </div>
 
       {/* Summary Section - Jumlah Dosen DTPR */}
-      <div className="bg-white rounded-2xl shadow-md border p-6 mb-6">
+      <div className="mb-6">
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-lg font-semibold text-slate-900">Jumlah Dosen DTPR</h2>
@@ -1466,7 +1466,7 @@ export default function Tabel3A3({ auth, role }) {
       </div>
 
       {/* Detail Section - Pengembangan DTPR */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
+      <div>
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-lg font-semibold text-slate-900">Pengembangan DTPR</h2>
