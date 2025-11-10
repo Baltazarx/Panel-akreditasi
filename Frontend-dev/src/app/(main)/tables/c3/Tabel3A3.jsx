@@ -1339,179 +1339,198 @@ export default function Tabel3A3({ auth, role }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">{LABEL}</h1>
-        <p className="text-slate-600 text-sm">
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
+      <header className="pb-6 mb-6 border-b border-slate-200">
+        <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
+        <p className="text-sm text-slate-500 mt-1">
           Tabel untuk mencatat pengembangan DTPR (Dosen Tetap Program Studi) di bidang penelitian untuk periode 5 tahun akademik (TS-4, TS-3, TS-2, TS-1, TS).
         </p>
-      </div>
+      </header>
 
-      {/* Filter Tahun */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Pilih Tahun Akademik (TS)
-            </label>
-            <select
-              value={selectedTahun || ""}
-              onChange={(e) => setSelectedTahun(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-            >
-              <option value="">Pilih Tahun</option>
-              {tahunList.map((tahun) => (
-                <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                  {tahun.tahun || tahun.nama || tahun.id_tahun}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Filter & Controls */}
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
+            {detailLoading || summaryLoading ? "Memuat..." : `${filteredDetailRows.length} baris detail`}
+          </span>
+          <label htmlFor="tahun" className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            Pilih Tahun Akademik (TS):
+          </label>
+          <select
+            id="tahun"
+            value={selectedTahun || ""}
+            onChange={(e) => setSelectedTahun(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+            disabled={detailLoading || summaryLoading}
+          >
+            <option value="">Pilih Tahun</option>
+            {tahunList.map((tahun) => (
+              <option key={tahun.id_tahun} value={tahun.id_tahun}>
+                {tahun.tahun || tahun.nama || tahun.id_tahun}
+              </option>
+            ))}
+          </select>
           {selectedTahun && (
-            <div className="text-sm text-slate-600">
-              <p><strong>TS:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS))?.tahun || tahunTS}</p>
-              <p><strong>TS-1:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS1))?.tahun || tahunTS1}</p>
-              <p><strong>TS-2:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS2))?.tahun || tahunTS2}</p>
-              <p><strong>TS-3:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS3))?.tahun || tahunTS3}</p>
-              <p><strong>TS-4:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS4))?.tahun || tahunTS4}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200">
+                <span className="text-xs font-bold text-blue-700">TS:</span>
+                <span className="text-xs font-medium text-blue-900">{tahunList.find(t => t.id_tahun === parseInt(tahunTS))?.tahun || tahunTS}</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200">
+                <span className="text-xs font-bold text-indigo-700">TS-1:</span>
+                <span className="text-xs font-medium text-indigo-900">{tahunList.find(t => t.id_tahun === parseInt(tahunTS1))?.tahun || tahunTS1}</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-200">
+                <span className="text-xs font-bold text-purple-700">TS-2:</span>
+                <span className="text-xs font-medium text-purple-900">{tahunList.find(t => t.id_tahun === parseInt(tahunTS2))?.tahun || tahunTS2}</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-50 border border-pink-200">
+                <span className="text-xs font-bold text-pink-700">TS-3:</span>
+                <span className="text-xs font-medium text-pink-900">{tahunList.find(t => t.id_tahun === parseInt(tahunTS3))?.tahun || tahunTS3}</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200">
+                <span className="text-xs font-bold text-rose-700">TS-4:</span>
+                <span className="text-xs font-medium text-rose-900">{tahunList.find(t => t.id_tahun === parseInt(tahunTS4))?.tahun || tahunTS4}</span>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Summary Section - Jumlah Dosen DTPR */}
-      <div className="bg-white rounded-2xl shadow-md border">
-        <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-slate-900">Jumlah Dosen DTPR</h2>
-              <div className="flex gap-2">
-                {canDelete && (
-                  <button
-                    onClick={() => setShowDeletedSummary(!showDeletedSummary)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                      showDeletedSummary
-                        ? "bg-[#0384d6] text-white"
-                        : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                    }`}
-                  >
-                    {showDeletedSummary ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-                  </button>
-                )}
-                {canCreate && (
-                  <button
-                    onClick={() => {
-                      setEditingSummary(null);
-                      setModalSummaryOpen(true);
-                    }}
-                    className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
-                      !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
-                    }`}
-                    disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4}
-                  >
-                    + Tambah Jumlah DTPR
-                  </button>
-                )}
-              </div>
-              </div>
-
-              {summaryLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6] mx-auto"></div>
-                  <p className="mt-2 text-slate-600">Memuat data...</p>
-                </div>
-              ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <p>Pilih tahun akademik untuk melihat data summary.</p>
-                </div>
-              ) : (
-                <SummaryTable
-                  summaryData={summaryData}
-                  maps={maps}
-                  canUpdate={canUpdate}
-                  canDelete={canDelete}
-                  onEdit={handleEditSummary}
-                onDelete={handleDeleteSummary}
-                showDeleted={showDeletedSummary}
-                  tahunTS={tahunTS}
-                  tahunTS1={tahunTS1}
-                  tahunTS2={tahunTS2}
-                  tahunTS3={tahunTS3}
-                  tahunTS4={tahunTS4}
-                />
+      <div className="bg-white rounded-2xl shadow-md border p-6 mb-6">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-lg font-semibold text-slate-900">Jumlah Dosen DTPR</h2>
+            <div className="flex gap-2">
+              {canDelete && (
+                <button
+                  onClick={() => setShowDeletedSummary(!showDeletedSummary)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    showDeletedSummary
+                      ? "bg-[#0384d6] text-white"
+                      : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+                  }`}
+                  disabled={summaryLoading}
+                  aria-label={showDeletedSummary ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
+                >
+                  {showDeletedSummary ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+                </button>
+              )}
+              {canCreate && (
+                <button
+                  onClick={() => {
+                    setEditingSummary(null);
+                    setModalSummaryOpen(true);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                    !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
+                  }`}
+                  disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 || summaryLoading}
+                  aria-label="Tambah jumlah DTPR"
+                >
+                  + Tambah Jumlah DTPR
+                </button>
               )}
             </div>
+          </div>
+
+          {summaryLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+              <p className="mt-4 text-slate-600">Memuat data...</p>
+            </div>
+          ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-500">Pilih tahun akademik untuk melihat data summary.</p>
+            </div>
+          ) : (
+            <SummaryTable
+              summaryData={summaryData}
+              maps={maps}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              onEdit={handleEditSummary}
+              onDelete={handleDeleteSummary}
+              showDeleted={showDeletedSummary}
+              tahunTS={tahunTS}
+              tahunTS1={tahunTS1}
+              tahunTS2={tahunTS2}
+              tahunTS3={tahunTS3}
+              tahunTS4={tahunTS4}
+            />
+          )}
         </div>
       </div>
 
       {/* Detail Section - Pengembangan DTPR */}
-      <div className="bg-white rounded-2xl shadow-md border">
-        <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-slate-900">Pengembangan DTPR</h2>
-                <div className="flex gap-2">
-                {canDelete && (
-                  <button
-                    onClick={() => setShowDeleted(!showDeleted)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                      showDeleted
-                        ? "bg-[#0384d6] text-white"
-                        : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                    }`}
-                  >
-                    {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-                  </button>
-                )}
-                {canCreate && (
-                    <button
-                      onClick={() => {
-                        setEditingDetail(null);
-                        setModalDetailOpen(true);
-                      }}
-                    className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
-                      !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
-                    }`}
-                    disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4}
-                  >
-                    + Tambah Pengembangan DTPR
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {detailLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6] mx-auto"></div>
-                  <p className="mt-2 text-slate-600">Memuat data...</p>
-                </div>
-              ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <p>Pilih tahun akademik untuk melihat data detail.</p>
-                </div>
-              ) : (
-                <DetailTable
-                  rows={detailRows}
-                  maps={maps}
-                  canUpdate={canUpdate}
-                  canDelete={canDelete}
-                  onEdit={handleEditDetail}
-                  onDelete={handleDeleteDetail}
-                  onRestore={handleRestoreDetail}
-                  onHardDelete={handleHardDeleteDetail}
-                  showDeleted={showDeleted}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  isAllSelected={isAllSelected}
-                  handleSelectAll={handleSelectAll}
-                />
+      <div className="bg-white rounded-2xl shadow-md border p-6">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-lg font-semibold text-slate-900">Pengembangan DTPR</h2>
+            <div className="flex gap-2">
+              {canDelete && (
+                <button
+                  onClick={() => setShowDeleted(!showDeleted)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    showDeleted
+                      ? "bg-[#0384d6] text-white"
+                      : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+                  }`}
+                  disabled={detailLoading}
+                  aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
+                >
+                  {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+                </button>
+              )}
+              {canCreate && (
+                <button
+                  onClick={() => {
+                    setEditingDetail(null);
+                    setModalDetailOpen(true);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                    !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
+                  }`}
+                  disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 || detailLoading}
+                  aria-label="Tambah pengembangan DTPR"
+                >
+                  + Tambah Pengembangan DTPR
+                </button>
               )}
             </div>
+          </div>
+
+          {detailLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+              <p className="mt-4 text-slate-600">Memuat data...</p>
+            </div>
+          ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-500">Pilih tahun akademik untuk melihat data detail.</p>
+            </div>
+          ) : (
+            <DetailTable
+              rows={detailRows}
+              maps={maps}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              onEdit={handleEditDetail}
+              onDelete={handleDeleteDetail}
+              onRestore={handleRestoreDetail}
+              onHardDelete={handleHardDeleteDetail}
+              showDeleted={showDeleted}
+              selectedRows={selectedRows}
+              setSelectedRows={setSelectedRows}
+              isAllSelected={isAllSelected}
+              handleSelectAll={handleSelectAll}
+            />
+          )}
         </div>
       </div>
 
