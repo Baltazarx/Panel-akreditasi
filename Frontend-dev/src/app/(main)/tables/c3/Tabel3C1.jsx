@@ -944,48 +944,40 @@ export default function Tabel3C1({ auth, role }) {
         </p>
       </header>
 
-      {/* Filter Tahun */}
-      <div className="mb-4 bg-white rounded-lg shadow-md border p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Pilih Tahun Akademik (TS)
-            </label>
-            <select
-              value={selectedTahun || ""}
-              onChange={(e) => setSelectedTahun(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-            >
-              <option value="">Pilih Tahun</option>
-              {tahunList && tahunList.length > 0 ? (
-                tahunList.map((tahun) => (
-                  <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                    {tahun.tahun || tahun.nama || tahun.id_tahun}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>Tidak ada data tahun</option>
-              )}
-            </select>
-          </div>
-          {selectedTahun && (
-            <div className="text-sm text-slate-600">
-              <p><strong>TS:</strong> {tahunList.find(t => t.id_tahun === parseInt(selectedTahun))?.tahun || selectedTahun}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* Filter & Controls */}
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {filteredRows.length} baris
+            {loading ? "Memuat..." : `${filteredRows.length} baris`}
           </span>
+          <label htmlFor="tahun" className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            Pilih Tahun Akademik (TS):
+          </label>
+          <select
+            id="tahun"
+            value={selectedTahun || ""}
+            onChange={(e) => setSelectedTahun(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+            disabled={loading}
+          >
+            <option value="">Pilih Tahun</option>
+            {tahunList && tahunList.length > 0 ? (
+              tahunList.map((tahun) => (
+                <option key={tahun.id_tahun} value={tahun.id_tahun}>
+                  {tahun.tahun || tahun.nama || tahun.id_tahun}
+                </option>
+              ))
+            ) : (
+              <option value="">Tidak ada data tahun</option>
+            )}
+          </select>
           <button 
             onClick={() => setShowDeleted(!showDeleted)} 
             className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
             }`}
+            disabled={loading}
+            aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
           >
             {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
           </button>
@@ -1006,6 +998,8 @@ export default function Tabel3C1({ auth, role }) {
             <button
               onClick={() => { setModalOpen(true); setEditingRow(null); }}
               className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              aria-label="Tambah data baru"
             >
               + Tambah Data
             </button>
@@ -1014,7 +1008,7 @@ export default function Tabel3C1({ auth, role }) {
             <button
               onClick={handleExport}
               className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              disabled={!tahunTS}
+              disabled={!tahunTS || loading}
             >
               <FiDownload size={18} />
               Export Excel
@@ -1023,39 +1017,37 @@ export default function Tabel3C1({ auth, role }) {
         </div>
       </div>
 
-      {/* Loading indicator */}
-      {loading && (
-        <div className="text-center py-8">
-          <p className="text-slate-500">Memuat data...</p>
-        </div>
-      )}
-
       {/* Data Table */}
-      {!loading && tahunTS && (
-        <DataTable
-          rows={rows}
-          maps={maps}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onRestore={handleRestore}
-          onHardDelete={handleHardDelete}
-          showDeleted={showDeleted}
-          selectedRows={selectedRows}
-          setSelectedRows={setSelectedRows}
-          isAllSelected={isAllSelected}
-          handleSelectAll={handleSelectAll}
-          tahunList={tahunList}
-          tahunTS={tahunTS}
-        />
-      )}
-
-      {!loading && !tahunTS && (
-        <div className="text-center py-8 bg-white rounded-lg border border-slate-200">
-          <p className="text-slate-500">Silakan pilih tahun akademik untuk melihat data.</p>
-        </div>
-      )}
+      <div className="bg-white rounded-2xl shadow-md border p-6">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+            <p className="mt-4 text-slate-600">Memuat data...</p>
+          </div>
+        ) : !tahunTS ? (
+          <div className="text-center py-12">
+            <p className="text-slate-500">Silakan pilih tahun akademik untuk melihat data.</p>
+          </div>
+        ) : (
+          <DataTable
+            rows={rows}
+            maps={maps}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onRestore={handleRestore}
+            onHardDelete={handleHardDelete}
+            showDeleted={showDeleted}
+            selectedRows={selectedRows}
+            setSelectedRows={setSelectedRows}
+            isAllSelected={isAllSelected}
+            handleSelectAll={handleSelectAll}
+            tahunList={tahunList}
+            tahunTS={tahunTS}
+          />
+        )}
+      </div>
 
       {/* Modal */}
       <ModalForm
