@@ -112,7 +112,7 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
               </select>
               {initialData && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Pilih tahun yang ingin di-edit (TS, TS-1, atau TS-2)
+                  Pilih tahun yang ingin di-edit (TS, TS-1, TS-2, TS-3, atau TS-4)
                 </p>
               )}
             </div>
@@ -404,6 +404,8 @@ function SummaryTable({
   tahunTS,
   tahunTS1,
   tahunTS2,
+  tahunTS3,
+  tahunTS4,
 }) {
   // Dropdown menu state for SummaryTable
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -463,7 +465,7 @@ function SummaryTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
               Tahun Akademik
             </th>
-            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
               Tahun Akademik
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
@@ -473,28 +475,26 @@ function SummaryTable({
               Aksi
             </th>
           </tr>
-          {/* Baris 2: Sub-header TS-2, TS-1, TS */}
+          {/* Baris 2: Sub-header TS-4, TS-3, TS-2, TS-1, TS */}
           <tr>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
           </tr>
-          {/* Baris 3: Label untuk Summary Section */}
-          <tr className="bg-white/10">
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-              Jumlah Dosen DTPR
-            </th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
-          </tr>
+
         </thead>
         <tbody className="divide-y divide-slate-200">
-          <tr className="bg-yellow-50 hover:bg-yellow-100 border-t-2 border-yellow-300">
+          <tr className="bg-white hover:bg-[#eaf4ff] transition-colors">
             <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">
               Jumlah Dosen DTPR
+            </td>
+            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+              {summaryData.jumlah_ts_4 || 0}
+            </td>
+            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+              {summaryData.jumlah_ts_3 || 0}
             </td>
             <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
               {summaryData.jumlah_ts_2 || 0}
@@ -506,9 +506,9 @@ function SummaryTable({
               {summaryData.jumlah_ts || 0}
             </td>
             <td className="px-4 py-3 border border-slate-200 text-slate-700">
-              {summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 ? (
+              {summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 ? (
                 <a
-                  href={summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2}
+                  href={summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4}
                   target="_blank"
                   rel="noreferrer"
                   className="text-[#0384d6] underline hover:text-[#043975]"
@@ -678,7 +678,7 @@ function DetailTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
               Nama DTPR
             </th>
-            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
               Jumlah
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
@@ -688,8 +688,10 @@ function DetailTable({
               Aksi
             </th>
           </tr>
-          {/* Baris 2: TS-2, TS-1, TS */}
+          {/* Baris 2: TS-4, TS-3, TS-2, TS-1, TS */}
           <tr>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
@@ -699,7 +701,7 @@ function DetailTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td
-                colSpan={showDeleted ? 7 : 6}
+                colSpan={showDeleted ? 9 : 8}
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -732,13 +734,15 @@ function DetailTable({
                 )}
                 <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.jenis_pengembangan || "-"}</td>
                 <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_dtpr || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_4 || 0}</td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_3 || 0}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_2 || 0}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_1 || 0}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts || 0}</td>
                 <td className="px-4 py-3 border border-slate-200 text-slate-700">
-                  {r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2 ? (
+                  {r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2 || r.link_bukti_ts_3 || r.link_bukti_ts_4 ? (
                     <a
-                      href={r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2}
+                      href={r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2 || r.link_bukti_ts_3 || r.link_bukti_ts_4}
                       target="_blank"
                       rel="noreferrer"
                       className="text-[#0384d6] underline hover:text-[#043975]"
@@ -917,24 +921,26 @@ export default function Tabel3A3({ auth, role }) {
     return tahun.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
   }, [maps?.tahun]);
 
-  // Hitung TS, TS-1, TS-2 berdasarkan tahun yang dipilih
-  const { tahunTS, tahunTS1, tahunTS2 } = useMemo(() => {
+  // Hitung TS, TS-1, TS-2, TS-3, TS-4 berdasarkan tahun yang dipilih
+  const { tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 } = useMemo(() => {
     if (!selectedTahun) {
-      return { tahunTS: null, tahunTS1: null, tahunTS2: null };
+      return { tahunTS: null, tahunTS1: null, tahunTS2: null, tahunTS3: null, tahunTS4: null };
     }
 
     const sortedTahunList = [...tahunList].sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
     const selectedIndex = sortedTahunList.findIndex(t => t.id_tahun === parseInt(selectedTahun));
     
     if (selectedIndex === -1) {
-      return { tahunTS: null, tahunTS1: null, tahunTS2: null };
+      return { tahunTS: null, tahunTS1: null, tahunTS2: null, tahunTS3: null, tahunTS4: null };
     }
 
     const tahunTS = sortedTahunList[selectedIndex]?.id_tahun;
     const tahunTS1 = selectedIndex > 0 ? sortedTahunList[selectedIndex - 1]?.id_tahun : tahunTS;
     const tahunTS2 = selectedIndex > 1 ? sortedTahunList[selectedIndex - 2]?.id_tahun : tahunTS1;
+    const tahunTS3 = selectedIndex > 2 ? sortedTahunList[selectedIndex - 3]?.id_tahun : tahunTS2;
+    const tahunTS4 = selectedIndex > 3 ? sortedTahunList[selectedIndex - 4]?.id_tahun : tahunTS3;
 
-    return { tahunTS, tahunTS1, tahunTS2 };
+    return { tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 };
   }, [selectedTahun, tahunList]);
 
   // Auto-select tahun TS
@@ -956,11 +962,11 @@ export default function Tabel3A3({ auth, role }) {
   // Fetch Summary data
   useEffect(() => {
     const fetchSummary = async () => {
-      if (!tahunTS || !tahunTS1 || !tahunTS2) return;
+      if (!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4) return;
 
       setSummaryLoading(true);
       try {
-        let url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}`;
+        let url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}`;
         if (showDeletedSummary) {
           url += "&include_deleted=1";
         }
@@ -980,16 +986,16 @@ export default function Tabel3A3({ auth, role }) {
     };
 
       fetchSummary();
-  }, [showDeletedSummary, tahunTS, tahunTS1, tahunTS2]);
+  }, [showDeletedSummary, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
 
   // Fetch Detail data
   useEffect(() => {
     const fetchDetail = async () => {
-      if (!tahunTS || !tahunTS1 || !tahunTS2) return;
+      if (!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4) return;
 
       setDetailLoading(true);
       try {
-        let url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}`;
+        let url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}`;
         if (showDeleted) {
           url += "&include_deleted=1";
         }
@@ -1009,7 +1015,7 @@ export default function Tabel3A3({ auth, role }) {
     };
 
       fetchDetail();
-  }, [showDeleted, tahunTS, tahunTS1, tahunTS2]);
+  }, [showDeleted, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
 
   // Handle Save Summary
   const handleSaveSummary = async (form) => {
@@ -1062,7 +1068,7 @@ export default function Tabel3A3({ auth, role }) {
       setEditingSummary(null);
 
       // Refresh data
-      const url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeletedSummary ? "&include_deleted=1" : ""}`;
+      const url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&include_deleted=1" : ""}`;
       const data = await apiFetch(url);
       setSummaryData(data);
     } catch (err) {
@@ -1139,7 +1145,7 @@ export default function Tabel3A3({ auth, role }) {
       setEditingDetail(null);
 
       // Refresh data
-      const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeleted ? "&include_deleted=1" : ""}`;
+      const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
       const data = await apiFetch(url);
       setDetailRows(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1170,7 +1176,7 @@ export default function Tabel3A3({ auth, role }) {
   const handleDeleteSummary = async (data) => {
     Swal.fire({
       title: 'Anda yakin?',
-      text: `Data jumlah DTPR untuk unit ini akan dihapus (soft delete) untuk tahun TS, TS-1, dan TS-2.`,
+      text: `Data jumlah DTPR untuk unit ini akan dihapus (soft delete) untuk tahun TS, TS-1, TS-2, TS-3, dan TS-4.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -1184,8 +1190,8 @@ export default function Tabel3A3({ auth, role }) {
           const rawUrl = `${ENDPOINT_SUMMARY}?id_unit=${data.id_unit}`;
           const rawData = await apiFetch(rawUrl);
           
-          // Filter hanya tahun yang relevan (TS, TS-1, TS-2)
-          const tahunList = [tahunTS, tahunTS1, tahunTS2].filter(Boolean);
+          // Filter hanya tahun yang relevan (TS, TS-1, TS-2, TS-3, TS-4)
+          const tahunList = [tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4].filter(Boolean);
           const relevantData = Array.isArray(rawData) 
             ? rawData.filter(item => tahunList.includes(item.id_tahun) && !item.deleted_at)
             : [];
@@ -1205,7 +1211,7 @@ export default function Tabel3A3({ auth, role }) {
           await Promise.all(deletePromises);
           
           // Refresh data
-          const refreshUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeletedSummary ? "&include_deleted=1" : ""}`;
+          const refreshUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&include_deleted=1" : ""}`;
           const refreshedData = await apiFetch(refreshUrl);
           setSummaryData(refreshedData);
 
@@ -1250,7 +1256,7 @@ export default function Tabel3A3({ auth, role }) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}`, { method: "DELETE" });
           
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1279,7 +1285,7 @@ export default function Tabel3A3({ auth, role }) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/hard`, { method: "DELETE" });
           
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1308,7 +1314,7 @@ export default function Tabel3A3({ auth, role }) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/restore`, { method: "POST" });
           
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1338,7 +1344,7 @@ export default function Tabel3A3({ auth, role }) {
       <div className="bg-white rounded-2xl shadow-md border p-6">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">{LABEL}</h1>
         <p className="text-slate-600 text-sm">
-          Tabel untuk mencatat pengembangan DTPR (Dosen Tetap Program Studi) di bidang penelitian untuk periode 3 tahun akademik (TS-2, TS-1, TS).
+          Tabel untuk mencatat pengembangan DTPR (Dosen Tetap Program Studi) di bidang penelitian untuk periode 5 tahun akademik (TS-4, TS-3, TS-2, TS-1, TS).
         </p>
       </div>
 
@@ -1367,6 +1373,8 @@ export default function Tabel3A3({ auth, role }) {
               <p><strong>TS:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS))?.tahun || tahunTS}</p>
               <p><strong>TS-1:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS1))?.tahun || tahunTS1}</p>
               <p><strong>TS-2:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS2))?.tahun || tahunTS2}</p>
+              <p><strong>TS-3:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS3))?.tahun || tahunTS3}</p>
+              <p><strong>TS-4:</strong> {tahunList.find(t => t.id_tahun === parseInt(tahunTS4))?.tahun || tahunTS4}</p>
             </div>
           )}
         </div>
@@ -1398,11 +1406,11 @@ export default function Tabel3A3({ auth, role }) {
                       setModalSummaryOpen(true);
                     }}
                     className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
-                      !tahunTS || !tahunTS1 || !tahunTS2
+                      !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
                     }`}
-                    disabled={!tahunTS || !tahunTS1 || !tahunTS2}
+                    disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4}
                   >
                     + Tambah Jumlah DTPR
                   </button>
@@ -1415,7 +1423,7 @@ export default function Tabel3A3({ auth, role }) {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6] mx-auto"></div>
                   <p className="mt-2 text-slate-600">Memuat data...</p>
                 </div>
-              ) : !tahunTS || !tahunTS1 || !tahunTS2 ? (
+              ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
                 <div className="text-center py-8 text-slate-500">
                   <p>Pilih tahun akademik untuk melihat data summary.</p>
                 </div>
@@ -1431,6 +1439,8 @@ export default function Tabel3A3({ auth, role }) {
                   tahunTS={tahunTS}
                   tahunTS1={tahunTS1}
                   tahunTS2={tahunTS2}
+                  tahunTS3={tahunTS3}
+                  tahunTS4={tahunTS4}
                 />
               )}
             </div>
@@ -1463,11 +1473,11 @@ export default function Tabel3A3({ auth, role }) {
                         setModalDetailOpen(true);
                       }}
                     className={`px-4 py-2 rounded-lg transition-opacity font-medium ${
-                      !tahunTS || !tahunTS1 || !tahunTS2
+                      !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-gradient-to-r from-[#043975] to-[#0384d6] text-white hover:opacity-90"
                     }`}
-                    disabled={!tahunTS || !tahunTS1 || !tahunTS2}
+                    disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4}
                   >
                     + Tambah Pengembangan DTPR
                     </button>
@@ -1480,7 +1490,7 @@ export default function Tabel3A3({ auth, role }) {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6] mx-auto"></div>
                   <p className="mt-2 text-slate-600">Memuat data...</p>
                 </div>
-              ) : !tahunTS || !tahunTS1 || !tahunTS2 ? (
+              ) : !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 ? (
                 <div className="text-center py-8 text-slate-500">
                   <p>Pilih tahun akademik untuk melihat data detail.</p>
                 </div>

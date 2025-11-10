@@ -332,11 +332,12 @@ function DataTable({
   // Format checkmark untuk tahun perolehan
   const formatTahunPerolehan = (row) => {
     // Backend mengembalikan tahun_ts4, tahun_ts3, tahun_ts2, tahun_ts1, tahun_ts
-    // Tapi dari gambar, hanya TS-2, TS-1, TS yang ditampilkan
+    const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+    const ts3 = row.tahun_ts3 === '√' ? '√' : '';
     const ts2 = row.tahun_ts2 === '√' ? '√' : '';
     const ts1 = row.tahun_ts1 === '√' ? '√' : '';
     const ts = row.tahun_ts === '√' ? '√' : '';
-    return { ts2, ts1, ts };
+    return { ts4, ts3, ts2, ts1, ts };
   };
 
   return (
@@ -359,7 +360,7 @@ function DataTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis HKI</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR</th>
-            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
               Tahun Perolehan (Beri Tanda √)
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
@@ -367,6 +368,12 @@ function DataTable({
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              {tahunLaporan?.nama_ts4 || 'TS-4'}
+            </th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              {tahunLaporan?.nama_ts3 || 'TS-3'}
+            </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
               {tahunLaporan?.nama_ts2 || 'TS-2'}
             </th>
@@ -382,7 +389,7 @@ function DataTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td 
-                colSpan={showDeleted ? 10 : 9} 
+                colSpan={showDeleted ? 12 : 11} 
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -417,6 +424,8 @@ function DataTable({
                   </td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{row.jenis_hki || "-"}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{row.nama_dtpr || "-"}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts4}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts3}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts2}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts1}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts}</td>
@@ -473,6 +482,12 @@ function DataTable({
                 className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
               >
                 Jumlah HKI
+              </td>
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                {filteredRows.filter(r => r.tahun_ts4 === '√').length}
+              </td>
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                {filteredRows.filter(r => r.tahun_ts3 === '√').length}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
                 {filteredRows.filter(r => r.tahun_ts2 === '√').length}
@@ -975,4 +990,3 @@ export default function Tabel3C3({ auth, role }) {
     </div>
   );
 }
-

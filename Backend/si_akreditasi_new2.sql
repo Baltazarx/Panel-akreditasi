@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 05 Nov 2025 pada 07.22
+-- Waktu pembuatan: 10 Nov 2025 pada 03.47
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -1569,6 +1569,13 @@ CREATE TABLE `tabel_3a3_dtpr_tahunan` (
   `deleted_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `tabel_3a3_dtpr_tahunan`
+--
+
+INSERT INTO `tabel_3a3_dtpr_tahunan` (`id`, `id_unit`, `id_tahun`, `jumlah_dtpr`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 12, 2024, 15, 'https://example.com/bukti.pdf', '2025-11-05 06:55:47', '2025-11-05 06:55:47', NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1586,6 +1593,90 @@ CREATE TABLE `tabel_3a3_pengembangan` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_3a3_pengembangan`
+--
+
+INSERT INTO `tabel_3a3_pengembangan` (`id_pengembangan`, `id_unit`, `id_dosen`, `jenis_pengembangan`, `id_tahun`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 12, 1, 'Tugas Belajar', 2024, 'https://example.com/bukti.pdf', '2025-11-05 07:07:07', '2025-11-05 07:07:07', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3c1_kerjasama_penelitian`
+--
+
+CREATE TABLE `tabel_3c1_kerjasama_penelitian` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Merujuk ke unit_kerja.id_unit (misal: LPPM)',
+  `judul_kerjasama` text NOT NULL,
+  `mitra_kerja_sama` varchar(255) NOT NULL,
+  `sumber` enum('L','N','I') NOT NULL COMMENT 'L: Lokal/Wilayah, N: Nasional, I: Internasional',
+  `durasi_tahun` int(11) DEFAULT NULL,
+  `link_bukti` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3c1_pendanaan_kerjasama`
+--
+
+CREATE TABLE `tabel_3c1_pendanaan_kerjasama` (
+  `id_pendanaan` int(11) NOT NULL,
+  `id_kerjasama` int(11) NOT NULL COMMENT 'Merujuk ke id tabel_3c1_kerjasama_penelitian',
+  `id_tahun` int(11) NOT NULL COMMENT 'Merujuk ke id tahun_akademik (utk TS-2, TS-1, TS)',
+  `jumlah_dana` bigint(20) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3c2_publikasi_penelitian`
+--
+
+CREATE TABLE `tabel_3c2_publikasi_penelitian` (
+  `id` int(11) NOT NULL,
+  `id_dosen` int(11) NOT NULL COMMENT 'Relasi ke tabel dosen.id_dosen',
+  `judul_publikasi` text NOT NULL COMMENT 'Judul lengkap publikasi',
+  `jenis_publikasi` enum('IB','I','S1','S2','S3','S4','T') NOT NULL COMMENT 'IB: Intl Bereputasi, I: Intl, S1-S4: Sinta, T: Tdk Terakreditasi',
+  `id_tahun_terbit` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `link_bukti` text DEFAULT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Prodi/LPPM)',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_3c3_hki`
+--
+
+CREATE TABLE `tabel_3c3_hki` (
+  `id` int(11) NOT NULL,
+  `id_dosen` int(11) NOT NULL COMMENT 'Relasi ke tabel dosen.id_dosen',
+  `judul_hki` text NOT NULL COMMENT 'Judul lengkap HKI',
+  `jenis_hki` varchar(255) NOT NULL COMMENT 'Jenis HKI (cth: Paten, Hak Cipta, dll)',
+  `id_tahun_perolehan` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `link_bukti` text DEFAULT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Prodi/LPPM)',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -2075,6 +2166,42 @@ ALTER TABLE `tabel_3a3_pengembangan`
   ADD KEY `fk_3a3_pengembangan_tahun_idx` (`id_tahun`);
 
 --
+-- Indeks untuk tabel `tabel_3c1_kerjasama_penelitian`
+--
+ALTER TABLE `tabel_3c1_kerjasama_penelitian`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_unit` (`id_unit`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_3c1_pendanaan_kerjasama`
+--
+ALTER TABLE `tabel_3c1_pendanaan_kerjasama`
+  ADD PRIMARY KEY (`id_pendanaan`),
+  ADD KEY `id_kerjasama` (`id_kerjasama`),
+  ADD KEY `id_tahun` (`id_tahun`);
+
+--
+-- Indeks untuk tabel `tabel_3c2_publikasi_penelitian`
+--
+ALTER TABLE `tabel_3c2_publikasi_penelitian`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_3c2_id_dosen` (`id_dosen`),
+  ADD KEY `idx_3c2_id_tahun_terbit` (`id_tahun_terbit`),
+  ADD KEY `idx_3c2_id_unit` (`id_unit`),
+  ADD KEY `idx_3c2_deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_3c3_hki`
+--
+ALTER TABLE `tabel_3c3_hki`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_3c3_id_dosen` (`id_dosen`),
+  ADD KEY `idx_3c3_id_tahun_perolehan` (`id_tahun_perolehan`),
+  ADD KEY `idx_3c3_id_unit` (`id_unit`),
+  ADD KEY `idx_3c3_deleted_at` (`deleted_at`);
+
+--
 -- Indeks untuk tabel `tahun_akademik`
 --
 ALTER TABLE `tahun_akademik`
@@ -2285,13 +2412,37 @@ ALTER TABLE `tabel_3a2_penelitian`
 -- AUTO_INCREMENT untuk tabel `tabel_3a3_dtpr_tahunan`
 --
 ALTER TABLE `tabel_3a3_dtpr_tahunan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_3a3_pengembangan`
 --
 ALTER TABLE `tabel_3a3_pengembangan`
-  MODIFY `id_pengembangan` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pengembangan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3c1_kerjasama_penelitian`
+--
+ALTER TABLE `tabel_3c1_kerjasama_penelitian`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3c1_pendanaan_kerjasama`
+--
+ALTER TABLE `tabel_3c1_pendanaan_kerjasama`
+  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3c2_publikasi_penelitian`
+--
+ALTER TABLE `tabel_3c2_publikasi_penelitian`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_3c3_hki`
+--
+ALTER TABLE `tabel_3c3_hki`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `tenaga_kependidikan`
@@ -2531,6 +2682,19 @@ ALTER TABLE `tabel_3a3_pengembangan`
   ADD CONSTRAINT `fk_3a3_pengembangan_dosen` FOREIGN KEY (`id_dosen`) REFERENCES `dosen` (`id_dosen`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_3a3_pengembangan_tahun` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_3a3_pengembangan_unit` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON UPDATE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3c1_kerjasama_penelitian`
+--
+ALTER TABLE `tabel_3c1_kerjasama_penelitian`
+  ADD CONSTRAINT `tabel_3c1_kerjasama_penelitian_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_3c1_pendanaan_kerjasama`
+--
+ALTER TABLE `tabel_3c1_pendanaan_kerjasama`
+  ADD CONSTRAINT `tabel_3c1_pendanaan_kerjasama_ibfk_1` FOREIGN KEY (`id_kerjasama`) REFERENCES `tabel_3c1_kerjasama_penelitian` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tabel_3c1_pendanaan_kerjasama_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`);
 
 --
 -- Ketidakleluasaan untuk tabel `tenaga_kependidikan`
