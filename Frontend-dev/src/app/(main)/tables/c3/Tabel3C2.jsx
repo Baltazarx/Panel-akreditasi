@@ -421,9 +421,9 @@ function DataTable({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{row.jenis_publikasi || "-"}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunTerbit.ts2}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunTerbit.ts1}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunTerbit.ts}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts2}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts1}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">
                     {row.link_bukti ? (
                       <a 
@@ -470,26 +470,26 @@ function DataTable({
           )}
           {/* Summary Row */}
           {filteredRows.length > 0 && (
-            <tr className="bg-gray-100">
-              {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+            <tr className="bg-white">
+              {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-white"></td>}
               <td 
                 colSpan={4} 
-                className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white"
               >
                 Jumlah Publikasi
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts2 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts1 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts === '√').length}
               </td>
               <td 
                 colSpan={2} 
-                className="px-4 py-3 border border-slate-200 bg-gray-200"
+                className="px-4 py-3 border border-slate-200 bg-white"
               ></td>
             </tr>
           )}

@@ -358,7 +358,7 @@ function DataTable({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+    <div className="overflow-x-auto rounded-lg border border-slate-300 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           {/* Header Level 1 */}
@@ -381,12 +381,12 @@ function DataTable({
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-300">
           {filteredRows.length === 0 ? (
             <tr>
               <td 
                 colSpan={showDeleted ? 11 : 10} 
-                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                className="px-6 py-16 text-center text-slate-500 border border-slate-300"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
                 <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
@@ -397,11 +397,11 @@ function DataTable({
               <tr
                 key={r.id || i}
                 className={`transition-colors ${
-                  i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  i % 2 === 0 ? "bg-white" : "bg-white"
                 } hover:bg-[#eaf4ff]`}
               >
                 {showDeleted && (
-                  <td className="px-4 py-3 text-center border border-slate-200">
+                  <td className="px-4 py-3 text-center border border-slate-300">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(r.id)}
@@ -416,21 +416,21 @@ function DataTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800 max-w-xs">
+                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{i + 1}</td>
+                <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
                   <div className="truncate" title={r.judul_kerjasama || ""}>
                     {r.judul_kerjasama || "-"}
                   </div>
                 </td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+                <td className="px-4 py-3 border border-slate-300 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">
                   {r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-"}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts2 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts1 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts || 0)}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.durasi_tahun || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts2 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts1 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts || 0)}</td>
+                <td className="px-4 py-3 border border-slate-300 text-slate-700">
                   {r.link_bukti ? (
                     <a 
                       href={r.link_bukti} 
@@ -444,7 +444,7 @@ function DataTable({
                     <span className="text-slate-400">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 border border-slate-200">
+                <td className="px-4 py-3 border border-slate-300">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {
@@ -477,41 +477,41 @@ function DataTable({
           {filteredRows.length > 0 && (
             <>
               {/* Jumlah Dana */}
-              <tr className="bg-gray-100">
-                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+              <tr className="bg-white">
+                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={5} 
-                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                  className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
                 >
                   Jumlah Dana
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
-                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
+                <td className="px-4 py-3 border border-slate-300 bg-white"></td>
+                <td className="px-4 py-3 border border-slate-300 bg-white"></td>
               </tr>
               {/* Jumlah Mitra Kerjasama */}
-              <tr className="bg-gray-100">
-                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+              <tr className="bg-white">
+                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={2} 
-                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                  className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
                 >
                   Jumlah Mitra Kerjasama
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {filteredRows.length}
                 </td>
                 <td 
                   colSpan={7} 
-                  className="px-4 py-3 border border-slate-200 bg-gray-200"
+                  className="px-4 py-3 border border-slate-300 bg-white"
                 ></td>
               </tr>
             </>
@@ -1010,7 +1010,7 @@ export default function Tabel3C1({ auth, role }) {
               className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               disabled={!tahunTS || loading}
             >
-              <FiDownload size={18} />
+              <FiDownload className="w-4 h-4" />
               Export Excel
             </button>
           )}
