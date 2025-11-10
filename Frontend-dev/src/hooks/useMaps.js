@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 
+const BASE_URL = "http://localhost:3000/api";
+
 /**
  * Mengambil master data lalu membentuk "maps" (object by id) untuk dipakai di UI.
  * Endpoint yang dipakai mengikuti daftar routes backend:
@@ -37,6 +39,36 @@ export function useMaps(authUser = true) {
 
     (async () => {
       try {
+        // Helper untuk fetch dengan error handling yang lebih baik
+        // Menggunakan fetch langsung untuk semua endpoint untuk menghindari console.error dari apiFetch
+        const safeFetch = async (endpoint) => {
+          try {
+            const res = await fetch(`${BASE_URL}${endpoint}`, {
+              credentials: "include",
+              mode: "cors",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            
+            if (!res.ok) {
+              // Silent fail untuk semua endpoint di useMaps
+              // Error sudah ditangani dengan return []
+              return [];
+            }
+            
+            const contentType = res.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+              return await res.json();
+            }
+            return [];
+          } catch (err) {
+            // Silent fail untuk semua error di useMaps
+            // Error sudah ditangani dengan return []
+            return [];
+          }
+        };
+
         const [
           units,
           pegawai,
@@ -46,13 +78,13 @@ export function useMaps(authUser = true) {
           tendik,
           ami,
         ] = await Promise.all([
-          apiFetch("/unit-kerja").catch(() => []),
-          apiFetch("/pegawai").catch(() => []),
-          apiFetch("/tahun-akademik").catch(() => []),
-          apiFetch("/ref-jabatan-struktural").catch(() => []),
-          apiFetch("/ref-jabatan-fungsional").catch(() => []), // <-- ini yang bikin dropdown JAFUNG muncul
-          apiFetch("/tendik").catch(() => []),
-          apiFetch("/audit-mutu-internal").catch(() => []),
+          safeFetch("/unit-kerja"),
+          safeFetch("/pegawai"),
+          safeFetch("/tahun-akademik"),
+          safeFetch("/ref-jabatan-struktural"),
+          safeFetch("/ref-jabatan-fungsional"), // <-- ini yang bikin dropdown JAFUNG muncul
+          safeFetch("/tendik"),
+          safeFetch("/audit-mutu-internal"),
         ]);
 
         const toMap = (arr, keys) =>
