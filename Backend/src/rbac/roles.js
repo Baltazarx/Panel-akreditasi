@@ -17,14 +17,14 @@ export const AccessMatrix = {
 
     // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
     'profil_lulusan':   { C: true, R: true, U: true, D: true },
-    'cpl':              { C: true, R: true, U: true, D: true },
-    'mata_kuliah':      { C: true, R: true, U: true, D: true },
-    'cpmk':             { C: true, R: true, U: true, D: true },
-    'visi_misi':        { C: true, R: true, U: true, D: true },
-    'pemetaan2b1':      { R: true },
-    'pemetaan2b2':      { R: true, U: true },
-    'pemetaan2b3':      { R: true },
-    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
+    'cpl':                { C: true, R: true, U: true, D: true },
+    'mata_kuliah':        { C: true, R: true, U: true, D: true },
+    'cpmk':               { C: true, R: true, U: true, D: true },
+    'visi_misi':          { C: true, R: true, U: true, D: true },
+    'pemetaan2b1':        { R: true },
+    'pemetaan2b2':        { R: true, U: true },
+    'pemetaan2b3':        { R: true },
+    'pemetaanCpmkCpl':    { C: true, R: true, U: true, D: true },
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
     'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
@@ -54,14 +54,14 @@ export const AccessMatrix = {
 
     // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
     'profil_lulusan':   { C: true, R: true, U: true, D: true },
-    'cpl':              { C: true, R: true, U: true, D: true },
-    'mata_kuliah':      { C: true, R: true, U: true, D: true },
-    'cpmk':             { C: true, R: true, U: true, D: true },
-    'visi_misi':        { C: true, R: true, U: true, D: true },
-    'pemetaan2b1':      { R: true },
-    'pemetaan2b2':      { R: true, U: true },
-    'pemetaan2b3':      { R: true },
-    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
+    'cpl':                { C: true, R: true, U: true, D: true },
+    'mata_kuliah':        { C: true, R: true, U: true, D: true },
+    'cpmk':               { C: true, R: true, U: true, D: true },
+    'visi_misi':          { C: true, R: true, U: true, D: true },
+    'pemetaan2b1':        { R: true },
+    'pemetaan2b2':        { R: true, U: true },
+    'pemetaan2b3':        { R: true },
+    'pemetaanCpmkCpl':    { C: true, R: true, U: true, D: true },
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
     'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
@@ -91,14 +91,14 @@ export const AccessMatrix = {
 
     // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
     'profil_lulusan':   { C: true, R: true, U: true, D: true },
-    'cpl':              { C: true, R: true, U: true, D: true },
-    'mata_kuliah':      { C: true, R: true, U: true, D: true },
-    'cpmk':             { C: true, R: true, U: true, D: true },
-    'visi_misi':        { C: true, R: true, U: true, D: true },
-    'pemetaan2b1':      { R: true },
-    'pemetaan2b2':      { R: true, U: true },
-    'pemetaan2b3':      { R: true },
-    'pemetaanCpmkCpl':  { C: true, R: true, U: true, D: true },
+    'cpl':                { C: true, R: true, U: true, D: true },
+    'mata_kuliah':        { C: true, R: true, U: true, D: true },
+    'cpmk':               { C: true, R: true, U: true, D: true },
+    'visi_misi':          { C: true, R: true, U: true, D: true },
+    'pemetaan2b1':        { R: true },
+    'pemetaan2b2':        { R: true, U: true },
+    'pemetaan2b3':        { R: true },
+    'pemetaanCpmkCpl':    { C: true, R: true, U: true, D: true },
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
     'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
@@ -126,9 +126,12 @@ export const AccessMatrix = {
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
     'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true, H: true },
+    
+    // [BARIS BARU DITAMBAHKAN DI SINI]
+    'tabel_3c3_hki': { C: true, R: true, U: true, D: true, H: true },
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
-    'sumber_pendanaan':           { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
+    'sumber_pendanaan':         { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
     'sumber_pendanaan_summary':   { R: true }, // Untuk API /sumber-pendanaan/summary (jika keynya ini)
     'penggunaan_dana':          { R: true }, // Untuk API /penggunaan-dana
     'penggunaan_dana_summary':  { R: true }, // Untuk API /penggunaan-dana/summary
