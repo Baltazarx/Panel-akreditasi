@@ -1961,13 +1961,32 @@ const GrafikTabel = () => {
     // Items per slide (1 item per slide)
     const itemsPerSlide = 1;
     const totalSlides = Math.ceil(chartData.length / itemsPerSlide);
+    const [isLooping, setIsLooping] = useState(false);
 
     const nextSlide = () => {
-        setCurrentSlide((prev) => (prev + 1) % totalSlides);
+        if (currentSlide === totalSlides - 1) {
+            // Dari slide terakhir ke slide pertama (loop)
+            setIsLooping(true);
+            setCurrentSlide(0);
+            // Reset isLooping setelah animasi selesai
+            setTimeout(() => setIsLooping(false), 50);
+        } else {
+            setIsLooping(false);
+            setCurrentSlide((prev) => prev + 1);
+        }
     };
 
     const prevSlide = () => {
-        setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+        if (currentSlide === 0) {
+            // Dari slide pertama ke slide terakhir (loop)
+            setIsLooping(true);
+            setCurrentSlide(totalSlides - 1);
+            // Reset isLooping setelah animasi selesai
+            setTimeout(() => setIsLooping(false), 50);
+        } else {
+            setIsLooping(false);
+            setCurrentSlide((prev) => prev - 1);
+        }
     };
 
     return (
@@ -2003,24 +2022,69 @@ const GrafikTabel = () => {
                 <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
             ) : (
                 <div className="relative">
+                    {/* Navigation Buttons - Outside Carousel */}
+                    {totalSlides > 1 && (
+                        <div className="flex items-center justify-between mb-4">
+                            <button
+                                onClick={prevSlide}
+                                className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-sm hover:shadow-md"
+                                aria-label="Previous slide"
+                            >
+                                <FiChevronLeft className="w-5 h-5" />
+                            </button>
+                            
+                            {/* Dots Indicator */}
+                            <div className="flex items-center gap-2">
+                                {Array.from({ length: totalSlides }).map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => {
+                                            setIsLooping(false);
+                                            setCurrentSlide(index);
+                                        }}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                            currentSlide === index
+                                                ? 'bg-[#0384d6] w-6'
+                                                : 'bg-gray-300 hover:bg-gray-400'
+                                        }`}
+                                        aria-label={`Go to slide ${index + 1}`}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <button
+                                onClick={nextSlide}
+                                className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-sm hover:shadow-md"
+                                aria-label="Next slide"
+                            >
+                                <FiChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Carousel Container */}
                     <div className="overflow-hidden rounded-xl">
                         <motion.div
+                            key={isLooping ? `loop-${currentSlide}` : `normal-${currentSlide}`}
                             animate={{
                                 x: `-${currentSlide * (100 / totalSlides)}%`
                             }}
-                            transition={{
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 30
-                            }}
+                            transition={
+                                isLooping
+                                    ? { duration: 0 }
+                                    : {
+                                          type: "spring",
+                                          stiffness: 300,
+                                          damping: 30
+                                      }
+                            }
                             className="flex"
                             style={{ width: `${totalSlides * 100}%` }}
                         >
                             {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                                 <div
                                     key={slideIndex}
-                                    className="w-full"
+                                    className="w-full px-1"
                                     style={{ width: `${100 / totalSlides}%`, flexShrink: 0 }}
                                 >
                                     {chartData.slice(slideIndex * itemsPerSlide, slideIndex * itemsPerSlide + itemsPerSlide).map((item, itemIndex) => {
@@ -2114,22 +2178,8 @@ const GrafikTabel = () => {
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* Bottom Section dengan Navigation, Data, Progress */}
+                                                    {/* Bottom Section dengan Data dan Progress */}
                                                     <div className="flex items-end justify-between gap-4">
-                                                        {/* Left Navigation */}
-                                                        {totalSlides > 1 && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    prevSlide();
-                                                                }}
-                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
-                                                                aria-label="Previous slide"
-                                                            >
-                                                                <FiChevronLeft className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-
                                                         {/* Data Section */}
                                                         <div className="flex-1">
                                                             <div className="text-4xl font-extrabold text-slate-900 mb-1">{item.count}</div>
@@ -2153,20 +2203,6 @@ const GrafikTabel = () => {
                                                             </div>
                                                             <div className="text-xs text-gray-500">Progress</div>
                                                         </div>
-
-                                                        {/* Right Navigation */}
-                                                        {totalSlides > 1 && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    nextSlide();
-                                                                }}
-                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
-                                                                aria-label="Next slide"
-                                                            >
-                                                                <FiChevronRight className="w-4 h-4" />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </motion.div>
                                             </div>
