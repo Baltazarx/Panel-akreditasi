@@ -56,6 +56,9 @@ import tabel3a3PengembanganDtprRouter from './routes/tabel3a3PengembanganDtpr.ro
 import tabel3c1KerjasamaRoutes from './routes/tabel3c1Kerjasama.route.js';
 import tabel3c2PublikasiRoutes from './routes/tabel3c2Publikasi.route.js';
 import tabel3c3HkiRoutes from './routes/tabel3c3Hki.route.js';
+
+// ===== C4 ROUTES =====
+import tabel4a1SarprasPkmRouter from './routes/tabel4a1SarprasPkm.route.js';
 // TODO: import route lain setelah dikonversi
 
 const app = express();
@@ -150,6 +153,8 @@ app.use('/api/tabel-3c1-kerjasama', tabel3c1KerjasamaRoutes);
 app.use('/api/tabel-3c2-publikasi', tabel3c2PublikasiRoutes);
 app.use('/api/tabel-3c3-hki', tabel3c3HkiRoutes);
 
+// ===== C4 =====
+app.use('/api/tabel-4a1-sarpras-pkm', tabel4a1SarprasPkmRouter);
 
 // ===== 404 FALLBACK =====
 app.use((_req, res) => {
