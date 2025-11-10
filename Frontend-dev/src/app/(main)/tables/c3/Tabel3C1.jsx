@@ -8,7 +8,7 @@ import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload } from 'react-icons/fi';
 
-const ENDPOINT = "/tabel-3c1-kerjasama-penelitian";
+const ENDPOINT = "/tabel-3c1-kerjasama";
 const TABLE_KEY = "tabel_3c1_kerjasama_penelitian";
 const LABEL = "3.C.1 Kerjasama Penelitian";
 
