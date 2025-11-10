@@ -5,7 +5,7 @@ import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 export const listTahun = async (req, res) => {
   try {
     const { where, params } = await buildWhere(req, 'tahun_akademik', 't');
-    const orderBy = buildOrderBy(req.query?.order_by, 'id_tahun DESC', 't');
+    const orderBy = buildOrderBy(req.query?.order_by, 'id_tahun', 't');
 
     const sql = `
       SELECT t.*
