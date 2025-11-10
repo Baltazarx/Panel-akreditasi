@@ -9,11 +9,13 @@ import { roleCan } from "../../../../lib/role";
 import Tabel3A1 from "./Tabel3A1";
 import Tabel3A2 from "./Tabel3A2";
 import Tabel3A3 from "./Tabel3A3";
+import Tabel3C1 from "./Tabel3C1";
 
 const ALL_TABLES = [
   { key: "3a1", label: "Tabel 3A-1", Component: Tabel3A1, accessKey: "tabel_3a1_sarpras_penelitian" },
   { key: "3a2", label: "Tabel 3A-2", Component: Tabel3A2, accessKey: "tabel_3a2_penelitian" },
   { key: "3a3", label: "Tabel 3A-3", Component: Tabel3A3, accessKey: "tabel_3a3_pengembangan_dtpr" },
+  { key: "3c1", label: "Tabel 3C-1", Component: Tabel3C1, accessKey: "tabel_3c1_kerjasama_penelitian" },
 ];
 
 export default function C3WithTopNav() {
