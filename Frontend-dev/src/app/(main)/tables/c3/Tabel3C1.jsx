@@ -23,28 +23,44 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
     pendanaan: [] // Array of {id_tahun, jumlah_dana}
   });
 
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        judul_kerjasama: initialData.judul_kerjasama || "",
-        mitra_kerja_sama: initialData.mitra_kerja_sama || "",
-        sumber: initialData.sumber || "",
-        durasi_tahun: initialData.durasi_tahun || "",
-        link_bukti: initialData.link_bukti || "",
-        pendanaan: initialData.pendanaan || []
-      });
-    } else {
-      setForm({
-        judul_kerjasama: "",
-        mitra_kerja_sama: "",
-        sumber: "",
-        durasi_tahun: "",
-        link_bukti: "",
-        pendanaan: []
-      });
-    }
-  }, [initialData]);
+  // Hook harus dipanggil sebelum early return
+  const tahunOptions = useMemo(() => {
+    if (!maps || !maps.tahun) return [];
+    const tahun = Object.values(maps.tahun);
+    return tahun
+      .filter(t => t && t.id_tahun) // Filter out invalid entries
+      .sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))
+      .map(t => ({
+        id: t.id_tahun,
+        nama: t.tahun || t.nama || t.id_tahun
+      }));
+  }, [maps?.tahun]);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setForm({
+          judul_kerjasama: initialData.judul_kerjasama || "",
+          mitra_kerja_sama: initialData.mitra_kerja_sama || "",
+          sumber: initialData.sumber || "",
+          durasi_tahun: initialData.durasi_tahun || "",
+          link_bukti: initialData.link_bukti || "",
+          pendanaan: Array.isArray(initialData.pendanaan) ? initialData.pendanaan : []
+        });
+      } else {
+        setForm({
+          judul_kerjasama: "",
+          mitra_kerja_sama: "",
+          sumber: "",
+          durasi_tahun: "",
+          link_bukti: "",
+          pendanaan: []
+        });
+      }
+    }
+  }, [initialData, isOpen]);
+
+  // Early return setelah semua hook dipanggil
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -52,7 +68,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   };
 
   const handlePendanaanChange = (index, field, value) => {
-    const newPendanaan = [...form.pendanaan];
+    const currentPendanaan = Array.isArray(form.pendanaan) ? form.pendanaan : [];
+    const newPendanaan = [...currentPendanaan];
     newPendanaan[index] = {
       ...newPendanaan[index],
       [field]: field === "jumlah_dana" ? parseFloat(value) || 0 : value
@@ -63,29 +80,21 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   const addPendanaanRow = () => {
     setForm((prev) => ({
       ...prev,
-      pendanaan: [...prev.pendanaan, { id_tahun: "", jumlah_dana: 0 }]
+      pendanaan: [...(Array.isArray(prev.pendanaan) ? prev.pendanaan : []), { id_tahun: "", jumlah_dana: 0 }]
     }));
   };
 
   const removePendanaanRow = (index) => {
-    const newPendanaan = form.pendanaan.filter((_, i) => i !== index);
+    const currentPendanaan = Array.isArray(form.pendanaan) ? form.pendanaan : [];
+    const newPendanaan = currentPendanaan.filter((_, i) => i !== index);
     setForm((prev) => ({ ...prev, pendanaan: newPendanaan }));
   };
-
-  const tahunOptions = useMemo(() => {
-    const tahun = Object.values(maps?.tahun || {});
-    return tahun
-      .sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))
-      .map(t => ({
-        id: t.id_tahun,
-        nama: t.tahun || t.nama || t.id_tahun
-      }));
-  }, [maps?.tahun]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Validasi minimal 1 pendanaan
-    if (form.pendanaan.length === 0) {
+    const pendanaanArray = Array.isArray(form.pendanaan) ? form.pendanaan : [];
+    if (pendanaanArray.length === 0) {
       Swal.fire({
         icon: 'warning',
         title: 'Pendanaan Wajib',
@@ -197,7 +206,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
             </label>
             <p className="text-xs text-gray-500 mb-3">Masukkan pendanaan untuk TS-4, TS-3, TS-2, TS-1, dan TS (minimal 1 tahun wajib diisi).</p>
             <div className="space-y-3">
-              {form.pendanaan.map((item, index) => (
+              {(Array.isArray(form.pendanaan) ? form.pendanaan : []).map((item, index) => (
                 <div key={`pendanaan-${index}-${item.id_tahun || 'new'}`} className="flex gap-3 items-end">
                   <div className="flex-1">
                     <label className="block text-xs text-slate-600 mb-1">Tahun</label>
@@ -355,12 +364,11 @@ function DataTable({
           {/* Header Level 1 */}
           <tr>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit/Prodi</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul Kerjasama</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Mitra Kerja Sama</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber (L/N/I)</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Durasi (Tahun)</th>
-            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
               Pendanaan (Rp Juta)
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
@@ -368,8 +376,6 @@ function DataTable({
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
@@ -379,7 +385,7 @@ function DataTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td 
-                colSpan={showDeleted ? 13 : 12} 
+                colSpan={showDeleted ? 11 : 10} 
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -411,7 +417,6 @@ function DataTable({
                   </td>
                 )}
                 <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{getUnitName(r.id_unit)}</td>
                 <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800 max-w-xs">
                   <div className="truncate" title={r.judul_kerjasama || ""}>
                     {r.judul_kerjasama || "-"}
@@ -419,14 +424,12 @@ function DataTable({
                 </td>
                 <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
-                  {r.sumber === "L" ? "Lokal/Wilayah (L)" : r.sumber === "N" ? "Nasional (N)" : r.sumber === "I" ? "Internasional (I)" : "-"}
+                  {r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-"}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{formatJuta(r.pendanaan_ts4 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{formatJuta(r.pendanaan_ts3 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{formatJuta(r.pendanaan_ts2 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{formatJuta(r.pendanaan_ts1 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{formatJuta(r.pendanaan_ts || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts2 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts1 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts || 0)}</td>
                 <td className="px-4 py-3 border border-slate-200 text-slate-700">
                   {r.link_bukti ? (
                     <a 
@@ -469,6 +472,49 @@ function DataTable({
                 </td>
               </tr>
             ))
+          )}
+          {/* Summary Rows */}
+          {filteredRows.length > 0 && (
+            <>
+              {/* Jumlah Dana */}
+              <tr className="bg-gray-100">
+                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+                <td 
+                  colSpan={5} 
+                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                >
+                  Jumlah Dana
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0))}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0))}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0))}
+                </td>
+                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
+                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
+              </tr>
+              {/* Jumlah Mitra Kerjasama */}
+              <tr className="bg-gray-100">
+                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+                <td 
+                  colSpan={2} 
+                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                >
+                  Jumlah Mitra Kerjasama
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                  {filteredRows.length}
+                </td>
+                <td 
+                  colSpan={7} 
+                  className="px-4 py-3 border border-slate-200 bg-gray-200"
+                ></td>
+              </tr>
+            </>
           )}
         </tbody>
       </table>
@@ -556,7 +602,8 @@ function DataTable({
 
 /* ---------- Page Component ---------- */
 export default function Tabel3C1({ auth, role }) {
-  const { maps: mapsFromHook } = useMaps(auth?.user || true);
+  const { authUser: authUserFromContext } = useAuth();
+  const { maps: mapsFromHook } = useMaps(auth?.user || authUserFromContext || true);
   const maps = mapsFromHook ?? { units: {}, unit_kerja: {}, tahun: {} };
 
   const [rows, setRows] = useState([]);
@@ -595,8 +642,14 @@ export default function Tabel3C1({ auth, role }) {
 
   // Tahun options
   const tahunList = useMemo(() => {
-    const tahun = Object.values(maps?.tahun || {});
-    return tahun.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
+    if (!maps || !maps.tahun) {
+      return [];
+    }
+    const tahun = Object.values(maps.tahun);
+    const sorted = tahun
+      .filter(t => t && t.id_tahun) // Filter out invalid entries
+      .sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
+    return sorted;
   }, [maps?.tahun]);
 
   // Auto-select tahun TS (cari tahun 2025, jika tidak ada gunakan tahun terakhir) jika belum dipilih
@@ -904,11 +957,15 @@ export default function Tabel3C1({ auth, role }) {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
             >
               <option value="">Pilih Tahun</option>
-              {tahunList.map((tahun) => (
-                <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                  {tahun.tahun || tahun.nama || tahun.id_tahun}
-                </option>
-              ))}
+              {tahunList && tahunList.length > 0 ? (
+                tahunList.map((tahun) => (
+                  <option key={tahun.id_tahun} value={tahun.id_tahun}>
+                    {tahun.tahun || tahun.nama || tahun.id_tahun}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>Tidak ada data tahun</option>
+              )}
             </select>
           </div>
           {selectedTahun && (
@@ -1006,9 +1063,9 @@ export default function Tabel3C1({ auth, role }) {
         onClose={() => { setModalOpen(false); setEditingRow(null); }}
         onSave={handleSave}
         initialData={editingRow}
-        maps={maps}
-        tahunList={tahunList}
-        authUser={auth?.user}
+        maps={maps || { units: {}, unit_kerja: {}, tahun: {} }}
+        tahunList={tahunList || []}
+        authUser={auth?.user || authUserFromContext}
       />
     </div>
   );
