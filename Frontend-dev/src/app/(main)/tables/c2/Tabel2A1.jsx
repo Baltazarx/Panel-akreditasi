@@ -1599,18 +1599,16 @@ export default function Tabel2A1({ role }) {
       {/* Pendaftaran */}
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">{tablePend.label}</h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Kelola data daya tampung dan jumlah pendaftar per tahun akademik.
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-sm text-slate-600 font-medium">
-                Total Data: <span className="text-[#0384d6] font-bold">{rowsPend.length}</span>
+          <h1 className="text-2xl font-bold text-slate-800">{tablePend.label}</h1>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-sm text-slate-500">
+              Kelola data daya tampung dan jumlah pendaftar per tahun akademik.
+            </p>
+            {!loading && (
+              <span className="inline-flex items-center text-sm text-slate-700">
+                Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rowsPend.length}</span>
               </span>
-            </div>
+            )}
           </div>
         </header>
 
@@ -1748,18 +1746,16 @@ export default function Tabel2A1({ role }) {
       {/* Mahasiswa Baru & Aktif */}
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Kelola data mahasiswa baru dan aktif per tahun akademik.
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="text-sm text-slate-600 font-medium">
-                Total Data: <span className="text-[#0384d6] font-bold">{rowsMaba.length}</span>
+          <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-sm text-slate-500">
+              Kelola data mahasiswa baru dan aktif per tahun akademik.
+            </p>
+            {!loading && (
+              <span className="inline-flex items-center text-sm text-slate-700">
+                Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rowsMaba.length}</span>
               </span>
-            </div>
+            )}
           </div>
         </header>
 
@@ -1888,9 +1884,20 @@ export default function Tabel2A1({ role }) {
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
           <h1 className="text-2xl font-bold text-slate-800">Tabel 2.A.1 Data Mahasiswa</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Data lengkap mahasiswa berdasarkan tahun akademik (TS-3, TS-2, TS-1, TS).
-          </p>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-sm text-slate-500">
+              Data lengkap mahasiswa berdasarkan tahun akademik (TS-3, TS-2, TS-1, TS).
+            </p>
+            {!loading && (() => {
+              const unitProdiId = parseInt(selectedUnitProdi) || 4;
+              const tableData = processDataForTable(unitProdiId);
+              return (
+                <span className="inline-flex items-center text-sm text-slate-700">
+                  Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+                </span>
+              );
+            })()}
+          </div>
         </header>
 
         {/* Filter Unit Prodi */}

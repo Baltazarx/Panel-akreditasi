@@ -809,9 +809,16 @@ export default function Tabel4A1({ auth, role: propRole }) {
       {/* Header */}
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data sarana dan prasarana PkM untuk tabel 4A-1.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data sarana dan prasarana PkM untuk tabel 4A-1.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Controls */}

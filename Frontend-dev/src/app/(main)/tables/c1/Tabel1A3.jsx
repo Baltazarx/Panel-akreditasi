@@ -560,9 +560,16 @@ export default function Tabel1A3({ role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -572,9 +579,6 @@ export default function Tabel1A3({ role }) {
             activeYear={activeYear} 
             setActiveYear={setActiveYear}
           />
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length} baris
-          </span>
           {canDelete && (
             <button
               onClick={() => setShowDeleted((prev) => !prev)}
@@ -712,9 +716,16 @@ export default function Tabel1A3({ role }) {
       })()}
 
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-700 mb-4">
-          Ringkasan Penggunaan Dana
-        </h2>
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-slate-700">
+            Ringkasan Penggunaan Dana
+          </h2>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{summaryData.length}</span>
+            </span>
+          )}
+        </div>
         <PrettyTable1A3Summary summaryData={summaryData} />
       </div>
 

@@ -229,18 +229,17 @@ export default function UserManagementPage() {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">👤 Manajemen Akun</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola akun pengguna sistem penjaminan mutu.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola akun pengguna sistem penjaminan mutu.
+          </p>
+          <span className="inline-flex items-center text-sm text-slate-700">
+            Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{users.length}</span>
+          </span>
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-700">Total Akun:</span>
-          <span className="px-2 py-1 bg-[#0384d6] text-white text-xs font-semibold rounded-full">
-            {users.length}
-          </span>
-        </div>
         <div className="flex items-center gap-3">
           {/* Filter Status */}
           <div className="flex items-center gap-2">

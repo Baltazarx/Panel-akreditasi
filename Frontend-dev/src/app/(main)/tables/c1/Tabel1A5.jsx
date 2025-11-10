@@ -33,17 +33,21 @@ export default function Tabel1A5() {
       {/* Header */}
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Data jumlah tenaga kependidikan berdasarkan tingkat pendidikan.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Data jumlah tenaga kependidikan berdasarkan tingkat pendidikan.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Controls */}
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {loading ? "Memuat..." : `${rows.length} baris`}
-          </span>
         </div>
       </div>
 

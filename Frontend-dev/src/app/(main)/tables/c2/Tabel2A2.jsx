@@ -817,9 +817,16 @@ export default function Tabel2A2({ role }) {
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
           <h1 className="text-2xl font-bold text-slate-800">Tabel 2.A.2 - Keragaman Asal Mahasiswa</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Kelola data keragaman asal mahasiswa per tahun akademik.
-          </p>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-sm text-slate-500">
+              Kelola data keragaman asal mahasiswa per tahun akademik.
+            </p>
+            {!loading && (
+              <span className="inline-flex items-center text-sm text-slate-700">
+                Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{filteredData.length}</span>
+              </span>
+            )}
+          </div>
         </header>
 
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

@@ -812,9 +812,14 @@ export default function Tabel1A2({ auth, role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">1.A.2 Sumber Pendanaan UPPS/PS</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data sumber pendanaan per tahun dan lihat ringkasan multi-TS.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data sumber pendanaan per tahun dan lihat ringkasan multi-TS.
+          </p>
+          <span className="inline-flex items-center text-sm text-slate-700">
+            Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length}</span>
+          </span>
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -826,9 +831,6 @@ export default function Tabel1A2({ auth, role }) {
             tahunList={tahunList}
             isLoadingTahun={isLoadingTahun}
           />
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length} baris
-          </span>
           <button 
             onClick={() => setShowDeleted(!showDeleted)} 
             className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -962,7 +964,12 @@ export default function Tabel1A2({ auth, role }) {
       })()}
 
       {/* Ringkasan */}
-      <h3 className="mt-10 mb-4 text-lg font-bold text-slate-800">Ringkasan Sumber Pendanaan (TS-4 s.d. TS)</h3>
+      <div className="mt-10 mb-4 flex justify-between items-center">
+        <h3 className="text-lg font-bold text-slate-800">Ringkasan Sumber Pendanaan (TS-4 s.d. TS)</h3>
+        <span className="inline-flex items-center text-sm text-slate-700">
+          Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{summaryRows.length}</span>
+        </span>
+      </div>
       <TableSummary 
         rows={summaryRows} 
       />

@@ -421,9 +421,16 @@ export default function Tabel2B4({ role }) {
         <h1 className="text-2xl font-bold text-slate-800">
           Tabel 2.B.4 Rata-rata Masa Tunggu Lulusan untuk Bekerja Pertama Kali
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Data masa tunggu lulusan untuk mendapatkan pekerjaan pertama
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Data masa tunggu lulusan untuk mendapatkan pekerjaan pertama
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Controls */}

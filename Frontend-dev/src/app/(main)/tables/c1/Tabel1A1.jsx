@@ -416,16 +416,20 @@ export default function Tabel1A1({ role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{table.label}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data pimpinan dan tupoksi UPPS/PS.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data pimpinan dan tupoksi UPPS/PS.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{processedRows.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {loading ? "Memuat..." : `${processedRows.length} baris`}
-          </span>
           <button 
             onClick={() => setShowDeleted(!showDeleted)} 
             className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
