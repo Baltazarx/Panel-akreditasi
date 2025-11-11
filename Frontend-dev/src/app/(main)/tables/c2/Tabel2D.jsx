@@ -545,7 +545,16 @@ export default function Tabel2D({ role }) {
         <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-8">
             <header className="pb-6 mb-2 border-b border-slate-200">
                 <h2 className="text-2xl font-bold text-slate-800">Tabel 2.D Rekognisi Lulusan</h2>
-                <p className="text-sm text-slate-600 mt-1">Menampilkan TS-4 hingga TS berdasarkan tahun akademik terpilih.</p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-sm text-slate-600">
+                    Menampilkan TS-4 hingga TS berdasarkan tahun akademik terpilih.
+                  </p>
+                  {!loading && (
+                    <span className="inline-flex items-center text-sm text-slate-700">
+                      Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{masterSumber.length}</span>
+                    </span>
+                  )}
+                </div>
             </header>
 
             {/* Bagian Kontrol dan Filter */}

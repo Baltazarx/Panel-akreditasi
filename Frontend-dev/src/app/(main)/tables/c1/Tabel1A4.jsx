@@ -415,9 +415,16 @@ export default function Tabel1A4({ role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data beban kerja dosen dan distribusi SKS per tahun.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data beban kerja dosen dan distribusi SKS per tahun.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -460,9 +467,6 @@ export default function Tabel1A4({ role }) {
               Pulihkan ({selectedRows.length})
             </button>
           )}
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {loading ? "Memuat..." : `${rows.length} baris`}
-          </span>
         </div>
         {canCreate && (
           <button

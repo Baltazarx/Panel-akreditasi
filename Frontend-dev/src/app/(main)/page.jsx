@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { roleCan } from "../../lib/role";
@@ -40,6 +40,7 @@ const FiPlusCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWi
 const FiEdit = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>);
 const FiTrash = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 const FiClock = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
+const FiRefreshCw = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -1586,11 +1587,14 @@ const GrafikTabel = () => {
     const C3_TABLES = [
         { key: '3a1', label: '3A-1', endpoint: '/tabel-3a1-sarpras-penelitian', accessKey: 'tabel_3a1_sarpras_penelitian' },
         { key: '3a2', label: '3A-2', endpoint: '/tabel-3a2-penelitian', accessKey: 'tabel_3a2_penelitian' },
-        { key: '3a3', label: '3A-3', endpoint: '/tabel-3a3-pengembangan-dtpr/detail', accessKey: 'tabel_3a3_pengembangan_dtpr' }
+        { key: '3a3', label: '3A-3', endpoint: '/tabel-3a3-pengembangan-dtpr/detail', accessKey: 'tabel_3a3_pengembangan_dtpr' },
+        { key: '3c1', label: '3C-1', endpoint: '/tabel-3c1-kerjasama', accessKey: 'tabel_3c1_kerjasama_penelitian' },
+        { key: '3c2', label: '3C-2', endpoint: '/tabel-3c2-publikasi', accessKey: 'tabel_3c2_publikasi_penelitian' },
+        { key: '3c3', label: '3C-3', endpoint: '/tabel-3c3-hki', accessKey: 'tabel_3c3_hki' }
     ];
 
     const C4_TABLES = [
-        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1', accessKey: 'tabel_4a1' },
+        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1-sarpras-pkm', accessKey: 'tabel_4a1_sarpras_pkm' },
         { key: '4a2', label: '4A-2', endpoint: '/tabel-4a2', accessKey: 'tabel_4a2' }
     ];
 
@@ -1605,10 +1609,17 @@ const GrafikTabel = () => {
     ];
 
     // Fungsi untuk fetch data count dari API
-    const fetchTableDataCount = async (endpoint) => {
+    const fetchTableDataCount = async (endpoint, tsId = null) => {
         try {
             const BASE_URL = "http://localhost:3000/api";
-            const response = await fetch(`${BASE_URL}${endpoint}`, {
+            let url = `${BASE_URL}${endpoint}`;
+            
+            // Tambahkan parameter ts_id jika diperlukan
+            if (tsId) {
+                url += `${url.includes('?') ? '&' : '?'}ts_id=${tsId}`;
+            }
+            
+            const response = await fetch(url, {
                 credentials: "include",
                 mode: "cors",
             });
@@ -1624,12 +1635,13 @@ const GrafikTabel = () => {
                 return data.total;
             } else if (data?.count !== undefined) {
                 return data.count;
+            } else if (data?.data && Array.isArray(data.data)) {
+                // Format untuk 3C2 dan 3C3: { tahun_laporan: {...}, data: [...] }
+                return data.data.length;
             } else if (Array.isArray(data)) {
                 return data.length;
             } else if (data?.items && Array.isArray(data.items)) {
                 return data.items.length;
-            } else if (data?.data && Array.isArray(data.data)) {
-                return data.data.length;
             }
             
             return 0;
@@ -1639,235 +1651,308 @@ const GrafikTabel = () => {
         }
     };
 
-    // Fetch data untuk semua tabel
-    useEffect(() => {
-        const fetchAllData = async () => {
-            setLoading(true);
-            
-            // Fetch data untuk C1
-            const c1DataPromises = C1_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
+    // Fungsi untuk mendapatkan tahun terbaru
+    const getLatestTahunId = async () => {
+        try {
+            const BASE_URL = "http://localhost:3000/api";
+            const response = await fetch(`${BASE_URL}/tahun-akademik`, {
+                credentials: "include",
+                mode: "cors",
             });
             
-            // Fetch data untuk C2
-            const c2DataPromises = C2_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
+            if (!response.ok) {
+                // Fallback ke tahun saat ini jika API gagal
+                return new Date().getFullYear();
+            }
+            
+            const data = await response.json();
+            const tahunList = Array.isArray(data) ? data : (data?.items || []);
+            
+            if (tahunList.length === 0) {
+                return new Date().getFullYear();
+            }
+            
+            // Cari tahun yang mengandung tahun saat ini
+            const currentYear = new Date().getFullYear();
+            const tahunTerpilih = tahunList.find(t => {
+                const tahunStr = String(t.tahun || t.nama || '');
+                return tahunStr.includes(String(currentYear));
             });
             
-            // Fetch data untuk C3
-            const c3DataPromises = C3_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
-            });
-
-            // Fetch data untuk C4
-            const c4DataPromises = C4_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
-            });
-
-            // Fetch data untuk C5
-            const c5DataPromises = C5_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
-            });
-
-            // Fetch data untuk C6
-            const c6DataPromises = C6_TABLES.map(async (table) => {
-                if (!roleCan(role, table.accessKey, 'r')) return null;
-                const count = await fetchTableDataCount(table.endpoint);
-                return { label: table.label, count };
-            });
-
-            const [c1Results, c2Results, c3Results, c4Results, c5Results, c6Results] = await Promise.all([
-                Promise.all(c1DataPromises),
-                Promise.all(c2DataPromises),
-                Promise.all(c3DataPromises),
-                Promise.all(c4DataPromises),
-                Promise.all(c5DataPromises),
-                Promise.all(c6DataPromises)
-            ]);
-
-            // Filter null values dan buat barData
-            const c1BarData = c1Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            const c2BarData = c2Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            const c3BarData = c3Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            const c4BarData = c4Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            const c5BarData = c5Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            const c6BarData = c6Results.filter(Boolean).map((item) => ({
-                category: item.label,
-                value: item.count
-            }));
-
-            // Hitung total count
-            const c1Total = c1Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-            const c2Total = c2Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-            const c3Total = c3Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-            const c4Total = c4Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-            const c5Total = c5Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-            const c6Total = c6Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
-
-            // Fetch data untuk Dosen dan Pegawai (Panel Admin)
-            let dosenCount = 0;
-            let pegawaiCount = 0;
-            const hasDosenAccess = roleCan(role, 'dosen', 'r');
-            const hasPegawaiAccess = roleCan(role, 'pegawai', 'r');
+            if (tahunTerpilih) {
+                return tahunTerpilih.id_tahun;
+            }
             
+            // Jika tidak ditemukan, gunakan tahun terbaru berdasarkan id_tahun
+            const sorted = tahunList.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0));
+            return sorted[0]?.id_tahun || new Date().getFullYear();
+        } catch (error) {
+            console.warn('Failed to fetch tahun akademik:', error);
+            return new Date().getFullYear();
+        }
+    };
+
+    // Fungsi untuk fetch semua data grafik (bisa dipanggil ulang untuk sinkronisasi)
+    const fetchAllChartData = useCallback(async () => {
+        if (!role) return;
+        
+        setLoading(true);
+        
+        // Fetch data untuk C1
+        const c1DataPromises = C1_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const count = await fetchTableDataCount(table.endpoint);
+            return { label: table.label, count };
+        });
+        
+        // Fetch data untuk C2
+        const c2DataPromises = C2_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const count = await fetchTableDataCount(table.endpoint);
+            return { label: table.label, count };
+        });
+        
+        // Fetch data untuk C3 - Perlu ts_id untuk beberapa tabel
+        const latestTahunId = await getLatestTahunId();
+        const c3DataPromises = C3_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const needsTsId = ['3c1', '3c2', '3c3'].includes(table.key);
+            const count = await fetchTableDataCount(table.endpoint, needsTsId ? latestTahunId : null);
+            return { label: table.label, count };
+        });
+
+        // Fetch data untuk C4
+        const c4DataPromises = C4_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const count = await fetchTableDataCount(table.endpoint);
+            return { label: table.label, count };
+        });
+
+        // Fetch data untuk C5
+        const c5DataPromises = C5_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const count = await fetchTableDataCount(table.endpoint);
+            return { label: table.label, count };
+        });
+
+        // Fetch data untuk C6
+        const c6DataPromises = C6_TABLES.map(async (table) => {
+            if (!roleCan(role, table.accessKey, 'r')) return null;
+            const count = await fetchTableDataCount(table.endpoint);
+            return { label: table.label, count };
+        });
+
+        const [c1Results, c2Results, c3Results, c4Results, c5Results, c6Results] = await Promise.all([
+            Promise.all(c1DataPromises),
+            Promise.all(c2DataPromises),
+            Promise.all(c3DataPromises),
+            Promise.all(c4DataPromises),
+            Promise.all(c5DataPromises),
+            Promise.all(c6DataPromises)
+        ]);
+
+        // Filter null values dan buat barData
+        const c1BarData = c1Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        const c2BarData = c2Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        const c3BarData = c3Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        const c4BarData = c4Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        const c5BarData = c5Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        const c6BarData = c6Results.filter(Boolean).map((item) => ({
+            category: item.label,
+            value: item.count
+        }));
+
+        // Hitung total count
+        const c1Total = c1Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+        const c2Total = c2Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+        const c3Total = c3Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+        const c4Total = c4Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+        const c5Total = c5Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+        const c6Total = c6Results.filter(Boolean).reduce((sum, item) => sum + item.count, 0);
+
+        // Fetch data untuk Dosen, Pegawai, dan Users (Panel Admin)
+        let dosenCount = 0;
+        let pegawaiCount = 0;
+        let usersCount = 0;
+        const hasDosenAccess = roleCan(role, 'dosen', 'r');
+        const hasPegawaiAccess = roleCan(role, 'pegawai', 'r');
+        const hasUsersAccess = roleCan(role, 'users', 'r');
+        
+        if (hasDosenAccess) {
+            dosenCount = await fetchTableDataCount('/dosen');
+        }
+        
+        if (hasPegawaiAccess) {
+            pegawaiCount = await fetchTableDataCount('/pegawai');
+        }
+        
+        if (hasUsersAccess) {
+            usersCount = await fetchTableDataCount('/users');
+        }
+
+        const chartDataArray = [
+            { 
+                name: 'C1', 
+                count: c1Total, 
+                color: 'from-blue-500 to-cyan-500', 
+                icon: FiBarChart, 
+                description: 'Standar C1',
+                barData: c1BarData.length > 0 ? c1BarData : [
+                    { category: '1A-1', value: 0 },
+                    { category: '1A-2', value: 0 },
+                    { category: '1A-3', value: 0 }
+                ]
+            },
+            { 
+                name: 'C2', 
+                count: c2Total, 
+                color: 'from-purple-500 to-violet-500', 
+                icon: FiTrendingUp, 
+                description: 'Standar C2',
+                barData: c2BarData.length > 0 ? c2BarData : [
+                    { category: '2A-2', value: 0 },
+                    { category: '2A-3', value: 0 },
+                    { category: '2B', value: 0 }
+                ]
+            },
+            { 
+                name: 'C3', 
+                count: c3Total, 
+                color: 'from-green-500 to-emerald-500', 
+                icon: FiUsers, 
+                description: 'Standar C3',
+                barData: c3BarData.length > 0 ? c3BarData : [
+                    { category: '3A-1', value: 0 },
+                    { category: '3A-2', value: 0 },
+                    { category: '3A-3', value: 0 }
+                ]
+            }
+        ];
+
+        // Tambahkan grafik C4 jika user punya akses
+        if (c4Results.filter(Boolean).length > 0) {
+            chartDataArray.push({
+                name: 'C4',
+                count: c4Total,
+                color: 'from-teal-500 to-cyan-500',
+                icon: FiTarget,
+                description: 'Standar C4',
+                barData: c4BarData.length > 0 ? c4BarData : [
+                    { category: '4A-1', value: 0 },
+                    { category: '4A-2', value: 0 }
+                ]
+            });
+        }
+
+        // Tambahkan grafik C5 jika user punya akses
+        if (c5Results.filter(Boolean).length > 0) {
+            chartDataArray.push({
+                name: 'C5',
+                count: c5Total,
+                color: 'from-amber-500 to-orange-500',
+                icon: FiDatabase,
+                description: 'Standar C5',
+                barData: c5BarData.length > 0 ? c5BarData : [
+                    { category: '5A-1', value: 0 },
+                    { category: '5A-2', value: 0 }
+                ]
+            });
+        }
+
+        // Tambahkan grafik C6 jika user punya akses
+        if (c6Results.filter(Boolean).length > 0) {
+            chartDataArray.push({
+                name: 'C6',
+                count: c6Total,
+                color: 'from-rose-500 to-pink-500',
+                icon: FiFileText,
+                description: 'Standar C6',
+                barData: c6BarData.length > 0 ? c6BarData : [
+                    { category: '6A-1', value: 0 },
+                    { category: '6A-2', value: 0 }
+                ]
+            });
+        }
+
+        // Tambahkan grafik Panel Admin jika user punya akses ke dosen, pegawai, atau users
+        if (hasDosenAccess || hasPegawaiAccess || hasUsersAccess) {
+            const panelAdminBarData = [];
             if (hasDosenAccess) {
-                dosenCount = await fetchTableDataCount('/dosen');
+                panelAdminBarData.push({ category: 'Dosen', value: dosenCount });
             }
-            
             if (hasPegawaiAccess) {
-                pegawaiCount = await fetchTableDataCount('/pegawai');
+                panelAdminBarData.push({ category: 'Pegawai', value: pegawaiCount });
             }
-
-            const chartDataArray = [
-                { 
-                    name: 'C1', 
-                    count: c1Total, 
-                    color: 'from-blue-500 to-cyan-500', 
-                    icon: FiBarChart, 
-                    description: 'Standar C1',
-                    barData: c1BarData.length > 0 ? c1BarData : [
-                        { category: '1A-1', value: 0 },
-                        { category: '1A-2', value: 0 },
-                        { category: '1A-3', value: 0 }
-                    ]
-                },
-                { 
-                    name: 'C2', 
-                    count: c2Total, 
-                    color: 'from-purple-500 to-violet-500', 
-                    icon: FiTrendingUp, 
-                    description: 'Standar C2',
-                    barData: c2BarData.length > 0 ? c2BarData : [
-                        { category: '2A-2', value: 0 },
-                        { category: '2A-3', value: 0 },
-                        { category: '2B', value: 0 }
-                    ]
-                },
-                { 
-                    name: 'C3', 
-                    count: c3Total, 
-                    color: 'from-green-500 to-emerald-500', 
-                    icon: FiUsers, 
-                    description: 'Standar C3',
-                    barData: c3BarData.length > 0 ? c3BarData : [
-                        { category: '3A-1', value: 0 },
-                        { category: '3A-2', value: 0 },
-                        { category: '3A-3', value: 0 }
-                    ]
-                }
-            ];
-
-            // Tambahkan grafik C4 jika user punya akses
-            if (c4Results.filter(Boolean).length > 0) {
-                chartDataArray.push({
-                    name: 'C4',
-                    count: c4Total,
-                    color: 'from-teal-500 to-cyan-500',
-                    icon: FiTarget,
-                    description: 'Standar C4',
-                    barData: c4BarData.length > 0 ? c4BarData : [
-                        { category: '4A-1', value: 0 },
-                        { category: '4A-2', value: 0 }
-                    ]
-                });
+            if (hasUsersAccess) {
+                panelAdminBarData.push({ category: 'Users', value: usersCount });
             }
-
-            // Tambahkan grafik C5 jika user punya akses
-            if (c5Results.filter(Boolean).length > 0) {
-                chartDataArray.push({
-                    name: 'C5',
-                    count: c5Total,
-                    color: 'from-amber-500 to-orange-500',
-                    icon: FiDatabase,
-                    description: 'Standar C5',
-                    barData: c5BarData.length > 0 ? c5BarData : [
-                        { category: '5A-1', value: 0 },
-                        { category: '5A-2', value: 0 }
-                    ]
-                });
-            }
-
-            // Tambahkan grafik C6 jika user punya akses
-            if (c6Results.filter(Boolean).length > 0) {
-                chartDataArray.push({
-                    name: 'C6',
-                    count: c6Total,
-                    color: 'from-rose-500 to-pink-500',
-                    icon: FiFileText,
-                    description: 'Standar C6',
-                    barData: c6BarData.length > 0 ? c6BarData : [
-                        { category: '6A-1', value: 0 },
-                        { category: '6A-2', value: 0 }
-                    ]
-                });
-            }
-
-            // Tambahkan grafik Panel Admin jika user punya akses ke dosen atau pegawai
-            if (hasDosenAccess || hasPegawaiAccess) {
-                const panelAdminBarData = [];
-                if (hasDosenAccess) {
-                    panelAdminBarData.push({ category: 'Dosen', value: dosenCount });
-                }
-                if (hasPegawaiAccess) {
-                    panelAdminBarData.push({ category: 'Pegawai', value: pegawaiCount });
-                }
-                
-                const panelAdminTotal = dosenCount + pegawaiCount;
-                
-                chartDataArray.push({
-                    name: 'Panel Admin',
-                    count: panelAdminTotal,
-                    color: 'from-pink-500 to-rose-500',
-                    icon: FiSettings,
-                    description: 'Panel Administrasi',
-                    barData: panelAdminBarData.length > 0 ? panelAdminBarData : [
-                        { category: 'Dosen', value: 0 },
-                        { category: 'Pegawai', value: 0 }
-                    ]
-                });
-            }
-
-            setChartData(chartDataArray);
             
-            setLoading(false);
-        };
+            const panelAdminTotal = dosenCount + pegawaiCount + usersCount;
+            
+            chartDataArray.push({
+                name: 'Panel Admin',
+                count: panelAdminTotal,
+                color: 'from-pink-500 to-rose-500',
+                icon: FiSettings,
+                description: 'Panel Administrasi',
+                barData: panelAdminBarData.length > 0 ? panelAdminBarData : [
+                    { category: 'Dosen', value: 0 },
+                    { category: 'Pegawai', value: 0 },
+                    { category: 'Users', value: 0 }
+                ]
+            });
+        }
 
+        setChartData(chartDataArray);
+        setLoading(false);
+    }, [role]);
+
+    // Fetch data untuk semua tabel saat pertama kali load
+    useEffect(() => {
         if (role) {
-            fetchAllData();
+            fetchAllChartData();
         } else {
             setLoading(false);
         }
-    }, [role]);
+    }, [role, fetchAllChartData]);
+
+    // Auto-refresh grafik setiap 30 detik dan saat window focus untuk sinkronisasi dengan data tabel
+    useEffect(() => {
+        if (!role) return;
+
+        // Auto-refresh setiap 30 detik
+        const intervalId = setInterval(() => {
+            fetchAllChartData();
+        }, 30000); // 30 detik
+
+        // Refresh saat window focus (user kembali ke tab)
+        window.addEventListener('focus', fetchAllChartData);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('focus', fetchAllChartData);
+        };
+    }, [role, fetchAllChartData]);
 
     // Hitung persentase untuk progress bar (max 100 untuk scaling yang lebih baik)
     const maxValue = 100;
@@ -1876,13 +1961,32 @@ const GrafikTabel = () => {
     // Items per slide (1 item per slide)
     const itemsPerSlide = 1;
     const totalSlides = Math.ceil(chartData.length / itemsPerSlide);
+    const [isLooping, setIsLooping] = useState(false);
 
     const nextSlide = () => {
-        setCurrentSlide((prev) => (prev + 1) % totalSlides);
+        if (currentSlide === totalSlides - 1) {
+            // Dari slide terakhir ke slide pertama (loop)
+            setIsLooping(true);
+            setCurrentSlide(0);
+            // Reset isLooping setelah animasi selesai
+            setTimeout(() => setIsLooping(false), 50);
+        } else {
+            setIsLooping(false);
+            setCurrentSlide((prev) => prev + 1);
+        }
     };
 
     const prevSlide = () => {
-        setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+        if (currentSlide === 0) {
+            // Dari slide pertama ke slide terakhir (loop)
+            setIsLooping(true);
+            setCurrentSlide(totalSlides - 1);
+            // Reset isLooping setelah animasi selesai
+            setTimeout(() => setIsLooping(false), 50);
+        } else {
+            setIsLooping(false);
+            setCurrentSlide((prev) => prev - 1);
+        }
     };
 
     return (
@@ -1894,6 +1998,16 @@ const GrafikTabel = () => {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-900">Grafik Data Tabel</h3>
                 <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => {
+                            fetchAllChartData();
+                        }}
+                        disabled={loading}
+                        className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        title="Refresh data grafik"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
                     <button 
                         onClick={() => router.push('/tables')}
                         className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
@@ -1908,24 +2022,69 @@ const GrafikTabel = () => {
                 <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
             ) : (
                 <div className="relative">
+                    {/* Navigation Buttons - Outside Carousel */}
+                    {totalSlides > 1 && (
+                        <div className="flex items-center justify-between mb-4">
+                            <button
+                                onClick={prevSlide}
+                                className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-sm hover:shadow-md"
+                                aria-label="Previous slide"
+                            >
+                                <FiChevronLeft className="w-5 h-5" />
+                            </button>
+                            
+                            {/* Dots Indicator */}
+                            <div className="flex items-center gap-2">
+                                {Array.from({ length: totalSlides }).map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => {
+                                            setIsLooping(false);
+                                            setCurrentSlide(index);
+                                        }}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                            currentSlide === index
+                                                ? 'bg-[#0384d6] w-6'
+                                                : 'bg-gray-300 hover:bg-gray-400'
+                                        }`}
+                                        aria-label={`Go to slide ${index + 1}`}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <button
+                                onClick={nextSlide}
+                                className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-sm hover:shadow-md"
+                                aria-label="Next slide"
+                            >
+                                <FiChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Carousel Container */}
                     <div className="overflow-hidden rounded-xl">
                         <motion.div
+                            key={isLooping ? `loop-${currentSlide}` : `normal-${currentSlide}`}
                             animate={{
                                 x: `-${currentSlide * (100 / totalSlides)}%`
                             }}
-                            transition={{
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 30
-                            }}
+                            transition={
+                                isLooping
+                                    ? { duration: 0 }
+                                    : {
+                                          type: "spring",
+                                          stiffness: 300,
+                                          damping: 30
+                                      }
+                            }
                             className="flex"
                             style={{ width: `${totalSlides * 100}%` }}
                         >
                             {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                                 <div
                                     key={slideIndex}
-                                    className="w-full"
+                                    className="w-full px-1"
                                     style={{ width: `${100 / totalSlides}%`, flexShrink: 0 }}
                                 >
                                     {chartData.slice(slideIndex * itemsPerSlide, slideIndex * itemsPerSlide + itemsPerSlide).map((item, itemIndex) => {
@@ -2019,22 +2178,8 @@ const GrafikTabel = () => {
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* Bottom Section dengan Navigation, Data, Progress */}
+                                                    {/* Bottom Section dengan Data dan Progress */}
                                                     <div className="flex items-end justify-between gap-4">
-                                                        {/* Left Navigation */}
-                                                        {totalSlides > 1 && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    prevSlide();
-                                                                }}
-                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
-                                                                aria-label="Previous slide"
-                                                            >
-                                                                <FiChevronLeft className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-
                                                         {/* Data Section */}
                                                         <div className="flex-1">
                                                             <div className="text-4xl font-extrabold text-slate-900 mb-1">{item.count}</div>
@@ -2058,20 +2203,6 @@ const GrafikTabel = () => {
                                                             </div>
                                                             <div className="text-xs text-gray-500">Progress</div>
                                                         </div>
-
-                                                        {/* Right Navigation */}
-                                                        {totalSlides > 1 && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    nextSlide();
-                                                                }}
-                                                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all duration-300 flex-shrink-0"
-                                                                aria-label="Next slide"
-                                                            >
-                                                                <FiChevronRight className="w-4 h-4" />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </motion.div>
                                             </div>
@@ -2121,12 +2252,15 @@ export default function App() {
   const c3AccessKeys = [
     "tabel_3a1_sarpras_penelitian",
     "tabel_3a2_penelitian",
-    "tabel_3a3_pengembangan_dtpr"
+    "tabel_3a3_pengembangan_dtpr",
+    "tabel_3c1_kerjasama_penelitian",
+    "tabel_3c2_publikasi_penelitian",
+    "tabel_3c3_hki"
   ];
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   // Akses C4, C5, C6
-  const c4AccessKeys = ["tabel_4a1", "tabel_4a2"];
+  const c4AccessKeys = ["tabel_4a1_sarpras_pkm", "tabel_4a2"];
   const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   const c5AccessKeys = ["tabel_5a1", "tabel_5a2"];

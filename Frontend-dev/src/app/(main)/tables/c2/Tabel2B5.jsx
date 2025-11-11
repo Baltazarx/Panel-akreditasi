@@ -446,9 +446,16 @@ export default function Tabel2B5({ role }) {
         <h1 className="text-2xl font-bold text-slate-800">
           Tabel 2.B.5 Kesesuaian Bidang Kerja Lulusan
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Data bidang profesi lulusan dan lingkup kerja (TS, TS-1, TS-2)
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Data bidang profesi lulusan dan lingkup kerja (TS, TS-1, TS-2)
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+            </span>
+          )}
+        </div>
       </header>
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">

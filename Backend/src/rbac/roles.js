@@ -164,6 +164,7 @@ export const AccessMatrix = {
   // ========== SARPRAS ==========
   'sarpras': {
     'tabel_3a1_sarpras_penelitian': { C: true, R: true, U: true, D: true },
+    'tabel_4a1_sarpras_pkm': { C: true, R: true, U: true, D: true },
   },
 
   // ========== KEMAHASISWAAN ==========

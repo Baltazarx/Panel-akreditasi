@@ -120,23 +120,28 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
-          <h2 className="text-xl font-bold text-slate-800">
-            {initialData ? "Edit" : "Tambah"} {LABEL}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold">
+                {initialData ? "Edit" : "Tambah"} {LABEL}
+              </h2>
+              <p className="text-white/80 mt-1 text-sm">Lengkapi data perolehan HKI sesuai dengan format LKPS.</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {/* Nama DTPR */}
           <div>
             <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-1">
@@ -231,19 +236,19 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="px-6 py-3 rounded-xl border-2 border-red-500 text-red-500 font-medium bg-white hover:bg-red-500 hover:border-red-500 hover:text-white active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          <div className="flex gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
             >
               Batal
             </button>
-            <button 
-              type="submit" 
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0384d6] to-[#043975] hover:from-[#043975] hover:to-[#0384d6] text-white font-semibold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
-              Simpan
+              {initialData ? "Simpan Perubahan" : "Tambah Data"}
             </button>
           </div>
         </form>
@@ -424,11 +429,11 @@ function DataTable({
                   </td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{row.jenis_hki || "-"}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{row.nama_dtpr || "-"}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts4}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts3}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts2}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts1}</td>
-                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{tahunPerolehan.ts}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunPerolehan.ts4}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunPerolehan.ts3}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunPerolehan.ts2}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunPerolehan.ts1}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunPerolehan.ts}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">
                     {row.link_bukti ? (
                       <a 
@@ -475,32 +480,32 @@ function DataTable({
           )}
           {/* Summary Row */}
           {filteredRows.length > 0 && (
-            <tr className="bg-gray-100">
-              {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+            <tr className="bg-white">
+              {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-white"></td>}
               <td 
                 colSpan={4} 
-                className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white"
               >
                 Jumlah HKI
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts4 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts3 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts2 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts1 === '√').length}
               </td>
-              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts === '√').length}
               </td>
               <td 
                 colSpan={2} 
-                className="px-4 py-3 border border-slate-200 bg-gray-200"
+                className="px-4 py-3 border border-slate-200 bg-white"
               ></td>
             </tr>
           )}
@@ -872,80 +877,89 @@ export default function Tabel3C3({ auth, role }) {
     }
   };
 
+  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-            <p className="text-sm text-slate-600 mt-1">Kelola data perolehan HKI (Granted)</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {canCreate && (
-              <button
-                onClick={() => {
-                  setEditingRow(null);
-                  setIsModalOpen(true);
-                }}
-                className="px-4 py-2 bg-gradient-to-r from-[#0384d6] to-[#043975] text-white rounded-lg hover:from-[#043975] hover:to-[#0384d6] transition-all duration-300 shadow-md hover:shadow-lg font-medium"
-              >
-                + Tambah Data
-              </button>
-            )}
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-            >
-              <FiDownload className="w-4 h-4" />
-              Export Excel
-            </button>
-          </div>
+    <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
+      <header className="pb-6 mb-6 border-b border-slate-200">
+        <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data perolehan HKI (Granted) sesuai dengan format LKPS.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{filteredRows.length}</span>
+            </span>
+          )}
         </div>
-      </div>
+      </header>
 
       {/* Filter & Controls */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="flex-1">
-            <label htmlFor="tahun" className="block text-sm font-medium text-slate-700 mb-2">
-              Pilih Tahun Akademik (TS)
-            </label>
-            <select
-              id="tahun"
-              value={selectedTahun || ""}
-              onChange={(e) => setSelectedTahun(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
+            {loading ? "Memuat..." : `${filteredRows.length} baris`}
+          </span>
+          <label htmlFor="tahun" className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            Pilih Tahun Akademik (TS):
+          </label>
+          <select
+            id="tahun"
+            value={selectedTahun || ""}
+            onChange={(e) => setSelectedTahun(e.target.value ? parseInt(e.target.value) : null)}
+            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+            disabled={loading}
+          >
+            <option value="">Pilih Tahun</option>
+            {tahunList.length > 0 ? (
+              tahunList.map((t) => (
+                <option key={t.id_tahun} value={t.id_tahun}>
+                  {t.tahun || t.nama || t.id_tahun}
+                </option>
+              ))
+            ) : (
+              <option value="">Tidak ada data tahun</option>
+            )}
+          </select>
+          <button 
+            onClick={() => setShowDeleted(!showDeleted)} 
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+            }`}
+            disabled={loading}
+            aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
+          >
+            {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+          </button>
+        </div>
+        <div className="flex items-center gap-4">
+          {canCreate && (
+            <button
+              onClick={() => {
+                setEditingRow(null);
+                setIsModalOpen(true);
+              }}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              aria-label="Tambah data baru"
             >
-              <option value="">Pilih Tahun</option>
-              {tahunList.length > 0 ? (
-                tahunList.map((t) => (
-                  <option key={t.id_tahun} value={t.id_tahun}>
-                    {t.tahun || t.nama || t.id_tahun}
-                  </option>
-                ))
-              ) : (
-                <option value="">Tidak ada data tahun</option>
-              )}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="showDeleted"
-              checked={showDeleted}
-              onChange={(e) => setShowDeleted(e.target.checked)}
-              className="w-4 h-4 text-[#0384d6] border-gray-300 rounded focus:ring-[#0384d6]"
-            />
-            <label htmlFor="showDeleted" className="text-sm text-slate-700">
-              Tampilkan data yang dihapus
-            </label>
-          </div>
+              + Tambah Data
+            </button>
+          )}
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={loading}
+          >
+            <FiDownload className="w-4 h-4" />
+            Export Excel
+          </button>
         </div>
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-2xl shadow-md border p-6">
+      <div>
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>

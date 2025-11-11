@@ -259,11 +259,6 @@ function DataTable({
     }
   }, [openDropdownId]);
 
-  const getUnitName = (id) => {
-    const unit = maps?.units?.[id] || maps?.unit_kerja?.[id];
-    return unit?.nama_unit || id || "-";
-  };
-
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
@@ -280,7 +275,6 @@ function DataTable({
               </th>
             )}
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit/Prodi</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Prasarana</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Luas Ruang (m²)</th>
@@ -295,7 +289,7 @@ function DataTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td 
-                colSpan={showDeleted ? 11 : 10} 
+                colSpan={showDeleted ? 10 : 9} 
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -327,7 +321,6 @@ function DataTable({
                   </td>
                 )}
                 <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{getUnitName(r.id_unit_prodi)}</td>
                 <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_sarpras || "-"}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.daya_tampung || "-"}</td>
                 <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.luas_ruang_m2 || "-"}</td>
@@ -696,9 +689,16 @@ export default function Tabel3A1({ auth, role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data sarana dan prasarana penelitian sesuai dengan format LKPS.
-        </p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data sarana dan prasarana penelitian sesuai dengan format LKPS.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{filteredRows.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

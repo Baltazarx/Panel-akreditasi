@@ -738,7 +738,16 @@ export default function Tabel2C({ role }) {
       {/* Header */}
       <header className="pb-6 mb-2 border-b border-slate-200">
         <h2 className="text-2xl font-bold text-slate-800">Tabel 2.C Fleksibilitas Dalam Proses Pembelajaran</h2>
-        <p className="text-sm text-slate-600 mt-1">Menampilkan TS-4, TS-3, TS-2, TS-1, TS berdasarkan tahun akademik terpilih.</p>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-600">
+            Menampilkan TS-4, TS-3, TS-2, TS-1, TS berdasarkan tahun akademik terpilih.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{bentukList.length}</span>
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">

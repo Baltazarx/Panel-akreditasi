@@ -155,6 +155,7 @@ export const ACCESS_MATRIX = {
   // ========== SARPRAS (dari backend roles.js) ==========
   'sarpras': {
     'tabel_3a1_sarpras_penelitian': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    'tabel_4a1_sarpras_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.A.1 Sarpras PkM
   },
 
   // Role lain dari file asli Anda (ala, pmb, kemahasiswaan) perlu ditinjau ulang

@@ -424,7 +424,7 @@ export default function TablesPage() {
 
   // Akses C4: jika ada akses ke tabel C4
   const c4AccessKeys = [
-    "tabel_4a1",
+    "tabel_4a1_sarpras_pkm",
     "tabel_4a2"
   ]; // tabel-tabel yang ada di C4
   const hasC4Access = c4AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));

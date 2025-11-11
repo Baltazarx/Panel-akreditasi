@@ -358,7 +358,7 @@ function DataTable({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+    <div className="overflow-x-auto rounded-lg border border-slate-300 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           {/* Header Level 1 */}
@@ -381,12 +381,12 @@ function DataTable({
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-300">
           {filteredRows.length === 0 ? (
             <tr>
               <td 
                 colSpan={showDeleted ? 11 : 10} 
-                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                className="px-6 py-16 text-center text-slate-500 border border-slate-300"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
                 <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
@@ -397,11 +397,11 @@ function DataTable({
               <tr
                 key={r.id || i}
                 className={`transition-colors ${
-                  i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  i % 2 === 0 ? "bg-white" : "bg-white"
                 } hover:bg-[#eaf4ff]`}
               >
                 {showDeleted && (
-                  <td className="px-4 py-3 text-center border border-slate-200">
+                  <td className="px-4 py-3 text-center border border-slate-300">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(r.id)}
@@ -416,21 +416,21 @@ function DataTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800 max-w-xs">
+                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{i + 1}</td>
+                <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
                   <div className="truncate" title={r.judul_kerjasama || ""}>
                     {r.judul_kerjasama || "-"}
                   </div>
                 </td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+                <td className="px-4 py-3 border border-slate-300 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">
                   {r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-"}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts2 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts1 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-yellow-50">{formatJuta(r.pendanaan_ts || 0)}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.durasi_tahun || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts2 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts1 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts || 0)}</td>
+                <td className="px-4 py-3 border border-slate-300 text-slate-700">
                   {r.link_bukti ? (
                     <a 
                       href={r.link_bukti} 
@@ -444,7 +444,7 @@ function DataTable({
                     <span className="text-slate-400">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 border border-slate-200">
+                <td className="px-4 py-3 border border-slate-300">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {
@@ -477,41 +477,41 @@ function DataTable({
           {filteredRows.length > 0 && (
             <>
               {/* Jumlah Dana */}
-              <tr className="bg-gray-100">
-                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+              <tr className="bg-white">
+                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={5} 
-                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                  className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
                 >
                   Jumlah Dana
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0))}
                 </td>
-                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
-                <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>
+                <td className="px-4 py-3 border border-slate-300 bg-white"></td>
+                <td className="px-4 py-3 border border-slate-300 bg-white"></td>
               </tr>
               {/* Jumlah Mitra Kerjasama */}
-              <tr className="bg-gray-100">
-                {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-gray-200"></td>}
+              <tr className="bg-white">
+                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={2} 
-                  className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-gray-200"
+                  className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
                 >
                   Jumlah Mitra Kerjasama
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-yellow-100">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {filteredRows.length}
                 </td>
                 <td 
                   colSpan={7} 
-                  className="px-4 py-3 border border-slate-200 bg-gray-200"
+                  className="px-4 py-3 border border-slate-300 bg-white"
                 ></td>
               </tr>
             </>
@@ -939,53 +939,52 @@ export default function Tabel3C1({ auth, role }) {
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola data kerjasama penelitian sesuai dengan format LKPS.
-        </p>
-      </header>
-
-      {/* Filter Tahun */}
-      <div className="mb-4 bg-white rounded-lg shadow-md border p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Pilih Tahun Akademik (TS)
-            </label>
-            <select
-              value={selectedTahun || ""}
-              onChange={(e) => setSelectedTahun(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-            >
-              <option value="">Pilih Tahun</option>
-              {tahunList && tahunList.length > 0 ? (
-                tahunList.map((tahun) => (
-                  <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                    {tahun.tahun || tahun.nama || tahun.id_tahun}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>Tidak ada data tahun</option>
-              )}
-            </select>
-          </div>
-          {selectedTahun && (
-            <div className="text-sm text-slate-600">
-              <p><strong>TS:</strong> {tahunList.find(t => t.id_tahun === parseInt(selectedTahun))?.tahun || selectedTahun}</p>
-            </div>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-slate-500">
+            Kelola data kerjasama penelitian sesuai dengan format LKPS.
+          </p>
+          {!loading && (
+            <span className="inline-flex items-center text-sm text-slate-700">
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{filteredRows.length}</span>
+            </span>
           )}
         </div>
-      </div>
+      </header>
 
+      {/* Filter & Controls */}
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {filteredRows.length} baris
+            {loading ? "Memuat..." : `${filteredRows.length} baris`}
           </span>
+          <label htmlFor="tahun" className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            Pilih Tahun Akademik (TS):
+          </label>
+          <select
+            id="tahun"
+            value={selectedTahun || ""}
+            onChange={(e) => setSelectedTahun(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+            disabled={loading}
+          >
+            <option value="">Pilih Tahun</option>
+            {tahunList && tahunList.length > 0 ? (
+              tahunList.map((tahun) => (
+                <option key={tahun.id_tahun} value={tahun.id_tahun}>
+                  {tahun.tahun || tahun.nama || tahun.id_tahun}
+                </option>
+              ))
+            ) : (
+              <option value="">Tidak ada data tahun</option>
+            )}
+          </select>
           <button 
             onClick={() => setShowDeleted(!showDeleted)} 
             className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
             }`}
+            disabled={loading}
+            aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
           >
             {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
           </button>
@@ -1006,6 +1005,8 @@ export default function Tabel3C1({ auth, role }) {
             <button
               onClick={() => { setModalOpen(true); setEditingRow(null); }}
               className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              aria-label="Tambah data baru"
             >
               + Tambah Data
             </button>
@@ -1014,48 +1015,46 @@ export default function Tabel3C1({ auth, role }) {
             <button
               onClick={handleExport}
               className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              disabled={!tahunTS}
+              disabled={!tahunTS || loading}
             >
-              <FiDownload size={18} />
+              <FiDownload className="w-4 h-4" />
               Export Excel
             </button>
           )}
         </div>
       </div>
 
-      {/* Loading indicator */}
-      {loading && (
-        <div className="text-center py-8">
-          <p className="text-slate-500">Memuat data...</p>
-        </div>
-      )}
-
       {/* Data Table */}
-      {!loading && tahunTS && (
-        <DataTable
-          rows={rows}
-          maps={maps}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onRestore={handleRestore}
-          onHardDelete={handleHardDelete}
-          showDeleted={showDeleted}
-          selectedRows={selectedRows}
-          setSelectedRows={setSelectedRows}
-          isAllSelected={isAllSelected}
-          handleSelectAll={handleSelectAll}
-          tahunList={tahunList}
-          tahunTS={tahunTS}
-        />
-      )}
-
-      {!loading && !tahunTS && (
-        <div className="text-center py-8 bg-white rounded-lg border border-slate-200">
-          <p className="text-slate-500">Silakan pilih tahun akademik untuk melihat data.</p>
-        </div>
-      )}
+      <div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+            <p className="mt-4 text-slate-600">Memuat data...</p>
+          </div>
+        ) : !tahunTS ? (
+          <div className="text-center py-12">
+            <p className="text-slate-500">Silakan pilih tahun akademik untuk melihat data.</p>
+          </div>
+        ) : (
+          <DataTable
+            rows={rows}
+            maps={maps}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onRestore={handleRestore}
+            onHardDelete={handleHardDelete}
+            showDeleted={showDeleted}
+            selectedRows={selectedRows}
+            setSelectedRows={setSelectedRows}
+            isAllSelected={isAllSelected}
+            handleSelectAll={handleSelectAll}
+            tahunList={tahunList}
+            tahunTS={tahunTS}
+          />
+        )}
+      </div>
 
       {/* Modal */}
       <ModalForm
