@@ -1594,7 +1594,7 @@ const GrafikTabel = () => {
     ];
 
     const C4_TABLES = [
-        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1-sarpras-pkm', accessKey: 'tabel_4a1' },
+        { key: '4a1', label: '4A-1', endpoint: '/tabel-4a1-sarpras-pkm', accessKey: 'tabel_4a1_sarpras_pkm' },
         { key: '4a2', label: '4A-2', endpoint: '/tabel-4a2', accessKey: 'tabel_4a2' }
     ];
 
@@ -2260,7 +2260,7 @@ export default function App() {
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   // Akses C4, C5, C6
-  const c4AccessKeys = ["tabel_4a1", "tabel_4a2"];
+  const c4AccessKeys = ["tabel_4a1_sarpras_pkm", "tabel_4a2"];
   const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   const c5AccessKeys = ["tabel_5a1", "tabel_5a2"];

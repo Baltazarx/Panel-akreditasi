@@ -10,7 +10,7 @@ import Tabel4A1 from "./Tabel4A1";
 import Tabel4A2 from "./Tabel4A2";
 
 const ALL_TABLES = [
-  { key: "4a1", label: "Tabel 4A-1", Component: Tabel4A1, accessKey: "tabel_4a1" },
+  { key: "4a1", label: "Tabel 4A-1", Component: Tabel4A1, accessKey: "tabel_4a1_sarpras_pkm" },
   { key: "4a2", label: "Tabel 4A-2", Component: Tabel4A2, accessKey: "tabel_4a2" },
 ];
 
