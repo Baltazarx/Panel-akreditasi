@@ -13,10 +13,21 @@ export default function Tabel2B4({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
   const tableKey = "tabel_2b4_masa_tunggu";
   
+  // Cek apakah user adalah role kemahasiswaan
+  const userRole = authUser?.role || role;
+  const isKemahasiswaan = userRole?.toLowerCase() === 'kemahasiswaan';
+  
+  // Cek apakah user adalah superadmin (bisa melihat semua prodi)
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTahun, setSelectedTahun] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -51,16 +62,46 @@ export default function Tabel2B4({ role }) {
   });
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // Pastikan showDeleted selalu false untuk role kemahasiswaan
+  useEffect(() => {
+    if (isKemahasiswaan && showDeleted) {
+      setShowDeleted(false);
+    }
+  }, [isKemahasiswaan, showDeleted]);
+
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
-  // Fetch data berdasarkan tahun yang dipilih
+  // Filter prodi yang tersedia (hanya TI dan MI)
+  const availableUnits = useMemo(() => {
+    return [
+      { id: 4, nama: "Teknik Informatika (TI)" },
+      { id: 5, nama: "Manajemen Informatika (MI)" }
+    ];
+  }, []);
+
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  useEffect(() => {
+    if (!selectedUnit) {
+      if (!isSuperAdmin && userProdiId) {
+        // User prodi: gunakan prodi mereka
+        setSelectedUnit(parseInt(userProdiId));
+      } else if (isSuperAdmin && availableUnits.length > 0) {
+        // Superadmin: pilih prodi pertama
+        setSelectedUnit(parseInt(availableUnits[0].id));
+      }
+    }
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
+
+  // Fetch data - ambil semua data, filter di frontend untuk menampilkan TS-4 sampai TS
   const fetchData = async () => {
     try {
       setLoading(true);
-      let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
-      if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
+      let params = showDeleted ? "?include_deleted=1" : "";
+      if (selectedUnit) {
+        params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
+      }
       console.log('Fetching Tabel2B4 data with params:', params);
       const result = await apiFetch(`/tabel2b4-masa-tunggu${params}`);
       console.log('Tabel2B4 data received:', result);
@@ -74,8 +115,10 @@ export default function Tabel2B4({ role }) {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [selectedTahun, showDeleted]);
+    if (selectedUnit) {
+      fetchData();
+    }
+  }, [showDeleted, selectedUnit]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -128,14 +171,29 @@ export default function Tabel2B4({ role }) {
 
   // Data untuk tabel dengan format TS-4, TS-3, TS-2, TS-1, TS
   const tableData = useMemo(() => {
-    const currentYear = new Date().getFullYear();
+    // Gunakan selectedTahun sebagai referensi tahun untuk TS, jika tidak ada gunakan tahun saat ini
+    const referenceYear = selectedTahun || new Date().getFullYear();
     const tsData = {};
     
+    // Filter data berdasarkan tahun yang dipilih (tahun referensi dan 4 tahun sebelumnya) dan prodi
+    let filteredData = selectedTahun 
+      ? data.filter(item => {
+          const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
+          const tsKey = referenceYear - tahunLulus;
+          return tsKey >= 0 && tsKey <= 4;
+        })
+      : data;
+    
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
+      filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
+    }
+    
     // Group data by tahun
-    data.forEach(item => {
+    filteredData.forEach(item => {
       // Gunakan id_tahun_lulus langsung (sudah angka)
-      const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || currentYear);
-      const tsKey = currentYear - tahunLulus;
+      const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
+      const tsKey = referenceYear - tahunLulus;
       
       if (tsKey >= 0 && tsKey <= 4) {
         tsData[tsKey] = item;
@@ -158,10 +216,10 @@ export default function Tabel2B4({ role }) {
     }
     
     // Tambahkan baris total
-    const totalLulusan = data.reduce((sum, item) => sum + (item.jumlah_lulusan || 0), 0);
-    const totalTerlacak = data.reduce((sum, item) => sum + (item.jumlah_terlacak || 0), 0);
-    const avgTunggu = data.length > 0 
-      ? data.reduce((sum, item) => sum + (item.rata_rata_waktu_tunggu_bulan || 0), 0) / data.length 
+    const totalLulusan = filteredData.reduce((sum, item) => sum + (item.jumlah_lulusan || 0), 0);
+    const totalTerlacak = filteredData.reduce((sum, item) => sum + (item.jumlah_terlacak || 0), 0);
+    const avgTunggu = filteredData.length > 0 
+      ? filteredData.reduce((sum, item) => sum + (item.rata_rata_waktu_tunggu_bulan || 0), 0) / filteredData.length 
       : 0;
     
     rows.push({
@@ -173,11 +231,11 @@ export default function Tabel2B4({ role }) {
     });
     
     return rows;
-  }, [data]);
+  }, [data, selectedTahun, selectedUnit]);
 
   const handleAddClick = () => {
     setFormState({
-      id_unit_prodi: authUser?.unit || "",
+      id_unit_prodi: selectedUnit || authUser?.unit || "",
       id_tahun_lulus: selectedTahun || "",
       jumlah_lulusan: "",
       jumlah_terlacak: "",
@@ -406,6 +464,26 @@ export default function Tabel2B4({ role }) {
     </div>
   );
 
+  // Unit Selector Component
+  const UnitSelector = () => (
+    <div className="flex items-center gap-2">
+      <label htmlFor="filter-prodi" className="text-sm font-medium text-slate-700">Prodi:</label>
+      <select
+        id="filter-prodi"
+        value={selectedUnit || ""}
+        onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : null)}
+        className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-64"
+        disabled={loading}
+      >
+        {availableUnits.map(u => (
+          <option key={u.id} value={u.id} className="text-slate-700">
+            {u.nama}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       
@@ -437,7 +515,8 @@ export default function Tabel2B4({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {canDelete && (
+          {isSuperAdmin && <UnitSelector />}
+          {canDelete && !isKemahasiswaan && (
             <button
               onClick={() => setShowDeleted(prev => !prev)}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${

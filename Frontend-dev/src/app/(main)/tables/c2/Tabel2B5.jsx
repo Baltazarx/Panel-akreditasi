@@ -12,10 +12,22 @@ export default function Tabel2B5({ role }) {
   const { authUser } = useAuth();
   const { maps, loading: mapsLoading } = useMaps(true);
   const tableKey = "tabel_2b5_kesesuaian_kerja";
+  
+  // Cek apakah user adalah role kemahasiswaan
+  const userRole = authUser?.role || role;
+  const isKemahasiswaan = userRole?.toLowerCase() === 'kemahasiswaan';
+  
+  // Cek apakah user adalah superadmin (bisa melihat semua prodi)
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTahun, setSelectedTahun] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
   
@@ -93,6 +105,13 @@ export default function Tabel2B5({ role }) {
   });
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // Pastikan showDeleted selalu false untuk role kemahasiswaan
+  useEffect(() => {
+    if (isKemahasiswaan && showDeleted) {
+      setShowDeleted(false);
+    }
+  }, [isKemahasiswaan, showDeleted]);
+
   const availableYears = useMemo(() => {
     const years = Object.values(maps?.tahun || {}).map(year => ({
       id: year.id_tahun,
@@ -100,6 +119,14 @@ export default function Tabel2B5({ role }) {
     }));
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
+
+  // Filter prodi yang tersedia (hanya TI dan MI)
+  const availableUnits = useMemo(() => {
+    return [
+      { id: 4, nama: "Teknik Informatika (TI)" },
+      { id: 5, nama: "Manajemen Informatika (MI)" }
+    ];
+  }, []);
 
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
@@ -109,6 +136,9 @@ export default function Tabel2B5({ role }) {
     try {
       setLoading(true);
       let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
+      if (selectedUnit) {
+        params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
+      }
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
       const result = await apiFetch(`/tabel2b5-kesesuaian-kerja${params}`);
       setData(result);
@@ -129,7 +159,20 @@ export default function Tabel2B5({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  useEffect(() => { fetchData(); }, [selectedTahun, showDeleted]);
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  useEffect(() => {
+    if (!selectedUnit) {
+      if (!isSuperAdmin && userProdiId) {
+        // User prodi: gunakan prodi mereka
+        setSelectedUnit(parseInt(userProdiId));
+      } else if (isSuperAdmin && availableUnits.length > 0) {
+        // Superadmin: pilih prodi pertama
+        setSelectedUnit(parseInt(availableUnits[0].id));
+      }
+    }
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
+
+  useEffect(() => { fetchData(); }, [selectedTahun, selectedUnit, showDeleted]);
 
   // Mapping ke baris TS, TS-1, TS-2, TS-3, TS-4, Jumlah
   const tableData = useMemo(() => {
@@ -138,7 +181,12 @@ export default function Tabel2B5({ role }) {
     if (showDeleted) {
       // Tampilkan HANYA data yang sudah soft delete
       const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
-      const deletedRows = data.filter(item => item.deleted_at).map(item => {
+      let filteredData = data.filter(item => item.deleted_at);
+      // Filter berdasarkan prodi yang dipilih
+      if (selectedUnit) {
+        filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
+      }
+      const deletedRows = filteredData.map(item => {
         const idxTarget = availableYears.findIndex(y => parseInt(item.id_tahun_lulus) === y.id);
         const tsIdx = idxSelected - idxTarget;
         let tsLabel = (tsIdx >= 0 && tsIdx <= 4) ? (tsIdx === 0 ? "TS" : `TS-${tsIdx}`) : (availableYears[idxTarget]?.tahun || item.id_tahun_lulus);
@@ -181,7 +229,11 @@ export default function Tabel2B5({ role }) {
       const idxTarget = idxSelected - i;
       if (idxTarget < 0) continue;
       const yearMeta = availableYears[idxTarget];
-      const dataItem = data.find(d => parseInt(d.id_tahun_lulus) === yearMeta.id && !d.deleted_at);
+      const dataItem = data.find(d => {
+        const matchYear = parseInt(d.id_tahun_lulus) === yearMeta.id;
+        const matchUnit = selectedUnit ? parseInt(d.id_unit_prodi) === parseInt(selectedUnit) : true;
+        return matchYear && matchUnit && !d.deleted_at;
+      });
       rows.push({
         tahun_lulus: i === 0 ? "TS" : `TS-${i}`,
         tahun_label: yearMeta.tahun,
@@ -209,11 +261,11 @@ export default function Tabel2B5({ role }) {
       data: null
     });
     return rows;
-  }, [data, selectedTahun, availableYears, showDeleted]);
+  }, [data, selectedTahun, selectedUnit, availableYears, showDeleted]);
 
   const handleAddClick = () => {
     setFormState({
-      id_unit_prodi: authUser?.unit || "",
+      id_unit_prodi: selectedUnit || authUser?.unit || "",
       id_tahun_lulus: selectedTahun || "",
       jumlah_lulusan: "",
       jumlah_terlacak: "",
@@ -435,6 +487,26 @@ export default function Tabel2B5({ role }) {
     </div>
   );
 
+  // Unit Selector Component
+  const UnitSelector = () => (
+    <div className="flex items-center gap-2">
+      <label htmlFor="filter-prodi" className="text-sm font-medium text-slate-700">Prodi:</label>
+      <select
+        id="filter-prodi"
+        value={selectedUnit || ""}
+        onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : null)}
+        className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-64"
+        disabled={loading}
+      >
+        {availableUnits.map(u => (
+          <option key={u.id} value={u.id} className="text-slate-700">
+            {u.nama}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
       {mapsLoading && (
@@ -460,7 +532,8 @@ export default function Tabel2B5({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {canDelete && (
+          {isSuperAdmin && <UnitSelector />}
+          {canDelete && !isKemahasiswaan && (
             <button
               onClick={() => setShowDeleted(prev => !prev)}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"}`}

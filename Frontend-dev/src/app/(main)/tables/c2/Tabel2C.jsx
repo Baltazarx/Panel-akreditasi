@@ -52,6 +52,17 @@ export default function Tabel2C({ role }) {
   const [editingBentukName, setEditingBentukName] = useState(""); // Nama bentuk pembelajaran yang sedang diedit
                 
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(role?.toLowerCase());
+  
+  // Cek apakah user adalah prodi TI atau MI
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  const isProdiUser = userProdiId && (userProdiId === 4 || userProdiId === 5);
+  
+  // Pastikan showDeleted selalu false untuk user prodi
+  useEffect(() => {
+    if (isProdiUser && showDeleted) {
+      setShowDeleted(false);
+    }
+  }, [isProdiUser, showDeleted]);
 
   // Get available prodi for dropdown (hanya TI dan MI)
   const availableProdi = useMemo(() => {
@@ -780,7 +791,7 @@ export default function Tabel2C({ role }) {
             </>
           )}
           
-          {canDelete && (
+          {canDelete && !isProdiUser && (
             <button
               onClick={() => setShowDeleted(prev => !prev)}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm ${

@@ -8,6 +8,8 @@ import { apiFetch } from "../../../lib/api"; // Path disesuaikan
 
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 
+import { useAuth } from "../../../context/AuthContext";
+
 import Swal from 'sweetalert2';
 
 
@@ -20,6 +22,8 @@ import Swal from 'sweetalert2';
 
 export default function Pemetaan2B1({ role, refreshTrigger }) {
 
+  const { authUser } = useAuth();
+
   const [data, setData] = useState({ columns: [], data: [] });
 
   const [loading, setLoading] = useState(false);
@@ -30,7 +34,15 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
   // === BARU: Cek role SuperAdmin ===
 
-  const isSuperAdmin = ['waket1', 'waket2', 'tpm'].includes(role);
+  const userRole = authUser?.role || role;
+
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+
+  
+
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
 
   
 
@@ -38,7 +50,29 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
   // Asumsi ID: 4 = TI, 5 = MI. "" = Semua Prodi
 
-  const [selectedProdi, setSelectedProdi] = useState(""); 
+  const [selectedProdi, setSelectedProdi] = useState("");
+
+  
+
+  // Set selectedProdi untuk user prodi
+
+  useEffect(() => {
+
+    if (!isSuperAdmin && userProdiId && !selectedProdi) {
+
+      // User prodi: set ke prodi mereka
+
+      setSelectedProdi(String(userProdiId));
+
+    } else if (isSuperAdmin && !selectedProdi) {
+
+      // Superadmin: default ke "Semua Prodi" (empty string)
+
+      setSelectedProdi("");
+
+    }
+
+  }, [isSuperAdmin, userProdiId, selectedProdi]); 
 
 
 
@@ -54,7 +88,13 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
     const queryParams = new URLSearchParams();
 
-    if (isSuperAdmin && selectedProdi) {
+    // Jika user prodi, filter berdasarkan prodi mereka
+
+    if (!isSuperAdmin && userProdiId) {
+
+      queryParams.append("id_unit_prodi", String(userProdiId));
+
+    } else if (isSuperAdmin && selectedProdi) {
 
       queryParams.append("id_unit_prodi", selectedProdi);
 
@@ -100,7 +140,13 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
     const queryParams = new URLSearchParams();
 
-    if (isSuperAdmin && selectedProdi) {
+    // Jika user prodi, filter berdasarkan prodi mereka
+
+    if (!isSuperAdmin && userProdiId) {
+
+      queryParams.append("id_unit_prodi", String(userProdiId));
+
+    } else if (isSuperAdmin && selectedProdi) {
 
       queryParams.append("id_unit_prodi", selectedProdi);
 
@@ -160,13 +206,20 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
 
 
-  // === MODIFIKASI: Tambahkan selectedProdi sebagai dependency ===
+  // === MODIFIKASI: Tambahkan selectedProdi dan userProdiId sebagai dependency ===
 
   useEffect(() => {
 
-    fetchData();
+    // Hanya fetch jika:
+    // - User prodi dan userProdiId sudah ada, ATAU
+    // - Superadmin (bisa fetch tanpa filter atau dengan filter)
+    if ((!isSuperAdmin && userProdiId) || isSuperAdmin) {
 
-  }, [refreshTrigger, canRead, selectedProdi]); 
+      fetchData();
+
+    }
+
+  }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]); 
 
   // =========================================================
 

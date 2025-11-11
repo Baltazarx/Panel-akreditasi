@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
+import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 
@@ -10,6 +11,7 @@ import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 // MATA KULIAH CRUD
 // ============================================================
 export default function MataKuliahCRUD({ role, maps, onDataChange }) {
+  const { authUser } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -18,6 +20,13 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Cek apakah user adalah superadmin (bisa melihat semua prodi)
+  const userRole = authUser?.role || role;
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
   
   // === PERBAIKAN: State filter menyimpan id_unit_prodi ===
   const [selectedProdi, setSelectedProdi] = useState("");
@@ -36,6 +45,17 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   const canUpdate = roleCan(role, "mata_kuliah", "U");
   const canDelete = roleCan(role, "mata_kuliah", "D");
   
+  // Set selectedProdi untuk user prodi
+  useEffect(() => {
+    if (!isSuperAdmin && userProdiId && !selectedProdi) {
+      // User prodi: set ke prodi mereka
+      setSelectedProdi(String(userProdiId));
+    } else if (isSuperAdmin && !selectedProdi) {
+      // Superadmin: default ke "Semua Prodi" (empty string)
+      setSelectedProdi("");
+    }
+  }, [isSuperAdmin, userProdiId, selectedProdi]);
+
   // === PERBAIKAN: Logika filter disederhanakan ===
   const filteredRows = selectedProdi 
     ? rows.filter(row => row.id_unit_prodi == selectedProdi)
@@ -44,7 +64,14 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   const fetchRows = async () => {
     setLoading(true);
     try {
-      const result = await apiFetch("/mata-kuliah");
+      // Jika user prodi, filter berdasarkan prodi mereka
+      let url = "/mata-kuliah";
+      if (!isSuperAdmin && userProdiId) {
+        url += `?id_unit_prodi=${userProdiId}`;
+      } else if (isSuperAdmin && selectedProdi) {
+        url += `?id_unit_prodi=${selectedProdi}`;
+      }
+      const result = await apiFetch(url);
       setRows(result);
     } catch (err) {
       console.error("Error fetching Mata Kuliah:", err);
@@ -151,8 +178,13 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   // === Akhir helper fungsi ===
 
   useEffect(() => {
-    fetchRows();
-  }, []);
+    // Hanya fetch jika:
+    // - User prodi dan userProdiId sudah ada, ATAU
+    // - Superadmin dan selectedProdi sudah di-set (bisa empty string untuk "Semua Prodi")
+    if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
+      fetchRows();
+    }
+  }, [selectedProdi, isSuperAdmin, userProdiId]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -212,17 +244,17 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         cpmk: existingCpmk.length > 0 ? existingCpmk : [{ kode_cpmk: "", deskripsi: "" }]
       });
     } else {
-      // Reset form
+      // Reset form - Tambah data baru: auto-set id_unit_prodi untuk user prodi
       setFormState({
         kode_mk: "",
         nama_mk: "",
         sks: "",
         semester: "",
-        id_unit_prodi: "",
+        id_unit_prodi: (!isSuperAdmin && userProdiId) ? String(userProdiId) : "",
         cpmk: [{ kode_cpmk: "", deskripsi: "" }]
       });
     }
-  }, [editing]);
+  }, [editing, isSuperAdmin, userProdiId]);
   
   // Ekstrak Prodi dari maps untuk filter
   const prodiList = Object.values(maps?.units || {}).filter(
@@ -235,17 +267,19 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         <h2 className="text-lg font-semibold text-slate-800">Mata Kuliah</h2>
         <div className="flex items-center gap-3">
           
-          {/* === PERBAIKAN: Dropdown filter dinamis === */}
-          <select
-            value={selectedProdi}
-            onChange={(e) => setSelectedProdi(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
-          >
-            <option value="">Semua Prodi</option>
-            {prodiList.map(prodi => (
-              <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
-            ))}
-          </select>
+          {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
+          {isSuperAdmin && (
+            <select
+              value={selectedProdi}
+              onChange={(e) => setSelectedProdi(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
+            >
+              <option value="">Semua Prodi</option>
+              {prodiList.map(prodi => (
+                <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
+              ))}
+            </select>
+          )}
           
           {canCreate && (
             <button
@@ -400,7 +434,8 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                       value={formState.id_unit_prodi}
                       onChange={(e) => setFormState({...formState, id_unit_prodi: e.target.value})}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
+                      disabled={!!editing || !isSuperAdmin}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       <option value="">Pilih Unit Prodi</option>
                       {prodiList.map(prodi => (
