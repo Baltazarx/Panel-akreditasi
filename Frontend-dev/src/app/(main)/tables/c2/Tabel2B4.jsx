@@ -126,7 +126,7 @@ export default function Tabel2B4({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
-  // Data untuk tabel dengan format TS-2, TS-1, TS
+  // Data untuk tabel dengan format TS-4, TS-3, TS-2, TS-1, TS
   const tableData = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const tsData = {};
@@ -137,14 +137,14 @@ export default function Tabel2B4({ role }) {
       const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || currentYear);
       const tsKey = currentYear - tahunLulus;
       
-      if (tsKey >= 0 && tsKey <= 2) {
+      if (tsKey >= 0 && tsKey <= 4) {
         tsData[tsKey] = item;
       }
     });
     
     // Format untuk tabel
     const rows = [];
-    for (let i = 2; i >= 0; i--) {
+    for (let i = 4; i >= 0; i--) {
       const tsLabel = i === 0 ? "TS" : `TS-${i}`;
       const item = tsData[i];
       

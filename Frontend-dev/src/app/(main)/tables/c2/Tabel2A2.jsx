@@ -81,7 +81,10 @@ export default function Tabel2A2({ role }) {
       
       // Build query parameters
       const params = new URLSearchParams();
-      if (showDeleted) params.append("include_deleted", "1");
+      // Role kemahasiswaan tidak bisa melihat data yang dihapus
+      if (showDeleted && userRole?.toLowerCase() !== 'kemahasiswaan') {
+        params.append("include_deleted", "1");
+      }
       if (selectedTahun) params.append("id_tahun", selectedTahun);
       
       const apiUrl = `/tabel2a2-keragaman-asal?${params}`;
@@ -89,7 +92,8 @@ export default function Tabel2A2({ role }) {
       const result = await apiFetch(apiUrl);
       
       // Apply filtering
-      const filteredData = showDeleted
+      // Role kemahasiswaan tidak bisa melihat data yang dihapus
+      const filteredData = (showDeleted && userRole?.toLowerCase() !== 'kemahasiswaan')
         ? result.filter((row) => row.deleted_at !== null)
         : result.filter((row) => row.deleted_at === null);
       
@@ -119,6 +123,13 @@ export default function Tabel2A2({ role }) {
       setLoading(false);
     }
   };
+
+  // Pastikan showDeleted selalu false untuk role kemahasiswaan
+  useEffect(() => {
+    if (userRole?.toLowerCase() === 'kemahasiswaan' && showDeleted) {
+      setShowDeleted(false);
+    }
+  }, [userRole, showDeleted]);
 
   useEffect(() => {
     if (!mapsLoading) {
@@ -326,19 +337,78 @@ export default function Tabel2A2({ role }) {
     setShowDaerahDropdown(false);
   };
 
+  // Helper function untuk mencari provinsi dari nama daerah dan cek apakah ditemukan
+  const cariProvinsiDariDaerah = (namaDaerah) => {
+    if (!namaDaerah) return { provinsi: null, ditemukan: false };
+    
+    const namaDaerahUpper = namaDaerah.toUpperCase();
+    
+    // Coba exact match dulu
+    let daerahFound = uniqueDaerahList.find(daerah => 
+      daerah.nama.toUpperCase() === namaDaerahUpper
+    );
+    
+    // Jika tidak ketemu exact match, coba partial match (contains)
+    if (!daerahFound) {
+      daerahFound = uniqueDaerahList.find(daerah => {
+        const namaListUpper = daerah.nama.toUpperCase();
+        // Cek apakah nama daerah input mengandung nama dari list atau sebaliknya
+        return namaDaerahUpper.includes(namaListUpper) || namaListUpper.includes(namaDaerahUpper);
+      });
+    }
+    
+    return {
+      provinsi: daerahFound?.provinsi || null,
+      ditemukan: !!daerahFound
+    };
+  };
+
+  // Helper function untuk menentukan kategori geografis berdasarkan nama daerah dan provinsi
+  const getKategoriGeografis = (namaDaerah, provinsi = null) => {
+    if (!namaDaerah) {
+      return "Kota/Kab Lain";
+    }
+    
+    const namaDaerahUpper = namaDaerah.toUpperCase();
+    
+    // Prioritas 1: Jika nama daerah mengandung KABUPATEN BANYUWANGI, maka Sama Kota/Kab
+    if (namaDaerahUpper.includes("KABUPATEN BANYUWANGI")) {
+      return "Sama Kota/Kab";
+    }
+    
+    // Cari provinsi dari database jika tidak tersedia atau untuk memastikan
+    const hasilPencarian = cariProvinsiDariDaerah(namaDaerah);
+    const provinsiFinal = provinsi || hasilPencarian.provinsi;
+    
+    // Jika tidak ditemukan di database, maka Negara Lain
+    if (!hasilPencarian.ditemukan) {
+      return "Negara Lain";
+    }
+    
+    // Prioritas 2: Jika provinsi ditemukan dan bukan Jawa Timur, maka Provinsi Lain
+    if (provinsiFinal && provinsiFinal.toUpperCase() !== "JAWA TIMUR") {
+      return "Provinsi Lain";
+    }
+    
+    // Default: Kota/Kab Lain (untuk daerah di Jawa Timur selain Banyuwangi)
+    return "Kota/Kab Lain";
+  };
+
   const handleEditClick = (row) => {
+    const upperDaerah = (row.nama_daerah_input || "").toUpperCase();
+    const kategoriGeografis = getKategoriGeografis(upperDaerah);
     setForm({
       id_unit_prodi: row.id_unit_prodi || authUser?.unit || "",
       id_tahun: row.id_tahun || "",
-      nama_daerah_input: row.nama_daerah_input || "",
-      kategori_geografis: row.kategori_geografis || "Sama Kota/Kab",
+      nama_daerah_input: upperDaerah,
+      kategori_geografis: kategoriGeografis,
       jumlah_mahasiswa: row.jumlah_mahasiswa || 0,
       link_bukti: row.link_bukti || ""
     });
     setEditingRow(row);
     setIsEditTSMode(false);
     setShowModal(true);
-    setDaerahSearchTerm(row.nama_daerah_input || "");
+    setDaerahSearchTerm(upperDaerah);
     setShowDaerahDropdown(false);
   };
 
@@ -352,16 +422,28 @@ export default function Tabel2A2({ role }) {
 
   // Handler untuk mengubah input daerah
   const handleDaerahInputChange = (e) => {
-    const value = e.target.value;
-    setForm({...form, nama_daerah_input: value});
+    const value = e.target.value.toUpperCase();
+    const kategoriGeografis = getKategoriGeografis(value);
+    setForm({
+      ...form, 
+      nama_daerah_input: value,
+      kategori_geografis: kategoriGeografis
+    });
     setDaerahSearchTerm(value);
     setShowDaerahDropdown(true);
   };
 
   // Handler untuk memilih daerah dari dropdown
   const handleSelectDaerah = (daerah) => {
-    setForm({...form, nama_daerah_input: daerah.nama});
-    setDaerahSearchTerm(daerah.nama);
+    const upperValue = daerah.nama.toUpperCase();
+    const provinsi = daerah.provinsi || null;
+    const kategoriGeografis = getKategoriGeografis(upperValue, provinsi);
+    setForm({
+      ...form, 
+      nama_daerah_input: upperValue,
+      kategori_geografis: kategoriGeografis
+    });
+    setDaerahSearchTerm(upperValue);
     setShowDaerahDropdown(false);
   };
 
@@ -404,11 +486,6 @@ export default function Tabel2A2({ role }) {
         Swal.fire({ icon: 'error', title: 'Error!', text: 'Masukkan nama daerah terlebih dahulu' });
         return;
       }
-      if (!form.kategori_geografis) {
-        console.log("❌ Validation failed: No category selected");
-        Swal.fire({ icon: 'error', title: 'Error!', text: 'Pilih kategori geografis terlebih dahulu' });
-        return;
-      }
       if (form.jumlah_mahasiswa < 0) {
         console.log("❌ Validation failed: Negative student count");
         Swal.fire({ icon: 'error', title: 'Error!', text: 'Jumlah mahasiswa tidak boleh negatif' });
@@ -440,17 +517,95 @@ export default function Tabel2A2({ role }) {
         console.log("✅ Update successful");
         await Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil diupdate', timer: 2000 });
       } else {
-        console.log("➕ Creating new record");
+        console.log("➕ Creating new record(s)");
         const createUrl = "/tabel2a2-keragaman-asal";
         console.log("🌐 Create API URL:", createUrl);
         
-        await apiFetch(createUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        console.log("✅ Create successful");
-        await Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil ditambahkan', timer: 2000 });
+        // Cari provinsi dari nama daerah
+        const hasilPencarian = cariProvinsiDariDaerah(form.nama_daerah_input);
+        const provinsiDitemukan = hasilPencarian.provinsi;
+        const daerahDitemukan = hasilPencarian.ditemukan;
+        const namaDaerahUpper = (form.nama_daerah_input || "").toUpperCase();
+        const isBanyuwangi = namaDaerahUpper.includes("KABUPATEN BANYUWANGI");
+        const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase() === "JAWA TIMUR";
+        
+        // Jika tidak ditemukan di database, buat 1 record dengan kategori Negara Lain
+        if (!daerahDitemukan) {
+          const payloadNegaraLain = {
+            ...payload,
+            nama_daerah_input: form.nama_daerah_input.toUpperCase(),
+            kategori_geografis: "Negara Lain"
+          };
+          
+          await apiFetch(createUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadNegaraLain)
+          });
+          console.log("✅ Create Negara Lain successful");
+          
+          await Swal.fire({ 
+            icon: 'success', 
+            title: 'Berhasil!', 
+            text: 'Data berhasil ditambahkan (Negara Lain)', 
+            timer: 2000 
+          });
+        } else {
+          // Record 1: Kota/Kab Lain (selalu dibuat, kecuali jika Banyuwangi)
+          if (!isBanyuwangi) {
+            const payloadKotaKab = {
+              ...payload,
+              nama_daerah_input: form.nama_daerah_input.toUpperCase(),
+              kategori_geografis: "Kota/Kab Lain"
+            };
+            
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadKotaKab)
+            });
+            console.log("✅ Create Kota/Kab Lain successful");
+          } else {
+            // Jika Banyuwangi, buat dengan kategori Sama Kota/Kab
+            const payloadBanyuwangi = {
+              ...payload,
+              nama_daerah_input: form.nama_daerah_input.toUpperCase(),
+              kategori_geografis: "Sama Kota/Kab"
+            };
+            
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadBanyuwangi)
+            });
+            console.log("✅ Create Sama Kota/Kab (Banyuwangi) successful");
+          }
+          
+          // Record 2: Provinsi Lain (hanya jika provinsi ditemukan dan bukan Jawa Timur)
+          if (provinsiDitemukan && !isJawaTimur) {
+            const payloadProvinsi = {
+              ...payload,
+              nama_daerah_input: provinsiDitemukan.toUpperCase(),
+              kategori_geografis: "Provinsi Lain"
+            };
+            
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadProvinsi)
+            });
+            console.log("✅ Create Provinsi Lain successful");
+          }
+          
+          await Swal.fire({ 
+            icon: 'success', 
+            title: 'Berhasil!', 
+            text: provinsiDitemukan && !isJawaTimur 
+              ? 'Data berhasil ditambahkan (Kota/Kab Lain dan Provinsi Lain)' 
+              : 'Data berhasil ditambahkan', 
+            timer: 2000 
+          });
+        }
       }
       
       handleCloseModal();
@@ -620,16 +775,18 @@ export default function Tabel2A2({ role }) {
     const selectedData = tsData.find(item => Number(item.id) === Number(dataId));
     
     if (selectedData) {
+      const upperDaerah = (selectedData.nama_daerah_input || "").toUpperCase();
+      const kategoriGeografis = getKategoriGeografis(upperDaerah);
       setForm({
         id_unit_prodi: selectedData.id_unit_prodi || authUser?.unit || "",
         id_tahun: selectedData.id_tahun || selectedTahun || "",
-        nama_daerah_input: selectedData.nama_daerah_input || "",
-        kategori_geografis: selectedData.kategori_geografis || "Sama Kota/Kab",
+        nama_daerah_input: upperDaerah,
+        kategori_geografis: kategoriGeografis,
         jumlah_mahasiswa: selectedData.jumlah_mahasiswa || 0,
         link_bukti: selectedData.link_bukti || ""
       });
       setEditingRow(selectedData);
-      setDaerahSearchTerm(selectedData.nama_daerah_input || "");
+      setDaerahSearchTerm(upperDaerah);
     }
   };
 
@@ -850,18 +1007,20 @@ export default function Tabel2A2({ role }) {
               </div>
             )}
             
-            {/* Show Deleted Toggle */}
-            <button
-              onClick={() => { setShowDeleted(!showDeleted); setSelectedRows([]); }}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                showDeleted
-                  ? "bg-[#0384d6] text-white"
-                  : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-              }`}
-              disabled={loading}
-            >
-              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-            </button>
+            {/* Show Deleted Toggle - Hidden untuk role kemahasiswaan */}
+            {userRole?.toLowerCase() !== 'kemahasiswaan' && (
+              <button
+                onClick={() => { setShowDeleted(!showDeleted); setSelectedRows([]); }}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  showDeleted
+                    ? "bg-[#0384d6] text-white"
+                    : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
+                }`}
+                disabled={loading}
+              >
+                {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
+              </button>
+            )}
 
             {/* Bulk Restore Button */}
             {showDeleted && selectedRows.length > 0 && (
@@ -1189,8 +1348,9 @@ export default function Tabel2A2({ role }) {
                           setShowDaerahDropdown(true);
                         }}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white uppercase"
                         placeholder="Ketik untuk mencari kabupaten/kota dari referensi"
+                        style={{ textTransform: 'uppercase' }}
                         autoComplete="off"
                       />
                       {showDaerahDropdown && (
@@ -1265,22 +1425,6 @@ export default function Tabel2A2({ role }) {
                         ⚠️ Data kabupaten/kota belum ter-load. Silakan refresh halaman.
                       </p>
                     )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Kategori Geografis <span className="text-red-500">*</span></label>
-                    <select
-                      value={form.kategori_geografis}
-                      onChange={(e) => setForm({...form, kategori_geografis: e.target.value})}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Kategori...</option>
-                      <option value="Sama Kota/Kab">Kota/Kab sama dengan PS</option>
-                      <option value="Kota/Kab Lain">Kota/Kab Lain</option>
-                      <option value="Provinsi Lain">Provinsi Lain</option>
-                      <option value="Negara Lain">Negara Lain</option>
-                    </select>
                   </div>
 
                   <div className="space-y-2">
