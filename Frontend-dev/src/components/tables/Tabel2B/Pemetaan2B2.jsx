@@ -126,7 +126,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-white border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium"
           >
             📥 Export Excel
           </button>

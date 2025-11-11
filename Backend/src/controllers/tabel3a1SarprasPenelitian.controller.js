@@ -75,10 +75,20 @@ export const createTabel3a1SarprasPenelitian = async (req, res) => {
     // Validasi
     if (!nama_sarpras) { return res.status(400).json({ error: 'Nama Prasarana wajib diisi.' }); }
     
+    // Debug: Log req.user untuk melihat strukturnya
+    console.log("createTabel3a1SarprasPenelitian - req.user:", req.user);
+    console.log("createTabel3a1SarprasPenelitian - req.user?.id_unit_prodi:", req.user?.id_unit_prodi);
+    console.log("createTabel3a1SarprasPenelitian - req.user?.id_unit:", req.user?.id_unit);
+    
     // Auto-fill id_unit_prodi dari user yang login
-    const id_unit_prodi = req.user?.id_unit_prodi;
+    // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
+    let id_unit_prodi = req.user?.id_unit_prodi || req.user?.id_unit;
+    
     if (!id_unit_prodi) { 
-      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit/prodi.' }); 
+      console.error("createTabel3a1SarprasPenelitian - req.user tidak memiliki id_unit_prodi atau id_unit:", req.user);
+      return res.status(400).json({ 
+        error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit/prodi. Silakan logout dan login ulang untuk mendapatkan token baru.' 
+      }); 
     }
 
     const data = {
@@ -110,10 +120,9 @@ export const updateTabel3a1SarprasPenelitian = async (req, res) => {
     // Validasi
     if (!nama_sarpras) { return res.status(400).json({ error: 'Nama Prasarana wajib diisi.' }); }
     
-    // Auto-fill id_unit_prodi dari user yang login (jika belum ada, tetap gunakan yang lama)
-    // Tapi biasanya update tidak mengubah id_unit_prodi, jadi kita tidak perlu set ulang
-    // Kecuali kalau memang mau allow change unit, tapi untuk sekarang tetap dari user login
-    const id_unit_prodi = req.user?.id_unit_prodi;
+    // Auto-fill id_unit_prodi dari user yang login
+    // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
+    let id_unit_prodi = req.user?.id_unit_prodi || req.user?.id_unit;
     if (!id_unit_prodi) { 
       return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user.' }); 
     }

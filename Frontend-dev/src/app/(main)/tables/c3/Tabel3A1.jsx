@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../../../../context/AuthContext";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
@@ -464,8 +465,38 @@ function DataTable({
 
 /* ---------- Page Component ---------- */
 export default function Tabel3A1({ auth, role }) {
-  const { maps: mapsFromHook } = useMaps(auth?.user || true);
+  const { authUser: authUserFromContext } = useAuth();
+  // auth sudah berisi authUser langsung dari c3.jsx (auth={authUser})
+  const authUser = auth || authUserFromContext;
+  const { maps: mapsFromHook } = useMaps(authUser || true);
   const maps = mapsFromHook ?? { units: {}, unit_kerja: {} };
+
+  // Debug: Log authUser untuk melihat strukturnya
+  useEffect(() => {
+    if (authUser) {
+      console.log("Tabel3A1 - authUser saat mount:", authUser);
+      console.log("Tabel3A1 - authUser.id_unit_prodi:", authUser.id_unit_prodi);
+      console.log("Tabel3A1 - authUser.id_unit:", authUser.id_unit);
+      console.log("Tabel3A1 - authUser.unit:", authUser.unit);
+      if (authUser.token) {
+        try {
+          const base64Url = authUser.token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const decoded = JSON.parse(jsonPayload);
+          console.log("Tabel3A1 - Decoded token:", decoded);
+          console.log("Tabel3A1 - Decoded token id_unit_prodi:", decoded.id_unit_prodi);
+        } catch (e) {
+          console.error("Tabel3A1 - Gagal decode token:", e);
+        }
+      }
+    }
+  }, [authUser]);
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -531,10 +562,69 @@ export default function Tabel3A1({ auth, role }) {
   // Create / Update handler
   const handleSave = async (form) => {
     try {
+      // Backend mengambil id_unit_prodi dari req.user (session/token), bukan dari payload
+      // Jadi kita tidak perlu mengirim id_unit di payload
+      // Tapi kita tetap perlu memastikan user memiliki id_unit_prodi untuk validasi di frontend
+      
+      if (!editingRow) {
+        // Validasi: pastikan user memiliki id_unit_prodi
+        let userUnit = authUser?.id_unit_prodi || authUser?.id_unit || authUser?.unit || authUser?.id_unit_kerja;
+        
+        // Jika masih tidak ada, coba decode dari token
+        if (!userUnit && authUser?.token) {
+          try {
+            const base64Url = authUser.token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+              atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+            );
+            const decoded = JSON.parse(jsonPayload);
+            userUnit = decoded?.id_unit_prodi || decoded?.id_unit || decoded?.id_unit_kerja;
+          } catch (e) {
+            console.error("Gagal decode token:", e);
+          }
+        }
+        
+        // Validasi: jika user tidak memiliki id_unit_prodi, tampilkan error
+        if (!userUnit) {
+          console.error("Tabel3A1 - User tidak memiliki id_unit_prodi:", {
+            authUser,
+            id_unit_prodi: authUser?.id_unit_prodi,
+            id_unit: authUser?.id_unit,
+            unit: authUser?.unit,
+            id_unit_kerja: authUser?.id_unit_kerja
+          });
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Unit/Prodi Tidak Ditemukan',
+            html: `
+              <p>Unit/Prodi tidak ditemukan dari data user Anda.</p>
+              <p><strong>Solusi:</strong></p>
+              <ol style="text-align: left; margin: 10px 0;">
+                <li>Pastikan akun Anda memiliki Unit/Prodi di database</li>
+                <li>Silakan <strong>logout</strong> dan <strong>login ulang</strong> untuk mendapatkan token baru</li>
+                <li>Jika masih error, hubungi administrator untuk memastikan akun Anda memiliki Unit/Prodi</li>
+              </ol>
+            `,
+            confirmButtonText: 'Mengerti'
+          });
+          return;
+        }
+      }
+
+      // Backend mengambil id_unit_prodi dari req.user, jadi kita tidak perlu mengirimnya di payload
+      // Hapus id_unit dari form jika ada, karena backend akan mengambilnya dari session
+      const { id_unit, ...formWithoutIdUnit } = form;
+      const payload = formWithoutIdUnit;
+
       if (editingRow) {
         await apiFetch(`${ENDPOINT}/${editingRow.id}`, {
           method: "PUT",
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         Swal.fire({
           icon: 'success',
@@ -546,7 +636,7 @@ export default function Tabel3A1({ auth, role }) {
       } else {
         await apiFetch(ENDPOINT, {
           method: "POST",
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         Swal.fire({
           icon: 'success',
