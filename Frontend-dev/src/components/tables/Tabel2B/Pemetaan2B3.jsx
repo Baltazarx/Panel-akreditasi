@@ -118,6 +118,12 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
     <div>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-800">🗺️ Peta Pemenuhan CPL</h2>
+        <button
+          onClick={handleExport}
+          className="px-4 py-2 bg-white border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium"
+        >
+          📥 Export Excel
+        </button>
         <div className="flex items-center gap-3">
           {/* Tampilkan filter HANYA jika superadmin */}
           {isSuperAdmin && (
