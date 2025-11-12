@@ -59,6 +59,7 @@ import tabel3c3HkiRoutes from './routes/tabel3c3Hki.route.js';
 
 // ===== C4 ROUTES =====
 import tabel4a1SarprasPkmRouter from './routes/tabel4a1SarprasPkm.route.js';
+import tabel4a2PkmRouter from './routes/tabel4a2Pkm.route.js';
 // TODO: import route lain setelah dikonversi
 
 const app = express();
@@ -155,6 +156,7 @@ app.use('/api/tabel-3c3-hki', tabel3c3HkiRoutes);
 
 // ===== C4 =====
 app.use('/api/tabel-4a1-sarpras-pkm', tabel4a1SarprasPkmRouter);
+app.use('/api/tabel-4a2-pkm', tabel4a2PkmRouter);
 
 // ===== 404 FALLBACK =====
 app.use((_req, res) => {
