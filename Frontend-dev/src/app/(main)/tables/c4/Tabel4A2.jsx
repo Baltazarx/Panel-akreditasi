@@ -447,7 +447,8 @@ export default function Tabel4A2({ auth, role: propRole }) {
     try {
       setLoading(true);
       setError("");
-      const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+      // Tambahkan include_deleted=1 untuk mendapatkan semua data termasuk yang dihapus
+      const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}&include_deleted=1`);
       
       if (response.tahun_laporan) {
         setTahunLaporan(response.tahun_laporan);
@@ -624,14 +625,23 @@ export default function Tabel4A2({ auth, role: propRole }) {
   // Filter rows
   const filteredRows = useMemo(() => {
     if (showDeleted) {
-      return rows.filter(r => r.deleted_at);
+      // Tampilkan hanya data yang dihapus (deleted_at tidak null dan tidak kosong)
+      return rows.filter(r => {
+        const deletedAt = r.deleted_at;
+        return deletedAt != null && deletedAt !== '' && deletedAt !== undefined;
+      });
     }
-    return rows.filter(r => !r.deleted_at);
+    // Tampilkan hanya data yang tidak dihapus (deleted_at null, undefined, atau kosong)
+    return rows.filter(r => {
+      const deletedAt = r.deleted_at;
+      return !deletedAt || deletedAt === null || deletedAt === '' || deletedAt === undefined;
+    });
   }, [rows, showDeleted]);
 
-  // Calculate summary
+  // Calculate summary (hanya dari data yang tidak dihapus)
   const summary = useMemo(() => {
-    const activeRows = filteredRows.filter(r => !r.deleted_at);
+    // Selalu hitung dari data yang tidak dihapus, bukan dari filteredRows
+    const activeRows = rows.filter(r => !r.deleted_at || r.deleted_at === null || r.deleted_at === '');
     const totalDanaTS2 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts2) || 0), 0);
     const totalDanaTS1 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts1) || 0), 0);
     const totalDanaTS = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts) || 0), 0);
@@ -646,7 +656,7 @@ export default function Tabel4A2({ auth, role: propRole }) {
       jumlahPkm,
       jumlahJenisHibah
     };
-  }, [filteredRows]);
+  }, [rows]);
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
@@ -682,15 +692,16 @@ export default function Tabel4A2({ auth, role: propRole }) {
             ))}
           </select>
 
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={showDeleted}
-              onChange={(e) => setShowDeleted(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-            />
-            Tampilkan yang dihapus
-          </label>
+          <button
+            onClick={() => setShowDeleted(!showDeleted)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+              showDeleted
+                ? "bg-blue-100 border-gray-300 text-blue-800 hover:bg-blue-200"
+                : "bg-blue-50 border-gray-300 text-blue-700 hover:bg-blue-100"
+            } focus:outline-none focus:ring-2 focus:ring-blue-400/40`}
+          >
+            Tampilkan Dihapus
+          </button>
 
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
             {loading ? "Memuat..." : `${filteredRows.length} baris`}
@@ -726,27 +737,36 @@ export default function Tabel4A2({ auth, role: propRole }) {
         </div>
       )}
 
+      {/* Roadmap Card */}
+      <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-md p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            <label className="text-gray-800 font-bold text-base">Roadmap</label>
+          </div>
+          <div className="flex-1 flex items-center gap-3">
+            <input
+              type="url"
+              value={linkRoadmap}
+              onChange={(e) => setLinkRoadmap(e.target.value)}
+              placeholder="Tuliskan link ke dokumen roadmap Pengabdian kepada Masyarakat"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+            <button
+              onClick={() => {
+                // TODO: Implement save roadmap functionality
+                Swal.fire('Info', 'Fitur simpan roadmap akan segera tersedia.', 'info');
+              }}
+              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+            >
+              Simpan
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <table className="w-full text-sm text-left border-collapse">
-          {/* Roadmap Header */}
-          <thead>
-            <tr>
-              <th colSpan="2" className="px-4 py-3 bg-slate-100 border border-slate-300 text-left font-semibold text-slate-800">
-                Roadmap
-              </th>
-              <th colSpan={tahunLaporan ? 9 : 6} className="px-4 py-3 bg-yellow-100 border border-slate-300">
-                <input
-                  type="url"
-                  value={linkRoadmap}
-                  onChange={(e) => setLinkRoadmap(e.target.value)}
-                  placeholder="Link dokumen roadmap Pengabdian kepada Masyarakat"
-                  className="w-full px-3 py-2 border border-yellow-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </th>
-            </tr>
-          </thead>
-          
           {/* Main Table Header */}
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
@@ -884,8 +904,8 @@ export default function Tabel4A2({ auth, role: propRole }) {
                   );
                 })}
                 
-                {/* Summary Rows */}
-                {filteredRows.length > 0 && !loading && (
+                {/* Summary Rows - Hanya tampilkan jika tidak menampilkan data yang dihapus */}
+                {filteredRows.length > 0 && !loading && !showDeleted && (
                   <>
                     {/* Jumlah Dana */}
                     <tr className="bg-yellow-50 font-semibold">
