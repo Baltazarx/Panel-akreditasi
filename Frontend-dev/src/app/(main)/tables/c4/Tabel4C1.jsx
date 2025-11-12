@@ -8,52 +8,23 @@ import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus } from 'react-icons/fi';
 
-const ENDPOINT = "/tabel-4a2-pkm";
-const TABLE_KEY = "tabel_4a2_pkm";
-const LABEL = "4.A.2 PkM DTPR";
+const ENDPOINT = "/tabel-4c1-kerjasama-pkm";
+const TABLE_KEY = "tabel_4c1_kerjasama_pkm";
+const LABEL = "4.C.1 Kerjasama PKM";
 
 /* ---------- Modal Form Tambah/Edit ---------- */
-function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
+function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selectedTahun }) {
   const [form, setForm] = useState({
-    link_roadmap: "",
-    id_dosen_ketua: "",
-    judul_pkm: "",
-    jml_mhs_terlibat: "",
-    jenis_hibah_pkm: "",
-    sumber_dana: "",
+    judul_kerjasama: "",
+    mitra_kerja_sama: "",
+    sumber: "",
     durasi_tahun: "",
     link_bukti: "",
     pendanaan: [] // Array untuk 3 tahun (TS-2, TS-1, TS): [{id_tahun, jumlah_dana}, ...]
   });
 
-  const [dosenList, setDosenList] = useState([]);
   const [tahunList, setTahunList] = useState([]);
   const [tahunLaporan, setTahunLaporan] = useState(null);
-
-  // Fetch dosen list
-  useEffect(() => {
-    const fetchDosen = async () => {
-      try {
-        const data = await apiFetch("/dosen");
-        const list = Array.isArray(data) ? data : [];
-        const dosenMap = new Map();
-        list.forEach((d) => {
-          const id = d.id_dosen;
-          if (!dosenMap.has(id)) {
-            dosenMap.set(id, {
-              id_dosen: id,
-              nama: d.nama_lengkap || d.nama || `${d.nama_depan || ""} ${d.nama_belakang || ""}`.trim() || `Dosen ${id}`
-            });
-          }
-        });
-        setDosenList(Array.from(dosenMap.values()).sort((a, b) => (a.nama || "").localeCompare(b.nama || "")));
-      } catch (err) {
-        console.error("Error fetching dosen:", err);
-        setDosenList([]);
-      }
-    };
-    if (isOpen) fetchDosen();
-  }, [isOpen]);
 
   // Fetch tahun akademik
   useEffect(() => {
@@ -76,12 +47,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       if (initialData) {
         // Load existing data
         setForm({
-          link_roadmap: initialData.link_roadmap || "",
-          id_dosen_ketua: initialData.id_dosen_ketua || "",
-          judul_pkm: initialData.judul_pkm || "",
-          jml_mhs_terlibat: initialData.jml_mhs_terlibat || "",
-          jenis_hibah_pkm: initialData.jenis_hibah_pkm || "",
-          sumber_dana: initialData.sumber_dana || "",
+          judul_kerjasama: initialData.judul_kerjasama || "",
+          mitra_kerja_sama: initialData.mitra_kerja_sama || "",
+          sumber: initialData.sumber || "",
           durasi_tahun: initialData.durasi_tahun || "",
           link_bukti: initialData.link_bukti || "",
           pendanaan: initialData.pendanaan || []
@@ -93,7 +61,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
             .then(data => {
               if (data.pendanaan && Array.isArray(data.pendanaan)) {
                 // Filter hanya 3 tahun terakhir (TS-2, TS-1, TS)
-                // Backend mengirim semua tahun, kita ambil yang sesuai dengan tahun_laporan
                 apiFetch(`${ENDPOINT}?ts_id=${selectedTahun || new Date().getFullYear()}`)
                   .then(response => {
                     if (response.tahun_laporan) {
@@ -108,13 +75,11 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                       });
                       setForm(prev => ({ ...prev, pendanaan: filteredPendanaan }));
                     } else {
-                      // Fallback: ambil 3 tahun terakhir dari data
                       const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
                       setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
                     }
                   })
                   .catch(() => {
-                    // Fallback: ambil 3 tahun terakhir dari data
                     const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
                     setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
                   });
@@ -125,31 +90,23 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       } else {
         // Reset form for new data
         setForm({
-          link_roadmap: "",
-          id_dosen_ketua: "",
-          judul_pkm: "",
-          jml_mhs_terlibat: "",
-          jenis_hibah_pkm: "",
-          sumber_dana: "",
+          judul_kerjasama: "",
+          mitra_kerja_sama: "",
+          sumber: "",
           durasi_tahun: "",
           link_bukti: "",
           pendanaan: []
         });
       }
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, selectedTahun]);
 
   // Get tahun laporan untuk menentukan 3 tahun (TS-2, TS-1, TS)
   useEffect(() => {
     const getTahunLaporan = async () => {
       try {
-        // Ambil tahun terbaru sebagai default
-        if (tahunList.length > 0) {
-          const latestTahun = tahunList[0];
-          const ts_id = latestTahun.id_tahun;
-          
-          // Fetch data untuk mendapatkan tahun_laporan
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${ts_id}`);
+        if (tahunList.length > 0 && selectedTahun) {
+          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
           if (response.tahun_laporan) {
             setTahunLaporan(response.tahun_laporan);
             
@@ -169,10 +126,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       }
     };
     
-    if (isOpen && tahunList.length > 0 && !initialData) {
+    if (isOpen && tahunList.length > 0 && !initialData && selectedTahun) {
       getTahunLaporan();
     }
-  }, [isOpen, tahunList, initialData]);
+  }, [isOpen, tahunList, initialData, selectedTahun]);
 
   if (!isOpen) return null;
 
@@ -201,78 +158,61 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
-            {initialData ? "Edit PkM DTPR" : "Tambah PkM DTPR"}
+            {initialData ? "Edit Kerjasama PKM" : "Tambah Kerjasama PKM"}
           </h2>
-          <p className="text-white/80 mt-1 text-sm">Lengkapi data PkM DTPR sesuai dengan format LKPS.</p>
+          <p className="text-white/80 mt-1 text-sm">Lengkapi data Kerjasama PKM sesuai dengan format LKPS.</p>
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {/* Link Roadmap */}
+          {/* Judul Kerjasama */}
           <div>
-            <label htmlFor="link_roadmap" className="block text-sm font-medium text-slate-700 mb-1">
-              Link Roadmap
-            </label>
-            <input
-              type="url"
-              id="link_roadmap"
-              value={form.link_roadmap}
-              onChange={(e) => handleChange("link_roadmap", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              placeholder="https://..."
-            />
-          </div>
-
-          {/* Dosen Ketua */}
-          <div>
-            <label htmlFor="id_dosen_ketua" className="block text-sm font-medium text-slate-700 mb-1">
-              Dosen Ketua (DTPR) <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="id_dosen_ketua"
-              value={form.id_dosen_ketua}
-              onChange={(e) => handleChange("id_dosen_ketua", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              required
-            >
-              <option value="">-- Pilih Dosen --</option>
-              {dosenList.map((d) => (
-                <option key={d.id_dosen} value={d.id_dosen}>
-                  {d.nama}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Judul PkM */}
-          <div>
-            <label htmlFor="judul_pkm" className="block text-sm font-medium text-slate-700 mb-1">
-              Judul PkM <span className="text-red-500">*</span>
+            <label htmlFor="judul_kerjasama" className="block text-sm font-medium text-slate-700 mb-1">
+              Judul Kerjasama <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              id="judul_pkm"
-              value={form.judul_pkm}
-              onChange={(e) => handleChange("judul_pkm", e.target.value)}
+              id="judul_kerjasama"
+              value={form.judul_kerjasama}
+              onChange={(e) => handleChange("judul_kerjasama", e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              placeholder="Judul PkM..."
+              placeholder="Judul kerjasama..."
+              required
+            />
+          </div>
+
+          {/* Mitra Kerja Sama */}
+          <div>
+            <label htmlFor="mitra_kerja_sama" className="block text-sm font-medium text-slate-700 mb-1">
+              Mitra Kerja Sama <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="mitra_kerja_sama"
+              value={form.mitra_kerja_sama}
+              onChange={(e) => handleChange("mitra_kerja_sama", e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+              placeholder="Nama mitra kerja sama..."
               required
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Jumlah Mahasiswa Terlibat */}
+            {/* Sumber */}
             <div>
-              <label htmlFor="jml_mhs_terlibat" className="block text-sm font-medium text-slate-700 mb-1">
-                Jumlah Mahasiswa Terlibat
+              <label htmlFor="sumber" className="block text-sm font-medium text-slate-700 mb-1">
+                Sumber (L/N/I) <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                id="jml_mhs_terlibat"
-                value={form.jml_mhs_terlibat}
-                onChange={(e) => handleChange("jml_mhs_terlibat", e.target.value)}
+              <select
+                id="sumber"
+                value={form.sumber}
+                onChange={(e) => handleChange("sumber", e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                placeholder="0"
-                min="0"
-              />
+                required
+              >
+                <option value="">-- Pilih Sumber --</option>
+                <option value="L">L - Lembaga</option>
+                <option value="N">N - Nasional</option>
+                <option value="I">I - Internasional</option>
+              </select>
             </div>
 
             {/* Durasi Tahun */}
@@ -290,40 +230,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                 min="0"
               />
             </div>
-          </div>
-
-          {/* Jenis Hibah PkM */}
-          <div>
-            <label htmlFor="jenis_hibah_pkm" className="block text-sm font-medium text-slate-700 mb-1">
-              Jenis Hibah PkM
-            </label>
-            <input
-              type="text"
-              id="jenis_hibah_pkm"
-              value={form.jenis_hibah_pkm}
-              onChange={(e) => handleChange("jenis_hibah_pkm", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              placeholder="Jenis hibah..."
-            />
-          </div>
-
-          {/* Sumber Dana */}
-          <div>
-            <label htmlFor="sumber_dana" className="block text-sm font-medium text-slate-700 mb-1">
-              Sumber Dana (L/N/I) <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="sumber_dana"
-              value={form.sumber_dana}
-              onChange={(e) => handleChange("sumber_dana", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              required
-            >
-              <option value="">-- Pilih Sumber Dana --</option>
-              <option value="L">L - Lembaga</option>
-              <option value="N">N - Nasional</option>
-              <option value="I">I - Internasional</option>
-            </select>
           </div>
 
           {/* Pendanaan 3 Tahun (TS-2, TS-1, TS) */}
@@ -396,7 +302,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
   );
 }
 
-export default function Tabel4A2({ auth, role: propRole }) {
+export default function Tabel4C1({ auth, role: propRole }) {
   const { authUser } = useAuth();
   const role = propRole || authUser?.role;
   const { maps } = useMaps(auth?.user || authUser || true);
@@ -410,7 +316,6 @@ export default function Tabel4A2({ auth, role: propRole }) {
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [tahunList, setTahunList] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [linkRoadmap, setLinkRoadmap] = useState("");
   
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -513,13 +418,13 @@ export default function Tabel4A2({ auth, role: propRole }) {
           method: 'PUT',
           body: JSON.stringify(formData)
         });
-        Swal.fire('Berhasil!', 'Data PkM berhasil diperbarui.', 'success');
+        Swal.fire('Berhasil!', 'Data Kerjasama PKM berhasil diperbarui.', 'success');
       } else {
         await apiFetch(ENDPOINT, {
           method: 'POST',
           body: JSON.stringify(formData)
         });
-        Swal.fire('Berhasil!', 'Data PkM berhasil ditambahkan.', 'success');
+        Swal.fire('Berhasil!', 'Data Kerjasama PKM berhasil ditambahkan.', 'success');
       }
       setShowForm(false);
       setEditData(null);
@@ -556,7 +461,6 @@ export default function Tabel4A2({ auth, role: propRole }) {
   // Handle restore
   const handleRestore = async (row) => {
     try {
-      // Restore dengan mengupdate deleted_at menjadi null
       await apiFetch(`${ENDPOINT}/${row.id}`, {
         method: 'PUT',
         body: JSON.stringify({ ...row, deleted_at: null })
@@ -613,7 +517,7 @@ export default function Tabel4A2({ auth, role: propRole }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Tabel_4A2_PkM_DTPR_${selectedTahun}.xlsx`;
+      a.download = `Tabel_4C1_Kerjasama_PKM_${selectedTahun}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -637,21 +541,17 @@ export default function Tabel4A2({ auth, role: propRole }) {
 
   // Calculate summary (hanya dari data yang tidak dihapus)
   const summary = useMemo(() => {
-    // Selalu hitung dari data yang tidak dihapus, bukan dari filteredRows
     const activeRows = rows.filter(r => !r.deleted_at);
     const totalDanaTS2 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts2) || 0), 0);
     const totalDanaTS1 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts1) || 0), 0);
     const totalDanaTS = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts) || 0), 0);
-    const jumlahPkm = activeRows.length;
-    const uniqueJenisHibah = new Set(activeRows.map(r => r.jenis_hibah_pkm).filter(Boolean));
-    const jumlahJenisHibah = uniqueJenisHibah.size;
+    const jumlahKerjasama = activeRows.length;
     
     return {
       totalDanaTS2,
       totalDanaTS1,
       totalDanaTS,
-      jumlahPkm,
-      jumlahJenisHibah
+      jumlahKerjasama
     };
   }, [rows]);
 
@@ -662,7 +562,7 @@ export default function Tabel4A2({ auth, role: propRole }) {
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
         <div className="flex justify-between items-center mt-1">
           <p className="text-sm text-slate-500">
-            Kelola data PkM DTPR untuk tabel 4A-2.
+            Kelola data Kerjasama PKM untuk tabel 4C-1.
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
@@ -734,33 +634,6 @@ export default function Tabel4A2({ auth, role: propRole }) {
         </div>
       )}
 
-      {/* Roadmap Card */}
-      <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-md p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
-            <label className="text-gray-800 font-bold text-base">Roadmap</label>
-          </div>
-          <div className="flex-1 flex items-center gap-3">
-            <input
-              type="url"
-              value={linkRoadmap}
-              onChange={(e) => setLinkRoadmap(e.target.value)}
-              placeholder="Tuliskan link ke dokumen roadmap Pengabdian kepada Masyarakat"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            />
-            <button
-              onClick={() => {
-                // TODO: Implement save roadmap functionality
-                Swal.fire('Info', 'Fitur simpan roadmap akan segera tersedia.', 'info');
-              }}
-              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
-            >
-              Simpan
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <table className="w-full text-sm text-left border-collapse">
@@ -768,16 +641,10 @@ export default function Tabel4A2({ auth, role: propRole }) {
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul Kerjasama</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Mitra kerja sama</th>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                Nama DTPR<br/>(Sebagai Ketua PkM)
-              </th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul PkM</th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                Jumlah Mahasiswa<br/>yang Terlibat
-              </th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Hibah PkM</th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                Sumber Dana<br/>(L/N/I)
+                Sumber<br/>(L/N/I)
               </th>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Durasi<br/>(tahun)
@@ -809,14 +676,14 @@ export default function Tabel4A2({ auth, role: propRole }) {
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={tahunLaporan ? 11 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <p className="mt-4">Memuat data...</p>
                 </td>
               </tr>
             ) : filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={tahunLaporan ? 11 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -839,15 +706,13 @@ export default function Tabel4A2({ auth, role: propRole }) {
                       className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${isDeleted ? "opacity-60" : ""}`}
                     >
                       <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                      <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.nama_dtpr || "-"}</td>
                       <td className="px-6 py-4 border border-slate-200 text-slate-700 max-w-xs">
-                        <div className="truncate" title={r.judul_pkm || ""}>
-                          {r.judul_pkm || "-"}
+                        <div className="truncate" title={r.judul_kerjasama || ""}>
+                          {r.judul_kerjasama || "-"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.jml_mhs_terlibat || "-"}</td>
-                      <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.jenis_hibah_pkm || "-"}</td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.sumber_dana || "-"}</td>
+                      <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.sumber || "-"}</td>
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
                       {tahunLaporan && (
                         <>
@@ -906,7 +771,7 @@ export default function Tabel4A2({ auth, role: propRole }) {
                   <>
                     {/* Jumlah Dana */}
                     <tr className="bg-yellow-50 font-semibold">
-                      <td colSpan="7" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
+                      <td colSpan="5" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Dana
                       </td>
                       {tahunLaporan && (
@@ -925,29 +790,15 @@ export default function Tabel4A2({ auth, role: propRole }) {
                       <td colSpan={(canUpdate || canDelete) ? 2 : 1} className="px-6 py-4 border border-slate-200"></td>
                     </tr>
                     
-                    {/* Jumlah PkM */}
+                    {/* Jumlah Kerjasama */}
                     <tr className="bg-yellow-50 font-semibold">
-                      <td colSpan="2" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
-                        Jumlah PkM
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
+                        Jumlah Kerjasama
                       </td>
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
-                        {summary.jumlahPkm}
+                        {summary.jumlahKerjasama}
                       </td>
-                      <td colSpan={tahunLaporan ? 7 : 4} className="px-6 py-4 border border-slate-200"></td>
-                      {(canUpdate || canDelete) && (
-                        <td className="px-6 py-4 border border-slate-200"></td>
-                      )}
-                    </tr>
-                    
-                    {/* Jumlah Jenis Hibah PKM */}
-                    <tr className="bg-yellow-50 font-semibold">
-                      <td colSpan="4" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
-                        Jumlah Jenis Hibah PKM
-                      </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
-                        {summary.jumlahJenisHibah}
-                      </td>
-                      <td colSpan={tahunLaporan ? 5 : 2} className="px-6 py-4 border border-slate-200"></td>
+                      <td colSpan={tahunLaporan ? 6 : 3} className="px-6 py-4 border border-slate-200"></td>
                       {(canUpdate || canDelete) && (
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}
@@ -1050,7 +901,9 @@ export default function Tabel4A2({ auth, role: propRole }) {
         initialData={editData}
         maps={maps}
         authUser={authUser}
+        selectedTahun={selectedTahun}
       />
     </div>
   );
 }
+

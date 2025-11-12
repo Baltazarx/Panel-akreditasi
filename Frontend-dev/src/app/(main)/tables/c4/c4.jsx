@@ -8,10 +8,12 @@ import { roleCan } from "../../../../lib/role";
 // Impor komponen tabel C4
 import Tabel4A1 from "./Tabel4A1";
 import Tabel4A2 from "./Tabel4A2";
+import Tabel4C1 from "./Tabel4C1";
 
 const ALL_TABLES = [
   { key: "4a1", label: "Tabel 4A-1", Component: Tabel4A1, accessKey: "tabel_4a1_sarpras_pkm" },
   { key: "4a2", label: "Tabel 4A-2", Component: Tabel4A2, accessKey: "tabel_4a2" },
+  { key: "4c1", label: "Tabel 4C-1", Component: Tabel4C1, accessKey: "tabel_4c1_kerjasama_pkm" },
 ];
 
 export default function C4WithTopNav() {
