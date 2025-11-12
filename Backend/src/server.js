@@ -59,7 +59,13 @@ import tabel3c3HkiRoutes from './routes/tabel3c3Hki.route.js';
 
 // ===== C4 ROUTES =====
 import tabel4a1SarprasPkmRouter from './routes/tabel4a1SarprasPkm.route.js';
-// TODO: import route lain setelah dikonversi
+
+// ===== C5 ROUTES =====
+import tabel51SistemTataKelolaRouter from './routes/tabel51SistemTataKelola.route.js';
+import tabel52SarprasPendidikanRouter from './routes/tabel52SarprasPendidikan.route.js';
+
+// ===== C6 ROUTES =====
+import tabel6KesesuaianVisiMisiRouter from './routes/tabel6KesesuaianVisiMisi.route.js';
 
 const app = express();
 
@@ -155,6 +161,13 @@ app.use('/api/tabel-3c3-hki', tabel3c3HkiRoutes);
 
 // ===== C4 =====
 app.use('/api/tabel-4a1-sarpras-pkm', tabel4a1SarprasPkmRouter);
+
+// ===== C5 =====
+app.use('/api/tabel-5-1-sistem-tata-kelola', tabel51SistemTataKelolaRouter);
+app.use('/api/tabel-5-2-sarpras-pendidikan', tabel52SarprasPendidikanRouter);
+
+// ===== C6 =====
+app.use('/api/tabel-6-kesesuaian-visi-misi', tabel6KesesuaianVisiMisiRouter);
 
 // ===== 404 FALLBACK =====
 app.use((_req, res) => {

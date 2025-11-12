@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 10 Nov 2025 pada 03.47
+-- Waktu pembuatan: 12 Nov 2025 pada 06.30
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -1518,7 +1518,8 @@ CREATE TABLE `tabel_3a2_pendanaan` (
 INSERT INTO `tabel_3a2_pendanaan` (`id_pendanaan`, `id_penelitian`, `id_tahun`, `jumlah_dana`, `link_bukti`, `created_at`, `updated_at`) VALUES
 (3, 1, 2024, 10, 'https://youtube.com1', '2025-11-05 04:10:27', '2025-11-05 04:10:27'),
 (4, 2, 2026, 11, 'https://youtube.com1', '2025-11-05 04:15:38', '2025-11-05 04:15:38'),
-(6, 3, 2031, 1, 'https://youtube.com1', '2025-11-05 04:39:29', '2025-11-05 04:39:29');
+(6, 3, 2031, 1, 'https://youtube.com1', '2025-11-05 04:39:29', '2025-11-05 04:39:29'),
+(7, 4, 2034, 10, 'https://youtube.com', '2025-11-11 04:04:23', '2025-11-11 04:04:23');
 
 -- --------------------------------------------------------
 
@@ -1549,7 +1550,8 @@ CREATE TABLE `tabel_3a2_penelitian` (
 INSERT INTO `tabel_3a2_penelitian` (`id`, `id_unit`, `link_roadmap`, `id_dosen_ketua`, `judul_penelitian`, `jml_mhs_terlibat`, `jenis_hibah`, `sumber_dana`, `durasi_tahun`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
 (1, 2, 'https://www.youtube.com/', 12, 'Testing', 2, 'Terapan', 'L', 1, '2025-11-04 09:28:58', '2025-11-05 04:06:18', NULL, NULL),
 (2, 12, 'https://www.youtube.com/', 3, 'Tes 2', 1, 'Hibah Dasar', 'N', 2, '2025-11-05 04:15:38', '2025-11-05 04:15:38', NULL, NULL),
-(3, 12, 'https://www.youtube1.com/', 1, 'Tes 3', 0, 'Hibah Dasar', 'I', 3, '2025-11-05 04:28:57', '2025-11-05 04:39:29', NULL, NULL);
+(3, 12, 'https://www.youtube1.com/', 1, 'Tes 3', 0, 'Hibah Dasar', 'I', 3, '2025-11-05 04:28:57', '2025-11-05 04:39:29', NULL, NULL),
+(4, 2, 'https://www.youtube2.com/', 1, 'Mancing', 1, 'Hibah Dasar', 'I', 1, '2025-11-11 04:04:23', '2025-11-11 04:04:23', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1678,6 +1680,37 @@ CREATE TABLE `tabel_3c3_hki` (
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4a1_sarpras_pkm`
+--
+
+CREATE TABLE `tabel_4a1_sarpras_pkm` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Sarpras)',
+  `nama_sarpras` varchar(255) NOT NULL,
+  `daya_tampung` int(11) DEFAULT NULL,
+  `luas_ruang_m2` float DEFAULT NULL,
+  `kepemilikan` enum('M','W') DEFAULT NULL COMMENT 'M: Milik Sendiri, W: Sewa',
+  `lisensi` enum('L','P','T') DEFAULT NULL COMMENT 'L: Berlisensi, P: Public Domain, T: Tdk Berlisensi',
+  `perangkat_detail` text DEFAULT NULL COMMENT 'Isi: perangkat keras, lunak, bandwidth, dll.',
+  `link_bukti` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_4a1_sarpras_pkm`
+--
+
+INSERT INTO `tabel_4a1_sarpras_pkm` (`id`, `id_unit`, `nama_sarpras`, `daya_tampung`, `luas_ruang_m2`, `kepemilikan`, `lisensi`, `perangkat_detail`, `link_bukti`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`) VALUES
+(1, 2, 'Basis Data', 5, 50, 'M', 'L', 'Hardware, Software', 'https://youtube.com', '2025-11-11 03:33:44', 1, '2025-11-11 03:33:56', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2202,6 +2235,14 @@ ALTER TABLE `tabel_3c3_hki`
   ADD KEY `idx_3c3_deleted_at` (`deleted_at`);
 
 --
+-- Indeks untuk tabel `tabel_4a1_sarpras_pkm`
+--
+ALTER TABLE `tabel_4a1_sarpras_pkm`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_4a1_id_unit` (`id_unit`),
+  ADD KEY `idx_4a1_deleted_at` (`deleted_at`);
+
+--
 -- Indeks untuk tabel `tahun_akademik`
 --
 ALTER TABLE `tahun_akademik`
@@ -2400,13 +2441,13 @@ ALTER TABLE `tabel_3a1_sarpras_penelitian`
 -- AUTO_INCREMENT untuk tabel `tabel_3a2_pendanaan`
 --
 ALTER TABLE `tabel_3a2_pendanaan`
-  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_3a2_penelitian`
 --
 ALTER TABLE `tabel_3a2_penelitian`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_3a3_dtpr_tahunan`
@@ -2443,6 +2484,12 @@ ALTER TABLE `tabel_3c2_publikasi_penelitian`
 --
 ALTER TABLE `tabel_3c3_hki`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4a1_sarpras_pkm`
+--
+ALTER TABLE `tabel_4a1_sarpras_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `tenaga_kependidikan`

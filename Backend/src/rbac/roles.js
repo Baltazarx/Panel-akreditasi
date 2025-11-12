@@ -21,6 +21,7 @@ export const AccessMatrix = {
     'mata_kuliah':        { C: true, R: true, U: true, D: true },
     'cpmk':               { C: true, R: true, U: true, D: true },
     'visi_misi':          { C: true, R: true, U: true, D: true },
+    'tabel_6_kesesuaian_visi_misi': { C: true, R: true, U: true, D: true },
     'pemetaan2b1':        { R: true },
     'pemetaan2b2':        { R: true, U: true },
     'pemetaan2b3':        { R: true },
@@ -58,6 +59,7 @@ export const AccessMatrix = {
     'mata_kuliah':        { C: true, R: true, U: true, D: true },
     'cpmk':               { C: true, R: true, U: true, D: true },
     'visi_misi':          { C: true, R: true, U: true, D: true },
+    'tabel_6_kesesuaian_visi_misi': { C: true, R: true, U: true, D: true },
     'pemetaan2b1':        { R: true },
     'pemetaan2b2':        { R: true, U: true },
     'pemetaan2b3':        { R: true },
@@ -95,6 +97,7 @@ export const AccessMatrix = {
     'mata_kuliah':        { C: true, R: true, U: true, D: true },
     'cpmk':               { C: true, R: true, U: true, D: true },
     'visi_misi':          { C: true, R: true, U: true, D: true },
+    'tabel_6_kesesuaian_visi_misi': { C: true, R: true, U: true, D: true },
     'pemetaan2b1':        { R: true },
     'pemetaan2b2':        { R: true, U: true },
     'pemetaan2b3':        { R: true },
@@ -165,6 +168,7 @@ export const AccessMatrix = {
   'sarpras': {
     'tabel_3a1_sarpras_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_4a1_sarpras_pkm': { C: true, R: true, U: true, D: true },
+    'tabel_5_2_sarpras_pendidikan': { C: true, R: true, U: true, D: true },
   },
 
   // ========== KEMAHASISWAAN ==========
