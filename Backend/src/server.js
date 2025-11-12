@@ -59,7 +59,10 @@ import tabel3c3HkiRoutes from './routes/tabel3c3Hki.route.js';
 
 // ===== C4 ROUTES =====
 import tabel4a1SarprasPkmRouter from './routes/tabel4a1SarprasPkm.route.js';
-<<<<<<< HEAD
+import tabel4a2PkmRouter from './routes/tabel4a2Pkm.route.js';
+import tabel4c1KerjasamaPkmRouter from './routes/tabel4c1KerjasamaPkm.route.js';
+import tabel4c2DiseminasiPkmRouter from './routes/tabel4c2DiseminasiPkm.route.js';
+import tabel4c3HkiPkmRouter from './routes/tabel4c3HkiPkm.route.js';
 
 // ===== C5 ROUTES =====
 import tabel51SistemTataKelolaRouter from './routes/tabel51SistemTataKelola.route.js';
@@ -67,13 +70,7 @@ import tabel52SarprasPendidikanRouter from './routes/tabel52SarprasPendidikan.ro
 
 // ===== C6 ROUTES =====
 import tabel6KesesuaianVisiMisiRouter from './routes/tabel6KesesuaianVisiMisi.route.js';
-=======
-import tabel4a2PkmRouter from './routes/tabel4a2Pkm.route.js';
-import tabel4c1KerjasamaPkmRouter from './routes/tabel4c1KerjasamaPkm.route.js';
-import tabel4c2DiseminasiPkmRouter from './routes/tabel4c2DiseminasiPkm.route.js';
-import tabel4c3HkiPkmRouter from './routes/tabel4c3HkiPkm.route.js';
 // TODO: import route lain setelah dikonversi
->>>>>>> 8ec3d7e5054c2fcb728e81e2b8c8180122d5ae90
 
 const app = express();
 
