@@ -128,6 +128,7 @@ export const AccessMatrix = {
     'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true, H: true },
     'tabel_3c3_hki': { C: true, R: true, U: true, D: true, H: true },
     'tabel_4a2_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
   
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
@@ -206,6 +207,7 @@ export const AccessMatrix = {
   'kerjasama': {
     // ---- Tabel 3C1 (CRUD + Hard Delete) ----
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },
