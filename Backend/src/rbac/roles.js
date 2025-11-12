@@ -129,9 +129,12 @@ export const AccessMatrix = {
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
     'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true, H: true },
-    
-    // [BARIS BARU DITAMBAHKAN DI SINI]
     'tabel_3c3_hki': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4a2_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true, H: true },
+  
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
     'sumber_pendanaan':         { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
@@ -210,6 +213,7 @@ export const AccessMatrix = {
   'kerjasama': {
     // ---- Tabel 3C1 (CRUD + Hard Delete) ----
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },

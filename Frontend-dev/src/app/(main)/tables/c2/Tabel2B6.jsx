@@ -12,6 +12,17 @@ export default function Tabel2B6({ role }) {
   const { authUser } = useAuth();
   const { maps, loading: mapsLoading } = useMaps(true);
   const tableKey = "tabel_2b6_kepuasan_pengguna";
+  
+  // Cek apakah user adalah role kemahasiswaan
+  const userRole = authUser?.role || role;
+  const isKemahasiswaan = userRole?.toLowerCase() === 'kemahasiswaan';
+  
+  // Cek apakah user adalah superadmin (bisa melihat semua prodi)
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  
   const [data, setData] = useState([]);
   const [statistik, setStatistik] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +104,13 @@ export default function Tabel2B6({ role }) {
     rencana_tindak_lanjut: ""
   });
   const [showDeleted, setShowDeleted] = useState(false);
+
+  // Pastikan showDeleted selalu false untuk role kemahasiswaan
+  useEffect(() => {
+    if (isKemahasiswaan && showDeleted) {
+      setShowDeleted(false);
+    }
+  }, [isKemahasiswaan, showDeleted]);
 
   // Jenis kemampuan yang tersedia (sesuai backend)
   const jenisKemampuanList = [
@@ -206,13 +224,20 @@ export default function Tabel2B6({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  // Set selectedUnit saat availableUnits tersedia
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
   useEffect(() => {
-    if (!selectedUnit && Array.isArray(availableUnits) && availableUnits.length > 0) {
-      console.log("Tabel2B6 - Auto-selecting unit:", availableUnits[0].id);
-      setSelectedUnit(parseInt(availableUnits[0].id));
+    if (!selectedUnit) {
+      if (!isSuperAdmin && userProdiId) {
+        // User prodi: gunakan prodi mereka
+        console.log("Tabel2B6 - Auto-selecting user prodi:", userProdiId);
+        setSelectedUnit(parseInt(userProdiId));
+      } else if (isSuperAdmin && Array.isArray(availableUnits) && availableUnits.length > 0) {
+        // Superadmin: pilih prodi pertama
+        console.log("Tabel2B6 - Auto-selecting unit:", availableUnits[0].id);
+        setSelectedUnit(parseInt(availableUnits[0].id));
+      }
     }
-  }, [availableUnits, selectedUnit]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
 
   // Fetch data saat filter berubah (pastikan kedua filter sudah ter-set)
   useEffect(() => { 
@@ -248,6 +273,36 @@ export default function Tabel2B6({ role }) {
       };
     });
   }, [data, selectedTahun, selectedUnit, showDeleted]);
+
+  // Hitung total untuk baris Jumlah (jumlahkan lalu bagi 7)
+  const jumlahData = useMemo(() => {
+    const totalSangatBaik = tableData.reduce((sum, row) => {
+      const val = parseFloat(row.sangat_baik) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalBaik = tableData.reduce((sum, row) => {
+      const val = parseFloat(row.baik) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalCukup = tableData.reduce((sum, row) => {
+      const val = parseFloat(row.cukup) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalKurang = tableData.reduce((sum, row) => {
+      const val = parseFloat(row.kurang) || 0;
+      return sum + val;
+    }, 0);
+    
+    return {
+      sangat_baik: totalSangatBaik > 0 ? (totalSangatBaik / 7).toFixed(2) : "",
+      baik: totalBaik > 0 ? (totalBaik / 7).toFixed(2) : "",
+      cukup: totalCukup > 0 ? (totalCukup / 7).toFixed(2) : "",
+      kurang: totalKurang > 0 ? (totalKurang / 7).toFixed(2) : ""
+    };
+  }, [tableData]);
 
   // Statistik terpilih (backend bisa kirim object atau array)
   const statData = useMemo(() => {
@@ -494,10 +549,10 @@ export default function Tabel2B6({ role }) {
             {/* Baris Jumlah (gabung kolom No + Jumlah) */}
             <tr className={tableData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
               <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
-              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.sangat_baik}</td>
+              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.baik}</td>
+              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.cukup}</td>
+              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.kurang}</td>
               <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
               <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
             </tr>
@@ -584,8 +639,8 @@ export default function Tabel2B6({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          <UnitSelector />
-          {canDelete && (
+          {isSuperAdmin && <UnitSelector />}
+          {canDelete && !isKemahasiswaan && (
             <button
               onClick={() => setShowDeleted(prev => !prev)}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"}`}

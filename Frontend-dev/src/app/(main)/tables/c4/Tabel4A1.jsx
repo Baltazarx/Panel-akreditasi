@@ -134,8 +134,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData }) {
               >
                 <option value="">Pilih Kepemilikan</option>
                 <option value="M">Milik Sendiri (M)</option>
-                <option value="S">Sewa (S)</option>
-                <option value="W">Wakaf (W)</option>
+                <option value="W">Sewa (W)</option>
               </select>
             </div>
 
@@ -233,12 +232,12 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <tr>
+            <tr className="sticky top-0">
               {showDeleted && (
-                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                   <input
                     type="checkbox"
                     checked={selectedRows.length === filteredRows.length && filteredRows.length > 0}
@@ -253,36 +252,36 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                   />
                 </th>
               )}
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Nama<br />Prasarana
               </th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Daya<br />Tampung
               </th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Luas<br />Ruang<br />(m²)
               </th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Milik Sendiri<br />(M)/ Sewa (W)
               </th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 Berlisensi (L)/<br /><em>Public Domain</em><br />(P)/Tidak<br />Berlisensi (T)
               </th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">...</th>
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">...</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
               {(canUpdate || canDelete) && (
-                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-300">
+          <tbody className="divide-y divide-slate-200">
             {filteredRows.length === 0 ? (
               <tr>
                 <td 
                   colSpan={showDeleted ? 11 : 10} 
-                  className="px-6 py-16 text-center text-slate-500 border border-slate-300"
+                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
                 >
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
@@ -297,11 +296,11 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                   <tr
                     key={rowId}
                     className={`transition-colors ${
-                      i % 2 === 0 ? "bg-white" : "bg-white"
+                      i % 2 === 0 ? "bg-white" : "bg-slate-50"
                     } hover:bg-[#eaf4ff] ${isDeleted ? "opacity-60" : ""}`}
                   >
                     {showDeleted && (
-                      <td className="px-4 py-3 text-center border border-slate-300">
+                      <td className="px-6 py-4 text-center border border-slate-200">
                         <input
                           type="checkbox"
                           checked={selectedRows.includes(r.id)}
@@ -316,27 +315,27 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                         />
                       </td>
                     )}
-                    <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{i + 1}</td>
-                    <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
+                    <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
+                    <td className="px-6 py-4 border border-slate-200 font-semibold text-slate-800 max-w-xs">
                       <div className="truncate" title={r.nama_sarpras || ""}>
                         {r.nama_sarpras || "-"}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.daya_tampung || "-"}</td>
-                    <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.luas_ruang_m2 || "-"}</td>
-                    <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">
-                      {r.kepemilikan === "M" ? "M" : r.kepemilikan === "S" ? "S" : r.kepemilikan === "W" ? "W" : "-"}
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.daya_tampung || "-"}</td>
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.luas_ruang_m2 || "-"}</td>
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">
+                      {r.kepemilikan === "M" ? "M" : r.kepemilikan === "W" ? "W" : "-"}
                     </td>
-                    <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">
                       {r.lisensi === "L" ? "L" : r.lisensi === "P" ? "P" : r.lisensi === "T" ? "T" : "-"}
                     </td>
-                    <td className="px-4 py-3 border border-slate-300 text-slate-700 max-w-xs">
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700 max-w-xs">
                       <div className="truncate" title={r.perangkat_detail || ""}>
                         {r.perangkat_detail || "-"}
                       </div>
                     </td>
-                    <td className="px-4 py-3 border border-slate-300 text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 border border-slate-300 text-slate-700">
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700 text-center">-</td>
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">
                       {r.link_bukti ? (
                         <a 
                           href={r.link_bukti} 
@@ -351,7 +350,7 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                       )}
                     </td>
                     {(canUpdate || canDelete) && (
-                      <td className="px-4 py-3 border border-slate-300">
+                      <td className="px-6 py-4 border border-slate-200">
                         <div className="flex items-center justify-center dropdown-container">
                           <button
                             onClick={(e) => {

@@ -1936,23 +1936,7 @@ const GrafikTabel = () => {
         }
     }, [role, fetchAllChartData]);
 
-    // Auto-refresh grafik setiap 30 detik dan saat window focus untuk sinkronisasi dengan data tabel
-    useEffect(() => {
-        if (!role) return;
-
-        // Auto-refresh setiap 30 detik
-        const intervalId = setInterval(() => {
-            fetchAllChartData();
-        }, 30000); // 30 detik
-
-        // Refresh saat window focus (user kembali ke tab)
-        window.addEventListener('focus', fetchAllChartData);
-
-        return () => {
-            clearInterval(intervalId);
-            window.removeEventListener('focus', fetchAllChartData);
-        };
-    }, [role, fetchAllChartData]);
+    // Auto-refresh dihapus - refresh hanya melalui button manual
 
     // Hitung persentase untuk progress bar (max 100 untuk scaling yang lebih baik)
     const maxValue = 100;
@@ -1991,9 +1975,9 @@ const GrafikTabel = () => {
 
     return (
         <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6"
         >
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-900">Grafik Data Tabel</h3>
@@ -2152,13 +2136,12 @@ const GrafikTabel = () => {
                                                     </ResponsiveContainer>
                                                 </div>
 
-                                                {/* Card Section - Design seperti gambar 2 */}
+                                                {/* Card Section */}
                                                 <motion.div
                                                     whileHover={shouldReduceMotion ? undefined : { y: -2 }}
                                                     className="group relative bg-white rounded-xl border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all duration-300"
                                                     onClick={() => {
                                                         if (item.name === 'Panel Admin') {
-                                                            // Redirect ke halaman tables dengan parameter untuk menampilkan panel admin
                                                             router.push('/tables');
                                                         } else {
                                                             router.push(`/tables?table=${item.name}`);
@@ -2166,7 +2149,6 @@ const GrafikTabel = () => {
                                                     }}
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
-                                                        {/* Icon dan Label */}
                                                         <div className="flex items-center gap-3 flex-1">
                                                             <div className={`p-3 rounded-lg bg-gradient-to-br ${item.color} text-white shadow-md flex-shrink-0`}>
                                                                 <IconComponent className="w-5 h-5" />
@@ -2178,14 +2160,11 @@ const GrafikTabel = () => {
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* Bottom Section dengan Data dan Progress */}
                                                     <div className="flex items-end justify-between gap-4">
-                                                        {/* Data Section */}
                                                         <div className="flex-1">
                                                             <div className="text-4xl font-extrabold text-slate-900 mb-1">{item.count}</div>
                                                             <div className="text-xs text-gray-500 mb-3">Data</div>
                                                             
-                                                            {/* Progress Bar */}
                                                             <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
                                                                 <motion.div
                                                                     initial={{ width: 0 }}
@@ -2196,7 +2175,6 @@ const GrafikTabel = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Progress Percentage */}
                                                         <div className="text-right flex-shrink-0">
                                                             <div className={`text-base font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
                                                                 {percentage.toFixed(0)}%

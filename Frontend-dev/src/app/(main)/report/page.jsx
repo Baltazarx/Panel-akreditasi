@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../../context/AuthContext";
 import { roleCan } from "../../../lib/role";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 // Shimmer animation akan ditambahkan via inline style atau global CSS
 
@@ -53,7 +54,14 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  Building2,
+  Handshake,
+  Award,
+  Circle
 } from "lucide-react";
 
 // Definisi semua tabel C1
@@ -84,6 +92,24 @@ const C3_TABLES = [
   { key: "3a1", label: "Tabel 3A-1", endpoint: "/tabel-3a1-sarpras-penelitian", accessKey: "tabel_3a1_sarpras_penelitian", description: "Sarana Prasarana Penelitian" },
   { key: "3a2", label: "Tabel 3A-2", endpoint: "/tabel-3a2-penelitian", accessKey: "tabel_3a2_penelitian", description: "Penelitian" },
   { key: "3a3", label: "Tabel 3A-3", endpoint: "/tabel-3a3-pengembangan-dtpr/detail", accessKey: "tabel_3a3_pengembangan_dtpr", description: "Pengembangan DTPR di Bidang Penelitian" },
+];
+
+// Definisi semua tabel C4
+const C4_TABLES = [
+  { key: "4a1", label: "Tabel 4A-1", endpoint: "/tabel-4a1-sarpras-pkm", accessKey: "tabel_4a1_sarpras_pkm", description: "Sarana Prasarana PKM" },
+  { key: "4a2", label: "Tabel 4A-2", endpoint: "/tabel-4a2", accessKey: "tabel_4a2", description: "Pengabdian Kepada Masyarakat" },
+];
+
+// Definisi semua tabel C5
+const C5_TABLES = [
+  { key: "5a1", label: "Tabel 5A-1", endpoint: "/tabel-5a1", accessKey: "tabel_5a1", description: "Kerjasama" },
+  { key: "5a2", label: "Tabel 5A-2", endpoint: "/tabel-5a2", accessKey: "tabel_5a2", description: "Kerjasama Lanjutan" },
+];
+
+// Definisi semua tabel C6
+const C6_TABLES = [
+  { key: "6a1", label: "Tabel 6A-1", endpoint: "/tabel-6a1", accessKey: "tabel_6a1", description: "Luaran dan Capaian" },
+  { key: "6a2", label: "Tabel 6A-2", endpoint: "/tabel-6a2", accessKey: "tabel_6a2", description: "Capaian Tridharma" },
 ];
 
 // Komponen Grafik Card untuk setiap tabel - Design sesuai gambar
@@ -195,6 +221,348 @@ const ChartCard = ({ table, dataCount, isLoading, onExpand, isExpanded, role, co
           )}
         </div>
       )}
+    </motion.div>
+  );
+};
+
+// Komponen Grafik untuk setiap kategori (C1, C2, C3) - Terpisah sesuai sub judul
+const GrafikSection = ({ tables, role, color, icon: Icon, title, categoryName, showCards = true }) => {
+  const [barData, setBarData] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fungsi untuk fetch data count dari API
+  const fetchTableDataCount = async (endpoint, tsId = null) => {
+    try {
+      const BASE_URL = "http://localhost:3000/api";
+      let url = `${BASE_URL}${endpoint}`;
+      
+      if (tsId) {
+        url += `${url.includes('?') ? '&' : '?'}ts_id=${tsId}`;
+      }
+      
+      const response = await fetch(url, {
+        credentials: "include",
+        mode: "cors",
+      });
+      
+      if (!response.ok) {
+        return 0;
+      }
+      
+      const data = await response.json();
+      
+      if (data?.total !== undefined) {
+        return data.total;
+      } else if (data?.count !== undefined) {
+        return data.count;
+      } else if (data?.data && Array.isArray(data.data)) {
+        return data.data.length;
+      } else if (Array.isArray(data)) {
+        return data.length;
+      } else if (data?.items && Array.isArray(data.items)) {
+        return data.items.length;
+      }
+      
+      return 0;
+    } catch (error) {
+      console.warn(`Failed to fetch data for ${endpoint}:`, error);
+      return 0;
+    }
+  };
+
+  // Fungsi untuk mendapatkan tahun terbaru
+  const getLatestTahunId = async () => {
+    try {
+      const BASE_URL = "http://localhost:3000/api";
+      const response = await fetch(`${BASE_URL}/tahun-akademik`, {
+        credentials: "include",
+        mode: "cors",
+      });
+      
+      if (!response.ok) {
+        return new Date().getFullYear();
+      }
+      
+      const data = await response.json();
+      const tahunList = Array.isArray(data) ? data : (data?.items || []);
+      
+      if (tahunList.length === 0) {
+        return new Date().getFullYear();
+      }
+      
+      const currentYear = new Date().getFullYear();
+      const tahunTerpilih = tahunList.find(t => {
+        const tahunStr = String(t.tahun || t.nama || '');
+        return tahunStr.includes(String(currentYear));
+      });
+      
+      if (tahunTerpilih) {
+        return tahunTerpilih.id_tahun;
+      }
+      
+      const sorted = tahunList.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0));
+      return sorted[0]?.id_tahun || new Date().getFullYear();
+    } catch (error) {
+      console.warn('Failed to fetch tahun akademik:', error);
+      return new Date().getFullYear();
+    }
+  };
+
+  // Fetch data grafik
+  const fetchChartData = useCallback(async () => {
+    if (!role) return;
+    
+    setLoading(true);
+    
+    const latestTahunId = await getLatestTahunId();
+    
+    const dataPromises = tables.map(async (table) => {
+      if (!roleCan(role, table.accessKey, 'r')) return null;
+      const needsTsId = ['3a3'].includes(table.key);
+      const count = await fetchTableDataCount(table.endpoint, needsTsId ? latestTahunId : null);
+      return { label: table.label.replace('Tabel ', ''), count };
+    });
+
+    const results = await Promise.all(dataPromises);
+    const filteredResults = results.filter(Boolean);
+
+    if (filteredResults.length === 0) {
+      setBarData([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
+
+    const chartBarData = filteredResults.map((item) => ({
+      category: item.label,
+      value: item.count
+    }));
+
+    const total = filteredResults.reduce((sum, item) => sum + item.count, 0);
+
+    setBarData(chartBarData);
+    setTotalCount(total);
+    setLoading(false);
+  }, [tables, role]);
+
+  useEffect(() => {
+    if (role) {
+      fetchChartData();
+    } else {
+      setLoading(false);
+    }
+  }, [role, fetchChartData]);
+
+  // Hitung persentase untuk progress bar
+  const maxValue = 100;
+  const calculatePercentage = (count) => Math.min((count / maxValue) * 100, 100);
+  const percentage = calculatePercentage(totalCount);
+
+  // Cek apakah user punya akses ke setidaknya satu tabel
+  const hasAccess = tables.some(table => roleCan(role, table.accessKey, 'r'));
+
+  if (!hasAccess) {
+    return null;
+  }
+
+  // Warna stroke berdasarkan kategori
+  const getStrokeColor = () => {
+    if (categoryName === 'C1') return '#3b82f6';
+    if (categoryName === 'C2') return '#8b5cf6';
+    if (categoryName === 'C3') return '#10b981';
+    if (categoryName === 'C4') return '#14b8a6'; // teal-500
+    if (categoryName === 'C5') return '#f59e0b'; // amber-500
+    if (categoryName === 'C6') return '#f43f5e'; // rose-500
+    if (categoryName === 'Panel Admin') return '#10b981';
+    return '#3b82f6';
+  };
+
+  const strokeColor = getStrokeColor();
+
+  // Hitung jumlah tabel yang bisa diakses
+  const accessibleTablesCount = tables.filter(table => roleCan(role, table.accessKey, 'r')).length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-14"
+    >
+      {/* Sub Judul Baru - Di atas card */}
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+      </div>
+
+      {/* Grafik Card - Dengan judul dan icon */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6"
+      >
+        {/* Header dengan Icon dan Judul */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className={`p-3 rounded-lg bg-gradient-to-br ${color} text-white shadow-md`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">{categoryName}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{title}</p>
+          </div>
+        </div>
+
+        {/* Deskripsi Grafik untuk Semua Kategori */}
+        {categoryName === 'C1' && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C1 (Visi, Misi, Tujuan, dan Sasaran). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'C2' && (
+          <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C2 (Mahasiswa, Lulusan, dan Pengguna). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'C3' && (
+          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C3 (Penelitian). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'C4' && (
+          <div className="mb-4 p-4 bg-teal-50 rounded-lg border border-teal-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C4 (Pengabdian Kepada Masyarakat). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'C5' && (
+          <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C5 (Kerjasama). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'C6' && (
+          <div className="mb-4 p-4 bg-rose-50 rounded-lg border border-rose-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari setiap tabel dalam Standar C6 (Luaran dan Capaian). 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {categoryName === 'Panel Admin' && (
+          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-100">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Grafik ini menampilkan jumlah data dari tabel Dosen dan Pegawai. 
+              Setiap titik pada grafik mewakili jumlah data yang tersedia pada tabel terkait, membantu Anda melihat 
+              distribusi dan kelengkapan data secara visual.
+            </p>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="h-32 bg-gray-100 rounded-lg animate-pulse"></div>
+        ) : (
+          <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={barData || []} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+                <XAxis 
+                  dataKey="category" 
+                  tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  domain={[0, 'dataMax']}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    fontSize: '12px'
+                  }}
+                  cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+                />
+                <Line 
+                  type="monotone"
+                  dataKey="value" 
+                  stroke={strokeColor}
+                  strokeWidth={2}
+                  dot={{ fill: strokeColor, r: 4 }}
+                  activeDot={{ r: 6 }}
+                  name="Jumlah Data"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Progress Bar dengan Icon - Untuk Semua Grafik */}
+        {!loading && (
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <Circle className={`w-5 h-5 ${categoryName === 'C1' ? 'text-blue-500' : categoryName === 'C2' ? 'text-purple-500' : categoryName === 'C3' ? 'text-green-500' : categoryName === 'C4' ? 'text-teal-500' : categoryName === 'C5' ? 'text-amber-500' : categoryName === 'C6' ? 'text-rose-500' : 'text-green-500'}`} strokeWidth={2} fill="none" />
+            </div>
+            <div className="flex-1 relative">
+              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${percentage}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className={`h-full rounded-full ${
+                    categoryName === 'C1' ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                    categoryName === 'C2' ? 'bg-gradient-to-r from-purple-400 to-purple-500' :
+                    categoryName === 'C3' ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                    categoryName === 'C4' ? 'bg-gradient-to-r from-teal-400 to-teal-500' :
+                    categoryName === 'C5' ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                    categoryName === 'C6' ? 'bg-gradient-to-r from-rose-400 to-rose-500' :
+                    'bg-gradient-to-r from-green-400 to-green-500'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <span className={`text-sm font-medium ${
+                categoryName === 'C1' ? 'text-blue-500/70' :
+                categoryName === 'C2' ? 'text-purple-500/70' :
+                categoryName === 'C3' ? 'text-green-500/70' :
+                categoryName === 'C4' ? 'text-teal-500/70' :
+                categoryName === 'C5' ? 'text-amber-500/70' :
+                categoryName === 'C6' ? 'text-rose-500/70' :
+                'text-green-500/70'
+              }`}>{percentage.toFixed(0)}%</span>
+            </div>
+          </div>
+        )}
+      </motion.div>
     </motion.div>
   );
 };
@@ -318,8 +686,27 @@ export default function ReportPage() {
   ];
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
+  const c4AccessKeys = [
+    "tabel_4a1_sarpras_pkm",
+    "tabel_4a2"
+  ];
+  const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c5AccessKeys = [
+    "tabel_5a1",
+    "tabel_5a2"
+  ];
+  const hasC5Access = useMemo(() => c5AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+  const c6AccessKeys = [
+    "tabel_6a1",
+    "tabel_6a2"
+  ];
+  const hasC6Access = useMemo(() => c6AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
   const hasDosenAccess = useMemo(() => roleCan(role, "dosen", "r"), [role]);
   const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
+  const hasUsersAccess = useMemo(() => roleCan(role, "users", "r") || roleCan(role, "user_management", "r") || roleCan(role, "manajemen_akun", "r"), [role]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white py-10 px-4 sm:px-6 lg:px-8">
@@ -346,53 +733,101 @@ export default function ReportPage() {
 
         {/* Section C1 */}
         {hasC1Access && (
-          <ReportSection
-            title="Standar C1 - Visi, Misi, Tujuan, dan Sasaran"
-            icon={Database}
+          <GrafikSection
             tables={C1_TABLES}
             role={role}
             color="from-blue-500 to-cyan-500"
-          />
-        )}
-
-        {/* Section Panel Admin - Data Dosen dan Pegawai */}
-        {(hasDosenAccess || hasPegawaiAccess) && (
-          <ReportSection
-            title="Panel Admin"
-            icon={Users}
-            tables={[
-              ...(hasDosenAccess ? [{ key: "dosen", label: "Tabel Dosen", endpoint: "/dosen", accessKey: "dosen", description: "Data Dosen" }] : []),
-              ...(hasPegawaiAccess ? [{ key: "pegawai", label: "Tabel Pegawai", endpoint: "/pegawai", accessKey: "pegawai", description: "Data Pegawai" }] : [])
-            ]}
-            role={role}
-            color="from-green-500 to-emerald-500"
+            icon={Database}
+            title="Standar C1 - Visi, Misi, Tujuan, dan Sasaran"
+            categoryName="C1"
+            showCards={false}
           />
         )}
 
         {/* Section C2 */}
         {hasC2Access && (
-          <ReportSection
-            title="Standar C2 - Mahasiswa, Lulusan, dan Pengguna"
-            icon={TrendingUp}
+          <GrafikSection
             tables={C2_TABLES}
             role={role}
             color="from-purple-500 to-violet-500"
+            icon={TrendingUp}
+            title="Standar C2 - Mahasiswa, Lulusan, dan Pengguna"
+            categoryName="C2"
+            showCards={false}
           />
         )}
 
         {/* Section C3 */}
         {hasC3Access && (
-          <ReportSection
-            title="Standar C3 - Penelitian"
-            icon={FileText}
+          <GrafikSection
             tables={C3_TABLES}
             role={role}
-            color="from-indigo-500 to-purple-500"
+            color="from-green-500 to-emerald-500"
+            icon={FileText}
+            title="Standar C3 - Penelitian"
+            categoryName="C3"
+            showCards={false}
+          />
+        )}
+
+        {/* Section C4 */}
+        {hasC4Access && (
+          <GrafikSection
+            tables={C4_TABLES}
+            role={role}
+            color="from-teal-500 to-cyan-500"
+            icon={Building2}
+            title="Standar C4 - Pengabdian Kepada Masyarakat"
+            categoryName="C4"
+            showCards={false}
+          />
+        )}
+
+        {/* Section C5 */}
+        {hasC5Access && (
+          <GrafikSection
+            tables={C5_TABLES}
+            role={role}
+            color="from-amber-500 to-orange-500"
+            icon={Handshake}
+            title="Standar C5 - Kerjasama"
+            categoryName="C5"
+            showCards={false}
+          />
+        )}
+
+        {/* Section C6 */}
+        {hasC6Access && (
+          <GrafikSection
+            tables={C6_TABLES}
+            role={role}
+            color="from-rose-500 to-pink-500"
+            icon={Award}
+            title="Standar C6 - Luaran dan Capaian"
+            categoryName="C6"
+            showCards={false}
+          />
+        )}
+
+        {/* Section Panel Admin - Data Dosen, Pegawai, dan Users */}
+        {(hasDosenAccess || hasPegawaiAccess || hasUsersAccess) && (
+          <GrafikSection
+            tables={[
+              ...(hasDosenAccess ? [{ key: "dosen", label: "Tabel Dosen", endpoint: "/dosen", accessKey: "dosen", description: "Data Dosen" }] : []),
+              ...(hasPegawaiAccess ? [{ key: "pegawai", label: "Tabel Pegawai", endpoint: "/pegawai", accessKey: "pegawai", description: "Data Pegawai" }] : []),
+              ...(hasUsersAccess ? [{ key: "users", label: "Tabel Users", endpoint: "/users", accessKey: "users", description: "Manajemen Akun" }] : [])
+            ]}
+            role={role}
+            color="from-green-500 to-emerald-500"
+            icon={Users}
+            title="Panel Admin"
+            categoryName="Panel Admin"
+            showCards={false}
           />
         )}
 
         {/* Empty State */}
-        {!hasC1Access && !hasC2Access && !hasC3Access && !hasDosenAccess && !hasPegawaiAccess && (
+        {!hasC1Access && !hasC2Access && !hasC3Access && !hasC4Access && !hasC5Access && !hasC6Access && !hasDosenAccess && !hasPegawaiAccess && !hasUsersAccess && (
           <div className="text-center py-20">
             <Database size={64} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada akses</h3>

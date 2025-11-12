@@ -58,6 +58,17 @@ export default function Tabel2D({ role }) {
     const isProdiUser = ['prodi'].includes(role?.toLowerCase());
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(role?.toLowerCase());
     const canManageData = isProdiUser || isSuperAdmin; // Akses untuk prodi dan superadmin
+    
+    // Cek apakah user adalah prodi TI atau MI berdasarkan id_unit_prodi
+    const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+    const isProdiTIorMI = userProdiId && (userProdiId === 4 || userProdiId === 5);
+    
+    // Pastikan showDeleted selalu false untuk user prodi TI/MI
+    useEffect(() => {
+        if (isProdiTIorMI && showDeleted) {
+            setShowDeleted(false);
+        }
+    }, [isProdiTIorMI, showDeleted]);
 
     // --- Utility Hooks ---
     const availableYears = useMemo(() => {
@@ -587,7 +598,7 @@ export default function Tabel2D({ role }) {
                         </>
                     )}
                     
-                    {canDelete && (
+                    {canDelete && !isProdiTIorMI && (
                         <button
                             onClick={() => setShowDeleted(prev => !prev)}
                             className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
