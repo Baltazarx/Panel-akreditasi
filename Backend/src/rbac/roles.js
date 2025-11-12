@@ -130,6 +130,7 @@ export const AccessMatrix = {
     'tabel_4a2_pkm': { C: true, R: true, U: true, D: true, H: true },
     'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
     'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true, H: true },
   
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
