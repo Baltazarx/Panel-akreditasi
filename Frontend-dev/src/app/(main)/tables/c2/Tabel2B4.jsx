@@ -338,57 +338,58 @@ export default function Tabel2B4({ role }) {
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr className="sticky top-0">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                 Tahun Lulus
               </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                 Jumlah Lulusan
               </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                 Jumlah Lulusan yang Terlacak
               </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                 Rata-rata Waktu Tunggu (Bulan)
               </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">
                 Aksi
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody>
             {tableData.map((row, index) => {
               const rowBg = row.data && row.data.deleted_at ? "bg-red-100" : (index % 2 === 0 ? "bg-white" : "bg-slate-50");
+              const isJumlah = row.tahun_lulus === "Jumlah";
               return (
-              <tr key={index} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium">
+              <tr key={index} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''}`}>
+                <td className={`px-4 py-3 text-slate-700 border border-slate-200 ${isJumlah ? 'bg-slate-100 font-semibold' : 'bg-gray-50'} font-medium text-center`}>
                   {row.tahun_lulus}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
-                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
+                  className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg} ${
+                    row.data && !isJumlah ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
-                  onClick={() => row.data && handleCellClick(row, 'jumlah_lulusan')}
+                  onClick={() => row.data && !isJumlah && handleCellClick(row, 'jumlah_lulusan')}
                 >
-                  {row.jumlah_lulusan || (row.data ? "Klik untuk mengisi" : "")}
+                  {row.jumlah_lulusan !== "" ? row.jumlah_lulusan : (row.data && !isJumlah ? "Klik untuk mengisi" : "-")}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
-                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
+                  className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg} ${
+                    row.data && !isJumlah ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
-                  onClick={() => row.data && handleCellClick(row, 'jumlah_terlacak')}
+                  onClick={() => row.data && !isJumlah && handleCellClick(row, 'jumlah_terlacak')}
                 >
-                  {row.jumlah_terlacak || (row.data ? "Klik untuk mengisi" : "")}
+                  {row.jumlah_terlacak !== "" ? row.jumlah_terlacak : (row.data && !isJumlah ? "Klik untuk mengisi" : "-")}
                 </td>
                 <td 
-                  className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBg} ${
-                    row.data ? 'cursor-pointer hover:bg-slate-100' : ''
+                  className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg} ${
+                    row.data && !isJumlah ? 'cursor-pointer hover:bg-slate-100' : ''
                   }`}
-                  onClick={() => row.data && handleCellClick(row, 'rata_rata_waktu_tunggu_bulan')}
+                  onClick={() => row.data && !isJumlah && handleCellClick(row, 'rata_rata_waktu_tunggu_bulan')}
                 >
-                  {row.rata_rata_waktu_tunggu_bulan || (row.data ? "Klik untuk mengisi" : "")}
+                  {row.rata_rata_waktu_tunggu_bulan !== "" ? row.rata_rata_waktu_tunggu_bulan : (row.data && !isJumlah ? "Klik untuk mengisi" : "-")}
                 </td>
-                <td className="px-6 py-4 border border-slate-200">
-                  {row.data && !row.data.deleted_at && (
+                <td className="px-2 py-3 border border-slate-200 w-20">
+                  {row.data && !row.data.deleted_at && !isJumlah && (
                     <div className="flex items-center justify-center dropdown-container">
                       <button
                         onClick={(e) => {
@@ -414,7 +415,7 @@ export default function Tabel2B4({ role }) {
                       </button>
                     </div>
                   )}
-                  {row.data && row.data.deleted_at && (
+                  {row.data && row.data.deleted_at && !isJumlah && (
                     <div className="text-center italic text-red-600">Dihapus</div>
                   )}
                 </td>

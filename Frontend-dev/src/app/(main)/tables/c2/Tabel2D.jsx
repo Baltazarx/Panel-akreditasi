@@ -708,10 +708,10 @@ export default function Tabel2D({ role }) {
                         <table className="w-full text-sm text-left border-collapse">
                             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                                 <tr>
-                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">SUMBER REKOGNISI</th>
-                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">JENIS PENGAKUAN LULUSAN (REKOGNISI)</th>
-                                    <th colSpan={yearOrder.length} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TAHUN AKADEMIK</th>
-                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">LINK BUKTI</th>
+                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">SUMBER REKOGNISI</th>
+                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">JENIS PENGAKUAN LULUSAN (REKOGNISI)</th>
+                                    <th colSpan={yearOrder.length} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TAHUN AKADEMIK</th>
+                                    <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">LINK BUKTI</th>
                                 </tr>
                                 <tr>
                                     {yearOrder.map((y, idx) => {
@@ -719,7 +719,7 @@ export default function Tabel2D({ role }) {
                                         const labels = ['TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS'];
                                         const label = labels[idx] || getTahunName(y);
                                         return (
-                                            <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white/20">
+                                            <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
                                                 {label}
                                             </th>
                                         );
@@ -995,11 +995,11 @@ export default function Tabel2D({ role }) {
                             <table className="min-w-full text-sm text-left border-collapse">
                                         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                                     <tr>
-                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Sumber</th>
-                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Jenis Pengakuan</th>
-                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Jumlah</th>
-                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Link Bukti</th>
-                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Aksi</th>
+                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Sumber</th>
+                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Jenis Pengakuan</th>
+                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Jumlah</th>
+                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Link Bukti</th>
+                                                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Aksi</th>
                                     </tr>
                                 </thead>
                                         <tbody className="divide-y divide-slate-200">

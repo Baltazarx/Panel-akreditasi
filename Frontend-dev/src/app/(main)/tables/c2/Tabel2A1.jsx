@@ -1925,42 +1925,42 @@ export default function Tabel2A1({ role }) {
             <thead>
               {/* Row 1: Header utama */}
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
-                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Calon Mahasiswa</th>
-                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
-                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Aktif</th>
+                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS</th>
+                <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Daya Tampung</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Calon Mahasiswa</th>
+                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Mahasiswa Baru</th>
+                <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Mahasiswa Aktif</th>
               </tr>
               {/* Row 2: Sub-header */}
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                 {/* TS dan Daya Tampung sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
-                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar</th>
-                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Afirmasi</th>
-                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendaftar Kebutuhan Khusus</th>
-                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
-                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
-                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Reguler</th>
-                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">RPL</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Pendaftar</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Pendaftar Afirmasi</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Pendaftar Kebutuhan Khusus</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Reguler</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">RPL</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Reguler</th>
+                <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">RPL</th>
               </tr>
               {/* Row 3: Header detail */}
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                 {/* TS, Daya Tampung, Pendaftar, Pendaftar Afirmasi, Pendaftar Kebutuhan Khusus sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
                 {/* Di bawah "Reguler" (Mahasiswa Baru) */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Kebutuhan Khusus</th>
                 {/* Di bawah "RPL" (Mahasiswa Baru) */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Kebutuhan Khusus</th>
                 {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Kebutuhan Khusus</th>
                 {/* Di bawah "RPL" (Mahasiswa Aktif) */}
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Diterima</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Afirmasi</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kebutuhan Khusus</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Diterima</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Afirmasi</th>
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Kebutuhan Khusus</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">

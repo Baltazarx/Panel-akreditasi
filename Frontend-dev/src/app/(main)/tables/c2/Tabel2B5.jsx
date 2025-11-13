@@ -410,30 +410,33 @@ export default function Tabel2B5({ role }) {
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <tr className="sticky top-0">
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun Lulus</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Lulusan</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Lulusan yang Terlacak</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Profesi Kerja Bidang Infokom</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Profesi Kerja Bidang Non Infokom</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Multinasional / Internasional</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nasional</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Wirausaha</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Tahun Lulus</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan yang Terlacak</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Infokom</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Non Infokom</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Multinasional / Internasional</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nasional</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Wirausaha</th>
+            <th className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">Aksi</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
-          {tableData.map((row, idx) => (
-            <tr key={idx} className={`transition-colors ${row.data && row.data.deleted_at ? "bg-red-100 text-red-800" : idx%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium">{row.tahun_lulus}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jumlah_lulusan}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jumlah_terlacak}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jml_infokom}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jml_non_infokom}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jml_internasional}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jml_nasional}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jml_wirausaha}</td>
-              <td className="px-6 py-4 border border-slate-200">
-                {row.data && (
+        <tbody>
+          {tableData.map((row, idx) => {
+            const isJumlah = row.tahun_lulus === "Jumlah";
+            const rowBg = row.data && row.data.deleted_at ? "bg-red-100" : (idx % 2 === 0 ? "bg-white" : "bg-slate-50");
+            return (
+            <tr key={idx} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''} ${row.data && row.data.deleted_at ? 'text-red-800' : ''}`}>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 font-medium text-center ${isJumlah ? 'bg-slate-100 font-semibold' : 'bg-gray-50'}`}>{row.tahun_lulus}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_lulusan !== "" ? row.jumlah_lulusan : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_terlacak !== "" ? row.jumlah_terlacak : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_infokom !== "" ? row.jml_infokom : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_non_infokom !== "" ? row.jml_non_infokom : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_internasional !== "" ? row.jml_internasional : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_nasional !== "" ? row.jml_nasional : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_wirausaha !== "" ? row.jml_wirausaha : "-"}</td>
+              <td className="px-2 py-3 border border-slate-200 w-20">
+                {row.data && !isJumlah && (
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {
@@ -459,11 +462,20 @@ export default function Tabel2B5({ role }) {
                     </button>
                   </div>
                 )}
+                {row.data && row.data.deleted_at && !isJumlah && (
+                  <div className="text-center italic text-red-600">Dihapus</div>
+                )}
               </td>
             </tr>
-          ))}
+            );
+          })}
           {tableData.length === 0 && (
-            <tr><td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200"><p className="font-medium">Data tidak ditemukan</p><p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p></td></tr>
+            <tr>
+              <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <p className="font-medium">Data tidak ditemukan</p>
+                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+              </td>
+            </tr>
           )}
         </tbody>
       </table>

@@ -139,7 +139,7 @@ function PrettyTable1A3({
                 </td>
                 <td className="px-6 py-4 border border-slate-200">
                   <div className="flex items-center justify-center dropdown-container">
-                    <button
+                      <button
                       onClick={(e) => {
                         e.stopPropagation();
                         const rowId = getIdField(r) ? r[getIdField(r)] : i;
@@ -158,9 +158,9 @@ function PrettyTable1A3({
                       className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                       aria-label="Menu aksi"
                       aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
-                    >
+                      >
                       <FiMoreVertical size={18} />
-                    </button>
+                      </button>
                   </div>
                 </td>
               </tr>
@@ -562,8 +562,8 @@ export default function Tabel1A3({ role }) {
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
         <div className="flex justify-between items-center mt-1">
           <p className="text-sm text-slate-500">
-            Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
-          </p>
+          Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
+        </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
               Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length}</span>
@@ -718,8 +718,8 @@ export default function Tabel1A3({ role }) {
       <div className="mt-8">
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-slate-700">
-            Ringkasan Penggunaan Dana
-          </h2>
+          Ringkasan Penggunaan Dana
+        </h2>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
               Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{summaryData.length}</span>

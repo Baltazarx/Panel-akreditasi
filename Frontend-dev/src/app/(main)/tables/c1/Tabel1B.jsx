@@ -134,7 +134,7 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                           aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
                         >
                           <FiMoreVertical size={18} />
-                        </button>
+                          </button>
                       </div>
                     </td>
                   </tr>
@@ -550,8 +550,8 @@ export default function Tabel1B({ role }) {
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
         <div className="flex justify-between items-center mt-1">
           <p className="text-sm text-slate-500">
-            Kelola data audit mutu internal dan monitoring evaluasi per tahun.
-          </p>
+          Kelola data audit mutu internal dan monitoring evaluasi per tahun.
+        </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
               Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length}</span>

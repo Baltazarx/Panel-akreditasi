@@ -306,13 +306,13 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         <table className="w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">ID</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Kode MK</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Nama MK</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">SKS</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Semester</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Unit Prodi</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Aksi</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">ID</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Kode MK</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Nama MK</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">SKS</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Semester</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Unit Prodi</th>
+              <th className="px-2 py-3 text-xs font-semibold uppercase border border-white w-20 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -324,7 +324,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                 <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.sks}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.semester}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_unit_prodi}</td>
-                <td className="px-4 py-3 border border-slate-200">
+                <td className="px-2 py-3 border border-slate-200 w-20">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {

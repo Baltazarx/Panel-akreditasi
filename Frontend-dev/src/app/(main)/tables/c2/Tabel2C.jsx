@@ -877,13 +877,13 @@ export default function Tabel2C({ role }) {
           <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Tahun Akademik</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TS-4</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TS-3</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TS-2</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TS-1</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">TS</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white/20">Link Bukti</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Tahun Akademik</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TS-4</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TS-3</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TS-2</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TS-1</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TS</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">Link Bukti</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">

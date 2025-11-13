@@ -214,9 +214,9 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           <table className="w-full text-sm text-left">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">CPL</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPL</th>
                 {data.columns.map((col) => (
-                  <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white/20 text-center">
+                  <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
                     {col}
                   </th>
                 ))}

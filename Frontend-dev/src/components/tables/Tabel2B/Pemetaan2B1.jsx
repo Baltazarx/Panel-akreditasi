@@ -313,23 +313,33 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
         <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
 
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left border-collapse">
 
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
 
               <tr>
 
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Kode MK</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Kode MK</th>
 
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Nama MK</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nama MK</th>
 
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">SKS</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">SKS</th>
 
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">Semester</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Semester</th>
+
+                {data.columns.length > 0 && (
+
+                  <th colSpan={data.columns.length} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profil Lulusan</th>
+
+                )}
+
+              </tr>
+
+              <tr>
 
                 {data.columns.map((col) => (
 
-                  <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white/20 text-center">
+                  <th key={col} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
 
                     {col}
 
@@ -341,33 +351,51 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
             </thead>
 
-            <tbody className="divide-y divide-slate-200">
+            <tbody>
 
-              {data.data.map((row, idx) => (
+              {data.data.length === 0 ? (
 
-                <tr key={idx} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr>
 
-                  <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200">{row.kode_mk}</td>
+                  <td colSpan={4 + data.columns.length} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
 
-                  <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_mk}</td>
+                    <p className="font-medium">Data tidak ditemukan</p>
 
-                  <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.sks}</td>
+                    <p className="text-sm">Belum ada data yang ditambahkan.</p>
 
-                  <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.semester}</td>
-
-                  {data.columns.map((col) => (
-
-                    <td key={col} className="px-4 py-3 text-center border border-slate-200">
-
-                      {row.profil_lulusan && row.profil_lulusan[col] ? "✅" : ""}
-
-                    </td>
-
-                  ))}
+                  </td>
 
                 </tr>
 
-              ))}
+              ) : (
+
+                data.data.map((row, idx) => (
+
+                  <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+
+                    <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200 text-center">{row.kode_mk || "-"}</td>
+
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_mk || "-"}</td>
+
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.sks || "-"}</td>
+
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.semester || "-"}</td>
+
+                    {data.columns.map((col) => (
+
+                      <td key={col} className="px-4 py-3 text-center border border-slate-200">
+
+                        {row.profil_lulusan && row.profil_lulusan[col] ? "✅" : ""}
+
+                      </td>
+
+                    ))}
+
+                  </tr>
+
+                ))
+
+              )}
 
             </tbody>
 

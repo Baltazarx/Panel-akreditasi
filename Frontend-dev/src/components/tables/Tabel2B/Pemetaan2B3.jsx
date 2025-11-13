@@ -116,14 +116,9 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
 
   return (
     <div>
-      <div className="mb-4 flex justify-between items-center">
+      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-lg font-semibold text-slate-800">🗺️ Peta Pemenuhan CPL</h2>
-        <button
-          onClick={handleExport}
-          className="px-4 py-2 bg-white border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium"
-        >
-          📥 Export Excel
-        </button>
+        
         <div className="flex items-center gap-3">
           {/* Tampilkan filter HANYA jika superadmin */}
           {isSuperAdmin && (
@@ -139,7 +134,7 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
             📥 Export Excel
           </button>
@@ -152,32 +147,46 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">CPL</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase border border-white/20">CPMK</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">CPL</th>
+                <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">CPMK</th>
+                {data.semesters.length > 0 && (
+                  <th colSpan={data.semesters.length} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Semester</th>
+                )}
+              </tr>
+              <tr>
                 {data.semesters.map((sem) => (
-                  <th key={sem} className="px-4 py-3 text-xs font-semibold uppercase border border-white/20 text-center">
+                  <th key={sem} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                     Semester {sem}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
-              {data.rows.map((row, idx) => (
-                <tr key={idx} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200">{row.kode_cpl}</td>
-                  <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_cpmk}</td>
-                  {data.semesters.map((sem) => (
-                    <td key={sem} className="px-4 py-3 text-slate-700 border border-slate-200 text-center">
-                      {row.semester_map && row.semester_map[sem] && row.semester_map[sem].length > 0
-                        ? row.semester_map[sem].join(", ")
-                        : "-"}
-                    </td>
-                  ))}
+            <tbody>
+              {data.rows.length === 0 ? (
+                <tr>
+                  <td colSpan={2 + data.semesters.length} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang ditambahkan.</p>
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                data.rows.map((row, idx) => (
+                  <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                    <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200 text-center">{row.kode_cpl || "-"}</td>
+                    <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.kode_cpmk || "-"}</td>
+                    {data.semesters.map((sem) => (
+                      <td key={sem} className="px-4 py-3 text-slate-700 border border-slate-200 text-center">
+                        {row.semester_map && row.semester_map[sem] && row.semester_map[sem].length > 0
+                          ? row.semester_map[sem].join(", ")
+                          : "-"}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

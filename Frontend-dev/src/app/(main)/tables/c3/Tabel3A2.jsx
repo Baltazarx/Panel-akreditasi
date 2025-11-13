@@ -495,25 +495,25 @@ function DataTable({
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           {/* Header Level 1 */}
           <tr>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR (Ketua)</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul Penelitian</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa yang Terlibat</th>
-            <th colSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Durasi (tahun)</th>
-            <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendanaan (Rp juta)</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">No</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nama DTPR (Ketua)</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Judul Penelitian</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Mahasiswa yang Terlibat</th>
+            <th colSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Sumber</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Durasi (tahun)</th>
+            <th colSpan={6} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Pendanaan (Rp juta)</th>
+            <th rowSpan={2} className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">Aksi</th>
           </tr>
           {/* Header Level 2 */}
           <tr>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Hibah Penelitian</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">L/N/I</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jenis Hibah Penelitian</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">L/N/I</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS-4</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS-3</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS-2</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS-1</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">TS</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">Link Bukti</th>
           </tr>
         </thead>
         <tbody>
@@ -562,7 +562,7 @@ function DataTable({
                       <span className="text-slate-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 border border-slate-200">
+                  <td className="px-2 py-3 border border-slate-200 w-20">
                     <div className="flex items-center justify-center dropdown-container">
                       <button
                         onClick={(e) => {
