@@ -1009,17 +1009,32 @@ export default function Tabel2A2({ role }) {
             
             {/* Show Deleted Toggle - Hidden untuk role kemahasiswaan */}
             {userRole?.toLowerCase() !== 'kemahasiswaan' && (
-              <button
-                onClick={() => { setShowDeleted(!showDeleted); setSelectedRows([]); }}
-                className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  showDeleted
-                    ? "bg-[#0384d6] text-white"
-                    : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                }`}
-                disabled={loading}
-              >
-                {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-              </button>
+              <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => { setShowDeleted(false); setSelectedRows([]); }}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    !showDeleted
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data aktif"
+                >
+                  Data
+                </button>
+                <button
+                  onClick={() => { setShowDeleted(true); setSelectedRows([]); }}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    showDeleted
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data terhapus"
+                >
+                  Data Terhapus
+                </button>
+              </div>
             )}
 
             {/* Bulk Restore Button */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
@@ -14,6 +14,8 @@ export default function Tabel2A1({ role }) {
   const [rowsMaba, setRowsMaba] = useState([]);
   const [rowsGabungan, setRowsGabungan] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoadingPend, setInitialLoadingPend] = useState(true);
+  const [initialLoadingMaba, setInitialLoadingMaba] = useState(true);
   const [error, setError] = useState("");
   
   // Filter states - Global filters
@@ -133,9 +135,13 @@ export default function Tabel2A1({ role }) {
   }, [role]);
   
 
-  const fetchPend = async () => {
+  const fetchPend = useCallback(async (isToggle = false) => {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+        setInitialLoadingPend(true);
+      }
       setError("");
       const params = new URLSearchParams();
       
@@ -187,13 +193,20 @@ export default function Tabel2A1({ role }) {
       setError(e?.message || "Gagal memuat data pendaftaran");
       setRowsPend([]);
     } finally {
-      setLoading(false);
+      if (!isToggle) {
+        setLoading(false);
+        setInitialLoadingPend(false);
+      }
     }
-  };
+  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun]);
   
-  const fetchMaba = async () => {
+  const fetchMaba = useCallback(async (isToggle = false) => {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+        setInitialLoadingMaba(true);
+      }
       setError("");
       const params = new URLSearchParams();
       
@@ -245,9 +258,12 @@ export default function Tabel2A1({ role }) {
       setError(e?.message || "Gagal memuat data mahasiswa baru/aktif");
       setRowsMaba([]);
     } finally {
-      setLoading(false);
+      if (!isToggle) {
+        setLoading(false);
+        setInitialLoadingMaba(false);
+      }
     }
-  };
+  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun]);
 
   const combineRows = (pendaftaran, mabaAktif) => {
     return pendaftaran.map((p) => {
@@ -436,19 +452,37 @@ export default function Tabel2A1({ role }) {
     }
   }, [mapsLoading, maps?.tahun]);
   
+  // Initial load untuk Pendaftaran
   useEffect(() => { 
     if (!mapsLoading && maps?.tahun) {
-      fetchPend(); 
+      fetchPend(false); 
       setSelectedRowsPend([]);
     }
-  }, [showDeletedPend, selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun, fetchPend]);
   
+  // Toggle showDeleted untuk Pendaftaran
+  useEffect(() => {
+    if (!initialLoadingPend && !mapsLoading && maps?.tahun) {
+      fetchPend(true);
+      setSelectedRowsPend([]);
+    }
+  }, [showDeletedPend, initialLoadingPend, mapsLoading, maps?.tahun, fetchPend]);
+  
+  // Initial load untuk Mahasiswa Baru & Aktif
   useEffect(() => { 
     if (!mapsLoading && maps?.tahun) {
-      fetchMaba(); 
+      fetchMaba(false); 
       setSelectedRowsMaba([]);
     }
-  }, [showDeletedMaba, selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun, fetchMaba]);
+  
+  // Toggle showDeleted untuk Mahasiswa Baru & Aktif
+  useEffect(() => {
+    if (!initialLoadingMaba && !mapsLoading && maps?.tahun) {
+      fetchMaba(true);
+      setSelectedRowsMaba([]);
+    }
+  }, [showDeletedMaba, initialLoadingMaba, mapsLoading, maps?.tahun, fetchMaba]);
 
   // Helper functions untuk mendapatkan nama dari maps
   const getUnitName = (id) => {
@@ -905,8 +939,10 @@ export default function Tabel2A1({ role }) {
           <tbody className="divide-y divide-slate-200">
             {displayRows.map((row, idx) => {
               const isSelected = row.rowData && selectedRows.includes(row.rowData[getIdField(row.rowData)]);
+              const idField = row.rowData ? getIdField(row.rowData) : null;
+              const rowId = idField && row.rowData ? row.rowData[idField] : idx;
               return (
-                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`pend-${rowId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && (
@@ -1235,9 +1271,12 @@ export default function Tabel2A1({ role }) {
                 ? row.rowData.map(r => r[getIdField(r)])
                 : [];
               const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
+              const firstDataId = row.rowData && row.rowData.length > 0 
+                ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : idx)
+                : idx;
               
               return (
-                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`maba-${firstDataId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && row.rowData.length > 0 && (
@@ -1626,17 +1665,32 @@ export default function Tabel2A1({ role }) {
             />
             
             {canDPend && role?.toLowerCase() !== "ala" && (
-              <button
-                onClick={() => setShowDeletedPend((prev) => !prev)}
-                className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  showDeletedPend
-                    ? "bg-[#0384d6] text-white"
-                    : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                }`}
-                disabled={loading}
-              >
-                {showDeletedPend ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-              </button>
+              <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setShowDeletedPend(false)}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    !showDeletedPend
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data aktif"
+                >
+                  Data
+                </button>
+                <button
+                  onClick={() => setShowDeletedPend(true)}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    showDeletedPend
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data terhapus"
+                >
+                  Data Terhapus
+                </button>
+              </div>
             )}
             {canUPend && showDeletedPend && selectedRowsPend.length > 0 && (
               <button
@@ -1762,17 +1816,32 @@ export default function Tabel2A1({ role }) {
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
             {canDMaba && role?.toLowerCase() !== "ala" && (
-              <button
-                onClick={() => setShowDeletedMaba((prev) => !prev)}
-                className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  showDeletedMaba
-                    ? "bg-[#0384d6] text-white"
-                    : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                }`}
-                disabled={loading}
-              >
-                {showDeletedMaba ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-              </button>
+              <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setShowDeletedMaba(false)}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    !showDeletedMaba
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data aktif"
+                >
+                  Data
+                </button>
+                <button
+                  onClick={() => setShowDeletedMaba(true)}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    showDeletedMaba
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Tampilkan data terhapus"
+                >
+                  Data Terhapus
+                </button>
+              </div>
             )}
             {canUMaba && showDeletedMaba && selectedRowsMaba.length > 0 && (
               <button

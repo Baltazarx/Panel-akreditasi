@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function Tabel2B6({ role }) {
   const { authUser } = useAuth();
@@ -246,16 +246,15 @@ export default function Tabel2B6({ role }) {
     }
   }, [selectedTahun, selectedUnit, showDeleted, fetchData]);
 
-  // Transform data untuk tampilan tabel
-  const tableData = useMemo(() => {
+  // Helper function untuk transform data
+  const transformTableData = (sourceData) => {
     if (!selectedTahun) return [];
 
     // Pastikan hanya tahun terpilih yang ditampilkan walau API mengembalikan lebih banyak
-    const filteredByYear = data.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
+    const filteredByYear = sourceData.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
     const filteredByUnit = selectedUnit ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
-    const source = showDeleted ? filteredByUnit.filter(d => d.deleted_at) : filteredByUnit.filter(d => !d.deleted_at);
     const byJenis = new Map();
-    for (const row of source) {
+    for (const row of filteredByUnit) {
       const key = String(row.jenis_kemampuan || '').toLowerCase();
       // Ambil yang pertama (seharusnya unik per tahun/unit)
       if (!byJenis.has(key)) byJenis.set(key, row);
@@ -272,26 +271,38 @@ export default function Tabel2B6({ role }) {
         data: item || null,
       };
     });
-  }, [data, selectedTahun, selectedUnit, showDeleted]);
+  };
+
+  // Data untuk tabel aktif (tidak dihapus)
+  const tableDataActive = useMemo(() => {
+    const activeData = data.filter(d => !d.deleted_at);
+    return transformTableData(activeData);
+  }, [data, selectedTahun, selectedUnit]);
+
+  // Data untuk tabel terhapus
+  const tableDataDeleted = useMemo(() => {
+    const deletedData = data.filter(d => d.deleted_at);
+    return transformTableData(deletedData);
+  }, [data, selectedTahun, selectedUnit]);
 
   // Hitung total untuk baris Jumlah (jumlahkan lalu bagi 7)
-  const jumlahData = useMemo(() => {
-    const totalSangatBaik = tableData.reduce((sum, row) => {
+  const jumlahDataActive = useMemo(() => {
+    const totalSangatBaik = tableDataActive.reduce((sum, row) => {
       const val = parseFloat(row.sangat_baik) || 0;
       return sum + val;
     }, 0);
     
-    const totalBaik = tableData.reduce((sum, row) => {
+    const totalBaik = tableDataActive.reduce((sum, row) => {
       const val = parseFloat(row.baik) || 0;
       return sum + val;
     }, 0);
     
-    const totalCukup = tableData.reduce((sum, row) => {
+    const totalCukup = tableDataActive.reduce((sum, row) => {
       const val = parseFloat(row.cukup) || 0;
       return sum + val;
     }, 0);
     
-    const totalKurang = tableData.reduce((sum, row) => {
+    const totalKurang = tableDataActive.reduce((sum, row) => {
       const val = parseFloat(row.kurang) || 0;
       return sum + val;
     }, 0);
@@ -302,7 +313,36 @@ export default function Tabel2B6({ role }) {
       cukup: totalCukup > 0 ? (totalCukup / 7).toFixed(2) : "",
       kurang: totalKurang > 0 ? (totalKurang / 7).toFixed(2) : ""
     };
-  }, [tableData]);
+  }, [tableDataActive]);
+
+  const jumlahDataDeleted = useMemo(() => {
+    const totalSangatBaik = tableDataDeleted.reduce((sum, row) => {
+      const val = parseFloat(row.sangat_baik) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalBaik = tableDataDeleted.reduce((sum, row) => {
+      const val = parseFloat(row.baik) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalCukup = tableDataDeleted.reduce((sum, row) => {
+      const val = parseFloat(row.cukup) || 0;
+      return sum + val;
+    }, 0);
+    
+    const totalKurang = tableDataDeleted.reduce((sum, row) => {
+      const val = parseFloat(row.kurang) || 0;
+      return sum + val;
+    }, 0);
+    
+    return {
+      sangat_baik: totalSangatBaik > 0 ? (totalSangatBaik / 7).toFixed(2) : "",
+      baik: totalBaik > 0 ? (totalBaik / 7).toFixed(2) : "",
+      cukup: totalCukup > 0 ? (totalCukup / 7).toFixed(2) : "",
+      kurang: totalKurang > 0 ? (totalKurang / 7).toFixed(2) : ""
+    };
+  }, [tableDataDeleted]);
 
   // Statistik terpilih (backend bisa kirim object atau array)
   const statData = useMemo(() => {
@@ -366,38 +406,73 @@ export default function Tabel2B6({ role }) {
     });
     if (result.isConfirmed) {
       try {
-        await apiFetch(`/tabel2b6-kepuasan-pengguna/${item.data.id}`, {method: "DELETE"});
+        setLoading(true);
+        const idField = getIdField(item.data);
+        await apiFetch(`/tabel2b6-kepuasan-pengguna/${item.data?.[idField]}`, {method: "DELETE"});
         Swal.fire("Berhasil!", "Data berhasil dihapus", "success");
         fetchData();
       } catch (error) {
         Swal.fire("Error", "Gagal menghapus data", "error");
+      } finally {
+        setLoading(false);
       }
     }
   };
 
-  const handleRestoreClick = async (item) => {
-    const result = await Swal.fire({
-      title: "Konfirmasi Pulihkan",
-      text: "Apakah Anda yakin ingin memulihkan data ini?",
-      icon: "question",
+  const doRestore = (row) => {
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: "Data ini akan dikembalikan ke daftar aktif.",
+      icon: 'info',
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Ya, Pulihkan!",
-      cancelButtonText: "Batal"
-    });
-    if (result.isConfirmed) {
-      try {
-        await apiFetch(`/tabel2b6-kepuasan-pengguna/${item.data.id}/restore`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
-        });
-        Swal.fire("Berhasil!", "Data berhasil dipulihkan", "success");
-        fetchData();
-      } catch (error) {
-        Swal.fire("Error", "Gagal memulihkan data", "error");
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row.data);
+          await apiFetch(`/tabel2b6-kepuasan-pengguna/${row.data?.[idField]}/restore`, { 
+            method: "POST"
+          });
+          fetchData();
+          Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
+  };
+
+  const doHardDelete = (row) => {
+    Swal.fire({
+      title: 'Hapus Permanen?',
+      text: "PERINGATAN: Tindakan ini tidak dapat dibatalkan!",
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, Hapus Permanen!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row.data);
+          await apiFetch(`/tabel2b6-kepuasan-pengguna/${row.data?.[idField]}/hard-delete`, { method: "DELETE" });
+          fetchData();
+          Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal menghapus permanen data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -458,65 +533,59 @@ export default function Tabel2B6({ role }) {
     }
   };
 
-  const renderTable = () => (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead>
-          <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
-          </tr>
-          <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
-            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
-            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
-            <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200">
-          {loading ? (
-            <tr>
-              <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                <div className="flex justify-center items-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                  <span className="ml-2">Memuat data...</span>
-                </div>
-              </td>
+  // Render table function untuk data aktif
+  const renderTableActive = () => {
+    const currentData = tableDataActive;
+    const currentJumlah = jumlahDataActive;
+    
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead>
+            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
             </tr>
-          ) : tableData.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-              </td>
+            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
             </tr>
-          ) : (
-            <>
-            {tableData.map((row, idx) => (
-              <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${row.data?.deleted_at ? "bg-red-100 text-red-800" : ""}`}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
-                <td className="px-6 py-4 text-center border border-slate-200">
-                  {row.data && (
-                    row.data.deleted_at ? (
-                      // Untuk data yang dihapus, tampilkan tombol Pulihkan
-                      <div className="flex items-center justify-center">
-                        {canUpdate && (
-                          <button onClick={() => handleRestoreClick(row)} className="font-medium text-green-600 hover:underline">
-                            Pulihkan
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      // Untuk data aktif, tampilkan dropdown menu
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                    <span className="ml-2">Memuat data...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : currentData.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            ) : (
+              <>
+              {currentData.map((row, idx) => (
+                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    {row.data && (
                       <div className="flex items-center justify-center dropdown-container">
                         <button
                           onClick={(e) => {
@@ -541,44 +610,143 @@ export default function Tabel2B6({ role }) {
                           <FiMoreVertical size={18} />
                         </button>
                       </div>
-                    )
-                  )}
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {/* Baris Jumlah */}
+              <tr className={currentData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.sangat_baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.cukup}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.kurang}</td>
+                <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+                <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
+              </tr>
+
+              {/* Baris Statistik */}
+              <tr className={(currentData.length + 1) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah alumni/lulusan dalam 3 tahun terakhir</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_alumni_3_tahun ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              </tr>
+              <tr className={(currentData.length + 2) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah pengguna lulusan sebagai responden</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_responden ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              </tr>
+              <tr className={(currentData.length + 3) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah mahasiswa aktif pada tahun TS</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_mahasiswa_aktif_ts ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Render table function untuk data terhapus
+  const renderTableDeleted = () => {
+    const currentData = tableDataDeleted;
+    const currentJumlah = jumlahDataDeleted;
+    
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead>
+            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
+            </tr>
+            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
+              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                    <span className="ml-2">Memuat data...</span>
+                  </div>
                 </td>
               </tr>
-            ))}
-            {/* Baris Jumlah (gabung kolom No + Jumlah) */}
-            <tr className={tableData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
-              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.sangat_baik}</td>
-              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.baik}</td>
-              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.cukup}</td>
-              <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{jumlahData.kurang}</td>
-              <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-              <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
-            </tr>
-
-            {/* Baris Statistik (dalam struktur tabel utama) */}
-            <tr className={(tableData.length + 1) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah alumni/lulusan dalam 3 tahun terakhir</td>
-              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_alumni_3_tahun ?? ""}</td>
-              <td className="px-6 py-4 text-center border border-slate-300"></td>
-            </tr>
-            <tr className={(tableData.length + 2) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah pengguna lulusan sebagai responden</td>
-              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_responden ?? ""}</td>
-              <td className="px-6 py-4 text-center border border-slate-300"></td>
-            </tr>
-            <tr className={(tableData.length + 3) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-              <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah mahasiswa aktif pada tahun TS</td>
-              <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_mahasiswa_aktif_ts ?? ""}</td>
-              <td className="px-6 py-4 text-center border border-slate-300"></td>
-            </tr>
-            </>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+            ) : currentData.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang dihapus atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            ) : (
+              <>
+              {currentData.map((row, idx) => (
+                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    {row.data && (
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
+                            if (openDropdownId !== rowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownId(rowId);
+                            } else {
+                              setOpenDropdownId(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {/* Baris Jumlah */}
+              <tr className={currentData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.sangat_baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.cukup}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.kurang}</td>
+                <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
+                <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
+              </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const YearSelector = () => (
     <div className="flex items-center gap-2">
@@ -631,7 +799,9 @@ export default function Tabel2B6({ role }) {
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">
+                {showDeleted ? tableDataDeleted.length : tableDataActive.length}
+              </span>
             </span>
           )}
         </div>
@@ -641,13 +811,32 @@ export default function Tabel2B6({ role }) {
           <YearSelector />
           {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
-            <button
-              onClick={() => setShowDeleted(prev => !prev)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"}`}
-              disabled={loading}
-            >
-              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan yang Dihapus"}
-            </button>
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setShowDeleted(false)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  !showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data aktif"
+              >
+                Data
+              </button>
+              <button
+                onClick={() => setShowDeleted(true)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data terhapus"
+              >
+                Data Terhapus
+              </button>
+            </div>
           )}
         </div>
         {canCreate && (
@@ -660,11 +849,12 @@ export default function Tabel2B6({ role }) {
           </button>
         )}
       </div>
-      {renderTable()}
+      {showDeleted ? renderTableDeleted() : renderTableActive()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
-        const currentRow = tableData.find((row, idx) => {
+        const currentTableData = showDeleted ? tableDataDeleted : tableDataActive;
+        const currentRow = currentTableData.find((row, idx) => {
           if (!row.data) return false;
           const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
           return rowId === openDropdownId;
@@ -679,7 +869,7 @@ export default function Tabel2B6({ role }) {
               left: `${dropdownPosition.left}px`
             }}
           >
-            {canUpdate && (
+            {!showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -687,13 +877,13 @@ export default function Tabel2B6({ role }) {
                   setOpenDropdownId(null);
                 }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                aria-label={`Edit data ${currentRow.data.jenis_kemampuan || 'kepuasan pengguna'}`}
+                aria-label={`Edit data ${currentRow.jenis_kemampuan || 'kepuasan pengguna'}`}
               >
                 <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
                 <span>Edit</span>
               </button>
             )}
-            {canDelete && (
+            {!showDeleted && canDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -701,10 +891,38 @@ export default function Tabel2B6({ role }) {
                   setOpenDropdownId(null);
                 }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                aria-label={`Hapus data ${currentRow.data.jenis_kemampuan || 'kepuasan pengguna'}`}
+                aria-label={`Hapus data ${currentRow.jenis_kemampuan || 'kepuasan pengguna'}`}
               >
                 <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
                 <span>Hapus</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.jenis_kemampuan || 'kepuasan pengguna'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doRestore(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${currentRow.jenis_kemampuan || 'kepuasan pengguna'}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
               </button>
             )}
           </div>

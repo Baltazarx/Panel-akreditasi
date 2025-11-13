@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function Tabel2B4({ role }) {
   const { authUser } = useAuth();
@@ -169,20 +169,21 @@ export default function Tabel2B4({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
-  // Data untuk tabel dengan format TS-4, TS-3, TS-2, TS-1, TS
-  const tableData = useMemo(() => {
+  // Data untuk tabel aktif (tidak dihapus)
+  const tableDataActive = useMemo(() => {
+    const activeData = data.filter(item => !item.deleted_at);
     // Gunakan selectedTahun sebagai referensi tahun untuk TS, jika tidak ada gunakan tahun saat ini
     const referenceYear = selectedTahun || new Date().getFullYear();
     const tsData = {};
     
     // Filter data berdasarkan tahun yang dipilih (tahun referensi dan 4 tahun sebelumnya) dan prodi
     let filteredData = selectedTahun 
-      ? data.filter(item => {
+      ? activeData.filter(item => {
           const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
           const tsKey = referenceYear - tahunLulus;
           return tsKey >= 0 && tsKey <= 4;
         })
-      : data;
+      : activeData;
     
     // Filter berdasarkan prodi yang dipilih
     if (selectedUnit) {
@@ -191,7 +192,70 @@ export default function Tabel2B4({ role }) {
     
     // Group data by tahun
     filteredData.forEach(item => {
-      // Gunakan id_tahun_lulus langsung (sudah angka)
+      const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
+      const tsKey = referenceYear - tahunLulus;
+      
+      if (tsKey >= 0 && tsKey <= 4) {
+        tsData[tsKey] = item;
+      }
+    });
+    
+    // Format untuk tabel
+    const rows = [];
+    for (let i = 4; i >= 0; i--) {
+      const tsLabel = i === 0 ? "TS" : `TS-${i}`;
+      const item = tsData[i];
+      
+      rows.push({
+        tahun_lulus: tsLabel,
+        jumlah_lulusan: item?.jumlah_lulusan || "",
+        jumlah_terlacak: item?.jumlah_terlacak || "",
+        rata_rata_waktu_tunggu_bulan: item?.rata_rata_waktu_tunggu_bulan || "",
+        data: item
+      });
+    }
+    
+    // Tambahkan baris total
+    const totalLulusan = filteredData.reduce((sum, item) => sum + (item.jumlah_lulusan || 0), 0);
+    const totalTerlacak = filteredData.reduce((sum, item) => sum + (item.jumlah_terlacak || 0), 0);
+    const avgTunggu = filteredData.length > 0 
+      ? filteredData.reduce((sum, item) => sum + (item.rata_rata_waktu_tunggu_bulan || 0), 0) / filteredData.length 
+      : 0;
+    
+    rows.push({
+      tahun_lulus: "Jumlah",
+      jumlah_lulusan: totalLulusan,
+      jumlah_terlacak: totalTerlacak,
+      rata_rata_waktu_tunggu_bulan: Math.round(avgTunggu * 100) / 100,
+      data: null
+    });
+    
+    return rows;
+  }, [data, selectedTahun, selectedUnit]);
+
+  // Data untuk tabel terhapus
+  const tableDataDeleted = useMemo(() => {
+    const deletedData = data.filter(item => item.deleted_at);
+    // Gunakan selectedTahun sebagai referensi tahun untuk TS, jika tidak ada gunakan tahun saat ini
+    const referenceYear = selectedTahun || new Date().getFullYear();
+    const tsData = {};
+    
+    // Filter data berdasarkan tahun yang dipilih (tahun referensi dan 4 tahun sebelumnya) dan prodi
+    let filteredData = selectedTahun 
+      ? deletedData.filter(item => {
+          const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
+          const tsKey = referenceYear - tahunLulus;
+          return tsKey >= 0 && tsKey <= 4;
+        })
+      : deletedData;
+    
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
+      filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
+    }
+    
+    // Group data by tahun
+    filteredData.forEach(item => {
       const tahunLulus = item.id_tahun_lulus || parseInt(item.tahun_lulus?.split('/')[0] || referenceYear);
       const tsKey = referenceYear - tahunLulus;
       
@@ -271,7 +335,9 @@ export default function Tabel2B4({ role }) {
 
     if (result.isConfirmed) {
       try {
-        await apiFetch(`/tabel2b4-masa-tunggu/${item.id}`, {
+        setLoading(true);
+        const idField = getIdField(item);
+        await apiFetch(`/tabel2b4-masa-tunggu/${item?.[idField]}`, {
           method: "DELETE"
         });
         Swal.fire("Berhasil!", "Data berhasil dihapus", "success");
@@ -279,8 +345,70 @@ export default function Tabel2B4({ role }) {
       } catch (error) {
         console.error("Error deleting:", error);
         Swal.fire("Error", "Gagal menghapus data", "error");
+      } finally {
+        setLoading(false);
       }
     }
+  };
+
+  const doRestore = (row) => {
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: "Data ini akan dikembalikan ke daftar aktif.",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row);
+          await apiFetch(`/tabel2b4-masa-tunggu/${row?.[idField]}/restore`, { 
+            method: "POST",
+            body: JSON.stringify({
+              restored_by: authUser?.name || authUser?.username || "Unknown User",
+              restored_at: new Date().toISOString()
+            })
+          });
+          fetchData();
+          Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
+  const doHardDelete = (row) => {
+    Swal.fire({
+      title: 'Hapus Permanen?',
+      text: "PERINGATAN: Tindakan ini tidak dapat dibatalkan!",
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, Hapus Permanen!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row);
+          await apiFetch(`/tabel2b4-masa-tunggu/${row?.[idField]}/hard-delete`, { method: "DELETE" });
+          fetchData();
+          Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal menghapus permanen data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -331,8 +459,8 @@ export default function Tabel2B4({ role }) {
     }
   };
 
-  // Render table function untuk konsistensi dengan tabel lain
-  const renderTable = () => {
+  // Render table function untuk data aktif
+  const renderTableActive = () => {
     return (
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <table className="w-full text-sm text-left border-collapse">
@@ -356,8 +484,8 @@ export default function Tabel2B4({ role }) {
             </tr>
           </thead>
           <tbody>
-            {tableData.map((row, index) => {
-              const rowBg = row.data && row.data.deleted_at ? "bg-red-100" : (index % 2 === 0 ? "bg-white" : "bg-slate-50");
+            {tableDataActive.map((row, index) => {
+              const rowBg = index % 2 === 0 ? "bg-white" : "bg-slate-50";
               const isJumlah = row.tahun_lulus === "Jumlah";
               return (
               <tr key={index} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''}`}>
@@ -389,7 +517,7 @@ export default function Tabel2B4({ role }) {
                   {row.rata_rata_waktu_tunggu_bulan !== "" ? row.rata_rata_waktu_tunggu_bulan : (row.data && !isJumlah ? "Klik untuk mengisi" : "-")}
                 </td>
                 <td className="px-2 py-3 border border-slate-200 w-20">
-                  {row.data && !row.data.deleted_at && !isJumlah && (
+                  {row.data && !isJumlah && (
                     <div className="flex items-center justify-center dropdown-container">
                       <button
                         onClick={(e) => {
@@ -415,18 +543,102 @@ export default function Tabel2B4({ role }) {
                       </button>
                     </div>
                   )}
-                  {row.data && row.data.deleted_at && !isJumlah && (
-                    <div className="text-center italic text-red-600">Dihapus</div>
+                </td>
+              </tr>
+              );
+            })}
+            {tableDataActive.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Render table function untuk data terhapus
+  const renderTableDeleted = () => {
+    return (
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
+                Tahun Lulus
+              </th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
+                Jumlah Lulusan
+              </th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
+                Jumlah Lulusan yang Terlacak
+              </th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
+                Rata-rata Waktu Tunggu (Bulan)
+              </th>
+              <th className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">
+                Aksi
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableDataDeleted.map((row, index) => {
+              const rowBg = index % 2 === 0 ? "bg-white" : "bg-slate-50";
+              const isJumlah = row.tahun_lulus === "Jumlah";
+              return (
+              <tr key={index} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''}`}>
+                <td className={`px-4 py-3 text-slate-700 border border-slate-200 ${isJumlah ? 'bg-slate-100 font-semibold' : 'bg-gray-50'} font-medium text-center`}>
+                  {row.tahun_lulus}
+                </td>
+                <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">
+                  {row.jumlah_lulusan !== "" ? row.jumlah_lulusan : "-"}
+                </td>
+                <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">
+                  {row.jumlah_terlacak !== "" ? row.jumlah_terlacak : "-"}
+                </td>
+                <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">
+                  {row.rata_rata_waktu_tunggu_bulan !== "" ? row.rata_rata_waktu_tunggu_bulan : "-"}
+                </td>
+                <td className="px-2 py-3 border border-slate-200 w-20">
+                  {row.data && !isJumlah && (
+                    <div className="flex items-center justify-center dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : index;
+                          if (openDropdownId !== rowId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192;
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth)
+                            });
+                            setOpenDropdownId(rowId);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : index)}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
               );
             })}
-            {tableData.length === 0 && (
+            {tableDataDeleted.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                  <p className="text-sm">Belum ada data yang dihapus atau data yang cocok dengan filter.</p>
                 </td>
               </tr>
             )}
@@ -506,7 +718,9 @@ export default function Tabel2B4({ role }) {
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">
+                {showDeleted ? tableDataDeleted.length : tableDataActive.length}
+              </span>
             </span>
           )}
         </div>
@@ -518,17 +732,32 @@ export default function Tabel2B4({ role }) {
           <YearSelector />
           {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
-            <button
-              onClick={() => setShowDeleted(prev => !prev)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                showDeleted
-                  ? "bg-[#0384d6] text-white"
-                  : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-              }`}
-              disabled={loading}
-            >
-              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan yang Dihapus"}
-            </button>
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setShowDeleted(false)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  !showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data aktif"
+              >
+                Data
+              </button>
+              <button
+                onClick={() => setShowDeleted(true)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data terhapus"
+              >
+                Data Terhapus
+              </button>
+            </div>
           )}
         </div>
         
@@ -544,11 +773,12 @@ export default function Tabel2B4({ role }) {
       </div>
 
       {/* Table */}
-      {renderTable()}
+      {showDeleted ? renderTableDeleted() : renderTableActive()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
-        const currentRow = tableData.find((r, idx) => {
+        const currentTableData = showDeleted ? tableDataDeleted : tableDataActive;
+        const currentRow = currentTableData.find((r, idx) => {
           if (!r.data) return false;
           const rowId = getIdField(r.data) ? r.data[getIdField(r.data)] : idx;
           return rowId === openDropdownId;
@@ -563,7 +793,7 @@ export default function Tabel2B4({ role }) {
               left: `${dropdownPosition.left}px`
             }}
           >
-            {canUpdate && (
+            {!showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -577,7 +807,7 @@ export default function Tabel2B4({ role }) {
                 <span>Edit</span>
               </button>
             )}
-            {canDelete && (
+            {!showDeleted && canDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -589,6 +819,34 @@ export default function Tabel2B4({ role }) {
               >
                 <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
                 <span>Hapus</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow.data);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doRestore(currentRow.data);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
               </button>
             )}
           </div>

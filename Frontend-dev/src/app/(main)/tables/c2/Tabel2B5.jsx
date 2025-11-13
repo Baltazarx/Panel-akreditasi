@@ -174,55 +174,10 @@ export default function Tabel2B5({ role }) {
 
   useEffect(() => { fetchData(); }, [selectedTahun, selectedUnit, showDeleted]);
 
-  // Mapping ke baris TS, TS-1, TS-2, TS-3, TS-4, Jumlah
-  const tableData = useMemo(() => {
+  // Data untuk tabel aktif (tidak dihapus)
+  const tableDataActive = useMemo(() => {
     if (!selectedTahun || !availableYears.length) return [];
 
-    if (showDeleted) {
-      // Tampilkan HANYA data yang sudah soft delete
-      const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
-      let filteredData = data.filter(item => item.deleted_at);
-      // Filter berdasarkan prodi yang dipilih
-      if (selectedUnit) {
-        filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
-      }
-      const deletedRows = filteredData.map(item => {
-        const idxTarget = availableYears.findIndex(y => parseInt(item.id_tahun_lulus) === y.id);
-        const tsIdx = idxSelected - idxTarget;
-        let tsLabel = (tsIdx >= 0 && tsIdx <= 4) ? (tsIdx === 0 ? "TS" : `TS-${tsIdx}`) : (availableYears[idxTarget]?.tahun || item.id_tahun_lulus);
-        return {
-          tahun_lulus: tsLabel,
-          tahun_label: availableYears[idxTarget]?.tahun || item.id_tahun_lulus,
-          jumlah_lulusan: item.jumlah_lulusan || "",
-          jumlah_terlacak: item.jumlah_terlacak || "",
-          jml_infokom: item.jml_infokom || "",
-          jml_non_infokom: item.jml_non_infokom || "",
-          jml_internasional: item.jml_internasional || "",
-          jml_nasional: item.jml_nasional || "",
-          jml_wirausaha: item.jml_wirausaha || "",
-          data: item,
-        };
-      });
-      // Baris jumlah hanya untuk deletedRows
-      if (deletedRows.length > 0) {
-        const fieldSum = f => deletedRows.reduce((acc, x) => acc + (parseInt(x[f]) || 0), 0);
-        deletedRows.push({
-          tahun_lulus: "Jumlah",
-          tahun_label: "",
-          jumlah_lulusan: fieldSum("jumlah_lulusan"),
-          jumlah_terlacak: fieldSum("jumlah_terlacak"),
-          jml_infokom: fieldSum("jml_infokom"),
-          jml_non_infokom: fieldSum("jml_non_infokom"),
-          jml_internasional: fieldSum("jml_internasional"),
-          jml_nasional: fieldSum("jml_nasional"),
-          jml_wirausaha: fieldSum("jml_wirausaha"),
-          data: null,
-        });
-      }
-      return deletedRows;
-    }
-
-    // Default: slot TS~TS-4, hanya data aktif
     const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
     const rows = [];
     for (let i = 0; i <= 4; i++) {
@@ -261,7 +216,53 @@ export default function Tabel2B5({ role }) {
       data: null
     });
     return rows;
-  }, [data, selectedTahun, selectedUnit, availableYears, showDeleted]);
+  }, [data, selectedTahun, selectedUnit, availableYears]);
+
+  // Data untuk tabel terhapus
+  const tableDataDeleted = useMemo(() => {
+    if (!selectedTahun || !availableYears.length) return [];
+
+    const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
+    let filteredData = data.filter(item => item.deleted_at);
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
+      filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
+    }
+    const deletedRows = filteredData.map(item => {
+      const idxTarget = availableYears.findIndex(y => parseInt(item.id_tahun_lulus) === y.id);
+      const tsIdx = idxSelected - idxTarget;
+      let tsLabel = (tsIdx >= 0 && tsIdx <= 4) ? (tsIdx === 0 ? "TS" : `TS-${tsIdx}`) : (availableYears[idxTarget]?.tahun || item.id_tahun_lulus);
+      return {
+        tahun_lulus: tsLabel,
+        tahun_label: availableYears[idxTarget]?.tahun || item.id_tahun_lulus,
+        jumlah_lulusan: item.jumlah_lulusan || "",
+        jumlah_terlacak: item.jumlah_terlacak || "",
+        jml_infokom: item.jml_infokom || "",
+        jml_non_infokom: item.jml_non_infokom || "",
+        jml_internasional: item.jml_internasional || "",
+        jml_nasional: item.jml_nasional || "",
+        jml_wirausaha: item.jml_wirausaha || "",
+        data: item,
+      };
+    });
+    // Baris jumlah hanya untuk deletedRows
+    if (deletedRows.length > 0) {
+      const fieldSum = f => deletedRows.reduce((acc, x) => acc + (parseInt(x[f]) || 0), 0);
+      deletedRows.push({
+        tahun_lulus: "Jumlah",
+        tahun_label: "",
+        jumlah_lulusan: fieldSum("jumlah_lulusan"),
+        jumlah_terlacak: fieldSum("jumlah_terlacak"),
+        jml_infokom: fieldSum("jml_infokom"),
+        jml_non_infokom: fieldSum("jml_non_infokom"),
+        jml_internasional: fieldSum("jml_internasional"),
+        jml_nasional: fieldSum("jml_nasional"),
+        jml_wirausaha: fieldSum("jml_wirausaha"),
+        data: null,
+      });
+    }
+    return deletedRows;
+  }, [data, selectedTahun, selectedUnit, availableYears]);
 
   const handleAddClick = () => {
     setFormState({
@@ -306,17 +307,21 @@ export default function Tabel2B5({ role }) {
     });
     if (result.isConfirmed) {
       try {
-        await apiFetch(`/tabel2b5-kesesuaian-kerja/${item.id}`, {method: "DELETE"});
+        setLoading(true);
+        const idField = getIdField(item);
+        await apiFetch(`/tabel2b5-kesesuaian-kerja/${item?.[idField]}`, {method: "DELETE"});
         Swal.fire("Berhasil!", "Data berhasil dihapus", "success");
         fetchData();
       } catch (error) {
         Swal.fire("Error", "Gagal menghapus data", "error");
+      } finally {
+        setLoading(false);
       }
     }
   };
 
-  const doRestore = async (item) => {
-    const result = await Swal.fire({
+  const doRestore = (row) => {
+    Swal.fire({
       title: 'Pulihkan Data?',
       text: "Data ini akan dikembalikan ke daftar aktif.",
       icon: 'info',
@@ -325,23 +330,27 @@ export default function Tabel2B5({ role }) {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Ya, pulihkan!',
       cancelButtonText: 'Batal'
-    });
-    if (result.isConfirmed) {
-      try {
-        const idField = getIdField(item);
-        await apiFetch(`/tabel2b5-kesesuaian-kerja/${item?.[idField]}/restore`, { 
-          method: "POST"
-        });
-        fetchData();
-        Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
-      } catch (error) {
-        Swal.fire('Gagal!', `Gagal memulihkan data: ${error.message}`, 'error');
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row);
+          await apiFetch(`/tabel2b5-kesesuaian-kerja/${row?.[idField]}/restore`, { 
+            method: "POST"
+          });
+          fetchData();
+          Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
-  const doHardDelete = async (item) => {
-    const result = await Swal.fire({
+  const doHardDelete = (row) => {
+    Swal.fire({
       title: 'Hapus Permanen?',
       text: "PERINGATAN: Tindakan ini tidak dapat dibatalkan!",
       icon: 'error',
@@ -350,19 +359,21 @@ export default function Tabel2B5({ role }) {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Ya, Hapus Permanen!',
       cancelButtonText: 'Batal'
-    });
-    if (result.isConfirmed) {
-      try {
-        const idField = getIdField(item);
-        await apiFetch(`/tabel2b5-kesesuaian-kerja/${item?.[idField]}/hard-delete`, { 
-          method: "DELETE" 
-        });
-        fetchData();
-        Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
-      } catch (error) {
-        Swal.fire('Gagal!', `Gagal menghapus permanen data: ${error.message}`, 'error');
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          const idField = getIdField(row);
+          await apiFetch(`/tabel2b5-kesesuaian-kerja/${row?.[idField]}/hard-delete`, { method: "DELETE" });
+          fetchData();
+          Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal menghapus permanen data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -405,7 +416,8 @@ export default function Tabel2B5({ role }) {
     }
   };
 
-  const renderTable = () => (
+  // Render table function untuk data aktif
+  const renderTableActive = () => (
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
@@ -422,11 +434,11 @@ export default function Tabel2B5({ role }) {
           </tr>
         </thead>
         <tbody>
-          {tableData.map((row, idx) => {
+          {tableDataActive.map((row, idx) => {
             const isJumlah = row.tahun_lulus === "Jumlah";
-            const rowBg = row.data && row.data.deleted_at ? "bg-red-100" : (idx % 2 === 0 ? "bg-white" : "bg-slate-50");
+            const rowBg = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
             return (
-            <tr key={idx} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''} ${row.data && row.data.deleted_at ? 'text-red-800' : ''}`}>
+            <tr key={idx} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''}`}>
               <td className={`px-4 py-3 text-slate-700 border border-slate-200 font-medium text-center ${isJumlah ? 'bg-slate-100 font-semibold' : 'bg-gray-50'}`}>{row.tahun_lulus}</td>
               <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_lulusan !== "" ? row.jumlah_lulusan : "-"}</td>
               <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_terlacak !== "" ? row.jumlah_terlacak : "-"}</td>
@@ -462,18 +474,90 @@ export default function Tabel2B5({ role }) {
                     </button>
                   </div>
                 )}
-                {row.data && row.data.deleted_at && !isJumlah && (
-                  <div className="text-center italic text-red-600">Dihapus</div>
+              </td>
+            </tr>
+            );
+          })}
+          {tableDataActive.length === 0 && (
+            <tr>
+              <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <p className="font-medium">Data tidak ditemukan</p>
+                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  // Render table function untuk data terhapus
+  const renderTableDeleted = () => (
+    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+      <table className="w-full text-sm text-left border-collapse">
+        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <tr className="sticky top-0">
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Tahun Lulus</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan yang Terlacak</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Infokom</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Non Infokom</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Multinasional / Internasional</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nasional</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Wirausaha</th>
+            <th className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tableDataDeleted.map((row, idx) => {
+            const isJumlah = row.tahun_lulus === "Jumlah";
+            const rowBg = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+            return (
+            <tr key={idx} className={`transition-colors ${rowBg} hover:bg-[#eaf4ff] ${isJumlah ? 'font-semibold' : ''}`}>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 font-medium text-center ${isJumlah ? 'bg-slate-100 font-semibold' : 'bg-gray-50'}`}>{row.tahun_lulus}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_lulusan !== "" ? row.jumlah_lulusan : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jumlah_terlacak !== "" ? row.jumlah_terlacak : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_infokom !== "" ? row.jml_infokom : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_non_infokom !== "" ? row.jml_non_infokom : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_internasional !== "" ? row.jml_internasional : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_nasional !== "" ? row.jml_nasional : "-"}</td>
+              <td className={`px-4 py-3 text-slate-700 border border-slate-200 text-center ${rowBg}`}>{row.jml_wirausaha !== "" ? row.jml_wirausaha : "-"}</td>
+              <td className="px-2 py-3 border border-slate-200 w-20">
+                {row.data && !isJumlah && (
+                  <div className="flex items-center justify-center dropdown-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
+                        if (openDropdownId !== rowId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(rowId);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
+                    >
+                      <FiMoreVertical size={18} />
+                    </button>
+                  </div>
                 )}
               </td>
             </tr>
             );
           })}
-          {tableData.length === 0 && (
+          {tableDataDeleted.length === 0 && (
             <tr>
               <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                 <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                <p className="text-sm">Belum ada data yang dihapus atau data yang cocok dengan filter.</p>
               </td>
             </tr>
           )}
@@ -536,7 +620,9 @@ export default function Tabel2B5({ role }) {
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">
+                {showDeleted ? tableDataDeleted.length : tableDataActive.length}
+              </span>
             </span>
           )}
         </div>
@@ -546,13 +632,32 @@ export default function Tabel2B5({ role }) {
           <YearSelector />
           {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
-            <button
-              onClick={() => setShowDeleted(prev => !prev)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${showDeleted ? "bg-[#0384d6] text-white" : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"}`}
-              disabled={loading}
-            >
-              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan yang Dihapus"}
-            </button>
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setShowDeleted(false)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  !showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data aktif"
+              >
+                Data
+              </button>
+              <button
+                onClick={() => setShowDeleted(true)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data terhapus"
+              >
+                Data Terhapus
+              </button>
+            </div>
           )}
         </div>
         {canCreate && (
@@ -565,18 +670,17 @@ export default function Tabel2B5({ role }) {
           </button>
         )}
       </div>
-      {renderTable()}
+      {showDeleted ? renderTableDeleted() : renderTableActive()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
-        const currentRow = tableData.find((row, idx) => {
+        const currentTableData = showDeleted ? tableDataDeleted : tableDataActive;
+        const currentRow = currentTableData.find((row, idx) => {
           if (!row.data) return false;
           const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
           return rowId === openDropdownId;
         });
         if (!currentRow || !currentRow.data) return null;
-        
-        const isDeleted = currentRow.data.deleted_at;
         
         return (
           <div 
@@ -586,7 +690,7 @@ export default function Tabel2B5({ role }) {
               left: `${dropdownPosition.left}px`
             }}
           >
-            {!isDeleted && canUpdate && (
+            {!showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -600,7 +704,7 @@ export default function Tabel2B5({ role }) {
                 <span>Edit</span>
               </button>
             )}
-            {!isDeleted && canDelete && (
+            {!showDeleted && canDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -614,21 +718,7 @@ export default function Tabel2B5({ role }) {
                 <span>Hapus</span>
               </button>
             )}
-            {isDeleted && canUpdate && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  doRestore(currentRow.data);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
-                aria-label={`Pulihkan data ${currentRow.tahun_lulus || 'kesesuaian kerja'}`}
-              >
-                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
-                <span>Pulihkan</span>
-              </button>
-            )}
-            {isDeleted && canDelete && (
+            {showDeleted && canDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -640,6 +730,20 @@ export default function Tabel2B5({ role }) {
               >
                 <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
                 <span>Hapus Permanen</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doRestore(currentRow.data);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${currentRow.tahun_lulus || 'kesesuaian kerja'}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
               </button>
             )}
           </div>
