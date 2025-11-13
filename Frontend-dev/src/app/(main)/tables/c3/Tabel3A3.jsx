@@ -485,7 +485,7 @@ function SummaryTable({
           </tr>
 
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody>
           <tr className="bg-white hover:bg-[#eaf4ff] transition-colors">
             <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">
               Jumlah Dosen DTPR
@@ -697,7 +697,7 @@ function DetailTable({
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody>
           {filteredRows.length === 0 ? (
             <tr>
               <td

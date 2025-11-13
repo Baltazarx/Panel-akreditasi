@@ -381,7 +381,7 @@ function DataTable({
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-300">
+        <tbody>
           {filteredRows.length === 0 ? (
             <tr>
               <td 

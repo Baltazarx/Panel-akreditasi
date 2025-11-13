@@ -6,12 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { roleCan } from "../../../../lib/role";
 
 // Impor komponen tabel C6
-import Tabel6A1 from "./Tabel6A1";
-import Tabel6A2 from "./Tabel6A2";
+import Tabel6 from "./Tabel6";
 
 const ALL_TABLES = [
-  { key: "6a1", label: "Tabel 6A-1", Component: Tabel6A1, accessKey: "tabel_6a1" },
-  { key: "6a2", label: "Tabel 6A-2", Component: Tabel6A2, accessKey: "tabel_6a2" },
+  { key: "6", label: "Tabel 6", Component: Tabel6, accessKey: "tabel_6_kesesuaian_visi_misi" },
 ];
 
 export default function C6WithTopNav() {
@@ -34,7 +32,7 @@ export default function C6WithTopNav() {
     return filteredTabs;
   }, [role]);
   
-  const [activeKey, setActiveKey] = useState("6a1"); // default ke 6A-1
+  const [activeKey, setActiveKey] = useState("6"); // default ke 6
 
   // Baca tab dari hash / localStorage jika ada (#tab=6a1)
   useEffect(() => {
@@ -63,7 +61,7 @@ export default function C6WithTopNav() {
     }
   }, [activeKey]);
 
-  const Active = tabs.find(t => t.key === activeKey)?.Component || (tabs[0]?.Component || Tabel6A1);
+  const Active = tabs.find(t => t.key === activeKey)?.Component || (tabs[0]?.Component || Tabel6);
 
   // Jika tidak ada tab yang visible sama sekali untuk role ini
   if (tabs.length === 0 && role) {

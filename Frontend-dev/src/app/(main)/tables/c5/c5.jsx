@@ -6,12 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { roleCan } from "../../../../lib/role";
 
 // Impor komponen tabel C5
-import Tabel5A1 from "./Tabel5A1";
-import Tabel5A2 from "./Tabel5A2";
+import Tabel51 from "./Tabel51";
+import Tabel52 from "./Tabel52";
 
 const ALL_TABLES = [
-  { key: "5a1", label: "Tabel 5A-1", Component: Tabel5A1, accessKey: "tabel_5a1" },
-  { key: "5a2", label: "Tabel 5A-2", Component: Tabel5A2, accessKey: "tabel_5a2" },
+  { key: "51", label: "Tabel 5.1", Component: Tabel51, accessKey: "tabel_5_1_sistem_tata_kelola" },
+  { key: "52", label: "Tabel 5.2", Component: Tabel52, accessKey: "tabel_5_2_sarpras_pendidikan" },
 ];
 
 export default function C5WithTopNav() {
@@ -34,7 +34,7 @@ export default function C5WithTopNav() {
     return filteredTabs;
   }, [role]);
   
-  const [activeKey, setActiveKey] = useState("5a1"); // default ke 5A-1
+  const [activeKey, setActiveKey] = useState("51"); // default ke 5.1
 
   // Baca tab dari hash / localStorage jika ada (#tab=5a1)
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function C5WithTopNav() {
     }
   }, [activeKey]);
 
-  const Active = tabs.find(t => t.key === activeKey)?.Component || (tabs[0]?.Component || Tabel5A1);
+  const Active = tabs.find(t => t.key === activeKey)?.Component || (tabs[0]?.Component || Tabel51);
 
   // Jika tidak ada tab yang visible sama sekali untuk role ini
   if (tabs.length === 0 && role) {

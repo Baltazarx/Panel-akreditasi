@@ -382,7 +382,7 @@ function DataTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody>
           {filteredRows.length === 0 ? (
             <tr>
               <td 
