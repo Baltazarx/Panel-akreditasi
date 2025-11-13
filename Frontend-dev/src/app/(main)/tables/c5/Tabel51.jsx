@@ -458,14 +458,14 @@ export default function Tabel51({ auth, role: propRole }) {
           {/* Main Table Header */}
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Tata Kelola</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Sistem Informasi</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Akses (Lokal/Internet)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja/SDM Pengelola</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">No</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Jenis Tata Kelola</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Nama Sistem Informasi</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Akses (Lokal/Internet)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Unit Kerja/SDM Pengelola</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
               {(canUpdate || canDelete) && (
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
               )}
             </tr>
           </thead>

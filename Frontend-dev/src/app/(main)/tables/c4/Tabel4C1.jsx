@@ -640,34 +640,34 @@ export default function Tabel4C1({ auth, role: propRole }) {
           {/* Main Table Header */}
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul Kerjasama</th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Mitra kerja sama</th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">No</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Judul Kerjasama</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Mitra kerja sama</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                 Sumber<br/>(L/N/I)
               </th>
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                 Durasi<br/>(tahun)
               </th>
               {tahunLaporan && (
-                <th colSpan="3" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                <th colSpan="3" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   Pendanaan (Rp Juta)
                 </th>
               )}
-              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
               {(canUpdate || canDelete) && (
-                <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+                <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
               )}
             </tr>
             {tahunLaporan && (
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   TS-2<br/>({tahunLaporan.nama_ts2})
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   TS-1<br/>({tahunLaporan.nama_ts1})
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   TS<br/>({tahunLaporan.nama_ts})
                 </th>
               </tr>

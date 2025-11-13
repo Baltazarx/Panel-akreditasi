@@ -493,16 +493,16 @@ export default function Tabel52({ auth, role: propRole }) {
           {/* Main Table Header */}
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Prasarana</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Luas Ruang (m²)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Milik Sendiri (M)/Sewa (W)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">No</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Nama Prasarana</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Daya Tampung</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Luas Ruang (m²)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Milik Sendiri (M)/Sewa (W)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Perangkat</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
               {(canUpdate || canDelete) && (
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
               )}
             </tr>
           </thead>

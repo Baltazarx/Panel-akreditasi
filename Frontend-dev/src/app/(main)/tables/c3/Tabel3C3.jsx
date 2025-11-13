@@ -352,7 +352,7 @@ function DataTable({
           {/* Header Level 1 */}
           <tr>
             {showDeleted && (
-              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -361,31 +361,31 @@ function DataTable({
                 />
               </th>
             )}
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Judul</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis HKI</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR</th>
-            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">No</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Judul</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Jenis HKI</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Nama DTPR</th>
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Tahun Perolehan (Beri Tanda √)
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts4 || 'TS-4'}
             </th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts3 || 'TS-3'}
             </th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts2 || 'TS-2'}
             </th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts1 || 'TS-1'}
             </th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts || 'TS'}
             </th>
           </tr>

@@ -462,26 +462,26 @@ function SummaryTable({
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           {/* Baris 1: Header utama - Tahun Akademik */}
           <tr>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
               Tahun Akademik
             </th>
-            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Tahun Akademik
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
               Link Bukti
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-20 align-middle">
               Aksi
             </th>
           </tr>
           {/* Baris 2: Sub-header TS-4, TS-3, TS-2, TS-1, TS */}
           <tr>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-4</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-3</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-2</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-1</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS</th>
           </tr>
 
         </thead>
@@ -519,7 +519,7 @@ function SummaryTable({
                 <span className="text-slate-400">-</span>
               )}
             </td>
-            <td className="px-4 py-3 border border-slate-200">
+            <td className="px-2 py-3 border border-slate-200 w-20">
               <div className="flex items-center justify-center dropdown-container">
                 <button
                   onClick={(e) => {
@@ -663,7 +663,7 @@ function DetailTable({
           {/* Baris 1: Tahun Akademik */}
           <tr>
             {showDeleted && (
-              <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16 align-middle">
+              <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-16 align-middle">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -672,29 +672,29 @@ function DetailTable({
                 />
               </th>
             )}
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
               Jenis Pengembangan DTPR
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
               Nama DTPR
             </th>
-            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Jumlah
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
               Link Bukti
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 align-middle">
+            <th rowSpan={2} className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-20 align-middle">
               Aksi
             </th>
           </tr>
           {/* Baris 2: TS-4, TS-3, TS-2, TS-1, TS */}
           <tr>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-4</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-3</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-2</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-1</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS</th>
           </tr>
         </thead>
         <tbody>
@@ -753,7 +753,7 @@ function DetailTable({
                     <span className="text-slate-400">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 border border-slate-200">
+                <td className="px-2 py-3 border border-slate-200 w-20">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {

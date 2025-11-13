@@ -490,9 +490,9 @@ export default function Tabel6({ auth, role: propRole }) {
           <tbody className="divide-y divide-slate-200">
             {/* Row 1: Header Visi */}
             <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Visi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Visi UPPS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Visi Keilmuan PS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
             </tr>
             
             {/* Row 2: Data Visi */}
@@ -520,9 +520,9 @@ export default function Tabel6({ auth, role: propRole }) {
 
             {/* Row 3: Header Misi */}
             <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Misi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Misi UPPS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"></th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi UPPS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white"></th>
             </tr>
             
             {/* Row 4: Data Misi */}
