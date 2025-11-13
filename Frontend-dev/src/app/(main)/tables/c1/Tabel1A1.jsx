@@ -430,26 +430,32 @@ export default function Tabel1A1({ role }) {
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <span className="text-sm font-medium text-slate-700">Tampilkan Dihapus</span>
-            <div className="relative inline-block">
-              <input
-                type="checkbox"
-                checked={showDeleted}
-                onChange={() => setShowDeleted(!showDeleted)}
-                disabled={loading}
-                className="sr-only"
-                aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
-              />
-              <div className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-                showDeleted ? "bg-[#0384d6]" : "bg-gray-300"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
-                <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ease-in-out ${
-                  showDeleted ? "translate-x-6" : "translate-x-0"
-                }`}></span>
-              </div>
-            </div>
-          </label>
+          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setShowDeleted(false)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                !showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data aktif"
+            >
+              Data
+            </button>
+            <button
+              onClick={() => setShowDeleted(true)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data terhapus"
+            >
+              Data Terhapus
+            </button>
+          </div>
         </div>
         {canCreate && (
           <button 

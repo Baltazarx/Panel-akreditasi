@@ -446,17 +446,32 @@ export default function Tabel1A4({ role }) {
           </div>
 
           {canDelete && (
-            <button
-              onClick={() => setShowDeleted((prev) => !prev)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                showDeleted
-                  ? "bg-[#0384d6] text-white"
-                  : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-              }`}
-              disabled={loading}
-            >
-              {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-            </button>
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setShowDeleted(false)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  !showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data aktif"
+              >
+                Data
+              </button>
+              <button
+                onClick={() => setShowDeleted(true)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  showDeleted
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                aria-label="Tampilkan data terhapus"
+              >
+                Data Terhapus
+              </button>
+            </div>
           )}
           {canUpdate && showDeleted && selectedRows.length > 0 && (
             <button

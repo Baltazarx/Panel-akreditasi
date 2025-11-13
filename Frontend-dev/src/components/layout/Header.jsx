@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3 } from 'lucide-react';
+import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3, Palette } from 'lucide-react';
 import Image from 'next/image'; // Import komponen Image dari Next.js
 
 // Konstanta item navigasi (hindari re-create tiap render)
@@ -15,6 +15,7 @@ const ALL_NAV_ITEMS = [
   { href: "/report", label: "Report", icon: BarChart3 },
   { href: "/panduan", label: "Panduan", icon: Book },
   { href: "/berita", label: "Berita", icon: Newspaper },
+  { href: "/design-system/buttons", label: "Design System", icon: Palette },
 ];
 
 // Helper function untuk cek apakah role boleh melihat Report
