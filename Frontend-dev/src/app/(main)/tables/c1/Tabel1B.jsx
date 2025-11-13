@@ -65,13 +65,15 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
             <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {rows
               .filter(r => showDeleted ? r.deleted_at : !r.deleted_at)
               .map((r, i) => {
                 const totalAuditors = (r.jumlah_auditor_certified || 0) + (r.jumlah_auditor_noncertified || 0);
+                const idField = getIdField(r);
+                const rowId = idField && r[idField] ? r[idField] : i;
                 return (
-                  <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                  <tr key={`${showDeleted ? 'deleted' : 'active'}-1b-${rowId}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                     {showDeleted && (
                       <td className="px-6 py-4 text-center border border-slate-200">
                         <input
@@ -159,6 +161,7 @@ export default function Tabel1B({ role }) {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -250,9 +253,12 @@ export default function Tabel1B({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  async function fetchRows() {
+  async function fetchRows(isToggle = false) {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+      }
       setError("");
       const params = new URLSearchParams();
       params.append("relasi", "1");
@@ -268,13 +274,23 @@ export default function Tabel1B({ role }) {
       setError(e?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }
 
+  // Initial load
   useEffect(() => {
-    fetchRows();
-    setSelectedRows([]); // Reset selected rows saat filter berubah
-  }, [showDeleted, activeYear]);
+    fetchRows(false);
+    setSelectedRows([]);
+  }, [activeYear]);
+
+  // Toggle between active and deleted data
+  useEffect(() => {
+    if (!initialLoading) {
+      fetchRows(true);
+      setSelectedRows([]);
+    }
+  }, [showDeleted]);
 
   useEffect(() => {
     if (editing) {

@@ -191,9 +191,9 @@ function TablePerYear({ rows, onEdit, onDelete, onRestore, onHardDelete, canUpda
             <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
           {filteredRows.map((r, i) => (
-            <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+            <tr key={`${showDeleted ? 'deleted' : 'active'}-1a2-${r.id_sumber || i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
               {showDeleted && (
                 <td className="px-6 py-4 text-center border border-slate-200">
                   <input
@@ -280,9 +280,9 @@ function TableSummary({ rows }) {
             <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
           {rows.map((r, i) => (
-            <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+            <tr key={`summary-${i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
               <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{r.sumber_dana}</td>
               <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts4)}</td>
               <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts3)}</td>
@@ -320,6 +320,7 @@ export default function Tabel1A2({ auth, role }) {
   const [activeYear, setActiveYear] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Modal state & editing row
   const [modalOpen, setModalOpen] = useState(false);
@@ -523,70 +524,82 @@ export default function Tabel1A2({ auth, role }) {
 
 
   // Fetch data per tahun dan summary sesuai filter
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Debug logging
-        console.log("Tabel1A2 - Fetching data with:", { 
-          activeYear, 
-          showDeleted,
-          mapsTahun: Object.keys(maps.tahun || {}), 
-          tahunListLength: tahunList.length,
-          role: role
-        });
-        
-        // Fetch data utama
-        let qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
-        if (showDeleted) {
-          qs += (qs.length > 1 ? "&" : "") + "include_deleted=1";
-        }
-        const fullUrl = `/sumber-pendanaan${qs}`;
-        console.log("Tabel1A2 - Making API call to:", fullUrl);
-        
-        try {
-          const data = await apiFetch(fullUrl);
-          console.log("Tabel1A2 - API Response:", { 
-            qs, 
-            fullUrl,
-            dataLength: Array.isArray(data) ? data.length : 0,
-            data: data
-          });
-          setRows(Array.isArray(data) ? data : data?.items || []);
-        } catch (apiErr) {
-          console.error("API Error for /sumber-pendanaan:", apiErr);
-          console.error("Full error details:", {
-            message: apiErr.message,
-            status: apiErr.status,
-            response: apiErr.response
-          });
-          // Fallback: set empty array jika API tidak bisa diakses
-          setRows([]);
-        }
-
-        // Fetch summary (hanya data aktif)
-        if (activeYear) {
-          try {
-            await computeSummaryForActiveYear();
-          } catch (summaryErr) {
-            console.error("Summary computation error:", summaryErr);
-            setSummaryRows([]);
-          }
-        } else {
-          try {
-            await fetchSummaryAll();
-          } catch (summaryErr) {
-            console.error("Summary fetch error:", summaryErr);
-            setSummaryRows([]);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
+  const fetchData = async (isToggle = false) => {
+    try {
+      // Debug logging
+      console.log("Tabel1A2 - Fetching data with:", { 
+        activeYear, 
+        showDeleted,
+        mapsTahun: Object.keys(maps.tahun || {}), 
+        tahunListLength: tahunList.length,
+        role: role,
+        isToggle
+      });
+      
+      // Fetch data utama
+      let qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
+      if (showDeleted) {
+        qs += (qs.length > 1 ? "&" : "") + "include_deleted=1";
       }
-    };
+      const fullUrl = `/sumber-pendanaan${qs}`;
+      console.log("Tabel1A2 - Making API call to:", fullUrl);
+      
+      try {
+        const data = await apiFetch(fullUrl);
+        console.log("Tabel1A2 - API Response:", { 
+          qs, 
+          fullUrl,
+          dataLength: Array.isArray(data) ? data.length : 0,
+          data: data
+        });
+        setRows(Array.isArray(data) ? data : data?.items || []);
+      } catch (apiErr) {
+        console.error("API Error for /sumber-pendanaan:", apiErr);
+        console.error("Full error details:", {
+          message: apiErr.message,
+          status: apiErr.status,
+          response: apiErr.response
+        });
+        // Fallback: set empty array jika API tidak bisa diakses
+        setRows([]);
+      }
 
-    fetchData();
-    setSelectedRows([]); // Reset selected rows saat filter berubah
-  }, [activeYear, showDeleted, maps, tahunList]);
+      // Fetch summary (hanya data aktif)
+      if (activeYear) {
+        try {
+          await computeSummaryForActiveYear();
+        } catch (summaryErr) {
+          console.error("Summary computation error:", summaryErr);
+          setSummaryRows([]);
+        }
+      } else {
+        try {
+          await fetchSummaryAll();
+        } catch (summaryErr) {
+          console.error("Summary fetch error:", summaryErr);
+          setSummaryRows([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchData(false);
+    setSelectedRows([]);
+  }, [activeYear, maps, tahunList]);
+
+  // Toggle between active and deleted data
+  useEffect(() => {
+    if (!initialLoading) {
+      fetchData(true);
+      setSelectedRows([]);
+    }
+  }, [showDeleted]);
 
 
 

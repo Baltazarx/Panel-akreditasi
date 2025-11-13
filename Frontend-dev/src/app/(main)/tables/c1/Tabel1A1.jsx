@@ -18,6 +18,7 @@ export default function Tabel1A1({ role }) {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -205,9 +206,12 @@ export default function Tabel1A1({ role }) {
   const canUpdate = roleCan(role, table.key, "U");
   const canDelete = roleCan(role, table.key, "D");
 
-  const fetchRows = async () => {
+  const fetchRows = async (isToggle = false) => {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+      }
       setError("");
       const params = new URLSearchParams();
       if (relational) {
@@ -222,10 +226,21 @@ export default function Tabel1A1({ role }) {
       setError(e?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
-  useEffect(() => { fetchRows(); }, [showDeleted]);
+  // Initial load
+  useEffect(() => { 
+    fetchRows(false); 
+  }, []);
+
+  // Toggle between active and deleted data
+  useEffect(() => { 
+    if (!initialLoading) {
+      fetchRows(true); 
+    }
+  }, [showDeleted]);
 
   useEffect(() => {
     if (editing) {
@@ -476,9 +491,10 @@ export default function Tabel1A1({ role }) {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <tr className="sticky top-0">
+        <div className="relative transition-opacity duration-200 ease-in-out">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr className="sticky top-0">
               <th 
                 className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => handleSort('unit')}
@@ -554,9 +570,9 @@ export default function Tabel1A1({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
-            {loading ? (
-              // Loading Skeleton
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {initialLoading && loading ? (
+              // Loading Skeleton - only show on initial load
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={`skeleton-${i}`} className="bg-white">
                   <td className="px-6 py-4 border border-slate-200">
@@ -591,7 +607,7 @@ export default function Tabel1A1({ role }) {
               </tr>
             ) : (
               paginatedRows.map((r, i) => (
-                <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`${showDeleted ? 'deleted' : 'active'}-${getIdField(r) ? r[getIdField(r)] : i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getUnitName(r)}</td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{getKetuaName(r)}</td>
                   <td className="px-6 py-4 text-slate-600 border border-slate-200">
@@ -640,6 +656,7 @@ export default function Tabel1A1({ role }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Dropdown Menu - Fixed Position (Outside table to prevent scroll) */}

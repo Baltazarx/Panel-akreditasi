@@ -75,13 +75,16 @@ function PrettyTable1A3({
             <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
           {rows
             .filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
-            .map((r, i) => (
+            .map((r, i) => {
+              const idField = getIdField(r);
+              const rowId = idField && r[idField] ? r[idField] : i;
+              return (
               <tr
-                key={i}
-                className={`transition-colors ${
+                key={`${showDeleted ? 'deleted' : 'active'}-1a3-${rowId}`}
+                className={`transition-all duration-200 ease-in-out ${
                   i % 2 === 0 ? "bg-white" : "bg-slate-50"
                 } hover:bg-[#eaf4ff]`}
               >
@@ -164,7 +167,8 @@ function PrettyTable1A3({
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           {rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
             .length === 0 && (
             <tr>
@@ -210,11 +214,11 @@ function PrettyTable1A3Summary({ summaryData }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
           {summaryData.map((row, i) => (
             <tr
-              key={i}
-              className={`transition-colors ${
+              key={`summary-${i}`}
+              className={`transition-all duration-200 ease-in-out ${
                 i % 2 === 0 ? "bg-white" : "bg-slate-50"
               } hover:bg-[#eaf4ff]`}
             >
@@ -276,6 +280,7 @@ export default function Tabel1A3({ role }) {
   const [summaryData, setSummaryData] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -359,9 +364,12 @@ export default function Tabel1A3({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  async function fetchRows() {
+  async function fetchRows(isToggle = false) {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+      }
       setError("");
       let qs = "?relasi=1";
       if (activeYear) {
@@ -376,6 +384,7 @@ export default function Tabel1A3({ role }) {
       setError(e?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }
 
@@ -388,11 +397,21 @@ export default function Tabel1A3({ role }) {
     }
   }
 
+  // Initial load
   useEffect(() => {
-    fetchRows();
+    fetchRows(false);
     fetchSummary();
     setSelectedRows([]);
-  }, [showDeleted, activeYear]);
+  }, [activeYear]);
+
+  // Toggle between active and deleted data
+  useEffect(() => {
+    if (!initialLoading) {
+      fetchRows(true);
+      fetchSummary();
+      setSelectedRows([]);
+    }
+  }, [showDeleted]);
 
   useEffect(() => {
     if (editing) {

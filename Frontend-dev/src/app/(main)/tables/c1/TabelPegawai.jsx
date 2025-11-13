@@ -13,6 +13,7 @@ export default function TabelPegawai({ role }) {
   // State management
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -103,8 +104,11 @@ export default function TabelPegawai({ role }) {
   
 
   // Fungsi fetchRows
-  const fetchRows = async () => {
-    setLoading(true);
+  const fetchRows = async (isToggle = false) => {
+    // Only show loading skeleton on initial load, not when toggling
+    if (!isToggle) {
+      setLoading(true);
+    }
     try {
       const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
       const result = await apiFetch(url);
@@ -113,12 +117,19 @@ export default function TabelPegawai({ role }) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
   
   // useEffects
-  useEffect(() => { fetchRows(); }, []);
-  useEffect(() => { fetchRows(); }, [showDeleted]);
+  // Initial load
+  useEffect(() => { fetchRows(false); }, []);
+  // Toggle between active and deleted data
+  useEffect(() => { 
+    if (!initialLoading) {
+      fetchRows(true); 
+    }
+  }, [showDeleted]);
   useEffect(() => {
     if (editing) {
       setFormState({
@@ -323,7 +334,8 @@ export default function TabelPegawai({ role }) {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left">
+        <div className="relative transition-opacity duration-200 ease-in-out">
+          <table className="w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr className="sticky top-0">
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID Pegawai</th>
@@ -332,11 +344,11 @@ export default function TabelPegawai({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {rows
               .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
               .map((row, index) => (
-              <tr key={row.id_pegawai || index} className={`transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+              <tr key={`${showDeleted ? 'deleted' : 'active'}-pegawai-${row.id_pegawai || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{row.id_pegawai || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
                 <td className="px-6 py-4 text-slate-600 border border-slate-200">
@@ -384,6 +396,7 @@ export default function TabelPegawai({ role }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Dropdown Menu - Fixed Position */}

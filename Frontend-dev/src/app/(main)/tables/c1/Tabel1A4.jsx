@@ -46,7 +46,7 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
             <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Lain</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {rows.map((r, i) => {
               const pengajaranTotal = n(r.sks_pengajaran);
               const pengajaranPsSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
@@ -70,8 +70,11 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                 n(manajemenPtLain)
               ).toFixed(2);
 
+              const idField = getIdField(r);
+              const rowId = idField && r[idField] ? r[idField] : i;
+
               return (
-                <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
                   <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
                   <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
@@ -130,6 +133,7 @@ export default function Tabel1A4({ role }) {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -223,9 +227,12 @@ export default function Tabel1A4({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  async function fetchRows() {
+  async function fetchRows(isToggle = false) {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not when toggling
+      if (!isToggle) {
+        setLoading(true);
+      }
       setError("");
       const deletedQs = showDeleted ? `&include_deleted=1` : "";
       const yearQs = selectedYear ? `&id_tahun=${selectedYear}` : "";
@@ -238,13 +245,23 @@ export default function Tabel1A4({ role }) {
       setError(e?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }
 
+  // Initial load
   useEffect(() => {
-    fetchRows();
+    fetchRows(false);
     setSelectedRows([]);
-  }, [showDeleted, selectedYear]);
+  }, [selectedYear]);
+
+  // Toggle between active and deleted data
+  useEffect(() => {
+    if (!initialLoading) {
+      fetchRows(true);
+      setSelectedRows([]);
+    }
+  }, [showDeleted]);
 
   useEffect(() => {
     if (editing) {
