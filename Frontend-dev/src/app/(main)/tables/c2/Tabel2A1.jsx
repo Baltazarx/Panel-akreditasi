@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
@@ -894,7 +894,7 @@ export default function Tabel2A1({ role }) {
     }
 
     return (
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md transition-opacity duration-300 ease-in-out">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             {/* Row 1: Header utama */}
@@ -942,7 +942,7 @@ export default function Tabel2A1({ role }) {
               const idField = row.rowData ? getIdField(row.rowData) : null;
               const rowId = idField && row.rowData ? row.rowData[idField] : idx;
               return (
-                <tr key={`pend-${rowId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`pend-${showDeleted ? 'deleted' : 'active'}-${rowId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && (
@@ -1170,7 +1170,7 @@ export default function Tabel2A1({ role }) {
     }
 
     return (
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md transition-opacity duration-300 ease-in-out">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             {/* Row 1: Header utama */}
@@ -1276,7 +1276,7 @@ export default function Tabel2A1({ role }) {
                 : idx;
               
               return (
-                <tr key={`maba-${firstDataId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={`maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && row.rowData.length > 0 && (
@@ -1715,7 +1715,9 @@ export default function Tabel2A1({ role }) {
           )}
         </div>
 
-        {renderTablePendaftaran()}
+        <div className="relative transition-opacity duration-300 ease-in-out">
+          {renderTablePendaftaran()}
+        </div>
 
         {/* Dropdown Menu Pendaftaran - Fixed Position */}
         {openDropdownIdPend !== null && (() => {
@@ -1866,7 +1868,9 @@ export default function Tabel2A1({ role }) {
           )}
         </div>
 
-        {renderTableMaba()}
+        <div className="relative transition-opacity duration-300 ease-in-out">
+          {renderTableMaba()}
+        </div>
 
         {/* Dropdown Menu Maba - Fixed Position */}
         {openDropdownIdMaba !== null && (() => {

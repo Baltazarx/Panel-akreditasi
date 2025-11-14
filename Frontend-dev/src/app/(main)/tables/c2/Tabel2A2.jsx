@@ -1111,6 +1111,7 @@ export default function Tabel2A2({ role }) {
           <>
             {/* Table */}
             <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <div className="relative transition-opacity duration-200 ease-in-out">
           <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr className="sticky top-0">
@@ -1136,7 +1137,7 @@ export default function Tabel2A2({ role }) {
                 <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
               {(() => {
                 console.log("📊 Tabel2A2 - Rendering organized data:", {
                   organizedDataLength: organizedData.length,
@@ -1148,7 +1149,7 @@ export default function Tabel2A2({ role }) {
                 organizedData.forEach((category, categoryIndex) => {
                   // Add category row
                   rows.push(
-                    <tr key={`category-${categoryIndex}`} className="transition-colors bg-slate-100 hover:bg-slate-200">
+                    <tr key={`category-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}`} className="transition-all duration-200 ease-in-out bg-slate-100 hover:bg-slate-200">
                       {showDeleted && (
                         <td className="px-6 py-4 text-center border border-slate-200">
                           {/* Checkbox for bulk operations if needed */}
@@ -1185,7 +1186,7 @@ export default function Tabel2A2({ role }) {
                   // Add subcategory rows
                   category.subcategories.forEach((subcategory, subIndex) => {
                     rows.push(
-                      <tr key={`subcategory-${categoryIndex}-${subIndex}`} className={`transition-colors ${subIndex % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                      <tr key={`subcategory-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}-${subIndex}`} className={`transition-all duration-200 ease-in-out ${subIndex % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                         {showDeleted && (
                           <td className="px-6 py-4 text-center border border-slate-200">
                             <input
@@ -1262,6 +1263,7 @@ export default function Tabel2A2({ role }) {
             </tbody>
           </table>
         </div>
+      </div>
           </>
         )}
       </section>
