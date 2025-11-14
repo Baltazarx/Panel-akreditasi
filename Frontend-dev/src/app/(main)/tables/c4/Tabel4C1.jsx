@@ -589,16 +589,32 @@ export default function Tabel4C1({ auth, role: propRole }) {
             ))}
           </select>
 
-          <button
-            onClick={() => setShowDeleted(!showDeleted)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-              showDeleted
-                ? "bg-blue-100 border-gray-300 text-blue-800 hover:bg-blue-200"
-                : "bg-blue-50 border-gray-300 text-blue-700 hover:bg-blue-100"
-            } focus:outline-none focus:ring-2 focus:ring-blue-400/40`}
-          >
-            Tampilkan Dihapus
-          </button>
+          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setShowDeleted(false)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                !showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data aktif"
+            >
+              Data
+            </button>
+            <button
+              onClick={() => setShowDeleted(true)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data terhapus"
+            >
+              Data Terhapus
+            </button>
+          </div>
 
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
             {loading ? "Memuat..." : `${filteredRows.length} baris`}

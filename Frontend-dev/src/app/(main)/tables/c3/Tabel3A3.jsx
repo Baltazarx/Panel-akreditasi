@@ -1411,18 +1411,32 @@ export default function Tabel3A3({ auth, role }) {
             <h2 className="text-lg font-semibold text-slate-900">Jumlah Dosen DTPR</h2>
             <div className="flex gap-2">
               {canDelete && (
-                <button
-                  onClick={() => setShowDeletedSummary(!showDeletedSummary)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    showDeletedSummary
-                      ? "bg-[#0384d6] text-white"
-                      : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                  }`}
-                  disabled={summaryLoading}
-                  aria-label={showDeletedSummary ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
-                >
-                  {showDeletedSummary ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-                </button>
+                <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setShowDeletedSummary(false)}
+                    disabled={summaryLoading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      !showDeletedSummary
+                        ? "bg-white text-[#0384d6] shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data aktif"
+                  >
+                    Data
+                  </button>
+                  <button
+                    onClick={() => setShowDeletedSummary(true)}
+                    disabled={summaryLoading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      showDeletedSummary
+                        ? "bg-white text-[#0384d6] shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data terhapus"
+                  >
+                    Data Terhapus
+                  </button>
+                </div>
               )}
               {canCreate && (
                 <button
@@ -1479,18 +1493,32 @@ export default function Tabel3A3({ auth, role }) {
             <h2 className="text-lg font-semibold text-slate-900">Pengembangan DTPR</h2>
             <div className="flex gap-2">
               {canDelete && (
-                <button
-                  onClick={() => setShowDeleted(!showDeleted)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    showDeleted
-                      ? "bg-[#0384d6] text-white"
-                      : "bg-[#eaf3ff] text-[#043975] hover:bg-[#d9ecff]"
-                  }`}
-                  disabled={detailLoading}
-                  aria-label={showDeleted ? "Sembunyikan data yang dihapus" : "Tampilkan data yang dihapus"}
-                >
-                  {showDeleted ? "Sembunyikan Dihapus" : "Tampilkan Dihapus"}
-                </button>
+                <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setShowDeleted(false)}
+                    disabled={detailLoading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      !showDeleted
+                        ? "bg-white text-[#0384d6] shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data aktif"
+                  >
+                    Data
+                  </button>
+                  <button
+                    onClick={() => setShowDeleted(true)}
+                    disabled={detailLoading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      showDeleted
+                        ? "bg-white text-[#0384d6] shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data terhapus"
+                  >
+                    Data Terhapus
+                  </button>
+                </div>
               )}
               {canCreate && (
                 <button
