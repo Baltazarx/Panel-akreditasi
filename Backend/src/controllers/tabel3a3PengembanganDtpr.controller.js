@@ -1,3 +1,15 @@
+/*
+============================================================
+ FILE: tabel3a3PengembanganDtpr.controller.js
+ 
+ [PERBAIKAN GEMINI]: 
+ - Memperbaiki error 1055 (only_full_group_by)
+ - Mengganti default 'ORDER BY' di listSummaryDtpr
+ - Mengganti default 'ORDER BY' di listDetailPengembangan
+ - Menyamakan 'GROUP BY' di export agar konsisten
+============================================================
+*/
+
 import { pool } from '../db.js';
 import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 import ExcelJS from 'exceljs';
@@ -128,7 +140,9 @@ export const listSummaryDtpr = async (req, res) => {
       // PIVOT MODE: Data di-pivot untuk 3 tahun
       const { selectSql, params: pivotParams } = getPivotClauses(req.query);
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_dtpr_tahunan', 't');
-      const orderBy = buildOrderBy(req.query?.order_by, 'id', 't');
+      
+      // [PERBAIKAN]: Default ORDER BY diubah dari 'id' ke 'id_unit' (karena 'id' tidak ada di GROUP BY)
+      const orderBy = buildOrderBy(req.query?.order_by, 'id_unit', 't');
 
       // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
       const tahunList = [
@@ -333,7 +347,10 @@ export const listDetailPengembangan = async (req, res) => {
       // PIVOT MODE: Data di-pivot untuk 3 tahun
       const { selectSql, params: pivotParams } = getPivotClausesDetail(req.query);
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_pengembangan', 'p');
-      const orderBy = buildOrderBy(req.query?.order_by, 'id_pengembangan', 'p');
+      
+      // [PERBAIKAN]: Default ORDER BY diubah dari 'nama_dtpr' (alias) 
+      //              menjadi 'nama_lengkap' (nama kolom asli di tabel 'pg')
+      const orderBy = buildOrderBy(req.query?.order_by, 'nama_lengkap', 'pg');
 
       // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
       const tahunList = [
@@ -563,6 +580,7 @@ export const exportTabel3a3 = async (req, res) => {
         const whereClausesSummary = [...whereSummary];
         whereClausesSummary.push(`t.id_tahun IN (?, ?, ?)`);
 
+        // [PERBAIKAN]: Mengganti ORDER BY t.id (error) dengan MAX(t.id) agar lolos GROUP BY
         const sqlSummary = `
           SELECT 
             uk.nama_unit AS nama_unit_prodi
@@ -571,6 +589,7 @@ export const exportTabel3a3 = async (req, res) => {
           LEFT JOIN unit_kerja uk ON t.id_unit = uk.id_unit
           ${whereClausesSummary.length ? `WHERE ${whereClausesSummary.join(' AND ')}` : ''}
           GROUP BY t.id_unit, uk.nama_unit
+          ORDER BY MAX(t.id) DESC
           LIMIT 1
         `;
         
@@ -586,6 +605,7 @@ export const exportTabel3a3 = async (req, res) => {
         const whereClausesDetail = [...whereDetail];
         whereClausesDetail.push(`p.id_tahun IN (?, ?, ?)`);
 
+        // [PERBAIKAN]: Mengganti GROUP BY p.id_pengembangan (bug) dengan GROUP BY yang konsisten
         const sqlDetail = `
           SELECT 
             p.jenis_pengembangan,
@@ -596,7 +616,8 @@ export const exportTabel3a3 = async (req, res) => {
           LEFT JOIN pegawai pg ON d.id_pegawai = pg.id_pegawai
           LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
           ${whereClausesDetail.length ? `WHERE ${whereClausesDetail.join(' AND ')}` : ''}
-          GROUP BY p.id_pengembangan, p.jenis_pengembangan, pg.nama_lengkap
+          GROUP BY p.id_unit, uk.nama_unit, p.id_dosen, pg.nama_lengkap, p.jenis_pengembangan
+          ORDER BY pg.nama_lengkap ASC
         `;
         
         const allParamsDetail = [...pivotParamsDetail, ...whereParamsDetail, ...tahunListDetail];
@@ -684,4 +705,3 @@ export const exportTabel3a3 = async (req, res) => {
         res.status(500).json({ error: 'Gagal mengekspor data', details: err.message });
     }
 };
-
