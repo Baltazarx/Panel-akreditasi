@@ -1,12 +1,92 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+
+// ==================================================================================
+// [INSTRUKSI]: Uncomment import asli di bawah ini saat dipakai di project Anda.
+// Dan HAPUS bagian "MOCKS FOR PREVIEW" di bawahnya.
+// ==================================================================================
+
+// --- REAL IMPORTS (UNCOMMENT IN YOUR PROJECT) ---
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
+// // --- MOCKS FOR PREVIEW (DELETE THIS BLOCK IN YOUR PROJECT) ---
+// import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, RotateCw, XCircle, MoreVertical } from 'lucide-react';
+
+// // Mock Icons mapping to match your original code structure
+// const FiChevronUp = ChevronUp;
+// const FiChevronDown = ChevronDown;
+// const FiChevronLeft = ChevronLeft;
+// const FiChevronRight = ChevronRight;
+// const FiEdit2 = Edit;
+// const FiTrash2 = Trash2;
+// const FiRotateCw = RotateCw;
+// const FiXCircle = XCircle;
+// const FiMoreVertical = MoreVertical;
+
+// // Mock Functions
+// const apiFetch = async (url, options) => {
+//   // Simulasi delay
+//   await new Promise(r => setTimeout(r, 500));
+  
+//   if (options?.method === "DELETE") return {};
+//   if (options?.method === "POST" || options?.method === "PUT") return {};
+
+//   // Mock Data Get List
+//   return [
+//     {
+//       id_pimpinan: 1,
+//       id_unit: 2,
+//       unit_kerja: "Wakil Ketua I",
+//       nama_ketua: "Dr. Budi Santoso, M.Kom.",
+//       periode_mulai: "2023-01-01",
+//       periode_selesai: "2027-12-31",
+//       pendidikan_terakhir: "S3",
+//       jabatan_struktural: "Wakil Ketua I", 
+//       jabatan_fungsional: "Lektor Kepala", // [AUTO-DETECT]
+//       tupoksi: "Bertanggung jawab atas bidang akademik...",
+//       deleted_at: null
+//     },
+//     {
+//       id_pimpinan: 2,
+//       id_unit: 7,
+//       unit_kerja: "PMB",
+//       nama_ketua: "Citra Lestari, S.Kom., M.T.",
+//       periode_mulai: "2024-08-01",
+//       periode_selesai: "2028-07-31",
+//       pendidikan_terakhir: "S2",
+//       jabatan_struktural: "Ketua Program Studi",
+//       jabatan_fungsional: "Lektor", // [AUTO-DETECT]
+//       tupoksi: "Mengelola kegiatan penerimaan mahasiswa baru...",
+//       deleted_at: null
+//     }
+//   ];
+// };
+
+// const getIdField = (row) => 'id_pimpinan'; // Mock helper
+// const roleCan = () => true; // Mock permission (allow all)
+
+// const useMaps = () => ({
+//   maps: {
+//     units: { 2: { id_unit: 2, nama_unit: "Wakil Ketua I" }, 7: { id_unit: 7, nama_unit: "PMB" } },
+//     pegawai: { 1: { id_pegawai: 1, nama_lengkap: "Dr. Budi Santoso" }, 2: { id_pegawai: 2, nama_lengkap: "Citra Lestari" } },
+//     tahun: {},
+//     ref_jabatan_struktural: { 1: { id_jabatan: 1, nama_jabatan: "Ketua" }, 2: { id_jabatan: 2, nama_jabatan: "Wakil Ketua" } }
+//   }
+// });
+
+// const Swal = {
+//   fire: (opts) => {
+//     // Simple alert for preview
+//     if (opts.title) alert(opts.title + "\n" + (opts.text || ""));
+//     return Promise.resolve({ isConfirmed: true });
+//   }
+// };
+// // ==================================================================================
 
 export default function Tabel1A1({ role }) {
   const table = { key: "tabel_1a1", label: "1.A.1 Pimpinan & Tupoksi UPPS/PS", path: "/pimpinan-upps-ps" };
@@ -118,8 +198,9 @@ export default function Tabel1A1({ role }) {
             bValue = (b.pendidikan_terakhir || "").toLowerCase();
             break;
           case 'jabatan':
-            aValue = (a.jabatan_struktural || "").toLowerCase();
-            bValue = (b.jabatan_struktural || "").toLowerCase();
+            // [UBAH]: Sorting sekarang berdasarkan Jabatan Fungsional (sesuai tampilan)
+            aValue = (a.jabatan_fungsional || "").toLowerCase();
+            bValue = (b.jabatan_fungsional || "").toLowerCase();
             break;
           case 'tupoksi':
             aValue = (a.tupoksi || "").toLowerCase();
@@ -397,6 +478,7 @@ export default function Tabel1A1({ role }) {
               </div>
               <div className="space-y-2 md:col-span-2">
                   <label htmlFor="id_jabatan" className="block text-sm font-semibold text-gray-700">Jabatan Struktural <span className="text-red-500">*</span></label>
+                  <p className="text-xs text-gray-500 mb-1">Jabatan yang diemban saat ini (Contoh: Ketua Prodi, Dekan).</p>
                   <select id="id_jabatan" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdJabatan : newIdJabatan} onChange={(e)=> isEdit ? setEditIdJabatan(e.target.value) : setNewIdJabatan(e.target.value)} required>
                       <option value="">Pilih...</option>
                       {Object.values(maps.ref_jabatan_struktural).map(j=> <option key={j.id_jabatan} value={j.id_jabatan}>{j.nama_jabatan}</option>)}
@@ -545,18 +627,21 @@ export default function Tabel1A1({ role }) {
                   )}
                 </div>
               </th>
+              
+              {/* [UBAH]: Judul kolom diubah jadi Jabatan Fungsional */}
               <th 
                 className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => handleSort('jabatan')}
-                aria-label="Sort by Jabatan Struktural"
+                aria-label="Sort by Jabatan Fungsional"
               >
                 <div className="flex items-center gap-2">
-                  Jabatan Struktural
+                  Jabatan Fungsional
                   {sortConfig.key === 'jabatan' && (
                     sortConfig.direction === 'asc' ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />
                   )}
                 </div>
               </th>
+
               <th 
                 className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => handleSort('tupoksi')}
@@ -618,7 +703,12 @@ export default function Tabel1A1({ role }) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.pendidikan_terakhir || ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.jabatan_struktural || ""}</td>
+                  
+                  {/* [UBAH]: Tampilkan Jabatan Fungsional (Auto-Detect dari Backend) */}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium text-[#0384d6]">
+                      {r.jabatan_fungsional || "-"}
+                  </td>
+
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">
                     <div className="max-w-md md:max-w-lg lg:max-w-xl">
                       <p className="whitespace-pre-wrap break-words line-clamp-3" title={r.tupoksi || ""}>
