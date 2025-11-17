@@ -6,7 +6,9 @@ import {
   Plus, X, Check, ChevronDown, Loader2,
   Settings, Heart, Star, Share2, MoreVertical,
   Bell, User, Mail, MessageCircle, AlertCircle,
-  CheckCircle, XCircle, Info, Clock, Command
+  CheckCircle, XCircle, Info, Clock, Command,
+  Save, RefreshCw, Filter, Eye, EyeOff, Calendar,
+  FileText, Image, Video, Music, File, Folder
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -822,6 +824,409 @@ export default function ButtonDesignSystemPage() {
               Bottom
             </button>
           </div>
+        </ButtonSection>
+
+        {/* 27. Segmented Control - Data/Terhapus */}
+        <ButtonSection
+          title="27. Segmented Control - Data/Terhapus"
+          description="Segmented control khusus untuk toggle data aktif dan terhapus (seperti di tabel)"
+        >
+          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setSegmentedValue("active")}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                segmentedValue === "active"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data aktif"
+            >
+              Data
+            </button>
+            <button
+              onClick={() => setSegmentedValue("deleted")}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                segmentedValue === "deleted"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data terhapus"
+            >
+              Data Terhapus
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* 28. Button dengan Shadow Variants */}
+        <ButtonSection
+          title="28. Button dengan Shadow Variants"
+          description="Button dengan berbagai variasi shadow untuk depth effect"
+        >
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-sm">
+            Shadow Small
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-md">
+            Shadow Medium
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-lg">
+            Shadow Large
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-xl">
+            Shadow XL
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-2xl">
+            Shadow 2XL
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200 shadow-[#0384d6]/50 shadow-lg">
+            Colored Shadow
+          </button>
+        </ButtonSection>
+
+        {/* 29. Button dengan Glassmorphism Effect */}
+        <ButtonSection
+          title="29. Button dengan Glassmorphism Effect"
+          description="Button dengan efek kaca transparan (glassmorphism)"
+        >
+          <div className="relative w-full h-32 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl p-4 flex items-center gap-4">
+            <button className="px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-lg font-medium border border-white/30 hover:bg-white/30 transition-all duration-200 shadow-lg">
+              Glass Button
+            </button>
+
+            <button className="px-4 py-2 bg-white/10 backdrop-blur-lg text-white rounded-lg font-medium border border-white/20 hover:bg-white/20 transition-all duration-200 shadow-lg">
+              Light Glass
+            </button>
+
+            <button className="px-4 py-2 bg-black/20 backdrop-blur-md text-white rounded-lg font-medium border border-white/10 hover:bg-black/30 transition-all duration-200 shadow-lg">
+              Dark Glass
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* 30. Button dengan Neumorphism Effect */}
+        <ButtonSection
+          title="30. Button dengan Neumorphism Effect"
+          description="Button dengan efek neumorphism (soft UI)"
+        >
+          <div className="p-6 bg-gray-200 rounded-xl">
+            <button className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium shadow-[4px_4px_8px_rgba(0,0,0,0.1),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:shadow-[2px_2px_4px_rgba(0,0,0,0.1),-2px_-2px_4px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] transition-all duration-200">
+              Neumorphic Button
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* 31. Button dengan 3D Effect */}
+        <ButtonSection
+          title="31. Button dengan 3D Effect"
+          description="Button dengan efek 3D untuk depth perception"
+        >
+          <button className="px-6 py-3 bg-[#0384d6] text-white rounded-lg font-medium transform hover:translate-y-[-2px] hover:shadow-[0_10px_20px_rgba(3,132,214,0.3)] active:translate-y-[0px] active:shadow-[0_5px_10px_rgba(3,132,214,0.2)] transition-all duration-200 border-b-4 border-[#0273b8]">
+            3D Button
+          </button>
+
+          <button className="px-6 py-3 bg-green-500 text-white rounded-lg font-medium transform hover:translate-y-[-2px] hover:shadow-[0_10px_20px_rgba(34,197,94,0.3)] active:translate-y-[0px] active:shadow-[0_5px_10px_rgba(34,197,94,0.2)] transition-all duration-200 border-b-4 border-green-600">
+            3D Success
+          </button>
+
+          <button className="px-6 py-3 bg-red-500 text-white rounded-lg font-medium transform hover:translate-y-[-2px] hover:shadow-[0_10px_20px_rgba(239,68,68,0.3)] active:translate-y-[0px] active:shadow-[0_5px_10px_rgba(239,68,68,0.2)] transition-all duration-200 border-b-4 border-red-600">
+            3D Danger
+          </button>
+        </ButtonSection>
+
+        {/* 32. Button dengan Shimmer Effect */}
+        <ButtonSection
+          title="32. Button dengan Shimmer Effect"
+          description="Button dengan efek shimmer/glow untuk menarik perhatian"
+        >
+          <button className="relative px-6 py-3 bg-gradient-to-r from-[#0384d6] via-blue-500 to-[#0384d6] text-white rounded-lg font-medium overflow-hidden group">
+            <span className="relative z-10">Shimmer Button</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+          </button>
+
+          <button className="relative px-6 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white rounded-lg font-medium overflow-hidden group">
+            <span className="relative z-10">Gradient Shimmer</span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+          </button>
+        </ButtonSection>
+
+        {/* 33. Button dengan Social Media Colors */}
+        <ButtonSection
+          title="33. Button dengan Social Media Colors"
+          description="Button dengan warna khas platform sosial media"
+        >
+          <button className="px-4 py-2 bg-[#1877F2] text-white rounded-lg font-medium hover:bg-[#166FE5] transition-colors duration-200 shadow-sm hover:shadow-md">
+            <span className="flex items-center gap-2">
+              <span>Facebook</span>
+            </span>
+          </button>
+
+          <button className="px-4 py-2 bg-[#1DA1F2] text-white rounded-lg font-medium hover:bg-[#1A91DA] transition-colors duration-200 shadow-sm hover:shadow-md">
+            Twitter
+          </button>
+
+          <button className="px-4 py-2 bg-[#E4405F] text-white rounded-lg font-medium hover:bg-[#D32E4A] transition-colors duration-200 shadow-sm hover:shadow-md">
+            Instagram
+          </button>
+
+          <button className="px-4 py-2 bg-[#0077B5] text-white rounded-lg font-medium hover:bg-[#006399] transition-colors duration-200 shadow-sm hover:shadow-md">
+            LinkedIn
+          </button>
+
+          <button className="px-4 py-2 bg-[#FF0000] text-white rounded-lg font-medium hover:bg-[#CC0000] transition-colors duration-200 shadow-sm hover:shadow-md">
+            YouTube
+          </button>
+
+          <button className="px-4 py-2 bg-[#000000] text-white rounded-lg font-medium hover:bg-[#1A1A1A] transition-colors duration-200 shadow-sm hover:shadow-md">
+            GitHub
+          </button>
+        </ButtonSection>
+
+        {/* 34. Button dengan Size Variants Lengkap */}
+        <ButtonSection
+          title="34. Button dengan Size Variants Lengkap"
+          description="Button dengan berbagai ukuran dari extra small hingga extra large"
+        >
+          <button className="px-2 py-1 text-xs bg-[#0384d6] text-white rounded font-medium hover:bg-[#0273b8] transition-colors duration-200">
+            XS Button
+          </button>
+
+          <button className="px-3 py-1.5 text-sm bg-[#0384d6] text-white rounded-md font-medium hover:bg-[#0273b8] transition-colors duration-200">
+            SM Button
+          </button>
+
+          <button className="px-4 py-2 text-base bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors duration-200">
+            MD Button
+          </button>
+
+          <button className="px-5 py-2.5 text-lg bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors duration-200">
+            LG Button
+          </button>
+
+          <button className="px-6 py-3 text-xl bg-[#0384d6] text-white rounded-lg font-semibold hover:bg-[#0273b8] transition-colors duration-200">
+            XL Button
+          </button>
+        </ButtonSection>
+
+        {/* 35. Button dengan Border Variants */}
+        <ButtonSection
+          title="35. Button dengan Border Variants"
+          description="Button dengan berbagai variasi border width dan style"
+        >
+          <button className="px-4 py-2 bg-white text-[#0384d6] border border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
+            Border 1px
+          </button>
+
+          <button className="px-4 py-2 bg-white text-[#0384d6] border-2 border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
+            Border 2px
+          </button>
+
+          <button className="px-4 py-2 bg-white text-[#0384d6] border-4 border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
+            Border 4px
+          </button>
+
+          <button className="px-4 py-2 bg-white text-[#0384d6] border-2 border-dashed border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
+            Dashed Border
+          </button>
+
+          <button className="px-4 py-2 bg-white text-[#0384d6] border-2 border-dotted border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
+            Dotted Border
+          </button>
+        </ButtonSection>
+
+        {/* 36. Button dengan State Variants */}
+        <ButtonSection
+          title="36. Button dengan State Variants"
+          description="Button dengan berbagai state: default, hover, active, focus, disabled"
+        >
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+            Default State
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] hover:scale-105 transition-all duration-200">
+            Hover State
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium active:bg-[#025a94] active:scale-95 transition-all duration-200">
+            Active State
+          </button>
+
+          <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium focus:outline-none focus:ring-4 focus:ring-[#0384d6]/50 transition-all duration-200">
+            Focus State
+          </button>
+
+          <button className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg font-medium cursor-not-allowed opacity-50">
+            Disabled State
+          </button>
+        </ButtonSection>
+
+        {/* 37. Button dengan Icon Variants */}
+        <ButtonSection
+          title="37. Button dengan Icon Variants"
+          description="Button dengan berbagai kombinasi icon dan text"
+        >
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors duration-200">
+            <Save size={18} />
+            <span>Save</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors duration-200">
+            <RefreshCw size={18} />
+            <span>Refresh</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Filter size={18} />
+            <span>Filter</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Eye size={18} />
+            <span>View</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <EyeOff size={18} />
+            <span>Hide</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Calendar size={18} />
+            <span>Calendar</span>
+          </button>
+        </ButtonSection>
+
+        {/* 38. Button dengan File Type Icons */}
+        <ButtonSection
+          title="38. Button dengan File Type Icons"
+          description="Button dengan icon sesuai tipe file"
+        >
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <FileText size={18} className="text-blue-500" />
+            <span>Document</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Image size={18} className="text-green-500" />
+            <span>Image</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Video size={18} className="text-red-500" />
+            <span>Video</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Music size={18} className="text-purple-500" />
+            <span>Audio</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <File size={18} className="text-gray-500" />
+            <span>File</span>
+          </button>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200">
+            <Folder size={18} className="text-yellow-500" />
+            <span>Folder</span>
+          </button>
+        </ButtonSection>
+
+        {/* 39. Button dengan Confirmation States */}
+        <ButtonSection
+          title="39. Button dengan Confirmation States"
+          description="Button yang berubah state setelah diklik (confirmation feedback)"
+        >
+          <button
+            onClick={(e) => {
+              const btn = e.target;
+              const originalText = btn.textContent;
+              btn.textContent = "Saved!";
+              btn.className = "px-4 py-2 bg-green-500 text-white rounded-lg font-medium transition-all duration-200";
+              setTimeout(() => {
+                btn.textContent = originalText;
+                btn.className = "px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200";
+              }, 2000);
+            }}
+            className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-all duration-200"
+          >
+            Click to Save
+          </button>
+
+          <button
+            onClick={(e) => {
+              const btn = e.target;
+              const originalText = btn.textContent;
+              btn.textContent = "✓ Copied!";
+              btn.className = "px-4 py-2 bg-green-500 text-white rounded-lg font-medium transition-all duration-200";
+              setTimeout(() => {
+                btn.textContent = originalText;
+                btn.className = "px-4 py-2 bg-white text-[#0384d6] border-2 border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-all duration-200";
+              }, 2000);
+            }}
+            className="px-4 py-2 bg-white text-[#0384d6] border-2 border-[#0384d6] rounded-lg font-medium hover:bg-blue-50 transition-all duration-200"
+          >
+            Copy
+          </button>
+        </ButtonSection>
+
+        {/* 40. Button dengan Color Palette Lengkap */}
+        <ButtonSection
+          title="40. Button dengan Color Palette Lengkap"
+          description="Button dengan berbagai warna dari palette design system"
+        >
+          <button className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors duration-200">
+            Blue
+          </button>
+
+          <button className="px-4 py-2 bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-600 transition-colors duration-200">
+            Indigo
+          </button>
+
+          <button className="px-4 py-2 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors duration-200">
+            Purple
+          </button>
+
+          <button className="px-4 py-2 bg-pink-500 text-white rounded-lg font-medium hover:bg-pink-600 transition-colors duration-200">
+            Pink
+          </button>
+
+          <button className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors duration-200">
+            Red
+          </button>
+
+          <button className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors duration-200">
+            Orange
+          </button>
+
+          <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors duration-200">
+            Yellow
+          </button>
+
+          <button className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors duration-200">
+            Green
+          </button>
+
+          <button className="px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors duration-200">
+            Teal
+          </button>
+
+          <button className="px-4 py-2 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors duration-200">
+            Cyan
+          </button>
+
+          <button className="px-4 py-2 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors duration-200">
+            Gray
+          </button>
+
+          <button className="px-4 py-2 bg-slate-500 text-white rounded-lg font-medium hover:bg-slate-600 transition-colors duration-200">
+            Slate
+          </button>
         </ButtonSection>
 
         {/* Footer */}
