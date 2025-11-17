@@ -2267,7 +2267,7 @@ export default function App() {
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
   const hasC1Access = useMemo(() => {
     const roleLower = (role || '').toLowerCase();
-    if (roleLower === "ala" || roleLower === "kemahasiswaan") {
+    if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "pmb") {
       return false;
     }
     return c1AccessKeys.some((k) => roleCan(role, k, "r"));
@@ -2297,7 +2297,14 @@ export default function App() {
   const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   // Akses C4, C5, C6
-  const c4AccessKeys = ["tabel_4a1_sarpras_pkm", "tabel_4a2"];
+  const c4AccessKeys = [
+    "tabel_4a1_sarpras_pkm", 
+    "tabel_4a2",
+    "tabel_4a2_pkm",
+    "tabel_4c1_kerjasama_pkm",
+    "tabel_4c2_diseminasi_pkm",
+    "tabel_4c3_hki_pkm"
+  ];
   const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   const c5AccessKeys = ["tabel_5a1", "tabel_5a2"];
@@ -2312,10 +2319,10 @@ export default function App() {
   // Akses Data Pegawai
   const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
 
-  // Akses Management Akun (kecuali untuk role ALA dan kemahasiswaan)
+  // Akses Management Akun (kecuali untuk role ALA, kemahasiswaan, LPPM, dan KEPEGAWAIAN)
   const hasUsersAccess = useMemo(() => {
     const roleLower = (role || '').toLowerCase();
-    if (roleLower === "ala" || roleLower === "kemahasiswaan") {
+    if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "lppm" || roleLower === "kepegawaian") {
       return false;
     }
     return roleCan(role, "users", "r");

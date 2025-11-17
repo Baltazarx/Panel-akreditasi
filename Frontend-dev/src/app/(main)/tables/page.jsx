@@ -397,10 +397,10 @@ export default function TablesPage() {
 
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
-  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses C1
+  // KECUALI role kemahasiswaan, ALA, dan PMB yang tidak boleh akses C1
   const loweredRole = (authUser?.role || "").toLowerCase();
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
   const c2AccessKeys = [
@@ -418,14 +418,21 @@ export default function TablesPage() {
   const c3AccessKeys = [
     "tabel_3a1_sarpras_penelitian",
     "tabel_3a2_penelitian",
-    "tabel_3a3_pengembangan_dtpr"
+    "tabel_3a3_pengembangan_dtpr",
+    "tabel_3c1_kerjasama_penelitian",
+    "tabel_3c2_publikasi_penelitian",
+    "tabel_3c3_hki"
   ]; // tabel-tabel yang ada di C3
   const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C4: jika ada akses ke tabel C4
   const c4AccessKeys = [
     "tabel_4a1_sarpras_pkm",
-    "tabel_4a2"
+    "tabel_4a2",
+    "tabel_4a2_pkm",
+    "tabel_4c1_kerjasama_pkm",
+    "tabel_4c2_diseminasi_pkm",
+    "tabel_4c3_hki_pkm"
   ]; // tabel-tabel yang ada di C4
   const hasC4Access = c4AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
@@ -438,14 +445,13 @@ export default function TablesPage() {
 
   // Akses C6: jika ada akses ke tabel C6
   const c6AccessKeys = [
-    "tabel_6a1",
-    "tabel_6a2"
+    "tabel_6_kesesuaian_visi_misi"
   ]; // tabel-tabel yang ada di C6
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
-  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses Panel Admin
-  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && (
+  // KECUALI role kemahasiswaan, ALA, LPPM, dan KEPEGAWAIAN yang tidak boleh akses Panel Admin
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")

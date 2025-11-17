@@ -699,7 +699,7 @@ export default function Tabel2B4({ role }) {
       </div>
 
       {/* Table */}
-      {renderTable()}
+      {renderTable}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {

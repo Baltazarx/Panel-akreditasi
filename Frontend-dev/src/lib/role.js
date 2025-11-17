@@ -30,12 +30,12 @@ export const ACCESS_MATRIX = {
     'pemetaan2b3':      { r: true },
     'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
     'visi_misi':        { c: true, r: true, u: true, d: true },
+    'tabel_6_kesesuaian_visi_misi': { c: true, r: true, u: true, d: true },
     'isi_pembelajaran': { c: true, r: true, u: true, d: true },
     'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
     'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
     'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
     'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
-    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
     'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -67,12 +67,12 @@ export const ACCESS_MATRIX = {
     'pemetaan2b3':      { r: true },
     'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
     'visi_misi':        { c: true, r: true, u: true, d: true },
+    'tabel_6_kesesuaian_visi_misi': { c: true, r: true, u: true, d: true },
     'isi_pembelajaran': { c: true, r: true, u: true, d: true },
     'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
     'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
     'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
     'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
-    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
     'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -104,12 +104,12 @@ export const ACCESS_MATRIX = {
     'pemetaan2b3':      { r: true },
     'pemetaancpmkcpl':  { c: true, r: true, u: true, d: true },
     'visi_misi':        { c: true, r: true, u: true, d: true },
+    'tabel_6_kesesuaian_visi_misi': { c: true, r: true, u: true, d: true },
     'isi_pembelajaran': { c: true, r: true, u: true, d: true },
     'beban_kerja_dosen':        { c: true, r: true, u: true, d: true },
     'mahasiswa_kondisi':        { c: true, r: true, u: true, d: true },
     'fleksibilitas_pembelajaran': { c: true, r: true, u: true, d: true },
     'bentuk_pembelajaran_master': { c: true, r: true, u: true, d: true },
-    'rekognisi_lulusan':        { c: true, r: true, u: true, d: true },
     'sumber_rekognisi_master':  { c: true, r: true, u: true, d: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -129,6 +129,13 @@ export const ACCESS_MATRIX = {
     'tabel_1a3':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_3a2_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.A.2 Penelitian DTPR
     'tabel_3a3_pengembangan_dtpr': { c: true, r: true, u: true, d: true }, // Tabel 3.A.3 Pengembangan DTPR
+    'tabel_3c1_kerjasama_penelitian': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.1 Kerjasama Penelitian
+    'tabel_3c2_publikasi_penelitian': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.2 Publikasi Penelitian
+    'tabel_3c3_hki': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.3 HKI
+    'tabel_4a2_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.A.2 PKM
+    'tabel_4c1_kerjasama_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.1 Kerjasama PKM
+    'tabel_4c2_diseminasi_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.2 Diseminasi PKM
+    'tabel_4c3_hki_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.3 HKI PKM
     'penelitian': { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'pkm':        { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'sumber_pendanaan_summary': { r: true },
@@ -141,15 +148,23 @@ export const ACCESS_MATRIX = {
     'tenaga_kependidikan': { r: true },
     'audit_mutu_internal': { r: true },
     'dosen': { r: true }, // Untuk dropdown dosen di form Tabel 3.A.2
-    'users': { r: true }, // Untuk UserManagementPage
+    // 'users': { r: true }, // Dihapus: LPPM tidak memiliki akses Panel Admin
   },
 
   // ========== KEPEGAWAIAN (sesuai aturan baru C1) ==========
   'kepegawaian': { // Menambahkan role ini jika belum ada
-    'tabel_1a5': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
+    'tabel_1a5': { c: true, r: true, u: true, d: true }, // Tabel 1.A.5 Data Kepegawaian
+    'kualifikasi_tendik': { c: true, r: true, u: true, d: true, h: true }, // Kualifikasi Tenaga Kependidikan
     'dosen': { c: true, r: true, u: true, d: true, h: true }, // Data Dosen
     'pegawai': { c: true, r: true, u: true, d: true, h: true }, // Data Pegawai
     'tendik': { c: true, r: true, u: true, d: true, h: true }, // Data Tenaga Kependidikan
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { r: true }, // Untuk dropdown unit kerja
+    'tahun_akademik': { r: true }, // Untuk dropdown tahun akademik
+    'ref_jabatan_struktural': { r: true }, // Untuk dropdown jabatan struktural
+    'ref_jabatan_fungsional': { r: true }, // Untuk dropdown jabatan fungsional
+    'tenaga_kependidikan': { r: true }, // Untuk dropdown tendik
+    'audit_mutu_internal': { r: true }, // Untuk data audit mutu internal
   },
 
   // ========== SARPRAS (dari backend roles.js) ==========
@@ -176,10 +191,16 @@ export const ACCESS_MATRIX = {
     'ref_jabatan_fungsional': { r: true },
   },
   'pmb': {
-    // Hapus/sesuaikan akses tabel C1 jika tidak relevan
-    // Hapus/sesuaikan akses tabel 2B jika tidak relevan
-     pemetaan2b1: { r: true }, // Contoh
-     // ...
+    // ---- Tabel 2A1 ----
+    'tabel_2a1_pendaftaran': { c: true, r: true, u: true, d: true }, // Tabel 2.A.1 Pendaftaran
+    'tabel_2a1_mahasiswa_baru_aktif': { c: true, r: true, u: true, d: true }, // Tabel 2.A.1 Mahasiswa Baru Aktif
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { r: true }, // Untuk dropdown unit kerja
+    'tahun_akademik': { r: true }, // Untuk dropdown tahun akademik
+    'pegawai': { r: true }, // Untuk dropdown pegawai
+    'audit_mutu_internal': { r: true }, // Untuk data audit mutu internal
+    'ref_jabatan_struktural': { r: true }, // Untuk dropdown jabatan struktural
+    'tenaga_kependidikan': { r: true }, // Untuk dropdown tendik
   },
   'kemahasiswaan': {
      // Tabel 2.A.2

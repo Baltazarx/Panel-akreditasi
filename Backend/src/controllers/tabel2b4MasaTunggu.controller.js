@@ -4,7 +4,37 @@ import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 // === LIST TABEL 2B4 MASA TUNGGU ===
 export const listTabel2b4MasaTunggu = async (req, res) => {
   try {
+    // Special handling: Role KEMAHASISWAAN bisa melihat semua data tanpa filter unit prodi
+    const userRole = req.user?.role?.toLowerCase();
+    const isKemahasiswaan = userRole === 'kemahasiswaan';
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    
     const { where, params } = await buildWhere(req, 'tabel_2b4_masa_tunggu', 't2b4');
+    
+    // Hapus filter id_unit_prodi untuk role KEMAHASISWAAN (bisa lihat semua data)
+    if (isKemahasiswaan && !isSuperAdmin) {
+      const unitProdiFilterPattern = /t2b4\.id_unit_prodi\s*=\s*\?/i;
+      let unitProdiFilterIndex = -1;
+      for (let i = 0; i < where.length; i++) {
+        if (unitProdiFilterPattern.test(where[i])) {
+          unitProdiFilterIndex = i;
+          break;
+        }
+      }
+      
+      if (unitProdiFilterIndex !== -1) {
+        where.splice(unitProdiFilterIndex, 1);
+        let paramIndex = 0;
+        for (let i = 0; i < unitProdiFilterIndex; i++) {
+          const matches = where[i].match(/\?/g);
+          if (matches) paramIndex += matches.length;
+        }
+        if (paramIndex < params.length) {
+          params.splice(paramIndex, 1);
+        }
+      }
+    }
+    
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b4');
 
     const sql = `

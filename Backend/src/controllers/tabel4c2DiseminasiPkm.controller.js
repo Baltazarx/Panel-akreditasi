@@ -74,8 +74,38 @@ const pivotDiseminasiCheckmarkSQL = (tahunIds, aliasTabel = 'd') => `
 */
 export const listTabel4c2DiseminasiPkm = async (req, res) => {
   try {
+    // Special handling: Role LPPM bisa melihat semua data tanpa filter unit
+    const userRole = req.user?.role?.toLowerCase();
+    const isLppm = userRole === 'lppm';
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    
     // Alias 'd' untuk tabel_4c2_diseminasi_pkm
     const { where, params } = await buildWhere(req, 'tabel_4c2_diseminasi_pkm', 'd');
+    
+    // Hapus filter id_unit untuk role LPPM (bisa lihat semua data)
+    if (isLppm && !isSuperAdmin) {
+      const unitFilterPattern = /d\.id_unit\s*=\s*\?/i;
+      let unitFilterIndex = -1;
+      for (let i = 0; i < where.length; i++) {
+        if (unitFilterPattern.test(where[i])) {
+          unitFilterIndex = i;
+          break;
+        }
+      }
+      
+      if (unitFilterIndex !== -1) {
+        where.splice(unitFilterIndex, 1);
+        let paramIndex = 0;
+        for (let i = 0; i < unitFilterIndex; i++) {
+          const matches = where[i].match(/\?/g);
+          if (matches) paramIndex += matches.length;
+        }
+        if (paramIndex < params.length) {
+          params.splice(paramIndex, 1);
+        }
+      }
+    }
+    
     const customOrder = req.query?.order_by;
     const orderBy = customOrder 
       ? buildOrderBy(customOrder, 'nama_dtpr', 'pg')
