@@ -24,8 +24,23 @@ export default function ButtonDesignSystemPage() {
   const [splitDropdownOpen, setSplitDropdownOpen] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [buttonState, setButtonState] = useState("default"); // default, success, error, warning
+  const [activeSection, setActiveSection] = useState("");
   const splitDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
+
+  // Navigation items - defined outside to avoid dependency issues
+  const navItems = [
+    { id: "buttons", label: "Buttons", icon: Settings },
+    { id: "inputs", label: "Input Fields", icon: FileText },
+    { id: "modals", label: "Modal & Dialog", icon: Info },
+    { id: "cards", label: "Cards", icon: File },
+    { id: "tables", label: "Tables", icon: FileText },
+    { id: "forms", label: "Forms", icon: FileText },
+    { id: "alerts", label: "Alerts", icon: AlertCircle },
+    { id: "loading", label: "Loading", icon: Loader2 },
+    { id: "typography", label: "Typography", icon: FileText },
+    { id: "colors", label: "Colors", icon: Heart },
+  ];
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -53,8 +68,39 @@ export default function ButtonDesignSystemPage() {
     setChipItems(chipItems.filter((_, i) => i !== index));
   };
 
-  const ButtonSection = ({ title, description, children }) => (
-    <div className="mb-12">
+  // Scroll to section handler
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveSection(id);
+    }
+  };
+
+  // Track active section on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = navItems.map(item => document.getElementById(item.id)).filter(Boolean);
+      const scrollPosition = window.scrollY + 200;
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section && section.offsetTop <= scrollPosition) {
+          setActiveSection(navItems[i].id);
+          break;
+        }
+      }
+    };
+
+    // Set initial active section
+    handleScroll();
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const ButtonSection = ({ title, description, children, id }) => (
+    <div className="mb-12" id={id}>
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
         <p className="text-gray-600">{description}</p>
@@ -69,18 +115,55 @@ export default function ButtonDesignSystemPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Design System - Buttons
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Koleksi lengkap berbagai jenis button dan komponen interaktif untuk digunakan dalam aplikasi
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto flex gap-8">
+        {/* Sticky Navigation Sidebar */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="sticky top-8">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Navigasi</h3>
+              <nav className="space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeSection === item.id
+                          ? "bg-[#0384d6] text-white"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Design System - Portal Mutu
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Koleksi lengkap semua komponen design system yang digunakan dalam aplikasi Portal Mutu
+            </p>
+          </div>
 
         {/* 1. Toggle Switch */}
+        <div id="buttons" className="mb-12">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Buttons</h2>
+            <p className="text-gray-600">Berbagai jenis button dan komponen interaktif</p>
+          </div>
+        </div>
+
         <ButtonSection
           title="1. Toggle Switch"
           description="Switch on/off dengan animasi smooth"
@@ -1229,10 +1312,571 @@ export default function ButtonDesignSystemPage() {
           </button>
         </ButtonSection>
 
-        {/* Footer */}
-        <div className="mt-16 text-center text-gray-600">
-          <p>Design System - Portal Mutu</p>
-          <p className="text-sm mt-2">Gunakan komponen-komponen ini sebagai referensi untuk konsistensi desain</p>
+        {/* ========== INPUT FIELDS ========== */}
+        <div className="mb-12" id="inputs">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Input Fields</h2>
+            <p className="text-gray-600">Berbagai jenis input field yang digunakan dalam form</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="41. Text Input"
+          description="Input field untuk teks biasa"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Label Input</label>
+              <input
+                type="text"
+                placeholder="Masukkan teks..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Input dengan Icon</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Cari..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Input Disabled</label>
+              <input
+                type="text"
+                placeholder="Disabled input"
+                disabled
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Input dengan Error</label>
+              <input
+                type="text"
+                placeholder="Input dengan error"
+                className="w-full px-4 py-2.5 border border-red-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+              />
+              <p className="mt-1 text-sm text-red-600">Field ini wajib diisi</p>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="42. Number Input"
+          description="Input field untuk angka"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Number Input</label>
+              <input
+                type="number"
+                placeholder="0"
+                min="0"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Number dengan Min/Max</label>
+              <input
+                type="number"
+                placeholder="0"
+                min="0"
+                max="100"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="43. Password Input"
+          description="Input field untuk password"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password Input</label>
+              <input
+                type="password"
+                placeholder="Masukkan password"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password dengan Show/Hide</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  placeholder="Masukkan password"
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+                <Eye className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer" size={18} />
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="44. Email & URL Input"
+          description="Input field khusus untuk email dan URL"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Input</label>
+              <input
+                type="email"
+                placeholder="nama@example.com"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">URL Input</label>
+              <input
+                type="url"
+                placeholder="https://example.com"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="45. Textarea"
+          description="Input field untuk teks panjang"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Textarea Standard</label>
+              <textarea
+                rows="4"
+                placeholder="Masukkan teks panjang..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Textarea dengan Resize</label>
+              <textarea
+                rows="4"
+                placeholder="Textarea dengan resize..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="46. Select/Dropdown"
+          description="Dropdown untuk pilihan single atau multiple"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Standard</label>
+              <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition">
+                <option value="">-- Pilih Opsi --</option>
+                <option value="1">Opsi 1</option>
+                <option value="2">Opsi 2</option>
+                <option value="3">Opsi 3</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Select dengan Icon</label>
+              <div className="relative">
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                <select className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition appearance-none">
+                  <option value="">-- Pilih Opsi --</option>
+                  <option value="1">Opsi 1</option>
+                  <option value="2">Opsi 2</option>
+                  <option value="3">Opsi 3</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== MODAL/DIALOG ========== */}
+        <div className="mb-12" id="modals">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Modal & Dialog</h2>
+            <p className="text-gray-600">Komponen modal untuk dialog dan form</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="47. Modal Standard"
+          description="Modal dengan header, body, dan footer"
+        >
+          <button
+            onClick={() => setDropdownOpen(true)}
+            className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors duration-200"
+          >
+            Buka Modal
+          </button>
+          {dropdownOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setDropdownOpen(false)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
+              >
+                <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <h3 className="text-lg font-semibold text-gray-900">Modal Title</h3>
+                  <p className="text-sm text-gray-600 mt-1">Deskripsi modal</p>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-700">Konten modal di sini...</p>
+                </div>
+                <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                  <button
+                    onClick={() => setDropdownOpen(false)}
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => setDropdownOpen(false)}
+                    className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors"
+                  >
+                    Simpan
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </ButtonSection>
+
+        {/* ========== CARDS ========== */}
+        <div className="mb-12" id="cards">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Cards</h2>
+            <p className="text-gray-600">Komponen card untuk menampilkan konten</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="48. Card Standard"
+          description="Card dengan berbagai variasi"
+        >
+          <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h4 className="font-semibold text-gray-900 mb-2">Card Standard</h4>
+              <p className="text-sm text-gray-600">Konten card di sini</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+              <h4 className="font-semibold text-gray-900 mb-2">Card dengan Shadow</h4>
+              <p className="text-sm text-gray-600">Konten card di sini</p>
+            </div>
+            <div className="bg-gradient-to-br from-[#0384d6] to-[#043975] rounded-xl shadow-lg p-6 text-white">
+              <h4 className="font-semibold mb-2">Card Gradient</h4>
+              <p className="text-sm text-white/80">Konten card di sini</p>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TABLES ========== */}
+        <div className="mb-12" id="tables">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tables</h2>
+            <p className="text-gray-600">Komponen table untuk menampilkan data</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="49. Table Standard"
+          description="Table dengan header gradient dan styling konsisten"
+        >
+          <div className="w-full overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
+                  <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama</th>
+                  <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Email</th>
+                  <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-center border border-slate-200">1</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">John Doe</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">john@example.com</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    <div className="flex justify-center gap-2">
+                      <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                        <Edit size={16} />
+                      </button>
+                      <button className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-center border border-slate-200">2</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">Jane Smith</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">jane@example.com</td>
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    <div className="flex justify-center gap-2">
+                      <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                        <Edit size={16} />
+                      </button>
+                      <button className="p-1 text-red-600 hover:bg-red-50 rounded">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ButtonSection>
+
+        {/* ========== FORMS ========== */}
+        <div className="mb-12" id="forms">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Forms</h2>
+            <p className="text-gray-600">Layout form dan form groups</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="50. Form Layout"
+          description="Layout form dengan grid dan spacing"
+        >
+          <div className="w-full bg-white rounded-xl border border-gray-200 p-6">
+            <form className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap</label>
+                  <input
+                    type="text"
+                    placeholder="Masukkan nama"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    placeholder="nama@example.com"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Pesan</label>
+                <textarea
+                  rows="4"
+                  placeholder="Masukkan pesan"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  className="relative px-6 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-200 overflow-hidden group"
+                >
+                  <span className="relative z-10">Batal</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                </button>
+                <button
+                  type="submit"
+                  className="relative px-6 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#0384d6] to-blue-600 hover:from-[#0273b8] hover:to-blue-700 transition-all duration-200 overflow-hidden group"
+                >
+                  <span className="relative z-10">Simpan</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </ButtonSection>
+
+        {/* ========== ALERTS & NOTIFICATIONS ========== */}
+        <div className="mb-12" id="alerts">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Alerts & Notifications</h2>
+            <p className="text-gray-600">Komponen untuk menampilkan alert dan notifikasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="51. Alert Variants"
+          description="Alert dengan berbagai tipe (success, error, warning, info)"
+        >
+          <div className="w-full space-y-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+              <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-green-900 mb-1">Success Alert</h4>
+                <p className="text-sm text-green-800">Operasi berhasil dilakukan</p>
+              </div>
+            </div>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <XCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-red-900 mb-1">Error Alert</h4>
+                <p className="text-sm text-red-800">Terjadi kesalahan saat memproses</p>
+              </div>
+            </div>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-yellow-900 mb-1">Warning Alert</h4>
+                <p className="text-sm text-yellow-800">Perhatian: Pastikan data sudah benar</p>
+              </div>
+            </div>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+              <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-blue-900 mb-1">Info Alert</h4>
+                <p className="text-sm text-blue-800">Informasi penting untuk diketahui</p>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== LOADING STATES ========== */}
+        <div className="mb-12" id="loading">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Loading States</h2>
+            <p className="text-gray-600">Komponen untuk menampilkan loading state</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="52. Loading Spinner"
+          description="Spinner untuk indikasi loading"
+        >
+          <div className="flex items-center gap-6">
+            <Loader2 className="animate-spin text-[#0384d6]" size={24} />
+            <Loader2 className="animate-spin text-green-500" size={32} />
+            <Loader2 className="animate-spin text-red-500" size={40} />
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="53. Skeleton Loading"
+          description="Skeleton untuk placeholder saat loading"
+        >
+          <div className="w-full space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+            <div className="animate-pulse">
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TYPOGRAPHY ========== */}
+        <div className="mb-12" id="typography">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Typography</h2>
+            <p className="text-gray-600">Sistem tipografi yang digunakan</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="54. Heading Styles"
+          description="Berbagai ukuran heading"
+        >
+          <div className="w-full space-y-4">
+            <h1 className="text-4xl font-bold text-gray-900">Heading 1</h1>
+            <h2 className="text-3xl font-bold text-gray-900">Heading 2</h2>
+            <h3 className="text-2xl font-bold text-gray-900">Heading 3</h3>
+            <h4 className="text-xl font-semibold text-gray-900">Heading 4</h4>
+            <h5 className="text-lg font-semibold text-gray-900">Heading 5</h5>
+            <h6 className="text-base font-semibold text-gray-900">Heading 6</h6>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="55. Text Styles"
+          description="Berbagai style teks"
+        >
+          <div className="w-full space-y-3">
+            <p className="text-base text-gray-700">Text normal - Base size</p>
+            <p className="text-sm text-gray-600">Text kecil - Small size</p>
+            <p className="text-xs text-gray-500">Text sangat kecil - Extra small</p>
+            <p className="text-base font-medium text-gray-700">Text medium weight</p>
+            <p className="text-base font-semibold text-gray-700">Text semibold</p>
+            <p className="text-base font-bold text-gray-700">Text bold</p>
+          </div>
+        </ButtonSection>
+
+        {/* ========== COLORS ========== */}
+        <div className="mb-12" id="colors">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Color Palette</h2>
+            <p className="text-gray-600">Palet warna yang digunakan dalam design system</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="56. Primary Colors"
+          description="Warna utama aplikasi"
+        >
+          <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <div className="h-20 bg-[#0384d6] rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Primary Blue</p>
+              <p className="text-xs text-gray-500">#0384d6</p>
+            </div>
+            <div>
+              <div className="h-20 bg-[#043975] rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Dark Blue</p>
+              <p className="text-xs text-gray-500">#043975</p>
+            </div>
+            <div>
+              <div className="h-20 bg-[#0273b8] rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Hover Blue</p>
+              <p className="text-xs text-gray-500">#0273b8</p>
+            </div>
+            <div>
+              <div className="h-20 bg-gradient-to-r from-[#043975] to-[#0384d6] rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Gradient</p>
+              <p className="text-xs text-gray-500">#043975 → #0384d6</p>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="57. Status Colors"
+          description="Warna untuk status (success, error, warning)"
+        >
+          <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <div className="h-20 bg-green-500 rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Success</p>
+              <p className="text-xs text-gray-500">green-500</p>
+            </div>
+            <div>
+              <div className="h-20 bg-red-500 rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Error</p>
+              <p className="text-xs text-gray-500">red-500</p>
+            </div>
+            <div>
+              <div className="h-20 bg-yellow-500 rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Warning</p>
+              <p className="text-xs text-gray-500">yellow-500</p>
+            </div>
+            <div>
+              <div className="h-20 bg-blue-500 rounded-lg mb-2"></div>
+              <p className="text-sm font-medium text-gray-700">Info</p>
+              <p className="text-xs text-gray-500">blue-500</p>
+            </div>
+          </div>
+        </ButtonSection>
+
+          {/* Footer */}
+          <div className="mt-16 text-center text-gray-600">
+            <p className="text-lg font-semibold">Design System - Portal Mutu</p>
+            <p className="text-sm mt-2">Gunakan komponen-komponen ini sebagai referensi untuk konsistensi desain</p>
+          </div>
         </div>
       </div>
     </div>
