@@ -1608,14 +1608,72 @@ const GrafikTabel = () => {
         { key: '6a2', label: '6A-2', endpoint: '/tabel-6a2', accessKey: 'tabel_6a2' }
     ];
 
+    // Fungsi untuk menghitung tahun TS, TS-1, TS-2, TS-3, TS-4 dari tahun terbaru
+    const getTahunTSParams = async () => {
+        try {
+            const BASE_URL = "http://localhost:3000/api";
+            const response = await fetch(`${BASE_URL}/tahun-akademik`, {
+                credentials: "include",
+                mode: "cors",
+            });
+            
+            if (!response.ok) {
+                return null;
+            }
+            
+            const data = await response.json();
+            const tahunList = Array.isArray(data) ? data : (data?.items || []);
+            
+            if (tahunList.length === 0) {
+                return null;
+            }
+            
+            // Urutkan tahun dari terkecil ke terbesar
+            const sortedTahunList = [...tahunList].sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
+            
+            // Cari tahun yang mengandung tahun saat ini
+            const currentYear = new Date().getFullYear();
+            const tahunTerpilih = sortedTahunList.find(t => {
+                const tahunStr = String(t.tahun || t.nama || '');
+                return tahunStr.includes(String(currentYear));
+            });
+            
+            // Gunakan tahun terpilih atau tahun terakhir
+            const selectedTahun = tahunTerpilih || sortedTahunList[sortedTahunList.length - 1];
+            if (!selectedTahun) return null;
+            
+            const selectedIndex = sortedTahunList.findIndex(t => t.id_tahun === selectedTahun.id_tahun);
+            if (selectedIndex === -1) return null;
+            
+            const tahunTS = sortedTahunList[selectedIndex]?.id_tahun;
+            const tahunTS1 = selectedIndex > 0 ? sortedTahunList[selectedIndex - 1]?.id_tahun : tahunTS;
+            const tahunTS2 = selectedIndex > 1 ? sortedTahunList[selectedIndex - 2]?.id_tahun : tahunTS1;
+            const tahunTS3 = selectedIndex > 2 ? sortedTahunList[selectedIndex - 3]?.id_tahun : tahunTS2;
+            const tahunTS4 = selectedIndex > 3 ? sortedTahunList[selectedIndex - 4]?.id_tahun : tahunTS3;
+            
+            return { tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 };
+        } catch (error) {
+            console.warn('Failed to fetch tahun akademik for TS params:', error);
+            return null;
+        }
+    };
+
     // Fungsi untuk fetch data count dari API
-    const fetchTableDataCount = async (endpoint, tsId = null) => {
+    const fetchTableDataCount = async (endpoint, tsId = null, useTahunTS = false) => {
         try {
             const BASE_URL = "http://localhost:3000/api";
             let url = `${BASE_URL}${endpoint}`;
             
-            // Tambahkan parameter ts_id jika diperlukan
-            if (tsId) {
+            // Jika menggunakan parameter tahun TS (untuk Tabel3A2, 3A3)
+            if (useTahunTS) {
+                const tahunParams = await getTahunTSParams();
+                if (tahunParams && tahunParams.tahunTS) {
+                    url += `${url.includes('?') ? '&' : '?'}id_tahun_ts=${tahunParams.tahunTS}&id_tahun_ts_1=${tahunParams.tahunTS1}&id_tahun_ts_2=${tahunParams.tahunTS2}&id_tahun_ts_3=${tahunParams.tahunTS3}&id_tahun_ts_4=${tahunParams.tahunTS4}`;
+                } else {
+                    return 0; // Jika tidak ada tahun params, return 0
+                }
+            } else if (tsId) {
+                // Tambahkan parameter ts_id jika diperlukan
                 url += `${url.includes('?') ? '&' : '?'}ts_id=${tsId}`;
             }
             
@@ -1712,12 +1770,13 @@ const GrafikTabel = () => {
             return { label: table.label, count };
         });
         
-        // Fetch data untuk C3 - Perlu ts_id untuk beberapa tabel
+        // Fetch data untuk C3 - Perlu ts_id untuk beberapa tabel, dan tahun TS untuk 3a2 dan 3a3
         const latestTahunId = await getLatestTahunId();
         const c3DataPromises = C3_TABLES.map(async (table) => {
             if (!roleCan(role, table.accessKey, 'r')) return null;
             const needsTsId = ['3c1', '3c2', '3c3'].includes(table.key);
-            const count = await fetchTableDataCount(table.endpoint, needsTsId ? latestTahunId : null);
+            const needsTahunTS = ['3a2', '3a3'].includes(table.key);
+            const count = await fetchTableDataCount(table.endpoint, needsTsId ? latestTahunId : null, needsTahunTS);
             return { label: table.label, count };
         });
 
