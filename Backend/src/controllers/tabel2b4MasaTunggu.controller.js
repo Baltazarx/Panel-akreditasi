@@ -9,30 +9,49 @@ export const listTabel2b4MasaTunggu = async (req, res) => {
     const isKemahasiswaan = userRole === 'kemahasiswaan';
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
     
+    // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
+    if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
+      delete req.query.id_unit_prodi;
+    }
+    
     const { where, params } = await buildWhere(req, 'tabel_2b4_masa_tunggu', 't2b4');
     
-    // Hapus filter id_unit_prodi untuk role KEMAHASISWAAN (bisa lihat semua data)
+    // Hapus filter id_unit_prodi dari where clause untuk role KEMAHASISWAAN (bisa lihat semua data)
     if (isKemahasiswaan && !isSuperAdmin) {
-      const unitProdiFilterPattern = /t2b4\.id_unit_prodi\s*=\s*\?/i;
-      let unitProdiFilterIndex = -1;
+      // Cari dan hapus semua filter yang mengandung id_unit_prodi
+      const filteredWhere = [];
+      const filteredParams = [];
+      let paramIndex = 0;
+      
       for (let i = 0; i < where.length; i++) {
-        if (unitProdiFilterPattern.test(where[i])) {
-          unitProdiFilterIndex = i;
-          break;
+        const condition = where[i];
+        // Skip kondisi yang mengandung id_unit_prodi
+        if (!/id_unit_prodi/i.test(condition)) {
+          filteredWhere.push(condition);
+          // Hitung jumlah parameter di kondisi ini
+          const matches = condition.match(/\?/g);
+          if (matches) {
+            for (let j = 0; j < matches.length; j++) {
+              if (paramIndex < params.length) {
+                filteredParams.push(params[paramIndex]);
+              }
+              paramIndex++;
+            }
+          }
+        } else {
+          // Skip parameter untuk kondisi id_unit_prodi yang dihapus
+          const matches = condition.match(/\?/g);
+          if (matches) {
+            paramIndex += matches.length;
+          }
         }
       }
       
-      if (unitProdiFilterIndex !== -1) {
-        where.splice(unitProdiFilterIndex, 1);
-        let paramIndex = 0;
-        for (let i = 0; i < unitProdiFilterIndex; i++) {
-          const matches = where[i].match(/\?/g);
-          if (matches) paramIndex += matches.length;
-        }
-        if (paramIndex < params.length) {
-          params.splice(paramIndex, 1);
-        }
-      }
+      // Update where dan params
+      where.length = 0;
+      where.push(...filteredWhere);
+      params.length = 0;
+      params.push(...filteredParams);
     }
     
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b4');

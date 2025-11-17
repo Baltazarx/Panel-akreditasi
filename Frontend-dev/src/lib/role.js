@@ -171,6 +171,12 @@ export const ACCESS_MATRIX = {
   'sarpras': {
     'tabel_3a1_sarpras_penelitian': { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_4a1_sarpras_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.A.1 Sarpras PkM
+    'tabel_5_2_sarpras_pendidikan': { c: true, r: true, u: true, d: true }, // Tabel 5.2 Sarpras Pendidikan
+    // === MASTER DATA: Izin Baca untuk dropdown ===
+    'unit_kerja': { r: true },
+    'tahun_akademik': { r: true },
+    'pegawai': { r: true },
+    'audit_mutu_internal': { r: true },
   },
 
   // Role lain dari file asli Anda (ala, pmb, kemahasiswaan) perlu ditinjau ulang
@@ -244,6 +250,12 @@ export function roleCan(role, tableKey, action) {
   const roleLower = typeof role === 'string' ? role.toLowerCase() : String(role).toLowerCase();
   const actionLower = typeof action === 'string' ? action.toLowerCase() : String(action).toLowerCase();
   const tableKeyLower = typeof tableKey === 'string' ? tableKey.toLowerCase() : String(tableKey).toLowerCase();
+
+  // Role KETUASTIKOM hanya boleh Read-only di semua tabel
+  if (roleLower === 'ketuastikom' && actionLower !== 'r') {
+    console.log('roleCan - Role ketuastikom read-only enforcement');
+    return false;
+  }
 
   // Dapatkan izin untuk role tersebut
   const permissions = ACCESS_MATRIX[roleLower];

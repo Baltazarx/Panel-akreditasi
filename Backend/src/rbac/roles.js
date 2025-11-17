@@ -176,6 +176,11 @@ export const AccessMatrix = {
     'tabel_3a1_sarpras_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_4a1_sarpras_pkm': { C: true, R: true, U: true, D: true },
     'tabel_5_2_sarpras_pendidikan': { C: true, R: true, U: true, D: true },
+    // === MASTER DATA: Izin Baca untuk dropdown ===
+    'unit_kerja': { R: true },
+    'tahun_akademik': { R: true },
+    'pegawai': { R: true },
+    'audit_mutu_internal': { R: true },
   },
 
   // ========== KEMAHASISWAAN ==========

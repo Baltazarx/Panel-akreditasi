@@ -397,10 +397,10 @@ export default function TablesPage() {
 
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
-  // KECUALI role kemahasiswaan, ALA, dan PMB yang tidak boleh akses C1
+  // KECUALI role kemahasiswaan, ALA, PMB, dan SARPRAS yang tidak boleh akses C1
   const loweredRole = (authUser?.role || "").toLowerCase();
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && loweredRole !== "sarpras" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
   const c2AccessKeys = [
@@ -439,7 +439,8 @@ export default function TablesPage() {
   // Akses C5: jika ada akses ke tabel C5
   const c5AccessKeys = [
     "tabel_5a1",
-    "tabel_5a2"
+    "tabel_5a2",
+    "tabel_5_2_sarpras_pendidikan"
   ]; // tabel-tabel yang ada di C5
   const hasC5Access = c5AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
@@ -450,8 +451,8 @@ export default function TablesPage() {
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
-  // KECUALI role kemahasiswaan, ALA, LPPM, dan KEPEGAWAIAN yang tidak boleh akses Panel Admin
-  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && (
+  // KECUALI role kemahasiswaan, ALA, LPPM, KEPEGAWAIAN, dan SARPRAS yang tidak boleh akses Panel Admin
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && loweredRole !== "sarpras" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")

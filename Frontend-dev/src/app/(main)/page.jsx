@@ -2307,7 +2307,7 @@ export default function App() {
   ];
   const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
-  const c5AccessKeys = ["tabel_5a1", "tabel_5a2"];
+  const c5AccessKeys = ["tabel_5a1", "tabel_5a2", "tabel_5_2_sarpras_pendidikan"];
   const hasC5Access = useMemo(() => c5AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
   const c6AccessKeys = ["tabel_6a1", "tabel_6a2"];
