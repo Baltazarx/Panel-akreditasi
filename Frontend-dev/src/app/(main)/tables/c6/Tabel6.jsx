@@ -13,7 +13,7 @@ const TABLE_KEY = "tabel_6_kesesuaian_visi_misi";
 const LABEL = "Tabel 6. Kesesuaian Visi Misi";
 
 /* ---------- Modal Form Tambah/Edit ---------- */
-function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
+function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selectedProdi, isSuperAdmin }) {
   const [form, setForm] = useState({
     id_unit_prodi: "",
     visi_pt: "",
@@ -32,8 +32,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       try {
         const data = await apiFetch("/unit-kerja");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya prodi (biasanya prodi memiliki tipe tertentu atau bisa disesuaikan)
-        setProdiList(list.sort((a, b) => (a.nama_unit || "").localeCompare(b.nama_unit || "")));
+        // Filter hanya TI (4) dan MI (5)
+        const filtered = list.filter(uk => uk.id_unit === 4 || uk.id_unit === 5);
+        setProdiList(filtered.sort((a, b) => a.id_unit - b.id_unit));
       } catch (err) {
         console.error("Error fetching prodi:", err);
         setProdiList([]);
@@ -56,8 +57,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
           link_bukti: initialData.link_bukti || ""
         });
       } else {
+        // Tambah data baru: untuk superadmin, set dari selectedProdi
         setForm({
-          id_unit_prodi: "",
+          id_unit_prodi: (isSuperAdmin && selectedProdi) ? String(selectedProdi) : "",
           visi_pt: "",
           visi_upps: "",
           visi_keilmuan_ps: "",
@@ -67,7 +69,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
         });
       }
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, selectedProdi, isSuperAdmin]);
 
   if (!isOpen) return null;
 
@@ -99,9 +101,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
               id="id_unit_prodi"
               value={form.id_unit_prodi}
               onChange={(e) => handleChange("id_unit_prodi", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] disabled:bg-gray-100 disabled:cursor-not-allowed"
               required
-              disabled={!!initialData}
+              disabled={!!initialData || (isSuperAdmin && !initialData)}
             >
               <option value="">-- Pilih Program Studi --</option>
               {prodiList.map((p) => (
@@ -112,6 +114,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
             </select>
             {initialData && (
               <p className="mt-1 text-xs text-slate-500">Program Studi tidak dapat diubah setelah data dibuat.</p>
+            )}
+            {isSuperAdmin && !initialData && (
+              <p className="mt-1 text-xs text-slate-500">Program Studi sudah dipilih dari dropdown filter di atas.</p>
             )}
           </div>
 
@@ -244,11 +249,37 @@ export default function Tabel6({ auth, role: propRole }) {
   const [editData, setEditData] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
   
+  // Cek apakah user adalah superadmin (bisa melihat semua prodi)
+  const userRole = authUser?.role || role;
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  
+  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit;
+  
+  // State filter menyimpan id_unit_prodi
+  const [selectedProdi, setSelectedProdi] = useState("");
+  
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
+  
+  // Ekstrak Prodi dari maps untuk filter - hanya TI dan MI
+  const prodiList = Object.values(maps?.units || {})
+    .filter(uk => uk.id_unit === 4 || uk.id_unit === 5) // Hanya TI (4) dan MI (5)
+    .sort((a, b) => a.id_unit - b.id_unit); // Sort berdasarkan id_unit (TI dulu, lalu MI)
+  
+  // Set selectedProdi untuk user prodi
+  useEffect(() => {
+    if (!isSuperAdmin && userProdiId && !selectedProdi) {
+      // User prodi: set ke prodi mereka
+      setSelectedProdi(String(userProdiId));
+    } else if (isSuperAdmin && !selectedProdi && prodiList.length > 0) {
+      // Superadmin: default ke Prodi TI (id_unit = 4)
+      setSelectedProdi(String(prodiList[0].id_unit));
+    }
+  }, [isSuperAdmin, userProdiId, selectedProdi, prodiList]);
   
   // Fetch data
   const fetchRows = async () => {
@@ -256,23 +287,44 @@ export default function Tabel6({ auth, role: propRole }) {
       setLoading(true);
       setError("");
       let url = ENDPOINT;
+      
+      // Build query parameters
+      const params = [];
       if (showDeleted) {
-        url += "?include_deleted=1";
+        params.push("include_deleted=1");
       }
+      
+      // Filter berdasarkan prodi
+      if (!isSuperAdmin && userProdiId) {
+        // User prodi: selalu filter berdasarkan prodi mereka
+        params.push(`id_unit_prodi=${userProdiId}`);
+      } else if (selectedProdi) {
+        // Superadmin memilih prodi tertentu
+        params.push(`id_unit_prodi=${selectedProdi}`);
+      }
+      
+      if (params.length > 0) {
+        url += "?" + params.join("&");
+      }
+      
       const data = await apiFetch(url);
       const dataArray = Array.isArray(data) ? data : (data.items || []);
       setRows(dataArray);
       
-      // Set current data (untuk prodi user saat ini atau data pertama)
-      if (dataArray.length > 0 && authUser?.id_unit) {
-        const userData = dataArray.find(r => r.id_unit_prodi === authUser.id_unit && !r.deleted_at);
-        if (userData) {
-          setCurrentData(userData);
+      // Set current data berdasarkan filter
+      if (dataArray.length > 0) {
+        if (selectedProdi) {
+          // Jika ada filter prodi, tampilkan data prodi yang dipilih
+          const filteredData = dataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
+          setCurrentData(filteredData || dataArray.find(r => !r.deleted_at) || dataArray[0]);
+        } else if (!isSuperAdmin && userProdiId) {
+          // User prodi: tampilkan data prodi mereka
+          const userData = dataArray.find(r => String(r.id_unit_prodi) === String(userProdiId) && !r.deleted_at);
+          setCurrentData(userData || dataArray.find(r => !r.deleted_at) || dataArray[0]);
         } else {
+          // Fallback: tampilkan data pertama
           setCurrentData(dataArray.find(r => !r.deleted_at) || dataArray[0]);
         }
-      } else if (dataArray.length > 0) {
-        setCurrentData(dataArray.find(r => !r.deleted_at) || dataArray[0]);
       } else {
         setCurrentData(null);
       }
@@ -285,8 +337,13 @@ export default function Tabel6({ auth, role: propRole }) {
   };
 
   useEffect(() => {
-    fetchRows();
-  }, [showDeleted]);
+    // Hanya fetch jika:
+    // - User prodi dan userProdiId sudah ada, ATAU
+    // - Superadmin dan selectedProdi sudah di-set
+    if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi)) {
+      fetchRows();
+    }
+  }, [showDeleted, selectedProdi, isSuperAdmin, userProdiId]);
 
   // Handle save (create/update)
   const handleSave = async (formData) => {
@@ -454,9 +511,23 @@ export default function Tabel6({ auth, role: propRole }) {
             </button>
           </div>
 
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-            {loading ? "Memuat..." : `${filteredRows.length} data`}
-          </span>
+           {/* Dropdown filter hanya untuk superadmin */}
+           {isSuperAdmin && (
+             <select
+               value={selectedProdi}
+               onChange={(e) => setSelectedProdi(e.target.value)}
+               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
+             >
+               {prodiList.map(prodi => (
+                 <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
+               ))}
+             </select>
+           )}
+
+           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
+             {loading ? "Memuat..." : `${filteredRows.length} data`}
+             {selectedProdi && ` - ${prodiList.find(p => p.id_unit == selectedProdi)?.nama_unit || 'Prodi Terpilih'}`}
+           </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -591,6 +662,8 @@ export default function Tabel6({ auth, role: propRole }) {
         initialData={editData}
         maps={maps}
         authUser={authUser}
+        selectedProdi={selectedProdi}
+        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );
