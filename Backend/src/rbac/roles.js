@@ -31,7 +31,6 @@ export const AccessMatrix = {
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
-    'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -69,7 +68,6 @@ export const AccessMatrix = {
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
-    'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -107,7 +105,6 @@ export const AccessMatrix = {
     'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
-    'rekognisi_lulusan':        { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
@@ -153,18 +150,25 @@ export const AccessMatrix = {
     'dosen': { R: true }, // Untuk dropdown dosen di form Tabel 3.A.2
     
     // === USER MANAGEMENT: Izin Baca untuk UserManagementPage ===
-    'users': { R: true }, // Untuk UserManagementPage
+    // 'users': { R: true }, // Dihapus: LPPM tidak memiliki akses Panel Admin
   },
 
   // ========== KEPEGAWAIAN ==========
   'kepegawaian': { // Menambahkan role ini
     // ---- Tabel C1 ----
     'tabel_1a5': { C: true, R: true, U: true, D: true }, // Data Kepegawaian
+    'kualifikasi_tendik': { C: true, R: true, U: true, D: true, H: true }, // Kualifikasi Tenaga Kependidikan
     // ---- Master Data ----
     'dosen': { C: true, R: true, U: true, D: true, H: true }, // Data Dosen
     'pegawai': { C: true, R: true, U: true, D: true, H: true }, // Data Pegawai
     'tendik': { C: true, R: true, U: true, D: true, H: true }, // Data Tenaga Kependidikan
-    // Tambahkan resource lain untuk kepegawaian jika perlu
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { R: true }, // Untuk dropdown unit kerja
+    'tahun_akademik': { R: true }, // Untuk dropdown tahun akademik
+    'ref_jabatan_struktural': { R: true }, // Untuk dropdown jabatan struktural
+    'ref_jabatan_fungsional': { R: true }, // Untuk dropdown jabatan fungsional
+    'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
+    'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
   },
 
   // ========== SARPRAS ==========
@@ -172,6 +176,11 @@ export const AccessMatrix = {
     'tabel_3a1_sarpras_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_4a1_sarpras_pkm': { C: true, R: true, U: true, D: true },
     'tabel_5_2_sarpras_pendidikan': { C: true, R: true, U: true, D: true },
+    // === MASTER DATA: Izin Baca untuk dropdown ===
+    'unit_kerja': { R: true },
+    'tahun_akademik': { R: true },
+    'pegawai': { R: true },
+    'audit_mutu_internal': { R: true },
   },
 
   // ========== KEMAHASISWAAN ==========
@@ -207,6 +216,20 @@ export const AccessMatrix = {
     'ref_jabatan_struktural': { R: true },
     'tenaga_kependidikan': { R: true },
     'ref_jabatan_fungsional': { R: true },
+  },
+
+  // ========== PMB ==========
+  'pmb': {
+    // ---- Tabel 2A1 ----
+    'tabel_2a1_pendaftaran': { C: true, R: true, U: true, D: true },
+    'tabel_2a1_mahasiswa_baru_aktif': { C: true, R: true, U: true, D: true },
+    // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
+    'unit_kerja': { R: true }, // Untuk dropdown unit kerja
+    'tahun_akademik': { R: true }, // Untuk dropdown tahun akademik
+    'pegawai': { R: true }, // Untuk dropdown pegawai
+    'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
+    'ref_jabatan_struktural': { R: true }, // Untuk dropdown jabatan struktural
+    'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
   },
 
 // ========== KERJASAMA ==========

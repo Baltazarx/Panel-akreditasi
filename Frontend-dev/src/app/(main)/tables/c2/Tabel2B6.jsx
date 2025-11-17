@@ -146,15 +146,20 @@ export default function Tabel2B6({ role }) {
   const canDelete = roleCan(role, tableKey, "D");
 
   const fetchData = useCallback(async () => {
-    // Jangan fetch jika selectedTahun atau selectedUnit belum di-set
-    if (!selectedTahun || !selectedUnit) {
-      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit });
+    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
+    // Untuk role lain, jangan fetch jika selectedTahun atau selectedUnit belum di-set
+    if (!selectedTahun || (!selectedUnit && !isKemahasiswaan)) {
+      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit, isKemahasiswaan });
       return;
     }
 
     try {
       setLoading(true);
-      let params = `?id_tahun=${selectedTahun}&id_unit_prodi=${selectedUnit}`;
+      let params = `?id_tahun=${selectedTahun}`;
+      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
+      if (selectedUnit && !isKemahasiswaan) {
+        params += `&id_unit_prodi=${selectedUnit}`;
+      }
       if (showDeleted) params += "&include_deleted=1";
 
       const url = `/tabel2b6-kepuasan-pengguna${params}`;
@@ -207,7 +212,7 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted]);
+  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
@@ -225,8 +230,9 @@ export default function Tabel2B6({ role }) {
   }, [availableYears, selectedTahun]);
 
   // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
   useEffect(() => {
-    if (!selectedUnit) {
+    if (!selectedUnit && !isKemahasiswaan) {
       if (!isSuperAdmin && userProdiId) {
         // User prodi: gunakan prodi mereka
         console.log("Tabel2B6 - Auto-selecting user prodi:", userProdiId);
@@ -237,22 +243,26 @@ export default function Tabel2B6({ role }) {
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
 
-  // Fetch data saat filter berubah (pastikan kedua filter sudah ter-set)
+  // Fetch data saat filter berubah
+  // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
   useEffect(() => { 
-    if (selectedTahun && selectedUnit) {
+    if (isKemahasiswaan && selectedTahun) {
+      fetchData();
+    } else if (selectedTahun && selectedUnit) {
       fetchData();
     }
-  }, [selectedTahun, selectedUnit, showDeleted, fetchData]);
+  }, [selectedTahun, selectedUnit, showDeleted, fetchData, isKemahasiswaan]);
 
   // Helper function untuk transform data
-  const transformTableData = (sourceData) => {
+  const transformTableData = useCallback((sourceData) => {
     if (!selectedTahun) return [];
 
     // Pastikan hanya tahun terpilih yang ditampilkan walau API mengembalikan lebih banyak
     const filteredByYear = sourceData.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
-    const filteredByUnit = selectedUnit ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
+    // Untuk role kemahasiswaan, jangan filter berdasarkan selectedUnit (bisa lihat semua)
+    const filteredByUnit = (selectedUnit && !isKemahasiswaan) ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
     const byJenis = new Map();
     for (const row of filteredByUnit) {
       const key = String(row.jenis_kemampuan || '').toLowerCase();
@@ -271,19 +281,19 @@ export default function Tabel2B6({ role }) {
         data: item || null,
       };
     });
-  };
+  }, [selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
     const activeData = data.filter(d => !d.deleted_at);
     return transformTableData(activeData);
-  }, [data, selectedTahun, selectedUnit]);
+  }, [data, selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Data untuk tabel terhapus
   const tableDataDeleted = useMemo(() => {
     const deletedData = data.filter(d => d.deleted_at);
     return transformTableData(deletedData);
-  }, [data, selectedTahun, selectedUnit]);
+  }, [data, selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Hitung total untuk baris Jumlah (jumlahkan lalu bagi 7)
   const jumlahDataActive = useMemo(() => {

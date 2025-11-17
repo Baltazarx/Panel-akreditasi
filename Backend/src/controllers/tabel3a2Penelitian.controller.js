@@ -58,8 +58,42 @@ const getPivotClauses = (reqQuery) => {
  */
 export const listTabel3a2Penelitian = async (req, res) => {
   try {
+    // Special handling: Role LPPM bisa melihat semua data tanpa filter unit
+    const userRole = req.user?.role?.toLowerCase();
+    const isLppm = userRole === 'lppm';
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    
     const { selectSql, params: pivotParams } = getPivotClauses(req.query);
     const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
+    
+    // Hapus filter id_unit untuk role LPPM (bisa lihat semua data)
+    if (isLppm && !isSuperAdmin) {
+      // Cari dan hapus filter id_unit dari where clause
+      const unitFilterPattern = /p\.id_unit\s*=\s*\?/i;
+      let unitFilterIndex = -1;
+      for (let i = 0; i < where.length; i++) {
+        if (unitFilterPattern.test(where[i])) {
+          unitFilterIndex = i;
+          break;
+        }
+      }
+      
+      if (unitFilterIndex !== -1) {
+        where.splice(unitFilterIndex, 1);
+        // Hapus 1 param yang sesuai dengan filter id_unit
+        // Hitung berapa banyak placeholder ? sebelum index ini
+        let paramIndex = 0;
+        for (let i = 0; i < unitFilterIndex; i++) {
+          const matches = where[i].match(/\?/g);
+          if (matches) paramIndex += matches.length;
+        }
+        // Hapus 1 param di posisi paramIndex
+        if (paramIndex < whereParams.length) {
+          whereParams.splice(paramIndex, 1);
+        }
+      }
+    }
+    
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
 
     // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
