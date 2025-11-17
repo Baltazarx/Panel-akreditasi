@@ -135,7 +135,18 @@ export default function TabelDosen({ role }) {
     try {
       const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
       const result = await apiFetch(url);
-      setRows(result);
+      // Pastikan tidak ada duplikasi data berdasarkan id_dosen
+      const uniqueRows = Array.isArray(result) ? result.filter((row, index, self) => {
+        const idField = getIdField(row);
+        const idValue = idField && row[idField] !== undefined && row[idField] !== null ? row[idField] : null;
+        if (idValue === null) return true; // Keep rows without ID
+        // Keep only first occurrence of each ID
+        return index === self.findIndex(r => {
+          const rIdField = getIdField(r);
+          return rIdField && r[rIdField] === idValue;
+        });
+      }) : [];
+      setRows(uniqueRows);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -443,8 +454,9 @@ export default function TabelDosen({ role }) {
               .map((row, index) => {
                 const idField = getIdField(row);
                 // Pastikan key selalu unik dengan menggabungkan ID, showDeleted state, dan index
+                // Menggunakan index untuk memastikan unik meskipun ada duplikasi ID
                 const uniqueKey = idField && row[idField] !== undefined && row[idField] !== null 
-                  ? `${showDeleted ? 'deleted' : 'active'}-dosen-${row[idField]}` 
+                  ? `${showDeleted ? 'deleted' : 'active'}-dosen-${row[idField]}-${index}` 
                   : `${showDeleted ? 'deleted' : 'active'}-dosen-no-id-${index}`;
                 const rowId = idField && row[idField] !== undefined && row[idField] !== null 
                   ? row[idField] 
