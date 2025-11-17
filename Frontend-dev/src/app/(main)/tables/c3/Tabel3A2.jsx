@@ -499,7 +499,7 @@ function DataTable({
           <tr>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">No</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nama DTPR (Ketua)</th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Judul Penelitian</th>
+            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white min-w-[200px]">Judul Penelitian</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Mahasiswa yang Terlibat</th>
             <th colSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Sumber</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Durasi (tahun)</th>
@@ -540,7 +540,7 @@ function DataTable({
                 >
                   <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.nama_dosen_ketua || "-"}</td>
-                  <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.judul_penelitian || "-"}</td>
+                  <td className="px-4 py-3 border border-slate-200 text-slate-700 min-w-[200px]">{r.judul_penelitian || "-"}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jml_mhs_terlibat || "-"}</td>
                   <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.jenis_hibah || "-"}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.sumber_dana || "-"}</td>

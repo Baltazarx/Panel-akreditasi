@@ -15,11 +15,11 @@ import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 import ExcelJS from 'exceljs';
 
 /**
- * Helper PIVOT dinamis untuk 3 TAHUN (TS-2, TS-1, TS).
+ * Helper PIVOT dinamis untuk 5 TAHUN (TS-4, TS-3, TS-2, TS-1, TS).
  * Helper ini digunakan untuk endpoint READ (list/export) yang perlu menampilkan tabel PIVOT.
  */
 const getPivotClauses = (reqQuery) => {
-    const years = ['ts_2', 'ts_1', 'ts']; // 3 tahun
+    const years = ['ts_4', 'ts_3', 'ts_2', 'ts_1', 'ts']; // 5 tahun
     const params = [];
     const selectJumlah = [];
     const selectLinkBukti = [];
@@ -51,7 +51,7 @@ const getPivotClauses = (reqQuery) => {
         ...selectLinkBukti
     ];
 
-    // Params untuk jumlah (3) + params untuk link (3)
+    // Params untuk jumlah (5) + params untuk link (5)
     let allParams = [...params, ...params];
     
     return {
@@ -64,7 +64,7 @@ const getPivotClauses = (reqQuery) => {
  * Helper PIVOT untuk detail pengembangan (berdasarkan dosen dan jenis)
  */
 const getPivotClausesDetail = (reqQuery) => {
-    const years = ['ts_2', 'ts_1', 'ts']; // 3 tahun
+    const years = ['ts_4', 'ts_3', 'ts_2', 'ts_1', 'ts']; // 5 tahun
     const params = [];
     const selectJumlah = [];
     const selectLinkBukti = [];
@@ -92,8 +92,8 @@ const getPivotClausesDetail = (reqQuery) => {
         );
     }
 
-    // Buat urutan untuk COALESCE dengan prioritas TS > TS-1 > TS-2 (urutan dibalik)
-    const yearsForCoalesce = ['ts', 'ts_1', 'ts_2']; // Urutan prioritas: TS dulu
+    // Buat urutan untuk COALESCE dengan prioritas TS > TS-1 > TS-2 > TS-3 > TS-4 (urutan dibalik)
+    const yearsForCoalesce = ['ts', 'ts_1', 'ts_2', 'ts_3', 'ts_4']; // Urutan prioritas: TS dulu
     const paramsForCoalesce = [];
     for (const year of yearsForCoalesce) {
         const idTahunKey = `id_tahun_${year}`;
@@ -113,7 +113,7 @@ const getPivotClausesDetail = (reqQuery) => {
         `COALESCE(${selectLinkBuktiForCoalesce.join(', ')}) AS link_bukti_display`
     ];
 
-    // Params untuk jumlah (3) + params untuk link dengan alias (3) + params untuk COALESCE (3, urutan TS > TS-1 > TS-2)
+    // Params untuk jumlah (5) + params untuk link dengan alias (5) + params untuk COALESCE (5, urutan TS > TS-1 > TS-2 > TS-3 > TS-4)
     let allParams = [...params, ...params, ...paramsForCoalesce];
     
     return {
@@ -126,26 +126,28 @@ const getPivotClausesDetail = (reqQuery) => {
 
 /**
  * Mengambil data summary jumlah DTPR.
- * Jika ada parameter tahun (id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2) -> PIVOT mode
+ * Jika ada parameter tahun (id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2, id_tahun_ts_3, id_tahun_ts_4) -> PIVOT mode
  * Jika tidak ada parameter tahun -> RAW mode (semua data)
  */
 export const listSummaryDtpr = async (req, res) => {
   try {
-    const { id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2 } = req.query;
+    const { id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2, id_tahun_ts_3, id_tahun_ts_4 } = req.query;
     
     // Cek apakah ada parameter tahun untuk PIVOT mode
-    const isPivotMode = id_tahun_ts && id_tahun_ts_1 && id_tahun_ts_2;
+    const isPivotMode = id_tahun_ts && id_tahun_ts_1 && id_tahun_ts_2 && id_tahun_ts_3 && id_tahun_ts_4;
 
     if (isPivotMode) {
-      // PIVOT MODE: Data di-pivot untuk 3 tahun
+      // PIVOT MODE: Data di-pivot untuk 5 tahun
       const { selectSql, params: pivotParams } = getPivotClauses(req.query);
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_dtpr_tahunan', 't');
       
       // [PERBAIKAN]: Default ORDER BY diubah dari 'id' ke 'id_unit' (karena 'id' tidak ada di GROUP BY)
       const orderBy = buildOrderBy(req.query?.order_by, 'id_unit', 't');
 
-      // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
+      // Ambil tahun-tahun dari query params untuk filter (TS-4, TS-3, TS-2, TS-1, TS)
       const tahunList = [
+        parseInt(req.query.id_tahun_ts_4),
+        parseInt(req.query.id_tahun_ts_3),
         parseInt(req.query.id_tahun_ts_2),
         parseInt(req.query.id_tahun_ts_1),
         parseInt(req.query.id_tahun_ts)
@@ -153,8 +155,8 @@ export const listSummaryDtpr = async (req, res) => {
 
       // Build WHERE clause dengan filter tahun
       const whereClauses = [...where];
-      // Filter: Hanya tampilkan data yang memiliki tahun dalam rentang TS-2 sampai TS
-      whereClauses.push(`t.id_tahun IN (?, ?, ?)`);
+      // Filter: Hanya tampilkan data yang memiliki tahun dalam rentang TS-4 sampai TS
+      whereClauses.push(`t.id_tahun IN (?, ?, ?, ?, ?)`);
 
       const sql = `
         SELECT 
@@ -182,9 +184,13 @@ export const listSummaryDtpr = async (req, res) => {
         return res.json({
           id_unit: null,
           nama_unit_prodi: null,
+          jumlah_ts_4: 0,
+          jumlah_ts_3: 0,
           jumlah_ts_2: 0,
           jumlah_ts_1: 0,
           jumlah_ts: 0,
+          link_bukti_ts_4: null,
+          link_bukti_ts_3: null,
           link_bukti_ts_2: null,
           link_bukti_ts_1: null,
           link_bukti_ts: null
@@ -333,18 +339,18 @@ export const softDeleteSummaryDtpr = async (req, res) => {
 
 /**
  * Mengambil data detail pengembangan DTPR.
- * Jika ada parameter tahun (id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2) -> PIVOT mode
+ * Jika ada parameter tahun (id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2, id_tahun_ts_3, id_tahun_ts_4) -> PIVOT mode
  * Jika tidak ada parameter tahun -> RAW mode (semua data)
  */
 export const listDetailPengembangan = async (req, res) => {
   try {
-    const { id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2 } = req.query;
+    const { id_tahun_ts, id_tahun_ts_1, id_tahun_ts_2, id_tahun_ts_3, id_tahun_ts_4 } = req.query;
     
     // Cek apakah ada parameter tahun untuk PIVOT mode
-    const isPivotMode = id_tahun_ts && id_tahun_ts_1 && id_tahun_ts_2;
+    const isPivotMode = id_tahun_ts && id_tahun_ts_1 && id_tahun_ts_2 && id_tahun_ts_3 && id_tahun_ts_4;
 
     if (isPivotMode) {
-      // PIVOT MODE: Data di-pivot untuk 3 tahun
+      // PIVOT MODE: Data di-pivot untuk 5 tahun
       const { selectSql, params: pivotParams } = getPivotClausesDetail(req.query);
       const { where, params: whereParams } = await buildWhere(req, 'tabel_3a3_pengembangan', 'p');
       
@@ -352,8 +358,10 @@ export const listDetailPengembangan = async (req, res) => {
       //              menjadi 'nama_lengkap' (nama kolom asli di tabel 'pg')
       const orderBy = buildOrderBy(req.query?.order_by, 'nama_lengkap', 'pg');
 
-      // Ambil tahun-tahun dari query params untuk filter (TS-2, TS-1, TS)
+      // Ambil tahun-tahun dari query params untuk filter (TS-4, TS-3, TS-2, TS-1, TS)
       const tahunList = [
+        parseInt(req.query.id_tahun_ts_4),
+        parseInt(req.query.id_tahun_ts_3),
         parseInt(req.query.id_tahun_ts_2),
         parseInt(req.query.id_tahun_ts_1),
         parseInt(req.query.id_tahun_ts)
@@ -361,8 +369,8 @@ export const listDetailPengembangan = async (req, res) => {
 
       // Build WHERE clause dengan filter tahun
       const whereClauses = [...where];
-      // Filter: Hanya tampilkan pengembangan yang memiliki tahun dalam rentang TS-2 sampai TS
-      whereClauses.push(`p.id_tahun IN (?, ?, ?)`);
+      // Filter: Hanya tampilkan pengembangan yang memiliki tahun dalam rentang TS-4 sampai TS
+      whereClauses.push(`p.id_tahun IN (?, ?, ?, ?, ?)`);
 
       const sql = `
         SELECT 
@@ -568,7 +576,7 @@ export const softDeleteDetailPengembangan = async (req, res) => {
 };
 
 /**
- * [EXPORT/PIVOT] Ekspor data PIVOT 3 tahun ke Excel.
+ * [EXPORT/PIVOT] Ekspor data PIVOT 5 tahun ke Excel.
  */
 export const exportTabel3a3 = async (req, res) => {
     try {
@@ -576,9 +584,9 @@ export const exportTabel3a3 = async (req, res) => {
         const { selectSql: selectSqlSummary, params: pivotParamsSummary } = getPivotClauses(req.query);
         const { where: whereSummary, params: whereParamsSummary } = await buildWhere(req, 'tabel_3a3_dtpr_tahunan', 't');
         
-        const tahunListSummary = pivotParamsSummary.slice(0, 3);
+        const tahunListSummary = pivotParamsSummary.slice(0, 5);
         const whereClausesSummary = [...whereSummary];
-        whereClausesSummary.push(`t.id_tahun IN (?, ?, ?)`);
+        whereClausesSummary.push(`t.id_tahun IN (?, ?, ?, ?, ?)`);
 
         // [PERBAIKAN]: Mengganti ORDER BY t.id (error) dengan MAX(t.id) agar lolos GROUP BY
         const sqlSummary = `
@@ -601,9 +609,9 @@ export const exportTabel3a3 = async (req, res) => {
         const { selectSql: selectSqlDetail, params: pivotParamsDetail } = getPivotClausesDetail(req.query);
         const { where: whereDetail, params: whereParamsDetail } = await buildWhere(req, 'tabel_3a3_pengembangan', 'p');
         
-        const tahunListDetail = pivotParamsDetail.slice(0, 3);
+        const tahunListDetail = pivotParamsDetail.slice(0, 5);
         const whereClausesDetail = [...whereDetail];
-        whereClausesDetail.push(`p.id_tahun IN (?, ?, ?)`);
+        whereClausesDetail.push(`p.id_tahun IN (?, ?, ?, ?, ?)`);
 
         // [PERBAIKAN]: Mengganti GROUP BY p.id_pengembangan (bug) dengan GROUP BY yang konsisten
         const sqlDetail = `
@@ -628,7 +636,7 @@ export const exportTabel3a3 = async (req, res) => {
         const sheet = workbook.addWorksheet('Tabel 3.A.3');
 
         // 4. Header Summary
-        sheet.mergeCells('A1:E1');
+        sheet.mergeCells('A1:G1');
         sheet.getCell('A1').value = 'Tabel 3.A.3 Pengembangan DTPR di Bidang Penelitian';
         sheet.getCell('A1').font = { bold: true, size: 14 };
         sheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -638,44 +646,52 @@ export const exportTabel3a3 = async (req, res) => {
         sheet.getCell('A2').value = 'Tahun Akademik';
         sheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         
-        sheet.mergeCells('B2:D2');
+        sheet.mergeCells('B2:F2');
         sheet.getCell('B2').value = 'Jumlah Dosen DTPR';
         sheet.getCell('B2').alignment = { horizontal: 'center', vertical: 'middle' };
         
-        sheet.getCell('B3').value = 'TS-2';
-        sheet.getCell('C3').value = 'TS-1';
-        sheet.getCell('D3').value = 'TS';
-        sheet.getCell('E2').value = 'Link Bukti';
-        sheet.mergeCells('E2:E3');
-        sheet.getCell('E2').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        sheet.getCell('B3').value = 'TS-4';
+        sheet.getCell('C3').value = 'TS-3';
+        sheet.getCell('D3').value = 'TS-2';
+        sheet.getCell('E3').value = 'TS-1';
+        sheet.getCell('F3').value = 'TS';
+        sheet.getCell('G2').value = 'Link Bukti';
+        sheet.mergeCells('G2:G3');
+        sheet.getCell('G2').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
         // 6. Data Summary
-        sheet.getCell('B4').value = summaryData.jumlah_ts_2 || 0;
-        sheet.getCell('C4').value = summaryData.jumlah_ts_1 || 0;
-        sheet.getCell('D4').value = summaryData.jumlah_ts || 0;
-        sheet.getCell('E4').value = summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || '';
+        sheet.getCell('B4').value = summaryData.jumlah_ts_4 || 0;
+        sheet.getCell('C4').value = summaryData.jumlah_ts_3 || 0;
+        sheet.getCell('D4').value = summaryData.jumlah_ts_2 || 0;
+        sheet.getCell('E4').value = summaryData.jumlah_ts_1 || 0;
+        sheet.getCell('F4').value = summaryData.jumlah_ts || 0;
+        sheet.getCell('G4').value = summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 || '';
 
         // 7. Header Detail
         sheet.getCell('A5').value = 'Jenis Pengembangan DTPR';
         sheet.getCell('B5').value = 'Nama DTPR';
-        sheet.mergeCells('C5:E5');
+        sheet.mergeCells('C5:G5');
         sheet.getCell('C5').value = 'Jumlah';
         sheet.getCell('C5').alignment = { horizontal: 'center', vertical: 'middle' };
-        sheet.getCell('F5').value = 'Link Bukti';
+        sheet.getCell('H5').value = 'Link Bukti';
         
-        sheet.getCell('C6').value = 'TS-2';
-        sheet.getCell('D6').value = 'TS-1';
-        sheet.getCell('E6').value = 'TS';
+        sheet.getCell('C6').value = 'TS-4';
+        sheet.getCell('D6').value = 'TS-3';
+        sheet.getCell('E6').value = 'TS-2';
+        sheet.getCell('F6').value = 'TS-1';
+        sheet.getCell('G6').value = 'TS';
 
         // 8. Data Detail
         let rowIndex = 7;
         detailRows.forEach(row => {
             sheet.getCell(`A${rowIndex}`).value = row.jenis_pengembangan || '';
             sheet.getCell(`B${rowIndex}`).value = row.nama_dtpr || '';
-            sheet.getCell(`C${rowIndex}`).value = row.jumlah_ts_2 || 0;
-            sheet.getCell(`D${rowIndex}`).value = row.jumlah_ts_1 || 0;
-            sheet.getCell(`E${rowIndex}`).value = row.jumlah_ts || 0;
-            sheet.getCell(`F${rowIndex}`).value = row.link_bukti_display || '';
+            sheet.getCell(`C${rowIndex}`).value = row.jumlah_ts_4 || 0;
+            sheet.getCell(`D${rowIndex}`).value = row.jumlah_ts_3 || 0;
+            sheet.getCell(`E${rowIndex}`).value = row.jumlah_ts_2 || 0;
+            sheet.getCell(`F${rowIndex}`).value = row.jumlah_ts_1 || 0;
+            sheet.getCell(`G${rowIndex}`).value = row.jumlah_ts || 0;
+            sheet.getCell(`H${rowIndex}`).value = row.link_bukti_display || '';
             rowIndex++;
         });
 
@@ -688,6 +704,8 @@ export const exportTabel3a3 = async (req, res) => {
         sheet.columns = [
             { header: 'Jenis Pengembangan', key: 'jenis_pengembangan', width: 30 },
             { header: 'Nama DTPR', key: 'nama_dtpr', width: 30 },
+            { header: 'TS-4', key: 'jumlah_ts_4', width: 15 },
+            { header: 'TS-3', key: 'jumlah_ts_3', width: 15 },
             { header: 'TS-2', key: 'jumlah_ts_2', width: 15 },
             { header: 'TS-1', key: 'jumlah_ts_1', width: 15 },
             { header: 'TS', key: 'jumlah_ts', width: 15 },
