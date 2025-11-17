@@ -536,6 +536,7 @@ export default function UserManagementPage() {
                   <option value="KEPEGAWAIAN">KEPEGAWAIAN</option>
                   <option value="KERJASAMA">KERJASAMA</option>
                   <option value="SARPRAS">SARPRAS</option>
+                  <option value="KETUASTIKOM">KETUASTIKOM</option>
                   <option value="WAKET-1">WAKET-1</option>
                   <option value="WAKET-2">WAKET-2</option>
                   <option value="TPM">TPM</option>
