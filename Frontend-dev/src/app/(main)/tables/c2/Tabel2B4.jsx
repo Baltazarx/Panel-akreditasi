@@ -82,9 +82,8 @@ export default function Tabel2B4({ role }) {
   }, []);
 
   // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
-  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
   useEffect(() => {
-    if (!selectedUnit && !isKemahasiswaan) {
+    if (!selectedUnit) {
       if (!isSuperAdmin && userProdiId) {
         // User prodi: gunakan prodi mereka
         setSelectedUnit(parseInt(userProdiId));
@@ -93,15 +92,14 @@ export default function Tabel2B4({ role }) {
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
 
   // Fetch data - ambil semua data, filter di frontend untuk menampilkan TS-4 sampai TS
   const fetchData = async () => {
     try {
       setLoading(true);
       let params = showDeleted ? "?include_deleted=1" : "";
-      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
-      if (selectedUnit && !isKemahasiswaan) {
+      if (selectedUnit) {
         params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
       }
       console.log('Fetching Tabel2B4 data with params:', params);
@@ -117,12 +115,10 @@ export default function Tabel2B4({ role }) {
   };
 
   useEffect(() => {
-    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
-    // Untuk role lain, fetch data hanya jika selectedUnit ada
-    if (isKemahasiswaan || selectedUnit) {
+    if (selectedUnit) {
       fetchData();
     }
-  }, [showDeleted, selectedUnit, isKemahasiswaan]);
+  }, [showDeleted, selectedUnit]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -189,8 +185,8 @@ export default function Tabel2B4({ role }) {
         })
       : activeData;
     
-    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
-    if (selectedUnit && !isKemahasiswaan) {
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
       filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
     }
     
@@ -253,8 +249,8 @@ export default function Tabel2B4({ role }) {
         })
       : deletedData;
     
-    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
-    if (selectedUnit && !isKemahasiswaan) {
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
       filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
     }
     
@@ -703,7 +699,7 @@ export default function Tabel2B4({ role }) {
       </div>
 
       {/* Table */}
-      {renderTable}
+      {renderTable()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {

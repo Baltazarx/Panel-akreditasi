@@ -136,8 +136,7 @@ export default function Tabel2B5({ role }) {
     try {
       setLoading(true);
       let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
-      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
-      if (selectedUnit && !isKemahasiswaan) {
+      if (selectedUnit) {
         params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
       }
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
@@ -161,9 +160,8 @@ export default function Tabel2B5({ role }) {
   }, [availableYears, selectedTahun]);
 
   // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
-  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
   useEffect(() => {
-    if (!selectedUnit && !isKemahasiswaan) {
+    if (!selectedUnit) {
       if (!isSuperAdmin && userProdiId) {
         // User prodi: gunakan prodi mereka
         setSelectedUnit(parseInt(userProdiId));
@@ -172,15 +170,9 @@ export default function Tabel2B5({ role }) {
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
 
-  useEffect(() => { 
-    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
-    // Untuk role lain, fetch data hanya jika selectedTahun ada
-    if (isKemahasiswaan || selectedTahun) {
-      fetchData();
-    }
-  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
+  useEffect(() => { fetchData(); }, [selectedTahun, selectedUnit, showDeleted]);
 
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
@@ -194,8 +186,7 @@ export default function Tabel2B5({ role }) {
       const yearMeta = availableYears[idxTarget];
       const dataItem = data.find(d => {
         const matchYear = parseInt(d.id_tahun_lulus) === yearMeta.id;
-        // Untuk role kemahasiswaan, jangan filter berdasarkan selectedUnit (bisa lihat semua)
-        const matchUnit = (selectedUnit && !isKemahasiswaan) ? parseInt(d.id_unit_prodi) === parseInt(selectedUnit) : true;
+        const matchUnit = selectedUnit ? parseInt(d.id_unit_prodi) === parseInt(selectedUnit) : true;
         return matchYear && matchUnit && !d.deleted_at;
       });
       rows.push({
@@ -225,7 +216,7 @@ export default function Tabel2B5({ role }) {
       data: null
     });
     return rows;
-  }, [data, selectedTahun, selectedUnit, availableYears, isKemahasiswaan]);
+  }, [data, selectedTahun, selectedUnit, availableYears]);
 
   // Data untuk tabel terhapus
   const tableDataDeleted = useMemo(() => {
@@ -233,8 +224,8 @@ export default function Tabel2B5({ role }) {
 
     const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
     let filteredData = data.filter(item => item.deleted_at);
-    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
-    if (selectedUnit && !isKemahasiswaan) {
+    // Filter berdasarkan prodi yang dipilih
+    if (selectedUnit) {
       filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
     }
     const deletedRows = filteredData.map(item => {
@@ -271,7 +262,7 @@ export default function Tabel2B5({ role }) {
       });
     }
     return deletedRows;
-  }, [data, selectedTahun, selectedUnit, availableYears, isKemahasiswaan]);
+  }, [data, selectedTahun, selectedUnit, availableYears]);
 
   const handleAddClick = () => {
     setFormState({

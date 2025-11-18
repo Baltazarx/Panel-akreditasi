@@ -8,7 +8,15 @@ import {
   Bell, User, Mail, MessageCircle, AlertCircle,
   CheckCircle, XCircle, Info, Clock, Command,
   Save, RefreshCw, Filter, Eye, EyeOff, Calendar,
-  FileText, Image, Video, Music, File, Folder
+  FileText, Image, Video, Music, File, Folder,
+  Home, ChevronRight, ChevronLeft, Menu, Grid,
+  List, Sliders, Slider, Minus, Maximize2,
+  Minimize2, Copy, Link, ExternalLink, Lock,
+  Unlock, Shield, Key, LogOut, LogIn, UserPlus,
+  Users, Building, MapPin, Phone, Globe, Zap,
+  TrendingUp, TrendingDown, BarChart, PieChart,
+  LineChart, Activity, Target, Award, Trophy,
+  Gift, ShoppingCart, CreditCard, Wallet, DollarSign
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -25,6 +33,11 @@ export default function ButtonDesignSystemPage() {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [buttonState, setButtonState] = useState("default"); // default, success, error, warning
   const [activeSection, setActiveSection] = useState("");
+  const [activeTab, setActiveTab] = useState("tab1");
+  const [accordionOpen, setAccordionOpen] = useState(null);
+  const [progressValue, setProgressValue] = useState(65);
+  const [sliderValue, setSliderValue] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
   const splitDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -37,6 +50,21 @@ export default function ButtonDesignSystemPage() {
     { id: "tables", label: "Tables", icon: FileText },
     { id: "forms", label: "Forms", icon: FileText },
     { id: "alerts", label: "Alerts", icon: AlertCircle },
+    { id: "badges", label: "Badges & Tags", icon: Star },
+    { id: "tooltips", label: "Tooltips", icon: Info },
+    { id: "pagination", label: "Pagination", icon: ChevronRight },
+    { id: "tabs", label: "Tabs", icon: Grid },
+    { id: "breadcrumbs", label: "Breadcrumbs", icon: Home },
+    { id: "progress", label: "Progress Bars", icon: Activity },
+    { id: "sliders", label: "Sliders", icon: Slider },
+    { id: "accordion", label: "Accordion", icon: ChevronDown },
+    { id: "dropdowns", label: "Dropdowns", icon: ChevronDown },
+    { id: "avatars", label: "Avatars", icon: User },
+    { id: "icons", label: "Icons", icon: Star },
+    { id: "empty", label: "Empty States", icon: File },
+    { id: "dividers", label: "Dividers", icon: Minus },
+    { id: "spacing", label: "Spacing", icon: Grid },
+    { id: "shadows", label: "Shadows", icon: Zap },
     { id: "loading", label: "Loading", icon: Loader2 },
     { id: "typography", label: "Typography", icon: FileText },
     { id: "colors", label: "Colors", icon: Heart },
