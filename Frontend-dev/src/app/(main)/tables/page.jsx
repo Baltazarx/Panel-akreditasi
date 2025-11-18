@@ -11,6 +11,7 @@ import {
   FaUserTie, FaGraduationCap, FaFlask, FaBook, 
   FaChartLine, FaShield, FaChalkboard
 } from "react-icons/fa6";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Impor halaman C1, C2, C3, C4, C5, C6
@@ -93,7 +94,7 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
             variants={menuVariants}
             initial="closed"
             animate={isOpen ? "open" : "closed"}
-            className="bg-white shadow-xl rounded-2xl flex flex-col overflow-hidden"
+            className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden"
         >
             <div 
                 className="flex items-center justify-between p-4 flex-shrink-0 cursor-pointer h-14" 
@@ -149,9 +150,9 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                                     updateActiveTable(key);
                                                     setIsOpen(false);
                                                 }} 
-                                                className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group ${
+                                                className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
                                                   isActive 
-                                                    ? "bg-[#0384d6] text-white shadow-md" 
+                                                    ? "bg-[#0384d6] text-white" 
                                                     : "text-[#043975] hover:bg-[#eaf3ff]"
                                                 }`}
                                                 aria-label={`${name} - ${description}`}
@@ -188,10 +189,10 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                             updateActiveTable(key); 
                                             setIsOpen(false);
                                           }} 
-                                          className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
+                                          className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
                                             isActive 
-                                              ? "bg-[#0384d6] text-white shadow-md" 
-                                              : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                                              ? "bg-[#0384d6] text-white" 
+                                              : "text-[#043975] hover:bg-[#eaf3ff]"
                                           }`}
                                           aria-label={`${name} - ${description}`}
                                           aria-current={isActive ? 'page' : undefined}
@@ -221,15 +222,16 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
   const sidebarVariants = {
     open: { 
       width: "288px", 
-      height: contentHeight > 0 ? `${Math.max(contentHeight + 32, typeof window !== 'undefined' ? window.innerHeight - 32 : 800)}px` : "auto", 
-      minHeight: "calc(100vh - 2rem)", 
-      borderRadius: "16px", 
+      height: typeof window !== 'undefined' ? window.innerHeight : "100vh", 
+      minHeight: "100vh", 
+      borderRadius: "0 8px 8px 0", 
       transition: { type: "spring", stiffness: 120, damping: 20 } 
     },
     closed: { 
-      width: "64px", 
-      height: "64px", 
-      borderRadius: "20px", 
+      width: "4px", 
+      height: typeof window !== 'undefined' ? window.innerHeight : "100vh", 
+      minHeight: "100vh",
+      borderRadius: "0", 
       transition: { type: "spring", stiffness: 300, damping: 30 } 
     },
   };
@@ -260,10 +262,10 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                         <li key={key}>
                           <button 
                             onClick={() => updateActiveTable(key)} 
-                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
                               isActive 
-                                ? "bg-[#0384d6] text-white shadow-md" 
-                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                                ? "bg-[#0384d6] text-white" 
+                                : "text-[#043975] hover:bg-[#eaf3ff]"
                             }`}
                             aria-label={`${name} - ${description}`}
                             aria-current={isActive ? 'page' : undefined}
@@ -296,10 +298,10 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                         <li key={key}>
                           <button 
                             onClick={()=>updateActiveTable(key)} 
-                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
                               isActive 
-                                ? "bg-[#0384d6] text-white shadow-md" 
-                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
+                                ? "bg-[#0384d6] text-white" 
+                                : "text-[#043975] hover:bg-[#eaf3ff]"
                             }`}
                             aria-label={`${name} - ${description}`}
                             aria-current={isActive ? 'page' : undefined}
@@ -322,34 +324,51 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
   });
 
   const toggleButton = (
-    <Tooltip text={isOpen ? "Tutup sidebar" : "Buka sidebar"} isVisible={!isOpen}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)} 
-        className={`absolute z-20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
-          !isOpen 
-            ? 'top-0 left-0 w-full h-full flex items-center justify-center rounded-[20px] text-[#043975] hover:bg-slate-50' 
-            : 'top-4 right-4 p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-[#043975] flex items-center justify-center'
-        }`}
-        aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
-        aria-expanded={isOpen}
-      >
-        {isOpen ? (
-          <motion.div
-            animate={{ rotate: 90 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-center"
-          >
-            <FaXmark size={20} />
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-1.5 translate-y-[32px]">
-            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
-            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
-            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
-          </div>
-        )}
-      </button>
-    </Tooltip>
+    <motion.button 
+      onClick={() => setIsOpen(!isOpen)} 
+      className="absolute z-30 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+      animate={{
+        top: 16,
+        left: isOpen ? 256 : 0,
+        padding: isOpen ? '0.5rem' : '0.625rem',
+        backgroundColor: isOpen ? 'transparent' : 'rgb(229, 231, 235)',
+        borderRadius: isOpen ? '0' : '0.5rem',
+        boxShadow: isOpen ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+        width: isOpen ? 'auto' : 'auto',
+        minWidth: isOpen ? 'auto' : '40px',
+      }}
+      transition={{ type: "spring", stiffness: 120, damping: 20 }}
+      whileHover={!isOpen ? { 
+        backgroundColor: 'rgb(209, 213, 219)',
+        boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.15), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+        scale: 1.02
+      } : { 
+        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+        scale: 1.05
+      }}
+      whileTap={{ scale: 0.98 }}
+      aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+      aria-expanded={isOpen}
+    >
+      {isOpen ? (
+        <motion.div
+          initial={{ opacity: 0, rotate: 90 }}
+          animate={{ opacity: 1, rotate: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronLeft size={20} className="text-[#043975]" />
+        </motion.div>
+      ) : (
+        <motion.div 
+          className="flex items-center justify-center"
+          initial={{ opacity: 0, x: -5 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight size={18} className="text-gray-800" />
+        </motion.div>
+      )}
+    </motion.button>
   );
 
   return (
@@ -357,9 +376,12 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       variants={sidebarVariants} 
       initial={false} 
       animate={isOpen ? "open" : "closed"} 
-      className={`bg-white flex flex-col overflow-hidden m-4 relative self-start ${
-        isOpen ? 'shadow-2xl' : 'shadow-lg'
+      className={`flex flex-col relative self-start ${
+        isOpen 
+          ? 'bg-white border-r border-gray-200 overflow-hidden ml-0 shadow-sm' 
+          : 'bg-gray-200 overflow-visible ml-0'
       }`}
+      style={isOpen ? { left: 0, top: 0, borderLeft: '1px solid #000' } : { left: 0, top: 0 }}
       role="complementary"
       aria-label="Sidebar navigasi tabel"
     >
@@ -700,7 +722,9 @@ export default function TablesPage() {
         canSeeUserMgmt={canSeeUserMgmt}
         contentHeight={contentHeight}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden m-4 relative z-10">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-x-hidden relative z-10 m-4 mt-0 mb-0 ${
+        isSidebarOpen ? 'ml-0' : 'ml-6'
+      }`}>
         <main className="flex-1 overflow-x-hidden">
           <div className="px-4 pb-6 main-content-area">
             {!mounted ? (

@@ -10,13 +10,43 @@ import {
   Save, RefreshCw, Filter, Eye, EyeOff, Calendar,
   FileText, Image, Video, Music, File, Folder,
   Home, ChevronRight, ChevronLeft, Menu, Grid,
-  List, Sliders, Slider, Minus, Maximize2,
+  List, Sliders, Minus, Maximize2,
   Minimize2, Copy, Link, ExternalLink, Lock,
   Unlock, Shield, Key, LogOut, LogIn, UserPlus,
   Users, Building, MapPin, Phone, Globe, Zap,
   TrendingUp, TrendingDown, BarChart, PieChart,
   LineChart, Activity, Target, Award, Trophy,
-  Gift, ShoppingCart, CreditCard, Wallet, DollarSign
+  Gift, ShoppingCart, CreditCard, Wallet, DollarSign,
+  Upload as UploadIcon, Download as DownloadIcon, FileUp, FileDown,
+  Image as ImageIcon, Play, Pause, SkipForward, SkipBack,
+  Volume2, VolumeX, Mic, MicOff, Video as VideoIcon,
+  Camera, Film, Music2, Headphones, Radio,
+  Bookmark, BookmarkCheck, Tag, Tags, Hash,
+  AtSign, Hashtag, Percent, DollarSign as Dollar,
+  TrendingUp as TrendUp, TrendingDown as TrendDown,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+  Move, MoveUp, MoveDown, RotateCw, RotateCcw,
+  ZoomIn, ZoomOut, Maximize, Minimize,
+  XCircle as XCircleIcon, CheckCircle2, AlertTriangle,
+  HelpCircle, Lightbulb, Sparkles, Flame,
+  Droplet, Cloud, CloudRain, Sun, Moon,
+  Star as StarIcon, Heart as HeartIcon, ThumbsUp, ThumbsDown,
+  MessageSquare, MessageCircle as MessageCircleIcon,
+  Send, Reply, Forward,
+  BookOpen, Book, Library, GraduationCap,
+  Briefcase, Building2, Factory, Store,
+  MapPin as MapPinIcon, Navigation, Compass,
+  Globe as GlobeIcon, Wifi, WifiOff, Signal,
+  Battery, BatteryCharging, Power, Zap as ZapIcon,
+  Cpu, HardDrive, Server, Database,
+  Code, Terminal, Brackets, Braces,
+  Layers, Box, Package, Archive,
+  FolderOpen, FolderPlus, FolderMinus,
+  FileCheck, FileX, FileSearch, FileCode,
+  Clipboard, ClipboardCheck, ClipboardCopy,
+  Scissors, Copy as CopyIcon, Paste,
+  Undo, Redo, Repeat, RefreshCw as Refresh,
+  RotateCcw as Rotate, FlipHorizontal, FlipVertical
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -38,6 +68,13 @@ export default function ButtonDesignSystemPage() {
   const [progressValue, setProgressValue] = useState(65);
   const [sliderValue, setSliderValue] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateValue, setDateValue] = useState("");
+  const [timeValue, setTimeValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [stepperStep, setStepperStep] = useState(1);
+  const [rating, setRating] = useState(0);
+  const [switchState, setSwitchState] = useState(false);
   const splitDropdownRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -56,7 +93,7 @@ export default function ButtonDesignSystemPage() {
     { id: "tabs", label: "Tabs", icon: Grid },
     { id: "breadcrumbs", label: "Breadcrumbs", icon: Home },
     { id: "progress", label: "Progress Bars", icon: Activity },
-    { id: "sliders", label: "Sliders", icon: Slider },
+    { id: "sliders", label: "Sliders", icon: Sliders },
     { id: "accordion", label: "Accordion", icon: ChevronDown },
     { id: "dropdowns", label: "Dropdowns", icon: ChevronDown },
     { id: "avatars", label: "Avatars", icon: User },
@@ -65,6 +102,27 @@ export default function ButtonDesignSystemPage() {
     { id: "dividers", label: "Dividers", icon: Minus },
     { id: "spacing", label: "Spacing", icon: Grid },
     { id: "shadows", label: "Shadows", icon: Zap },
+    { id: "datepicker", label: "Date Picker", icon: Calendar },
+    { id: "timepicker", label: "Time Picker", icon: Clock },
+    { id: "fileupload", label: "File Upload", icon: UploadIcon },
+    { id: "search", label: "Search Bars", icon: Search },
+    { id: "navigation", label: "Navigation", icon: Menu },
+    { id: "sidebar", label: "Sidebar", icon: List },
+    { id: "popover", label: "Popover", icon: Info },
+    { id: "toast", label: "Toast", icon: Bell },
+    { id: "stepper", label: "Stepper", icon: ChevronRight },
+    { id: "rating", label: "Rating", icon: Star },
+    { id: "switch", label: "Switch", icon: Zap },
+    { id: "statistics", label: "Statistics", icon: BarChart },
+    { id: "timeline", label: "Timeline", icon: Clock },
+    { id: "listgroup", label: "List Group", icon: List },
+    { id: "header", label: "Header", icon: Menu },
+    { id: "footer", label: "Footer", icon: Home },
+    { id: "contextmenu", label: "Context Menu", icon: MoreVertical },
+    { id: "command", label: "Command Palette", icon: Command },
+    { id: "carousel", label: "Carousel", icon: Play },
+    { id: "gallery", label: "Image Gallery", icon: ImageIcon },
+    { id: "charts", label: "Charts", icon: PieChart },
     { id: "loading", label: "Loading", icon: Loader2 },
     { id: "typography", label: "Typography", icon: FileText },
     { id: "colors", label: "Colors", icon: Heart },
@@ -1836,6 +1894,1987 @@ export default function ButtonDesignSystemPage() {
           </div>
         </ButtonSection>
 
+        {/* ========== BADGES & TAGS ========== */}
+        <div className="mb-12" id="badges">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Badges & Tags</h2>
+            <p className="text-gray-600">Komponen badge dan tag untuk label dan status</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="58. Badge Variants"
+          description="Badge dengan berbagai variasi warna dan ukuran"
+        >
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">Primary</span>
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">Success</span>
+            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">Warning</span>
+            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">Error</span>
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">Info</span>
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">Neutral</span>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">Small</span>
+            <span className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-base font-medium">Large</span>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="59. Badge dengan Icon"
+          description="Badge yang dilengkapi dengan icon"
+        >
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              <CheckCircle size={14} />
+              Verified
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              <Star size={14} />
+              Featured
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+              <AlertCircle size={14} />
+              Urgent
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+              <Clock size={14} />
+              Pending
+            </span>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="60. Badge dengan Counter"
+          description="Badge yang menampilkan jumlah/counter"
+        >
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="relative inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              Notifications
+              <span className="ml-2 px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-xs font-bold">3</span>
+            </span>
+            <span className="relative inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+              Messages
+              <span className="ml-2 px-1.5 py-0.5 bg-red-600 text-white rounded-full text-xs font-bold">12</span>
+            </span>
+            <span className="relative inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              Updates
+              <span className="ml-2 px-1.5 py-0.5 bg-green-600 text-white rounded-full text-xs font-bold">99+</span>
+            </span>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TOOLTIPS ========== */}
+        <div className="mb-12" id="tooltips">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tooltips</h2>
+            <p className="text-gray-600">Tooltip untuk informasi tambahan saat hover</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="61. Tooltip Variants"
+          description="Tooltip dengan berbagai posisi dan style"
+        >
+          <div className="flex flex-wrap gap-6 items-center">
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Hover Me (Top)
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Tooltip di atas
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Hover Me (Bottom)
+              </button>
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Tooltip di bawah
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1 border-4 border-transparent border-b-gray-900"></div>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Hover Me (Left)
+              </button>
+              <div className="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Tooltip di kiri
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 -ml-1 border-4 border-transparent border-l-gray-900"></div>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Hover Me (Right)
+              </button>
+              <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Tooltip di kanan
+                <div className="absolute right-full top-1/2 transform -translate-y-1/2 -mr-1 border-4 border-transparent border-r-gray-900"></div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== PAGINATION ========== */}
+        <div className="mb-12" id="pagination">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Pagination</h2>
+            <p className="text-gray-600">Komponen pagination untuk navigasi halaman</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="62. Pagination Standard"
+          description="Pagination dengan prev/next dan nomor halaman"
+        >
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {[1, 2, 3, 4, 5].map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentPage === page
+                    ? "bg-[#0384d6] text-white"
+                    : "border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === 5}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="63. Pagination Compact"
+          description="Pagination dengan ellipsis untuk banyak halaman"
+        >
+          <div className="flex items-center gap-2">
+            <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+              <ChevronLeft size={16} />
+            </button>
+            <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg text-sm font-medium">1</button>
+            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">2</button>
+            <span className="px-2 text-gray-500">...</span>
+            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">10</button>
+            <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TABS ========== */}
+        <div className="mb-12" id="tabs">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tabs</h2>
+            <p className="text-gray-600">Komponen tab untuk navigasi konten</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="64. Tabs Standard"
+          description="Tab dengan indikator aktif"
+        >
+          <div className="w-full">
+            <div className="flex border-b border-gray-200">
+              {["Tab 1", "Tab 2", "Tab 3"].map((tab, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTab(`tab${index + 1}`)}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === `tab${index + 1}`
+                      ? "border-[#0384d6] text-[#0384d6]"
+                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">Konten untuk {activeTab}</p>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="65. Tabs dengan Icon"
+          description="Tab yang dilengkapi dengan icon"
+        >
+          <div className="w-full">
+            <div className="flex border-b border-gray-200">
+              <button className="flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 border-[#0384d6] text-[#0384d6]">
+                <Home size={16} />
+                Home
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <User size={16} />
+                Profile
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <Settings size={16} />
+                Settings
+              </button>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== BREADCRUMBS ========== */}
+        <div className="mb-12" id="breadcrumbs">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Breadcrumbs</h2>
+            <p className="text-gray-600">Navigasi breadcrumb untuk menunjukkan lokasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="66. Breadcrumb Standard"
+          description="Breadcrumb dengan separator"
+        >
+          <nav className="flex items-center space-x-2 text-sm">
+            <a href="#" className="text-gray-500 hover:text-gray-700 flex items-center">
+              <Home size={16} />
+            </a>
+            <ChevronRight size={16} className="text-gray-400" />
+            <a href="#" className="text-gray-500 hover:text-gray-700">Dashboard</a>
+            <ChevronRight size={16} className="text-gray-400" />
+            <a href="#" className="text-gray-500 hover:text-gray-700">Tables</a>
+            <ChevronRight size={16} className="text-gray-400" />
+            <span className="text-gray-900 font-medium">Tabel 1A1</span>
+          </nav>
+        </ButtonSection>
+
+        {/* ========== PROGRESS BARS ========== */}
+        <div className="mb-12" id="progress">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Progress Bars</h2>
+            <p className="text-gray-600">Komponen progress bar untuk menunjukkan progress</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="67. Progress Bar Standard"
+          description="Progress bar dengan berbagai nilai"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <div className="flex justify-between text-sm text-gray-700 mb-1">
+                <span>Progress 25%</span>
+                <span>25%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-[#0384d6] h-2 rounded-full" style={{ width: "25%" }}></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm text-gray-700 mb-1">
+                <span>Progress 50%</span>
+                <span>50%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-[#0384d6] h-2 rounded-full" style={{ width: "50%" }}></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm text-gray-700 mb-1">
+                <span>Progress 75%</span>
+                <span>75%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-[#0384d6] h-2 rounded-full" style={{ width: "75%" }}></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm text-gray-700 mb-1">
+                <span>Progress 100%</span>
+                <span>100%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: "100%" }}></div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="68. Progress Bar dengan Variasi Warna"
+          description="Progress bar dengan warna berbeda untuk status"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <div className="text-sm text-gray-700 mb-1">Success</div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="bg-green-500 h-3 rounded-full" style={{ width: "80%" }}></div>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-700 mb-1">Warning</div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="bg-yellow-500 h-3 rounded-full" style={{ width: "60%" }}></div>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-700 mb-1">Error</div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="bg-red-500 h-3 rounded-full" style={{ width: "30%" }}></div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== SLIDERS ========== */}
+        <div className="mb-12" id="sliders">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sliders</h2>
+            <p className="text-gray-600">Komponen slider untuk input nilai range</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="69. Slider Standard"
+          description="Slider untuk memilih nilai"
+        >
+          <div className="w-full space-y-6">
+            <div>
+              <div className="flex justify-between text-sm text-gray-700 mb-2">
+                <span>Value: {sliderValue}</span>
+                <span>0 - 100</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={sliderValue}
+                onChange={(e) => setSliderValue(e.target.value)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#0384d6]"
+              />
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== ACCORDION ========== */}
+        <div className="mb-12" id="accordion">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Accordion</h2>
+            <p className="text-gray-600">Komponen accordion untuk konten yang bisa di-expand/collapse</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="70. Accordion Standard"
+          description="Accordion dengan expand/collapse"
+        >
+          <div className="w-full space-y-2">
+            {[
+              { title: "Section 1", content: "Konten untuk section 1" },
+              { title: "Section 2", content: "Konten untuk section 2" },
+              { title: "Section 3", content: "Konten untuk section 3" },
+            ].map((item, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setAccordionOpen(accordionOpen === index ? null : index)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-medium text-gray-900">{item.title}</span>
+                  <ChevronDown
+                    size={20}
+                    className={`text-gray-500 transition-transform ${
+                      accordionOpen === index ? "transform rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {accordionOpen === index && (
+                  <div className="p-4 bg-gray-50 border-t border-gray-200">
+                    <p className="text-sm text-gray-600">{item.content}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ButtonSection>
+
+        {/* ========== DROPDOWNS ========== */}
+        <div className="mb-12" id="dropdowns">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Dropdowns</h2>
+            <p className="text-gray-600">Komponen dropdown menu untuk aksi dan pilihan</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="71. Dropdown Menu"
+          description="Dropdown dengan menu items"
+        >
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              <span>Actions</span>
+              <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+              >
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center gap-2">
+                  <Edit size={16} />
+                  Edit
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                  <Copy size={16} />
+                  Duplicate
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg flex items-center gap-2">
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </motion.div>
+            )}
+          </div>
+        </ButtonSection>
+
+        {/* ========== AVATARS ========== */}
+        <div className="mb-12" id="avatars">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Avatars</h2>
+            <p className="text-gray-600">Komponen avatar untuk menampilkan user</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="72. Avatar Variants"
+          description="Avatar dengan berbagai ukuran dan style"
+        >
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold text-xs">
+              JD
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold text-sm">
+              JD
+            </div>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold">
+              JD
+            </div>
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold text-lg">
+              JD
+            </div>
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold text-xl">
+              JD
+            </div>
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold">
+                <User size={20} />
+              </div>
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== ICONS ========== */}
+        <div className="mb-12" id="icons">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Icons</h2>
+            <p className="text-gray-600">Koleksi icon yang digunakan dalam aplikasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="73. Icon Collection"
+          description="Berbagai icon dengan ukuran dan warna berbeda"
+        >
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-6">
+            {[
+              { Icon: Home, name: "Home" },
+              { Icon: User, name: "User" },
+              { Icon: Settings, name: "Settings" },
+              { Icon: Search, name: "Search" },
+              { Icon: Bell, name: "Bell" },
+              { Icon: Mail, name: "Mail" },
+              { Icon: Edit, name: "Edit" },
+              { Icon: Trash2, name: "Trash" },
+              { Icon: Download, name: "Download" },
+              { Icon: Upload, name: "Upload" },
+              { Icon: Save, name: "Save" },
+              { Icon: RefreshCw, name: "Refresh" },
+              { Icon: Filter, name: "Filter" },
+              { Icon: Eye, name: "Eye" },
+              { Icon: EyeOff, name: "EyeOff" },
+              { Icon: Calendar, name: "Calendar" },
+            ].map(({ Icon, name }, index) => (
+              <div key={index} className="flex flex-col items-center gap-2">
+                <div className="p-3 bg-gray-100 rounded-lg">
+                  <Icon size={24} className="text-gray-700" />
+                </div>
+                <span className="text-xs text-gray-600 text-center">{name}</span>
+              </div>
+            ))}
+          </div>
+        </ButtonSection>
+
+        {/* ========== EMPTY STATES ========== */}
+        <div className="mb-12" id="empty">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Empty States</h2>
+            <p className="text-gray-600">Komponen untuk menampilkan state kosong</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="74. Empty State Standard"
+          description="Empty state dengan icon dan pesan"
+        >
+          <div className="w-full bg-white border border-gray-200 rounded-xl p-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <FileText size={32} className="text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Tidak ada data</h3>
+            <p className="text-sm text-gray-600 mb-4">Silakan tambah data baru atau muat ulang halaman</p>
+            <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors">
+              Tambah Data
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* ========== DIVIDERS ========== */}
+        <div className="mb-12" id="dividers">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Dividers</h2>
+            <p className="text-gray-600">Komponen divider untuk memisahkan konten</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="75. Divider Variants"
+          description="Divider dengan berbagai style"
+        >
+          <div className="w-full space-y-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Divider Horizontal</p>
+              <div className="border-t border-gray-200"></div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Divider dengan Text</p>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">atau</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Divider Vertical</p>
+              <div className="flex items-center gap-4">
+                <span>Item 1</span>
+                <div className="h-6 w-px bg-gray-200"></div>
+                <span>Item 2</span>
+                <div className="h-6 w-px bg-gray-200"></div>
+                <span>Item 3</span>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== SPACING ========== */}
+        <div className="mb-12" id="spacing">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Spacing System</h2>
+            <p className="text-gray-600">Sistem spacing yang digunakan dalam design system</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="76. Spacing Scale"
+          description="Skala spacing dari 0.5 hingga 8"
+        >
+          <div className="w-full space-y-4">
+            {[0.5, 1, 2, 3, 4, 5, 6, 8].map((size) => (
+              <div key={size} className="flex items-center gap-4">
+                <div className="w-20 text-sm font-medium text-gray-700">{size * 4}px</div>
+                <div className="flex-1">
+                  <div className="bg-[#0384d6] h-4" style={{ width: `${size * 4}px` }}></div>
+                </div>
+                <div className="text-xs text-gray-500">p-{size}</div>
+              </div>
+            ))}
+          </div>
+        </ButtonSection>
+
+        {/* ========== SHADOWS ========== */}
+        <div className="mb-12" id="shadows">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Shadows</h2>
+            <p className="text-gray-600">Sistem shadow untuk depth dan elevation</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="77. Shadow Variants"
+          description="Berbagai variasi shadow untuk depth effect"
+        >
+          <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { name: "None", class: "shadow-none" },
+              { name: "Small", class: "shadow-sm" },
+              { name: "Medium", class: "shadow-md" },
+              { name: "Large", class: "shadow-lg" },
+              { name: "XL", class: "shadow-xl" },
+              { name: "2XL", class: "shadow-2xl" },
+            ].map((shadow, index) => (
+              <div key={index} className="text-center">
+                <div className={`w-20 h-20 mx-auto bg-white rounded-lg border border-gray-200 ${shadow.class} mb-2`}></div>
+                <p className="text-xs text-gray-600">{shadow.name}</p>
+              </div>
+            ))}
+          </div>
+        </ButtonSection>
+
+        {/* ========== DATE PICKER ========== */}
+        <div className="mb-12" id="datepicker">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Date Picker</h2>
+            <p className="text-gray-600">Komponen untuk memilih tanggal</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="78. Date Picker Standard"
+          description="Date picker dengan berbagai format"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Date Input</label>
+              <input
+                type="date"
+                value={dateValue}
+                onChange={(e) => setDateValue(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Date dengan Icon</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                <input
+                  type="date"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TIME PICKER ========== */}
+        <div className="mb-12" id="timepicker">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Time Picker</h2>
+            <p className="text-gray-600">Komponen untuk memilih waktu</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="79. Time Picker Standard"
+          description="Time picker untuk input waktu"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Time Input</label>
+              <input
+                type="time"
+                value={timeValue}
+                onChange={(e) => setTimeValue(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Time dengan Icon</label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                <input
+                  type="time"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== FILE UPLOAD ========== */}
+        <div className="mb-12" id="fileupload">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">File Upload</h2>
+            <p className="text-gray-600">Komponen untuk upload file</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="80. File Upload Standard"
+          description="File upload dengan drag & drop dan preview"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">File Input</label>
+              <input
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Drag & Drop Upload</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#0384d6] transition-colors cursor-pointer">
+                <UploadIcon className="mx-auto mb-3 text-gray-400" size={32} />
+                <p className="text-sm text-gray-600 mb-1">Drag and drop file di sini, atau klik untuk memilih</p>
+                <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+              </div>
+            </div>
+            {selectedFile && (
+              <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="text-blue-600" size={20} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">{selectedFile.name}</p>
+                    <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedFile(null)} className="text-red-600 hover:text-red-700">
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+          </div>
+        </ButtonSection>
+
+        {/* ========== SEARCH BARS ========== */}
+        <div className="mb-12" id="search">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Search Bars</h2>
+            <p className="text-gray-600">Komponen search bar dengan berbagai variasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="81. Search Bar Variants"
+          description="Search bar dengan berbagai style"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Search Standard</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Search dengan Button</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Cari..."
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                  />
+                </div>
+                <button className="px-6 py-2.5 bg-[#0384d6] text-white rounded-lg font-medium hover:bg-[#0273b8] transition-colors">
+                  Cari
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Search Rounded Full</label>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Cari..."
+                  className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition"
+                />
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== NAVIGATION ========== */}
+        <div className="mb-12" id="navigation">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Navigation</h2>
+            <p className="text-gray-600">Komponen navigasi menu</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="82. Navigation Menu"
+          description="Navigation menu horizontal dan vertical"
+        >
+          <div className="w-full space-y-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Horizontal Navigation</p>
+              <nav className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+                <a href="#" className="px-4 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-md">Home</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">About</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">Services</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">Contact</a>
+              </nav>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Vertical Navigation</p>
+              <nav className="flex flex-col gap-1 bg-white border border-gray-200 rounded-lg p-2 w-48">
+                <a href="#" className="px-4 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-md">Dashboard</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">Profile</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">Settings</a>
+                <a href="#" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md">Logout</a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== SIDEBAR ========== */}
+        <div className="mb-12" id="sidebar">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sidebar</h2>
+            <p className="text-gray-600">Komponen sidebar navigation dengan berbagai variasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="83. Sidebar Standard"
+          description="Sidebar dengan menu items dan grouping"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 w-64">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Main Menu</h3>
+                <nav className="space-y-1">
+                  <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                    <Home size={18} />
+                    Dashboard
+                  </a>
+                  <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <User size={18} />
+                    Profile
+                  </a>
+                  <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <Settings size={18} />
+                    Settings
+                  </a>
+                </nav>
+              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Other</h3>
+                <nav className="space-y-1">
+                  <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <HelpCircle size={18} />
+                    Help
+                  </a>
+                  <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <LogOut size={18} />
+                    Logout
+                  </a>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="84. Sidebar dengan Logo"
+          description="Sidebar dengan logo di bagian atas"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-[#043975] to-[#0384d6]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <span className="text-[#0384d6] font-bold text-lg">PM</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">Portal Mutu</h3>
+                    <p className="text-blue-100 text-xs">Management System</p>
+                  </div>
+                </div>
+              </div>
+              <nav className="p-4 space-y-1">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <FileText size={18} />
+                  Tables
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <BarChart size={18} />
+                  Reports
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="85. Sidebar dengan Search"
+          description="Sidebar dengan search bar di bagian atas"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search menu..."
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                  />
+                </div>
+              </div>
+              <nav className="p-4 space-y-1 max-h-96 overflow-y-auto">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <User size={18} />
+                  Users
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <FileText size={18} />
+                  Documents
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="86. Sidebar dengan Badge/Notification"
+          description="Sidebar dengan badge untuk notifikasi atau counter"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <nav className="p-4 space-y-1">
+                <a href="#" className="flex items-center justify-between px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Home size={18} />
+                    Dashboard
+                  </div>
+                </a>
+                <a href="#" className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Bell size={18} />
+                    Notifications
+                  </div>
+                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">3</span>
+                </a>
+                <a href="#" className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Mail size={18} />
+                    Messages
+                  </div>
+                  <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">12</span>
+                </a>
+                <a href="#" className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <FileText size={18} />
+                    Tasks
+                  </div>
+                  <span className="px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full">5</span>
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="87. Sidebar dengan User Profile"
+          description="Sidebar dengan user profile di bagian bawah"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden flex flex-col h-96">
+              <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <User size={18} />
+                  Profile
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+              <div className="border-t border-gray-200 p-4 bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold">
+                    JD
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
+                    <p className="text-xs text-gray-500 truncate">john@example.com</p>
+                  </div>
+                  <button className="p-1 text-gray-500 hover:text-gray-700">
+                    <LogOut size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="88. Sidebar dengan Submenu"
+          description="Sidebar dengan menu yang bisa di-expand untuk submenu"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <nav className="p-4 space-y-1">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <div>
+                  <button className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText size={18} />
+                      Tables
+                    </div>
+                    <ChevronDown size={16} className="text-gray-400" />
+                  </button>
+                  <div className="ml-6 mt-1 space-y-1">
+                    <a href="#" className="block px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 rounded">Tabel 1A1</a>
+                    <a href="#" className="block px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 rounded">Tabel 1A2</a>
+                    <a href="#" className="block px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 rounded">Tabel 1A3</a>
+                  </div>
+                </div>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="89. Sidebar Icons Only"
+          description="Sidebar compact dengan icon saja"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-16 overflow-hidden">
+              <nav className="p-2 space-y-2">
+                <a href="#" className="flex items-center justify-center p-3 text-[#0384d6] bg-blue-50 rounded-lg" title="Dashboard">
+                  <Home size={20} />
+                </a>
+                <a href="#" className="flex items-center justify-center p-3 text-gray-700 hover:bg-gray-50 rounded-lg" title="Profile">
+                  <User size={20} />
+                </a>
+                <a href="#" className="flex items-center justify-center p-3 text-gray-700 hover:bg-gray-50 rounded-lg relative" title="Notifications">
+                  <Bell size={20} />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </a>
+                <a href="#" className="flex items-center justify-center p-3 text-gray-700 hover:bg-gray-50 rounded-lg" title="Settings">
+                  <Settings size={20} />
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="90. Sidebar dengan Active Indicator"
+          description="Sidebar dengan indikator aktif yang lebih jelas"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <nav className="p-4 space-y-1">
+                <a href="#" className="relative flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#0384d6] rounded-r-full"></div>
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <User size={18} />
+                  Profile
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <FileText size={18} />
+                  Tables
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="91. Sidebar dengan Divider"
+          description="Sidebar dengan divider untuk memisahkan section"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <nav className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-3">Main</h3>
+                  <div className="space-y-1">
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                      <Home size={18} />
+                      Dashboard
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <FileText size={18} />
+                      Tables
+                    </a>
+                  </div>
+                </div>
+                <div className="border-t border-gray-200"></div>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-3">Settings</h3>
+                  <div className="space-y-1">
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <Settings size={18} />
+                      Preferences
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <User size={18} />
+                      Account
+                    </a>
+                  </div>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="92. Sidebar dengan Tooltip (Icons Only)"
+          description="Sidebar compact dengan tooltip saat hover"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-16 overflow-hidden">
+              <nav className="p-2 space-y-2">
+                <div className="relative group">
+                  <a href="#" className="flex items-center justify-center p-3 text-[#0384d6] bg-blue-50 rounded-lg">
+                    <Home size={20} />
+                  </a>
+                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    Dashboard
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                  </div>
+                </div>
+                <div className="relative group">
+                  <a href="#" className="flex items-center justify-center p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <User size={20} />
+                  </a>
+                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    Profile
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                  </div>
+                </div>
+                <div className="relative group">
+                  <a href="#" className="flex items-center justify-center p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <Settings size={20} />
+                  </a>
+                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    Settings
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                  </div>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="93. Sidebar dengan Collapse Button"
+          description="Sidebar yang bisa di-collapse/expand"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Menu</h3>
+                <button className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded">
+                  <ChevronLeft size={18} />
+                </button>
+              </div>
+              <nav className="p-4 space-y-1">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <User size={18} />
+                  Profile
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="94. Sidebar dengan Gradient Background"
+          description="Sidebar dengan background gradient"
+        >
+          <div className="w-full">
+            <div className="bg-gradient-to-b from-[#043975] to-[#0384d6] border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <div className="p-4 border-b border-white/20">
+                <h3 className="text-white font-semibold text-lg">Portal Mutu</h3>
+              </div>
+              <nav className="p-4 space-y-1">
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white bg-white/20 rounded-lg">
+                  <Home size={18} />
+                  Dashboard
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 rounded-lg">
+                  <User size={18} />
+                  Profile
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 rounded-lg">
+                  <FileText size={18} />
+                  Tables
+                </a>
+                <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 rounded-lg">
+                  <Settings size={18} />
+                  Settings
+                </a>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        <ButtonSection
+          title="95. Sidebar dengan Section Header"
+          description="Sidebar dengan section header yang lebih menonjol"
+        >
+          <div className="w-full">
+            <div className="bg-white border border-gray-200 rounded-lg w-64 overflow-hidden">
+              <nav className="p-4 space-y-6">
+                <div>
+                  <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg">
+                    <h3 className="text-xs font-bold text-gray-900 uppercase">Navigation</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#0384d6] bg-blue-50 rounded-lg">
+                      <Home size={18} />
+                      Dashboard
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <FileText size={18} />
+                      Tables
+                    </a>
+                  </div>
+                </div>
+                <div>
+                  <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg">
+                    <h3 className="text-xs font-bold text-gray-900 uppercase">Account</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <User size={18} />
+                      Profile
+                    </a>
+                    <a href="#" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <Settings size={18} />
+                      Settings
+                    </a>
+                  </div>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== POPOVER ========== */}
+        <div className="mb-12" id="popover">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Popover</h2>
+            <p className="text-gray-600">Komponen popover untuk konten tambahan</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="96. Popover Variants"
+          description="Popover dengan berbagai posisi"
+        >
+          <div className="flex flex-wrap gap-6 items-center">
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Click Me (Top)
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-4 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <h4 className="font-semibold text-gray-900 mb-1">Popover Title</h4>
+                <p className="text-sm text-gray-600">Ini adalah konten popover yang muncul saat hover atau click</p>
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white"></div>
+              </div>
+            </div>
+            <div className="relative group">
+              <button className="px-4 py-2 bg-[#0384d6] text-white rounded-lg font-medium">
+                Click Me (Bottom)
+              </button>
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-4 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                <h4 className="font-semibold text-gray-900 mb-1">Popover Title</h4>
+                <p className="text-sm text-gray-600">Konten popover di bawah</p>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1 border-4 border-transparent border-b-white"></div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TOAST ========== */}
+        <div className="mb-12" id="toast">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Toast Notifications</h2>
+            <p className="text-gray-600">Komponen toast untuk notifikasi</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="97. Toast Variants"
+          description="Toast dengan berbagai tipe dan posisi"
+        >
+          <div className="w-full space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-green-900">Success</p>
+                <p className="text-sm text-green-800">Data berhasil disimpan</p>
+              </div>
+              <button className="text-green-600 hover:text-green-700">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <XCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-900">Error</p>
+                <p className="text-sm text-red-800">Terjadi kesalahan saat memproses</p>
+              </div>
+              <button className="text-red-600 hover:text-red-700">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">Info</p>
+                <p className="text-sm text-blue-800">Informasi penting untuk diketahui</p>
+              </div>
+              <button className="text-blue-600 hover:text-blue-700">
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== STEPPER ========== */}
+        <div className="mb-12" id="stepper">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Stepper</h2>
+            <p className="text-gray-600">Komponen stepper untuk multi-step form</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="98. Stepper Standard"
+          description="Stepper dengan indikator step"
+        >
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-8">
+              {[1, 2, 3, 4].map((step) => (
+                <div key={step} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                      step === stepperStep
+                        ? "bg-[#0384d6] text-white"
+                        : step < stepperStep
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}>
+                      {step < stepperStep ? <Check size={20} /> : step}
+                    </div>
+                    <span className="mt-2 text-xs text-gray-600">Step {step}</span>
+                  </div>
+                  {step < 4 && (
+                    <div className={`flex-1 h-1 mx-2 ${step < stepperStep ? "bg-green-500" : "bg-gray-200"}`}></div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between">
+              <button
+                onClick={() => setStepperStep(Math.max(1, stepperStep - 1))}
+                disabled={stepperStep === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setStepperStep(Math.min(4, stepperStep + 1))}
+                disabled={stepperStep === 4}
+                className="px-4 py-2 bg-[#0384d6] text-white rounded-lg text-sm font-medium hover:bg-[#0273b8] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== RATING ========== */}
+        <div className="mb-12" id="rating">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Rating</h2>
+            <p className="text-gray-600">Komponen rating untuk penilaian</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="99. Rating Stars"
+          description="Rating dengan bintang"
+        >
+          <div className="w-full space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Interactive Rating</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      size={24}
+                      className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">{rating > 0 ? `${rating}/5` : "Belum dinilai"}</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Read-only Rating</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={20}
+                    className={star <= 4 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                  />
+                ))}
+                <span className="ml-2 text-sm text-gray-600">4.0</span>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== SWITCH ========== */}
+        <div className="mb-12" id="switch">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Switch</h2>
+            <p className="text-gray-600">Komponen switch untuk toggle on/off</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="100. Switch Variants"
+          description="Switch dengan berbagai ukuran dan style"
+        >
+          <div className="w-full space-y-4">
+            <div className="flex items-center gap-4">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={switchState}
+                  onChange={(e) => setSwitchState(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0384d6]"></div>
+                <span className="ml-3 text-sm font-medium text-gray-700">Default Switch</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!switchState}
+                  onChange={(e) => setSwitchState(!e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+                <span className="ml-3 text-sm font-medium text-gray-700">Large Switch</span>
+              </label>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== STATISTICS ========== */}
+        <div className="mb-12" id="statistics">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Statistics Cards</h2>
+            <p className="text-gray-600">Komponen untuk menampilkan statistik</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="101. Statistics Cards"
+          description="Card untuk menampilkan data statistik"
+        >
+          <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-gray-500">Total Users</p>
+                <Users className="text-blue-600" size={20} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900">1,234</p>
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendUp size={12} />
+                +12.5%
+              </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-gray-500">Revenue</p>
+                <DollarSign className="text-green-600" size={20} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900">$45,678</p>
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendUp size={12} />
+                +8.2%
+              </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-gray-500">Orders</p>
+                <ShoppingCart className="text-purple-600" size={20} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900">567</p>
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <TrendDown size={12} />
+                -3.1%
+              </p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-gray-500">Growth</p>
+                <TrendUp className="text-orange-600" size={20} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900">23.4%</p>
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendUp size={12} />
+                +5.7%
+              </p>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== TIMELINE ========== */}
+        <div className="mb-12" id="timeline">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Timeline</h2>
+            <p className="text-gray-600">Komponen timeline untuk menampilkan urutan waktu</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="102. Timeline Standard"
+          description="Timeline dengan berbagai style"
+        >
+          <div className="w-full">
+            <div className="space-y-6">
+              {[
+                { title: "Project Started", time: "2 hours ago", icon: CheckCircle, bgColor: "bg-green-100", iconColor: "text-green-600" },
+                { title: "Design Approved", time: "1 day ago", icon: CheckCircle, bgColor: "bg-blue-100", iconColor: "text-blue-600" },
+                { title: "Development Started", time: "3 days ago", icon: Clock, bgColor: "bg-yellow-100", iconColor: "text-yellow-600" },
+                { title: "Planning Phase", time: "1 week ago", icon: FileText, bgColor: "bg-gray-100", iconColor: "text-gray-600" },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={index} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-10 h-10 rounded-full ${item.bgColor} flex items-center justify-center`}>
+                        <Icon className={item.iconColor} size={20} />
+                      </div>
+                      {index < 3 && <div className="w-0.5 h-full bg-gray-200 mt-2"></div>}
+                    </div>
+                    <div className="flex-1 pb-6">
+                      <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                      <p className="text-sm text-gray-500">{item.time}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== LIST GROUP ========== */}
+        <div className="mb-12" id="listgroup">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">List Group</h2>
+            <p className="text-gray-600">Komponen list group untuk menampilkan daftar item</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="103. List Group Variants"
+          description="List group dengan berbagai style"
+        >
+          <div className="w-full space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h4 className="font-semibold text-gray-900">List Group</h4>
+              </div>
+              <div className="divide-y divide-gray-200">
+                <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                  <p className="font-medium text-gray-900">Item 1</p>
+                  <p className="text-sm text-gray-500">Deskripsi item 1</p>
+                </div>
+                <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                  <p className="font-medium text-gray-900">Item 2</p>
+                  <p className="text-sm text-gray-500">Deskripsi item 2</p>
+                </div>
+                <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                  <p className="font-medium text-gray-900">Item 3</p>
+                  <p className="text-sm text-gray-500">Deskripsi item 3</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== HEADER ========== */}
+        <div className="mb-12" id="header">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Header</h2>
+            <p className="text-gray-600">Komponen header untuk navigasi utama</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="104. Header Navigation"
+          description="Header dengan logo, menu, dan user menu"
+        >
+          <div className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <header className="px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#0384d6] to-[#043975] rounded-lg flex items-center justify-center text-white font-bold">
+                  PM
+                </div>
+                <nav className="hidden md:flex items-center gap-4">
+                  <a href="#" className="text-sm font-medium text-[#0384d6]">Home</a>
+                  <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-900">About</a>
+                  <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-900">Services</a>
+                  <a href="#" className="text-sm font-medium text-gray-700 hover:text-gray-900">Contact</a>
+                </nav>
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                  <Bell size={20} />
+                </button>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0384d6] to-[#043975] flex items-center justify-center text-white font-bold text-sm">
+                  JD
+                </div>
+              </div>
+            </header>
+          </div>
+        </ButtonSection>
+
+        {/* ========== FOOTER ========== */}
+        <div className="mb-12" id="footer">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Footer</h2>
+            <p className="text-gray-600">Komponen footer untuk informasi tambahan</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="105. Footer Standard"
+          description="Footer dengan links dan informasi"
+        >
+          <div className="w-full bg-gray-900 text-white rounded-lg overflow-hidden">
+            <footer className="px-6 py-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div>
+                  <h4 className="font-semibold mb-3">Company</h4>
+                  <ul className="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" className="hover:text-white">About</a></li>
+                    <li><a href="#" className="hover:text-white">Careers</a></li>
+                    <li><a href="#" className="hover:text-white">Contact</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-3">Resources</h4>
+                  <ul className="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" className="hover:text-white">Documentation</a></li>
+                    <li><a href="#" className="hover:text-white">Support</a></li>
+                    <li><a href="#" className="hover:text-white">Blog</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-3">Legal</h4>
+                  <ul className="space-y-2 text-sm text-gray-400">
+                    <li><a href="#" className="hover:text-white">Privacy</a></li>
+                    <li><a href="#" className="hover:text-white">Terms</a></li>
+                    <li><a href="#" className="hover:text-white">Cookies</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-3">Follow Us</h4>
+                  <div className="flex gap-3">
+                    <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700">
+                      <GlobeIcon size={16} />
+                    </a>
+                    <a href="#" className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700">
+                      <Mail size={16} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-gray-800 pt-6 text-center text-sm text-gray-400">
+                <p>© 2024 Portal Mutu. All rights reserved.</p>
+              </div>
+            </footer>
+          </div>
+        </ButtonSection>
+
+        {/* ========== CONTEXT MENU ========== */}
+        <div className="mb-12" id="contextmenu">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Context Menu</h2>
+            <p className="text-gray-600">Komponen context menu untuk right-click actions</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="106. Context Menu"
+          description="Context menu yang muncul saat right-click"
+        >
+          <div className="relative inline-block">
+            <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-[#0384d6] transition-colors">
+              <p className="text-sm text-gray-600">Right-click di sini</p>
+            </div>
+            <div className="absolute top-4 left-4 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center gap-2">
+                <Edit size={16} />
+                Edit
+              </button>
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                <Copy size={16} />
+                Copy
+              </button>
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                <Share2 size={16} />
+                Share
+              </button>
+              <div className="border-t border-gray-200 my-1"></div>
+              <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg flex items-center gap-2">
+                <Trash2 size={16} />
+                Delete
+              </button>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== COMMAND PALETTE ========== */}
+        <div className="mb-12" id="command">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Command Palette</h2>
+            <p className="text-gray-600">Komponen command palette untuk quick actions</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="107. Command Palette"
+          description="Command palette dengan search dan shortcuts"
+        >
+          <div className="w-full max-w-md mx-auto bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Type a command or search..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                />
+              </div>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              <div className="p-2">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Recent</div>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+                  <FileText size={16} />
+                  <span>Open File</span>
+                  <kbd className="ml-auto px-2 py-0.5 bg-gray-100 rounded text-xs">⌘K</kbd>
+                </button>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+                  <Settings size={16} />
+                  <span>Settings</span>
+                  <kbd className="ml-auto px-2 py-0.5 bg-gray-100 rounded text-xs">⌘,</kbd>
+                </button>
+              </div>
+              <div className="border-t border-gray-200 my-1"></div>
+              <div className="p-2">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Actions</div>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+                  <Plus size={16} />
+                  <span>New File</span>
+                </button>
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-2">
+                  <Folder size={16} />
+                  <span>New Folder</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
+        {/* ========== CAROUSEL ========== */}
+        <div className="mb-12" id="carousel">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Carousel</h2>
+            <p className="text-gray-600">Komponen carousel untuk slideshow</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="108. Carousel Standard"
+          description="Carousel dengan navigation controls"
+        >
+          <div className="w-full max-w-2xl mx-auto relative">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 h-64 flex items-center justify-center">
+              <div className="text-white text-center">
+                <h3 className="text-2xl font-bold mb-2">Slide 1</h3>
+                <p className="text-blue-100">Konten carousel di sini</p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              <button className="w-2 h-2 rounded-full bg-[#0384d6]"></button>
+              <button className="w-2 h-2 rounded-full bg-gray-300"></button>
+              <button className="w-2 h-2 rounded-full bg-gray-300"></button>
+            </div>
+            <button className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
+              <ChevronLeft size={20} />
+            </button>
+            <button className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </ButtonSection>
+
+        {/* ========== IMAGE GALLERY ========== */}
+        <div className="mb-12" id="gallery">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Image Gallery</h2>
+            <p className="text-gray-600">Komponen gallery untuk menampilkan gambar</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="109. Image Gallery"
+          description="Gallery dengan grid layout"
+        >
+          <div className="w-full grid grid-cols-3 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <div
+                key={item}
+                className="aspect-square bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </ButtonSection>
+
+        {/* ========== CHARTS ========== */}
+        <div className="mb-12" id="charts">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Charts</h2>
+            <p className="text-gray-600">Komponen chart untuk visualisasi data</p>
+          </div>
+        </div>
+
+        <ButtonSection
+          title="110. Chart Types"
+          description="Berbagai jenis chart untuk data visualization"
+        >
+          <div className="w-full space-y-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Bar Chart</p>
+              <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-end justify-between gap-2">
+                {[40, 60, 80, 50, 70, 90].map((height, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center">
+                    <div
+                      className="w-full bg-gradient-to-t from-[#0384d6] to-blue-400 rounded-t"
+                      style={{ height: `${height}%` }}
+                    ></div>
+                    <span className="text-xs text-gray-500 mt-1">{index + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Line Chart</p>
+              <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-center justify-center">
+                <svg className="w-full h-full" viewBox="0 0 200 100">
+                  <polyline
+                    points="10,80 40,60 70,40 100,50 130,30 160,20 190,10"
+                    fill="none"
+                    stroke="#0384d6"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Pie Chart</p>
+              <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-center justify-center">
+                <div className="relative w-24 h-24">
+                  <div className="absolute inset-0 rounded-full border-8 border-[#0384d6] border-t-transparent transform rotate-45"></div>
+                  <div className="absolute inset-0 rounded-full border-8 border-green-500 border-r-transparent border-b-transparent"></div>
+                  <div className="absolute inset-0 rounded-full border-8 border-yellow-500 border-l-transparent border-t-transparent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ButtonSection>
+
         {/* ========== COLORS ========== */}
         <div className="mb-12" id="colors">
           <div className="mb-6">
@@ -1845,7 +3884,7 @@ export default function ButtonDesignSystemPage() {
         </div>
 
         <ButtonSection
-          title="56. Primary Colors"
+          title="111. Primary Colors"
           description="Warna utama aplikasi"
         >
           <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1873,7 +3912,7 @@ export default function ButtonDesignSystemPage() {
         </ButtonSection>
 
         <ButtonSection
-          title="57. Status Colors"
+          title="112. Status Colors"
           description="Warna untuk status (success, error, warning)"
         >
           <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
