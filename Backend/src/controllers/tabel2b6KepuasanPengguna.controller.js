@@ -57,6 +57,16 @@ const getStatistikData = async (id_unit_prodi, id_tahun) => {
 // === LIST TABEL 2B6 KEPUASAN PENGGUNA ===
 export const listTabel2b6KepuasanPengguna = async (req, res) => {
   try {
+    // Special handling: Role KEMAHASISWAAN bisa melihat semua data tanpa filter unit prodi
+    const userRole = req.user?.role?.toLowerCase();
+    const isKemahasiswaan = userRole === 'kemahasiswaan';
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    
+    // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
+    if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
+      delete req.query.id_unit_prodi;
+    }
+
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
@@ -69,7 +79,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     // Khusus role kemahasiswaan: tampilkan semua prodi (jangan batasi id_unit_prodi)
-    if (String(req.user?.role).toLowerCase() === 'kemahasiswaan') {
+    if (isKemahasiswaan && !isSuperAdmin) {
       const newWhere = [];
       const newParams = [];
 

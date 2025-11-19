@@ -340,26 +340,33 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       animate={{
         top: 16,
         left: isOpen ? 256 : 0,
-        padding: isOpen ? '0.5rem' : '0.625rem',
-        backgroundColor: isOpen ? 'transparent' : 'rgb(255, 255, 255)',
-        borderRadius: isOpen ? '0' : '0.5rem',
-        boxShadow: isOpen ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-        width: isOpen ? 'auto' : 'auto',
-        minWidth: isOpen ? 'auto' : '40px',
+        padding: isOpen ? '0.5rem' : '0.5rem',
+        backgroundColor: isOpen ? 'rgba(255, 255, 255, 0.9)' : 'rgb(255, 255, 255)',
+        borderRadius: isOpen ? '0.5rem' : '0 0.75rem 0.75rem 0',
+        boxShadow: isOpen 
+          ? '0 2px 8px 0 rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1)' 
+          : '0 2px 8px 0 rgba(0, 0, 0, 0.12), 0 1px 4px -1px rgba(0, 0, 0, 0.1)',
+        width: isOpen ? '36px' : '32px',
+        minWidth: isOpen ? '36px' : '32px',
+        height: isOpen ? '36px' : '100px',
+        minHeight: isOpen ? '36px' : '100px',
+        border: isOpen ? '1px solid rgba(229, 231, 235, 0.8)' : '1px solid rgba(229, 231, 235, 0.6)',
       }}
       transition={isOpen 
         ? { type: "spring", stiffness: 120, damping: 20 }
         : { type: "spring", stiffness: 300, damping: 30 }
       }
-      whileHover={!isOpen ? { 
-        backgroundColor: 'rgb(249, 250, 251)',
-        boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.15), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-        scale: 1.02
-      } : { 
-        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+      whileHover={isOpen ? { 
+        backgroundColor: 'rgb(255, 255, 255)',
+        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
         scale: 1.05
+      } : {
+        backgroundColor: 'rgb(249, 250, 251)',
+        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
+        scale: 1.02,
+        borderColor: 'rgba(229, 231, 235, 0.9)'
       }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.95 }}
       aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
       aria-expanded={isOpen}
     >
@@ -368,17 +375,18 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
           initial={{ opacity: 0, rotate: 90 }}
           animate={{ opacity: 1, rotate: 0 }}
           transition={{ duration: 0.2 }}
+          className="flex items-center justify-center w-full h-full"
         >
           <ChevronLeft size={20} className="text-[#043975]" />
         </motion.div>
       ) : (
         <motion.div 
-          className="flex items-center justify-center"
-          initial={{ opacity: 0, x: -5 }}
+          className="flex items-center justify-center w-full h-full"
+          initial={{ opacity: 0, x: -3 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronRight size={18} className="text-gray-800" />
+          <ChevronRight size={22} className="text-[#043975]" />
         </motion.div>
       )}
     </motion.button>
