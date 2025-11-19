@@ -146,18 +146,18 @@ export default function Tabel2B6({ role }) {
   const canDelete = roleCan(role, tableKey, "D");
 
   const fetchData = useCallback(async () => {
-    // Jangan fetch jika selectedTahun belum di-set
-    // Untuk role kemahasiswaan, selectedUnit tidak wajib (akan fetch semua data)
-    if (!selectedTahun) {
-      console.log("Tabel2B6 - Skip fetch, waiting for tahun:", { selectedTahun });
+    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
+    // Untuk role lain, jangan fetch jika selectedTahun atau selectedUnit belum di-set
+    if (!selectedTahun || (!selectedUnit && !isKemahasiswaan)) {
+      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit, isKemahasiswaan });
       return;
     }
 
     try {
       setLoading(true);
       let params = `?id_tahun=${selectedTahun}`;
-      // Untuk role kemahasiswaan yang bukan super admin, jangan kirim id_unit_prodi
-      if (selectedUnit && !(isKemahasiswaan && !isSuperAdmin)) {
+      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
+      if (selectedUnit && !isKemahasiswaan) {
         params += `&id_unit_prodi=${selectedUnit}`;
       }
       if (showDeleted) params += "&include_deleted=1";
@@ -212,7 +212,7 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan, isSuperAdmin]);
+  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
@@ -229,45 +229,40 @@ export default function Tabel2B6({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin atau kemahasiswaan, pilih pertama
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
   useEffect(() => {
-    if (!selectedUnit) {
-      if (!isSuperAdmin && !isKemahasiswaan && userProdiId) {
+    if (!selectedUnit && !isKemahasiswaan) {
+      if (!isSuperAdmin && userProdiId) {
         // User prodi: gunakan prodi mereka
         console.log("Tabel2B6 - Auto-selecting user prodi:", userProdiId);
         setSelectedUnit(parseInt(userProdiId));
-      } else if ((isSuperAdmin || isKemahasiswaan) && Array.isArray(availableUnits) && availableUnits.length > 0) {
-        // Superadmin atau kemahasiswaan: pilih prodi pertama
+      } else if (isSuperAdmin && Array.isArray(availableUnits) && availableUnits.length > 0) {
+        // Superadmin: pilih prodi pertama
         console.log("Tabel2B6 - Auto-selecting unit:", availableUnits[0].id);
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, isKemahasiswaan, userProdiId, availableUnits]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
 
   // Fetch data saat filter berubah
-  // Untuk role kemahasiswaan, hanya perlu selectedTahun
-  // Untuk role lain, perlu selectedTahun dan selectedUnit
+  // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
   useEffect(() => { 
-    if (isKemahasiswaan && !isSuperAdmin) {
-      // Role kemahasiswaan: fetch jika selectedTahun sudah ada
-      if (selectedTahun) {
-        fetchData();
-      }
-    } else {
-      // Role lain: fetch jika kedua filter sudah ada
-      if (selectedTahun && selectedUnit) {
-        fetchData();
-      }
+    if (isKemahasiswaan && selectedTahun) {
+      fetchData();
+    } else if (selectedTahun && selectedUnit) {
+      fetchData();
     }
-  }, [selectedTahun, selectedUnit, showDeleted, fetchData, isKemahasiswaan, isSuperAdmin]);
+  }, [selectedTahun, selectedUnit, showDeleted, fetchData, isKemahasiswaan]);
 
   // Helper function untuk transform data
-  const transformTableData = (sourceData) => {
+  const transformTableData = useCallback((sourceData) => {
     if (!selectedTahun) return [];
 
     // Pastikan hanya tahun terpilih yang ditampilkan walau API mengembalikan lebih banyak
     const filteredByYear = sourceData.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
-    const filteredByUnit = selectedUnit ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
+    // Untuk role kemahasiswaan, jangan filter berdasarkan selectedUnit (bisa lihat semua)
+    const filteredByUnit = (selectedUnit && !isKemahasiswaan) ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
     const byJenis = new Map();
     for (const row of filteredByUnit) {
       const key = String(row.jenis_kemampuan || '').toLowerCase();
@@ -286,19 +281,19 @@ export default function Tabel2B6({ role }) {
         data: item || null,
       };
     });
-  };
+  }, [selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
     const activeData = data.filter(d => !d.deleted_at);
     return transformTableData(activeData);
-  }, [data, selectedTahun, selectedUnit]);
+  }, [data, selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Data untuk tabel terhapus
   const tableDataDeleted = useMemo(() => {
     const deletedData = data.filter(d => d.deleted_at);
     return transformTableData(deletedData);
-  }, [data, selectedTahun, selectedUnit]);
+  }, [data, selectedTahun, selectedUnit, isKemahasiswaan]);
 
   // Hitung total untuk baris Jumlah (jumlahkan lalu bagi 7)
   const jumlahDataActive = useMemo(() => {
@@ -824,7 +819,7 @@ export default function Tabel2B6({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {(isSuperAdmin || isKemahasiswaan) && <UnitSelector />}
+          {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button

@@ -11,7 +11,6 @@ import {
   FaUserTie, FaGraduationCap, FaFlask, FaBook, 
   FaChartLine, FaShield, FaChalkboard
 } from "react-icons/fa6";
-import { ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Impor halaman C1, C2, C3, C4, C5, C6
@@ -94,7 +93,7 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
             variants={menuVariants}
             initial="closed"
             animate={isOpen ? "open" : "closed"}
-            className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden"
+            className="bg-white shadow-xl rounded-2xl flex flex-col overflow-hidden"
         >
             <div 
                 className="flex items-center justify-between p-4 flex-shrink-0 cursor-pointer h-14" 
@@ -150,9 +149,9 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                                     updateActiveTable(key);
                                                     setIsOpen(false);
                                                 }} 
-                                                className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
+                                                className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group ${
                                                   isActive 
-                                                    ? "bg-[#0384d6] text-white" 
+                                                    ? "bg-[#0384d6] text-white shadow-md" 
                                                     : "text-[#043975] hover:bg-[#eaf3ff]"
                                                 }`}
                                                 aria-label={`${name} - ${description}`}
@@ -189,10 +188,10 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                             updateActiveTable(key); 
                                             setIsOpen(false);
                                           }} 
-                                          className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
+                                          className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative group ${
                                             isActive 
-                                              ? "bg-[#0384d6] text-white" 
-                                              : "text-[#043975] hover:bg-[#eaf3ff]"
+                                              ? "bg-[#0384d6] text-white shadow-md" 
+                                              : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
                                           }`}
                                           aria-label={`${name} - ${description}`}
                                           aria-current={isActive ? 'page' : undefined}
@@ -219,32 +218,21 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
 };
 
 const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt, contentHeight }) => {
-  // Calculate sidebar height: follow content height if it's longer than viewport, otherwise use viewport
-  const sidebarHeight = React.useMemo(() => {
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
-    // Use contentHeight if it exists and is greater than viewport, otherwise use viewport
-    if (contentHeight && contentHeight > 0 && contentHeight > viewportHeight) {
-      return `${contentHeight}px`;
-    }
-    return "100vh";
-  }, [contentHeight]);
-  
-  const sidebarVariants = React.useMemo(() => ({
+  const sidebarVariants = {
     open: { 
       width: "288px", 
-      height: sidebarHeight,
-      minHeight: "100vh", 
-      borderRadius: "0", 
+      height: contentHeight > 0 ? `${Math.max(contentHeight + 32, typeof window !== 'undefined' ? window.innerHeight - 32 : 800)}px` : "auto", 
+      minHeight: "calc(100vh - 2rem)", 
+      borderRadius: "16px", 
       transition: { type: "spring", stiffness: 120, damping: 20 } 
     },
     closed: { 
-      width: "4px", 
-      height: sidebarHeight,
-      minHeight: "100vh",
-      borderRadius: "0", 
+      width: "64px", 
+      height: "64px", 
+      borderRadius: "20px", 
       transition: { type: "spring", stiffness: 300, damping: 30 } 
     },
-  }), [sidebarHeight]);
+  };
 
   const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
 
@@ -272,10 +260,10 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                         <li key={key}>
                           <button 
                             onClick={() => updateActiveTable(key)} 
-                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
                               isActive 
-                                ? "bg-[#0384d6] text-white" 
-                                : "text-[#043975] hover:bg-[#eaf3ff]"
+                                ? "bg-[#0384d6] text-white shadow-md" 
+                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
                             }`}
                             aria-label={`${name} - ${description}`}
                             aria-current={isActive ? 'page' : undefined}
@@ -308,10 +296,10 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                         <li key={key}>
                           <button 
                             onClick={()=>updateActiveTable(key)} 
-                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
                               isActive 
-                                ? "bg-[#0384d6] text-white" 
-                                : "text-[#043975] hover:bg-[#eaf3ff]"
+                                ? "bg-[#0384d6] text-white shadow-md" 
+                                : "text-[#043975] hover:bg-[#eaf3ff] hover:shadow-sm hover:scale-[1.02]"
                             }`}
                             aria-label={`${name} - ${description}`}
                             aria-current={isActive ? 'page' : undefined}
@@ -334,62 +322,34 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
   });
 
   const toggleButton = (
-    <motion.button 
-      onClick={() => setIsOpen(!isOpen)} 
-      className="absolute z-30 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-      animate={{
-        top: 16,
-        left: isOpen ? 256 : 0,
-        padding: isOpen ? '0.5rem' : '0.5rem',
-        backgroundColor: isOpen ? 'rgba(255, 255, 255, 0.9)' : 'rgb(255, 255, 255)',
-        borderRadius: isOpen ? '0.5rem' : '0 0.75rem 0.75rem 0',
-        boxShadow: isOpen 
-          ? '0 2px 8px 0 rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1)' 
-          : '0 2px 8px 0 rgba(0, 0, 0, 0.12), 0 1px 4px -1px rgba(0, 0, 0, 0.1)',
-        width: isOpen ? '36px' : '32px',
-        minWidth: isOpen ? '36px' : '32px',
-        height: isOpen ? '36px' : '100px',
-        minHeight: isOpen ? '36px' : '100px',
-        border: isOpen ? '1px solid rgba(229, 231, 235, 0.8)' : '1px solid rgba(229, 231, 235, 0.6)',
-      }}
-      transition={isOpen 
-        ? { type: "spring", stiffness: 120, damping: 20 }
-        : { type: "spring", stiffness: 300, damping: 30 }
-      }
-      whileHover={isOpen ? { 
-        backgroundColor: 'rgb(255, 255, 255)',
-        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-        scale: 1.05
-      } : {
-        backgroundColor: 'rgb(249, 250, 251)',
-        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-        scale: 1.02,
-        borderColor: 'rgba(229, 231, 235, 0.9)'
-      }}
-      whileTap={{ scale: 0.95 }}
-      aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
-      aria-expanded={isOpen}
-    >
-      {isOpen ? (
-        <motion.div
-          initial={{ opacity: 0, rotate: 90 }}
-          animate={{ opacity: 1, rotate: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex items-center justify-center w-full h-full"
-        >
-          <ChevronLeft size={20} className="text-[#043975]" />
-        </motion.div>
-      ) : (
-        <motion.div 
-          className="flex items-center justify-center w-full h-full"
-          initial={{ opacity: 0, x: -3 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronRight size={22} className="text-[#043975]" />
-        </motion.div>
-      )}
-    </motion.button>
+    <Tooltip text={isOpen ? "Tutup sidebar" : "Buka sidebar"} isVisible={!isOpen}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className={`absolute z-20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+          !isOpen 
+            ? 'top-0 left-0 w-full h-full flex items-center justify-center rounded-[20px] text-[#043975] hover:bg-slate-50' 
+            : 'top-4 right-4 p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-[#043975] flex items-center justify-center'
+        }`}
+        aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+        aria-expanded={isOpen}
+      >
+        {isOpen ? (
+          <motion.div
+            animate={{ rotate: 90 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center"
+          >
+            <FaXmark size={20} />
+          </motion.div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1.5 translate-y-[32px]">
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+            <div className="w-6 h-[2px] bg-[#043975] rounded-full"></div>
+          </div>
+        )}
+      </button>
+    </Tooltip>
   );
 
   return (
@@ -397,12 +357,9 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       variants={sidebarVariants} 
       initial={false} 
       animate={isOpen ? "open" : "closed"} 
-      className={`flex flex-col relative self-start ${
-        isOpen 
-          ? 'bg-white border-r border-gray-200 overflow-hidden ml-0 shadow-sm' 
-          : 'bg-gray-200 overflow-visible ml-0'
+      className={`bg-white flex flex-col overflow-hidden m-4 relative self-start ${
+        isOpen ? 'shadow-2xl' : 'shadow-lg'
       }`}
-      style={isOpen ? { left: 0, top: 0, borderLeft: '1px solid #000' } : { left: 0, top: 0 }}
       role="complementary"
       aria-label="Sidebar navigasi tabel"
     >
@@ -440,10 +397,10 @@ export default function TablesPage() {
 
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
-  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses C1
+  // KECUALI role kemahasiswaan, ALA, PMB, dan SARPRAS yang tidak boleh akses C1
   const loweredRole = (authUser?.role || "").toLowerCase();
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && loweredRole !== "sarpras" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
   const c2AccessKeys = [
@@ -461,34 +418,41 @@ export default function TablesPage() {
   const c3AccessKeys = [
     "tabel_3a1_sarpras_penelitian",
     "tabel_3a2_penelitian",
-    "tabel_3a3_pengembangan_dtpr"
+    "tabel_3a3_pengembangan_dtpr",
+    "tabel_3c1_kerjasama_penelitian",
+    "tabel_3c2_publikasi_penelitian",
+    "tabel_3c3_hki"
   ]; // tabel-tabel yang ada di C3
   const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C4: jika ada akses ke tabel C4
   const c4AccessKeys = [
     "tabel_4a1_sarpras_pkm",
-    "tabel_4a2"
+    "tabel_4a2",
+    "tabel_4a2_pkm",
+    "tabel_4c1_kerjasama_pkm",
+    "tabel_4c2_diseminasi_pkm",
+    "tabel_4c3_hki_pkm"
   ]; // tabel-tabel yang ada di C4
   const hasC4Access = c4AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C5: jika ada akses ke tabel C5
   const c5AccessKeys = [
     "tabel_5a1",
-    "tabel_5a2"
+    "tabel_5a2",
+    "tabel_5_2_sarpras_pendidikan"
   ]; // tabel-tabel yang ada di C5
   const hasC5Access = c5AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C6: jika ada akses ke tabel C6
   const c6AccessKeys = [
-    "tabel_6a1",
-    "tabel_6a2"
+    "tabel_6_kesesuaian_visi_misi"
   ]; // tabel-tabel yang ada di C6
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
-  // KECUALI role kemahasiswaan dan ALA yang tidak boleh akses Panel Admin
-  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && (
+  // KECUALI role kemahasiswaan, ALA, LPPM, KEPEGAWAIAN, dan SARPRAS yang tidak boleh akses Panel Admin
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && loweredRole !== "sarpras" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")
@@ -578,7 +542,7 @@ export default function TablesPage() {
 
   // Measure content height and update sidebar with debounce
   useEffect(() => {
-    if (typeof window === 'undefined' || !mounted) return;
+    if (typeof window === 'undefined') return;
     
     let resizeTimer;
     const measureContentHeight = () => {
@@ -586,33 +550,14 @@ export default function TablesPage() {
       resizeTimer = setTimeout(() => {
         const contentElement = document.querySelector('.main-content-area');
         if (contentElement) {
-          // Get the full scroll height of the content, including overflow
-          // This ensures we capture the full height of long tables
-          const scrollHeight = contentElement.scrollHeight;
-          const offsetHeight = contentElement.offsetHeight;
-          const rect = contentElement.getBoundingClientRect();
-          
-          // Use the maximum to ensure we get the full content height
-          // Add padding from parent container if needed
-          const parentElement = contentElement.parentElement;
-          const parentPadding = parentElement ? 
-            parseInt(getComputedStyle(parentElement).paddingTop) + 
-            parseInt(getComputedStyle(parentElement).paddingBottom) : 0;
-          
-          const height = Math.max(
-            scrollHeight,
-            offsetHeight,
-            rect.height,
-            scrollHeight + parentPadding
-          );
-          
+          const height = contentElement.scrollHeight;
           setContentHeight(height);
         }
-      }, 150);
+      }, 100);
     };
 
-    // Initial measurement with delay to ensure content is fully rendered
-    const initialTimer = setTimeout(measureContentHeight, 300);
+    // Initial measurement
+    measureContentHeight();
 
     // Set up ResizeObserver to watch for content changes
     const resizeObserver = new ResizeObserver(() => {
@@ -622,20 +567,12 @@ export default function TablesPage() {
     const contentElement = document.querySelector('.main-content-area');
     if (contentElement) {
       resizeObserver.observe(contentElement);
-      // Also observe the parent to catch padding/margin changes
-      if (contentElement.parentElement) {
-        resizeObserver.observe(contentElement.parentElement);
-      }
     }
 
-    // Listen for window resize
+    // Also listen for window resize
     window.addEventListener('resize', measureContentHeight);
-    
-    // Measure when activeTable changes
-    measureContentHeight();
 
     return () => {
-      clearTimeout(initialTimer);
       resizeObserver.disconnect();
       window.removeEventListener('resize', measureContentHeight);
       clearTimeout(resizeTimer);
@@ -770,9 +707,7 @@ export default function TablesPage() {
         canSeeUserMgmt={canSeeUserMgmt}
         contentHeight={contentHeight}
       />
-      <div className={`flex-1 flex flex-col min-w-0 overflow-x-hidden relative z-10 m-4 mt-0 mb-0 ${
-        isSidebarOpen ? 'ml-0' : 'ml-10'
-      }`}>
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden m-4 relative z-10">
         <main className="flex-1 overflow-x-hidden">
           <div className="px-4 pb-6 main-content-area">
             {!mounted ? (

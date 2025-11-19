@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
 
 export default function UserManagementPage() {
   const api = useApi();
+  const { authUser } = useAuth();
+  const loweredRole = authUser?.role?.toLowerCase();
+  const isReadOnlyRole = loweredRole === "ketuastikom";
   const [users, setUsers] = useState([]);
   const [units, setUnits] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
@@ -97,6 +101,7 @@ export default function UserManagementPage() {
 
   // Submit tambah/edit user
   const handleSubmit = async (e) => {
+    if (isReadOnlyRole) return;
     e.preventDefault();
     try {
       if (editMode) {
@@ -137,6 +142,7 @@ export default function UserManagementPage() {
 
   // Edit user
   const handleEdit = (user) => {
+    if (isReadOnlyRole) return;
     setFormData({
       id_user: user.id_user,
       username: user.username,
@@ -152,6 +158,7 @@ export default function UserManagementPage() {
 
   // Nonaktifkan user
   const handleDelete = (id) => {
+    if (isReadOnlyRole) return;
     Swal.fire({
       title: 'Nonaktifkan Akun?',
       text: "Anda yakin ingin menonaktifkan akun ini?",
@@ -177,6 +184,7 @@ export default function UserManagementPage() {
 
   // Restore user
   const handleRestore = (id) => {
+    if (isReadOnlyRole) return;
     Swal.fire({
       title: 'Aktifkan Kembali Akun?',
       text: "Anda yakin ingin mengaktifkan kembali akun ini?",
@@ -202,6 +210,7 @@ export default function UserManagementPage() {
 
   // Hard delete
   const handleHardDelete = (id) => {
+    if (isReadOnlyRole) return;
     Swal.fire({
       title: 'Hapus Permanen?',
       text: "PERINGATAN: Tindakan ini tidak dapat dibatalkan!",
@@ -254,16 +263,18 @@ export default function UserManagementPage() {
               <option value="inactive">Akun Nonaktif</option>
             </select>
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setEditMode(false);
-              setShowForm(true);
-            }}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
-          >
-            + Tambah Akun
-          </button>
+          {!isReadOnlyRole && (
+            <button
+              onClick={() => {
+                resetForm();
+                setEditMode(false);
+                setShowForm(true);
+              }}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
+            >
+              + Tambah Akun
+            </button>
+          )}
         </div>
       </div>
 
@@ -306,27 +317,31 @@ export default function UserManagementPage() {
                 </td>
                 <td className="px-6 py-4 border border-slate-200">
                   <div className="flex items-center justify-center dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (openDropdownId !== u.id_user) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(u.id_user);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === u.id_user}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
+                    {isReadOnlyRole ? (
+                      <span className="text-xs text-slate-400 italic">Hanya melihat</span>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openDropdownId !== u.id_user) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192;
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth)
+                            });
+                            setOpenDropdownId(u.id_user);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === u.id_user}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -336,7 +351,7 @@ export default function UserManagementPage() {
       </div>
 
       {/* Dropdown Menu - Fixed Position */}
-      {openDropdownId !== null && (() => {
+      {!isReadOnlyRole && openDropdownId !== null && (() => {
         const currentUser = users.find(u => u.id_user === openDropdownId);
         if (!currentUser) return null;
 
@@ -536,6 +551,7 @@ export default function UserManagementPage() {
                   <option value="KEPEGAWAIAN">KEPEGAWAIAN</option>
                   <option value="KERJASAMA">KERJASAMA</option>
                   <option value="SARPRAS">SARPRAS</option>
+                  <option value="KETUASTIKOM">KETUASTIKOM</option>
                   <option value="WAKET-1">WAKET-1</option>
                   <option value="WAKET-2">WAKET-2</option>
                   <option value="TPM">TPM</option>

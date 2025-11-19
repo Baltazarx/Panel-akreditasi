@@ -66,7 +66,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
       delete req.query.id_unit_prodi;
     }
-
+    
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');

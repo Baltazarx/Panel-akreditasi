@@ -20,9 +20,6 @@ export default function Tabel2B4({ role }) {
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
   
-  // Debug log untuk memastikan role terdeteksi dengan benar
-  console.log('Tabel2B4 - userRole:', userRole, 'isKemahasiswaan:', isKemahasiswaan, 'isSuperAdmin:', isSuperAdmin);
-  
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
   
@@ -84,30 +81,30 @@ export default function Tabel2B4({ role }) {
     ];
   }, []);
 
-  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin atau kemahasiswaan, pilih pertama
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
   useEffect(() => {
-    if (!selectedUnit) {
-      if (!isSuperAdmin && !isKemahasiswaan && userProdiId) {
+    if (!selectedUnit && !isKemahasiswaan) {
+      if (!isSuperAdmin && userProdiId) {
         // User prodi: gunakan prodi mereka
         setSelectedUnit(parseInt(userProdiId));
-      } else if ((isSuperAdmin || isKemahasiswaan) && availableUnits.length > 0) {
-        // Superadmin atau kemahasiswaan: pilih prodi pertama
+      } else if (isSuperAdmin && availableUnits.length > 0) {
+        // Superadmin: pilih prodi pertama
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, isKemahasiswaan, userProdiId, availableUnits]);
+  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
 
   // Fetch data - ambil semua data, filter di frontend untuk menampilkan TS-4 sampai TS
   const fetchData = async () => {
     try {
       setLoading(true);
       let params = showDeleted ? "?include_deleted=1" : "";
-      // Untuk role kemahasiswaan yang bukan super admin, jangan kirim id_unit_prodi di query
-      // Backend akan mengembalikan semua data, lalu kita filter di frontend berdasarkan selectedUnit
-      if (selectedUnit && !(isKemahasiswaan && !isSuperAdmin)) {
+      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
+      if (selectedUnit && !isKemahasiswaan) {
         params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
       }
-      console.log('Fetching Tabel2B4 data with params:', params, 'isKemahasiswaan:', isKemahasiswaan, 'isSuperAdmin:', isSuperAdmin);
+      console.log('Fetching Tabel2B4 data with params:', params);
       const result = await apiFetch(`/tabel2b4-masa-tunggu${params}`);
       console.log('Tabel2B4 data received:', result);
       setData(result);
@@ -120,15 +117,12 @@ export default function Tabel2B4({ role }) {
   };
 
   useEffect(() => {
-    // Untuk role kemahasiswaan yang bukan super admin, fetch tanpa menunggu selectedUnit
-    // Untuk role lain, tunggu selectedUnit
-    if (isKemahasiswaan && !isSuperAdmin) {
-      fetchData();
-    } else if (selectedUnit) {
+    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
+    // Untuk role lain, fetch data hanya jika selectedUnit ada
+    if (isKemahasiswaan || selectedUnit) {
       fetchData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDeleted, selectedUnit, isKemahasiswaan, isSuperAdmin]);
+  }, [showDeleted, selectedUnit, isKemahasiswaan]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -195,8 +189,8 @@ export default function Tabel2B4({ role }) {
         })
       : activeData;
     
-    // Filter berdasarkan prodi yang dipilih
-    if (selectedUnit) {
+    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
+    if (selectedUnit && !isKemahasiswaan) {
       filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
     }
     
@@ -259,8 +253,8 @@ export default function Tabel2B4({ role }) {
         })
       : deletedData;
     
-    // Filter berdasarkan prodi yang dipilih
-    if (selectedUnit) {
+    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
+    if (selectedUnit && !isKemahasiswaan) {
       filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
     }
     
@@ -614,30 +608,24 @@ export default function Tabel2B4({ role }) {
   );
 
   // Unit Selector Component
-  const UnitSelector = () => {
-    console.log('UnitSelector rendered - availableUnits:', availableUnits, 'selectedUnit:', selectedUnit);
-    if (!availableUnits || availableUnits.length === 0) {
-      return null;
-    }
-    return (
-      <div className="flex items-center gap-2">
-        <label htmlFor="filter-prodi" className="text-sm font-medium text-slate-700">Prodi:</label>
-        <select
-          id="filter-prodi"
-          value={selectedUnit || ""}
-          onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : null)}
-          className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-64"
-          disabled={loading}
-        >
-          {availableUnits.map(u => (
-            <option key={u.id} value={u.id} className="text-slate-700">
-              {u.nama}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
+  const UnitSelector = () => (
+    <div className="flex items-center gap-2">
+      <label htmlFor="filter-prodi" className="text-sm font-medium text-slate-700">Prodi:</label>
+      <select
+        id="filter-prodi"
+        value={selectedUnit || ""}
+        onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : null)}
+        className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-64"
+        disabled={loading}
+      >
+        {availableUnits.map(u => (
+          <option key={u.id} value={u.id} className="text-slate-700">
+            {u.nama}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
@@ -672,11 +660,7 @@ export default function Tabel2B4({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {(() => {
-            const shouldShowUnitSelector = isSuperAdmin || isKemahasiswaan;
-            console.log('Should show UnitSelector?', shouldShowUnitSelector, 'isSuperAdmin:', isSuperAdmin, 'isKemahasiswaan:', isKemahasiswaan);
-            return shouldShowUnitSelector && <UnitSelector />;
-          })()}
+          {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
