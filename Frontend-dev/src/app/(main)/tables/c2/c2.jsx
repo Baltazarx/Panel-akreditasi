@@ -81,7 +81,11 @@ export default function C2WithTopNav() {
     return (
         <div className="space-y-6">
             {/* Top navigation (tabs) dengan pill bergeser dan mobile scrollable */}
-            <div className="w-full bg-white rounded-2xl shadow-md px-3 sm:px-4 py-3">
+            {/* Posisi disesuaikan dengan button sidebar saat tertutup (left: 0, top: 16) */}
+            <div className="bg-white rounded-2xl shadow-md px-3 sm:px-4 py-3" style={{ 
+                marginLeft: '-40px', // -ml-10 = -40px untuk mengkompensasi ml-10 dari parent
+                marginTop: '16px' // Sejajar dengan top: 16 dari button sidebar
+            }}>
                 <div className="flex items-center gap-2 mb-3">
                     <h3 className="text-sm font-semibold text-slate-700">Navigasi C2</h3>
                 </div>
