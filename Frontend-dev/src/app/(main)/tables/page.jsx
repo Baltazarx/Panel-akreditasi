@@ -219,22 +219,32 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
 };
 
 const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt, contentHeight }) => {
-  const sidebarVariants = {
+  // Calculate sidebar height: follow content height if it's longer than viewport, otherwise use viewport
+  const sidebarHeight = React.useMemo(() => {
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+    // Use contentHeight if it exists and is greater than viewport, otherwise use viewport
+    if (contentHeight && contentHeight > 0 && contentHeight > viewportHeight) {
+      return `${contentHeight}px`;
+    }
+    return "100vh";
+  }, [contentHeight]);
+  
+  const sidebarVariants = React.useMemo(() => ({
     open: { 
       width: "288px", 
-      height: typeof window !== 'undefined' ? window.innerHeight : "100vh", 
+      height: sidebarHeight,
       minHeight: "100vh", 
-      borderRadius: "0 8px 8px 0", 
+      borderRadius: "0", 
       transition: { type: "spring", stiffness: 120, damping: 20 } 
     },
     closed: { 
       width: "4px", 
-      height: typeof window !== 'undefined' ? window.innerHeight : "100vh", 
+      height: sidebarHeight,
       minHeight: "100vh",
       borderRadius: "0", 
       transition: { type: "spring", stiffness: 300, damping: 30 } 
     },
-  };
+  }), [sidebarHeight]);
 
   const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
 
@@ -331,15 +341,18 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
         top: 16,
         left: isOpen ? 256 : 0,
         padding: isOpen ? '0.5rem' : '0.625rem',
-        backgroundColor: isOpen ? 'transparent' : 'rgb(229, 231, 235)',
+        backgroundColor: isOpen ? 'transparent' : 'rgb(255, 255, 255)',
         borderRadius: isOpen ? '0' : '0.5rem',
         boxShadow: isOpen ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
         width: isOpen ? 'auto' : 'auto',
         minWidth: isOpen ? 'auto' : '40px',
       }}
-      transition={{ type: "spring", stiffness: 120, damping: 20 }}
+      transition={isOpen 
+        ? { type: "spring", stiffness: 120, damping: 20 }
+        : { type: "spring", stiffness: 300, damping: 30 }
+      }
       whileHover={!isOpen ? { 
-        backgroundColor: 'rgb(209, 213, 219)',
+        backgroundColor: 'rgb(249, 250, 251)',
         boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.15), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
         scale: 1.02
       } : { 
@@ -557,7 +570,7 @@ export default function TablesPage() {
 
   // Measure content height and update sidebar with debounce
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !mounted) return;
     
     let resizeTimer;
     const measureContentHeight = () => {
@@ -565,14 +578,33 @@ export default function TablesPage() {
       resizeTimer = setTimeout(() => {
         const contentElement = document.querySelector('.main-content-area');
         if (contentElement) {
-          const height = contentElement.scrollHeight;
+          // Get the full scroll height of the content, including overflow
+          // This ensures we capture the full height of long tables
+          const scrollHeight = contentElement.scrollHeight;
+          const offsetHeight = contentElement.offsetHeight;
+          const rect = contentElement.getBoundingClientRect();
+          
+          // Use the maximum to ensure we get the full content height
+          // Add padding from parent container if needed
+          const parentElement = contentElement.parentElement;
+          const parentPadding = parentElement ? 
+            parseInt(getComputedStyle(parentElement).paddingTop) + 
+            parseInt(getComputedStyle(parentElement).paddingBottom) : 0;
+          
+          const height = Math.max(
+            scrollHeight,
+            offsetHeight,
+            rect.height,
+            scrollHeight + parentPadding
+          );
+          
           setContentHeight(height);
         }
-      }, 100);
+      }, 150);
     };
 
-    // Initial measurement
-    measureContentHeight();
+    // Initial measurement with delay to ensure content is fully rendered
+    const initialTimer = setTimeout(measureContentHeight, 300);
 
     // Set up ResizeObserver to watch for content changes
     const resizeObserver = new ResizeObserver(() => {
@@ -582,12 +614,20 @@ export default function TablesPage() {
     const contentElement = document.querySelector('.main-content-area');
     if (contentElement) {
       resizeObserver.observe(contentElement);
+      // Also observe the parent to catch padding/margin changes
+      if (contentElement.parentElement) {
+        resizeObserver.observe(contentElement.parentElement);
+      }
     }
 
-    // Also listen for window resize
+    // Listen for window resize
     window.addEventListener('resize', measureContentHeight);
+    
+    // Measure when activeTable changes
+    measureContentHeight();
 
     return () => {
+      clearTimeout(initialTimer);
       resizeObserver.disconnect();
       window.removeEventListener('resize', measureContentHeight);
       clearTimeout(resizeTimer);
@@ -723,7 +763,7 @@ export default function TablesPage() {
         contentHeight={contentHeight}
       />
       <div className={`flex-1 flex flex-col min-w-0 overflow-x-hidden relative z-10 m-4 mt-0 mb-0 ${
-        isSidebarOpen ? 'ml-0' : 'ml-6'
+        isSidebarOpen ? 'ml-0' : 'ml-10'
       }`}>
         <main className="flex-1 overflow-x-hidden">
           <div className="px-4 pb-6 main-content-area">
