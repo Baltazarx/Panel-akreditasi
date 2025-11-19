@@ -146,15 +146,20 @@ export default function Tabel2B6({ role }) {
   const canDelete = roleCan(role, tableKey, "D");
 
   const fetchData = useCallback(async () => {
-    // Jangan fetch jika selectedTahun atau selectedUnit belum di-set
-    if (!selectedTahun || !selectedUnit) {
-      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit });
+    // Jangan fetch jika selectedTahun belum di-set
+    // Untuk role kemahasiswaan, selectedUnit tidak wajib (akan fetch semua data)
+    if (!selectedTahun) {
+      console.log("Tabel2B6 - Skip fetch, waiting for tahun:", { selectedTahun });
       return;
     }
 
     try {
       setLoading(true);
-      let params = `?id_tahun=${selectedTahun}&id_unit_prodi=${selectedUnit}`;
+      let params = `?id_tahun=${selectedTahun}`;
+      // Untuk role kemahasiswaan yang bukan super admin, jangan kirim id_unit_prodi
+      if (selectedUnit && !(isKemahasiswaan && !isSuperAdmin)) {
+        params += `&id_unit_prodi=${selectedUnit}`;
+      }
       if (showDeleted) params += "&include_deleted=1";
 
       const url = `/tabel2b6-kepuasan-pengguna${params}`;
@@ -207,7 +212,7 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted]);
+  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan, isSuperAdmin]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
@@ -224,27 +229,37 @@ export default function Tabel2B6({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
+  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin atau kemahasiswaan, pilih pertama
   useEffect(() => {
     if (!selectedUnit) {
-      if (!isSuperAdmin && userProdiId) {
+      if (!isSuperAdmin && !isKemahasiswaan && userProdiId) {
         // User prodi: gunakan prodi mereka
         console.log("Tabel2B6 - Auto-selecting user prodi:", userProdiId);
         setSelectedUnit(parseInt(userProdiId));
-      } else if (isSuperAdmin && Array.isArray(availableUnits) && availableUnits.length > 0) {
-        // Superadmin: pilih prodi pertama
+      } else if ((isSuperAdmin || isKemahasiswaan) && Array.isArray(availableUnits) && availableUnits.length > 0) {
+        // Superadmin atau kemahasiswaan: pilih prodi pertama
         console.log("Tabel2B6 - Auto-selecting unit:", availableUnits[0].id);
         setSelectedUnit(parseInt(availableUnits[0].id));
       }
     }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
+  }, [selectedUnit, isSuperAdmin, isKemahasiswaan, userProdiId, availableUnits]);
 
-  // Fetch data saat filter berubah (pastikan kedua filter sudah ter-set)
+  // Fetch data saat filter berubah
+  // Untuk role kemahasiswaan, hanya perlu selectedTahun
+  // Untuk role lain, perlu selectedTahun dan selectedUnit
   useEffect(() => { 
-    if (selectedTahun && selectedUnit) {
-      fetchData();
+    if (isKemahasiswaan && !isSuperAdmin) {
+      // Role kemahasiswaan: fetch jika selectedTahun sudah ada
+      if (selectedTahun) {
+        fetchData();
+      }
+    } else {
+      // Role lain: fetch jika kedua filter sudah ada
+      if (selectedTahun && selectedUnit) {
+        fetchData();
+      }
     }
-  }, [selectedTahun, selectedUnit, showDeleted, fetchData]);
+  }, [selectedTahun, selectedUnit, showDeleted, fetchData, isKemahasiswaan, isSuperAdmin]);
 
   // Helper function untuk transform data
   const transformTableData = (sourceData) => {
@@ -809,7 +824,7 @@ export default function Tabel2B6({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {isSuperAdmin && <UnitSelector />}
+          {(isSuperAdmin || isKemahasiswaan) && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
