@@ -129,7 +129,7 @@ export default function C4WithTopNav() {
   return (
     <div className="space-y-6">
      {/* Top navigation (tabs) */}
-     <div className="w-full rounded-2xl shadow-md px-3 sm:px-4 py-3 bg-white">
+     <div className="w-full rounded-2xl shadow-md px-3 sm:px-4 py-3 bg-white pt-2">
        <div className="flex items-center gap-2 mb-3">
          <h3 className="text-sm font-semibold text-slate-700">Navigasi C4</h3>
        </div>
@@ -150,7 +150,7 @@ export default function C4WithTopNav() {
                    <>
                      <motion.div
                        layoutId="c4-tab-pill" // Pastikan layoutId unik untuk grup tab ini
-                       className="absolute inset-0 bg-blue-50 rounded-xl"
+                       className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200"
                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
                      />
                      <motion.div
