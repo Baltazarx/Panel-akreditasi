@@ -87,13 +87,26 @@ app.use((req, _res, next) => {
 // ===== CORS =====
 const ALLOW_ORIGIN = process.env.FRONTEND_ORIGIN?.split(",") || [
   "http://localhost:5173", // vite default
-  "http://localhost:3001"  // vite custom port
+  "http://localhost:3001", // Next.js dev port
+  "http://localhost:3000"  // Next.js default (fallback)
 ];
 
 app.use(
   cors({
-    origin: ALLOW_ORIGIN,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (ALLOW_ORIGIN.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(null, true); // Allow for now, but log warning
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
@@ -185,10 +198,20 @@ app.use((_req, res) => {
 });
 
 // ===== ERROR HANDLER =====
-app.use((err, _req, res, _next) => {
-  console.error('[ERR]', err);
+app.use((err, req, res, _next) => {
+  console.error('[ERR]', {
+    message: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    sql: err.sql || 'N/A',
+    sqlMessage: err.sqlMessage || 'N/A'
+  });
   res.status(err.status || 500).json({
     error: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && {
+      details: err.sqlMessage || err.stack
+    })
   });
 });
 

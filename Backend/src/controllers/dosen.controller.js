@@ -33,14 +33,15 @@ export const listDosen = async (req, res) => {
       LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
         AND pup.deleted_at IS NULL
         AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
-      LEFT JOIN ref_jabatan_struktural rjs ON pup.id_jabatan = rjs.id_jabatan
+      LEFT JOIN ref_jabatan_struktural rjs ON p.id_jabatan = rjs.id_jabatan
       WHERE 1=1
     `;
 
     const params = [];
 
-    // Filter deleted records unless include_deleted is true
-    if (!include_deleted) {
+    // Filter deleted records unless include_deleted is true (check for '1', 'true', or truthy)
+    const shouldIncludeDeleted = include_deleted === '1' || include_deleted === 'true' || include_deleted === true;
+    if (!shouldIncludeDeleted) {
       sql += ` AND d.deleted_at IS NULL`;
     }
 
@@ -58,11 +59,21 @@ export const listDosen = async (req, res) => {
 
     sql += ` ORDER BY d.id_dosen ASC`;
 
+    console.log('Executing SQL:', sql);
+    console.log('With params:', params);
+    
     const [rows] = await pool.query(sql, params);
+    console.log(`Successfully fetched ${rows.length} dosen records`);
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    res.status(500).json({ error: 'List failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    console.error("Full error:", JSON.stringify(err, null, 2));
+    res.status(500).json({ 
+      error: 'List failed', 
+      details: err.sqlMessage || err.message,
+      sql: err.sql || 'N/A'
+    });
   }
 };
 
@@ -84,7 +95,11 @@ export const getDosenById = async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error("Error getDosenById:", err);
-    res.status(500).json({ error: 'Get failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    res.status(500).json({ 
+      error: 'Get failed', 
+      details: err.sqlMessage || err.message 
+    });
   }
 };
 
@@ -121,7 +136,11 @@ export const createDosen = async (req, res) => {
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createDosen:", err);
-    res.status(500).json({ error: 'Create failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    res.status(500).json({ 
+      error: 'Create failed', 
+      details: err.sqlMessage || err.message 
+    });
   }
 };
 
@@ -169,7 +188,11 @@ export const updateDosen = async (req, res) => {
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateDosen:", err);
-    res.status(500).json({ error: 'Update failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    res.status(500).json({ 
+      error: 'Update failed', 
+      details: err.sqlMessage || err.message 
+    });
   }
 };
 
@@ -187,7 +210,11 @@ export const softDeleteDosen = async (req, res) => {
     res.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error("Error softDeleteDosen:", err);
-    res.status(500).json({ error: 'Delete failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    res.status(500).json({ 
+      error: 'Delete failed', 
+      details: err.sqlMessage || err.message 
+    });
   }
 };
 
@@ -200,7 +227,11 @@ export const restoreDosen = async (req, res) => {
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreDosen:", err);
-    res.status(500).json({ error: 'Restore failed' });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    res.status(500).json({ 
+      error: 'Restore failed', 
+      details: err.sqlMessage || err.message 
+    });
   }
 };
 
@@ -214,6 +245,6 @@ export const hardDeleteDosen = async (req, res) => {
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
     console.error("Error hardDeleteDosen:", err);
-    res.status(500).json({ error: 'Hard delete failed' });
+    res.status(500).json({ error: 'Hard delete failed', details: err.message });
   }
-};1
+};

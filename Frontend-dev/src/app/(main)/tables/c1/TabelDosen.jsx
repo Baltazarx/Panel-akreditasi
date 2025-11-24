@@ -133,8 +133,12 @@ export default function TabelDosen({ role }) {
       setLoading(true);
     }
     try {
+      setError(""); // Clear previous errors
       const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
+      console.log('Fetching dosen data from:', url);
       const result = await apiFetch(url);
+      console.log('Received dosen data:', result);
+      
       // Pastikan tidak ada duplikasi data berdasarkan id_dosen
       const uniqueRows = Array.isArray(result) ? result.filter((row, index, self) => {
         const idField = getIdField(row);
@@ -146,9 +150,49 @@ export default function TabelDosen({ role }) {
           return rIdField && r[rIdField] === idValue;
         });
       }) : [];
+      
+      console.log('Processed unique rows:', uniqueRows.length);
       setRows(uniqueRows);
     } catch (err) {
-      setError(err.message);
+      // Serialize error untuk logging yang lebih baik
+      const errorDetails = {
+        message: err.message,
+        status: err.status,
+        isNetworkError: err.isNetworkError,
+        response: err.response,
+        responseText: err.responseText,
+        stack: err.stack
+      };
+      console.error('Error fetching dosen data:', errorDetails);
+      console.error('Full error object:', err);
+      
+      // Show user-friendly error message
+      let errorMessage = 'Gagal memuat data dosen.';
+      if (err.isNetworkError) {
+        errorMessage = err.message || 'Tidak dapat terhubung ke server. Pastikan backend berjalan.';
+      } else if (err.status === 401) {
+        errorMessage = 'Session expired. Silakan login kembali.';
+      } else if (err.status === 403) {
+        errorMessage = 'Anda tidak memiliki izin untuk mengakses data ini.';
+      } else if (err.status === 404) {
+        errorMessage = 'Endpoint tidak ditemukan.';
+      } else if (err.status >= 500) {
+        errorMessage = `Server error: ${err.message || 'Terjadi kesalahan di server.'}`;
+      } else {
+        errorMessage = err.message || 'Gagal memuat data dosen. Silakan coba lagi.';
+      }
+      
+      setError(errorMessage);
+      
+      // Show alert for critical errors
+      if (err.isNetworkError || err.status >= 500) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorMessage,
+          footer: 'Periksa console untuk detail lebih lanjut'
+        });
+      }
     } finally {
       setLoading(false);
       setInitialLoading(false);
