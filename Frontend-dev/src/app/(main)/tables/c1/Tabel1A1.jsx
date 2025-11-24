@@ -460,9 +460,11 @@ export default function Tabel1A1({ role }) {
               <div className="space-y-2">
                   <label htmlFor="periode_selesai" className="block text-sm font-semibold text-gray-700">Periode Selesai <span className="text-red-500">*</span></label>
                   <input type="date" id="periode_selesai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editPeriodeSelesai : newPeriodeSelesai} onChange={(e)=> isEdit ? setEditPeriodeSelesai(e.target.value) : setNewPeriodeSelesai(e.target.value)} required/>
-                  <div className="flex items-start gap-2 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <FiAlertCircle className="text-blue-600 mt-0.5 flex-shrink-0" size={16} />
-                      <p className="text-xs text-blue-700">Unit Kerja dan Jabatan Fungsional akan otomatis diambil dari data pegawai.</p>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                  <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <FiAlertCircle className="text-blue-600 flex-shrink-0" size={16} />
+                      <p className="text-sm text-blue-700">Unit Kerja mengambil dari tabel pegawai dan Jabatan Fungsional mengambil dari tabel dosen.</p>
                   </div>
               </div>
               <div className="space-y-2 md:col-span-2">
