@@ -135,11 +135,15 @@ export default function TabelPegawai({ role }) {
       setFormState({
         nama_lengkap: editing.nama_lengkap || "",
         pendidikan_terakhir: editing.pendidikan_terakhir || "",
+        id_unit: editing.id_unit || "",
+        id_jabatan: editing.id_jabatan || "",
       });
     } else {
       setFormState({
         nama_lengkap: "",
         pendidikan_terakhir: "",
+        id_unit: "",
+        id_jabatan: "",
       });
     }
   }, [editing]);
@@ -152,18 +156,26 @@ export default function TabelPegawai({ role }) {
       const url = editing ? `${table.path}/${editing[idField]}` : table.path;
       const method = editing ? "PUT" : "POST";
       
+      // Prepare payload dengan konversi string kosong ke null untuk id_unit dan id_jabatan
+      const payload = {
+        nama_lengkap: formState.nama_lengkap || "",
+        pendidikan_terakhir: formState.pendidikan_terakhir || "",
+        id_unit: formState.id_unit ? parseInt(formState.id_unit) : null,
+        id_jabatan: formState.id_jabatan ? parseInt(formState.id_jabatan) : null,
+      };
+      
       console.log('Edit pegawai data:', {
         url,
         method,
         idField,
         editingId: editing ? editing[idField] : null,
-        formState
+        payload
       });
       
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
+        body: JSON.stringify(payload),
       });
       
       setShowModal(false);
@@ -340,6 +352,8 @@ export default function TabelPegawai({ role }) {
             <tr className="sticky top-0">
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID Pegawai</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Struktural</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
@@ -351,6 +365,8 @@ export default function TabelPegawai({ role }) {
               <tr key={`${showDeleted ? 'deleted' : 'active'}-pegawai-${row.id_pegawai || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{row.id_pegawai || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_unit || '-'}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_struktural || '-'}</td>
                 <td className="px-6 py-4 text-slate-600 border border-slate-200">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                     {row.pendidikan_terakhir || '-'}
@@ -362,7 +378,7 @@ export default function TabelPegawai({ role }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const rowId = getIdField(row) ? row[getIdField(row)] : i;
+                          const rowId = getIdField(row) ? row[getIdField(row)] : index;
                           if (openDropdownId !== rowId) {
                             const rect = e.currentTarget.getBoundingClientRect();
                             const dropdownWidth = 192;
@@ -377,7 +393,7 @@ export default function TabelPegawai({ role }) {
                         }}
                         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                         aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : i)}
+                        aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : index)}
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -388,7 +404,7 @@ export default function TabelPegawai({ role }) {
             ))}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
@@ -514,6 +530,38 @@ export default function TabelPegawai({ role }) {
                       <option value="S1">S1</option>
                       <option value="S2">S2</option>
                       <option value="S3">S3</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">Unit Kerja</label>
+                    <select
+                      value={formState.id_unit || ""}
+                      onChange={(e) => setFormState({...formState, id_unit: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                    >
+                      <option value="">Pilih Unit Kerja</option>
+                      {Object.values(maps.units || {}).map(u => (
+                        <option key={u.id_unit} value={u.id_unit}>
+                          {u.nama_unit || u.nama}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">Jabatan Struktural</label>
+                    <select
+                      value={formState.id_jabatan || ""}
+                      onChange={(e) => setFormState({...formState, id_jabatan: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                    >
+                      <option value="">Pilih Jabatan Struktural</option>
+                      {Object.values(maps.ref_jabatan_struktural || {}).map(j => (
+                        <option key={j.id_jabatan} value={j.id_jabatan}>
+                          {j.nama_jabatan}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

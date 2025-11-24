@@ -5,8 +5,8 @@
  LOGIKA FINAL (FIXED):
  1. INPUT: HANYA 'id_pegawai', Periode, Tupoksi.
  2. CREATE: Backend otomatis mencari 'id_unit' milik pegawai tersebut,
-    lalu menyimpannya ke tabel pimpinan (karena DB mewajibkan id_unit).
- 3. OUTPUT: Auto-detect Jabatan Fungsional & Unit Kerja.
+    lalu menyimpannya ke tabel pimpinan (jika kolom id_unit ada di tabel).
+ 3. OUTPUT: Auto-detect Jabatan Fungsional & Unit Kerja dari pegawai dan dosen.
 ============================================================
 */
 
@@ -113,32 +113,41 @@ export const createPimpinanUppsPs = async (req, res) => {
     // 1. Validasi
     if (!id_pegawai) return res.status(400).json({ error: 'Pegawai wajib dipilih.' });
 
-    // 2. [FIX] Ambil id_unit dari tabel Pegawai dulu!
-    //    Karena tabel pimpinan_upps_ps mewajibkan kolom id_unit terisi.
-    const [pegawaiRows] = await pool.query(
-      `SELECT id_unit FROM pegawai WHERE id_pegawai = ?`, 
-      [id_pegawai]
-    );
-
-    if (!pegawaiRows.length) return res.status(404).json({ error: 'Pegawai tidak ditemukan.' });
+    // 2. Cek apakah tabel memiliki kolom id_unit
+    const hasIdUnitColumn = await hasColumn('pimpinan_upps_ps', 'id_unit');
     
-    const idUnitPegawai = pegawaiRows[0].id_unit;
+    // 3. Jika tabel memiliki kolom id_unit, ambil dari pegawai
+    let idUnitPegawai = null;
+    if (hasIdUnitColumn) {
+      const [pegawaiRows] = await pool.query(
+        `SELECT id_unit FROM pegawai WHERE id_pegawai = ?`, 
+        [id_pegawai]
+      );
 
-    // Validasi: Pastikan Pegawai sudah punya Unit Kerja
-    if (!idUnitPegawai) {
-        return res.status(400).json({ 
-            error: 'Pegawai ini belum memiliki Unit Kerja. Silakan atur Unit Kerja di menu "Data Pegawai" terlebih dahulu.' 
-        });
+      if (!pegawaiRows.length) return res.status(404).json({ error: 'Pegawai tidak ditemukan.' });
+      
+      idUnitPegawai = pegawaiRows[0].id_unit;
+
+      // Validasi: Pastikan Pegawai sudah punya Unit Kerja (hanya jika kolom id_unit ada)
+      if (!idUnitPegawai) {
+          return res.status(400).json({ 
+              error: 'Pegawai ini belum memiliki Unit Kerja. Silakan atur Unit Kerja di menu "Data Pegawai" terlebih dahulu.' 
+          });
+      }
     }
 
-    // 3. Siapkan Data Insert
+    // 4. Siapkan Data Insert
     const data = {
-      id_unit: idUnitPegawai, // <-- Ini kuncinya! Kita masukkan unit yang didapat dari pegawai.
       id_pegawai: id_pegawai,
       periode_mulai: periode_mulai,
       periode_selesai: periode_selesai,
       tupoksi: tupoksi
     };
+
+    // Hanya tambahkan id_unit jika kolom ada di tabel
+    if (hasIdUnitColumn && idUnitPegawai) {
+      data.id_unit = idUnitPegawai;
+    }
 
     if (await hasColumn('pimpinan_upps_ps', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
@@ -166,7 +175,13 @@ export const createPimpinanUppsPs = async (req, res) => {
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createPimpinanUppsPs:", err);
-    res.status(500).json({ error: 'Create failed', details: err.message });
+    console.error("SQL Error Details:", err.sqlMessage || err.message);
+    console.error("Full error:", JSON.stringify(err, null, 2));
+    res.status(500).json({ 
+      error: 'Create failed', 
+      details: err.sqlMessage || err.message,
+      sql: err.sql || 'N/A'
+    });
   }
 };
 
@@ -175,10 +190,13 @@ export const updatePimpinanUppsPs = async (req, res) => {
   try {
     const { id_pegawai, periode_mulai, periode_selesai, tupoksi } = req.body;
 
-    // [FIX] Ambil id_unit terbaru dari Pegawai (jika id_pegawai berubah)
+    // Cek apakah tabel memiliki kolom id_unit
+    const hasIdUnitColumn = await hasColumn('pimpinan_upps_ps', 'id_unit');
+    
+    // [FIX] Ambil id_unit terbaru dari Pegawai (jika id_pegawai berubah dan kolom id_unit ada)
     // Agar data di tabel pimpinan tetap sinkron
     let idUnitPegawai = null;
-    if (id_pegawai) {
+    if (hasIdUnitColumn && id_pegawai) {
         const [pegawaiRows] = await pool.query(
             `SELECT id_unit FROM pegawai WHERE id_pegawai = ?`, 
             [id_pegawai]
@@ -195,8 +213,8 @@ export const updatePimpinanUppsPs = async (req, res) => {
       tupoksi
     };
     
-    // Jika unit ditemukan, update juga unitnya di tabel pimpinan
-    if (idUnitPegawai) {
+    // Jika kolom id_unit ada dan unit ditemukan, update juga unitnya di tabel pimpinan
+    if (hasIdUnitColumn && idUnitPegawai) {
         data.id_unit = idUnitPegawai;
     }
 

@@ -269,19 +269,15 @@ export default function Tabel1A1({ role }) {
     }
   }, [showCreateModal, showEditModal]);
 
-  const [newIdUnit, setNewIdUnit] = useState("");
   const [newIdPegawai, setNewIdPegawai] = useState("");
   const [newPeriodeMulai, setNewPeriodeMulai] = useState("");
   const [newPeriodeSelesai, setNewPeriodeSelesai] = useState("");
   const [newTupoksi, setNewTupoksi] = useState("");
-  const [newIdJabatan, setNewIdJabatan] = useState("");
 
-  const [editIdUnit, setEditIdUnit] = useState("");
   const [editIdPegawai, setEditIdPegawai] = useState("");
   const [editPeriodeMulai, setEditPeriodeMulai] = useState("");
   const [editPeriodeSelesai, setEditPeriodeSelesai] = useState("");
   const [editTupoksi, setEditTupoksi] = useState("");
-  const [editIdJabatan, setEditIdJabatan] = useState("");
 
   const canCreate = roleCan(role, table.key, "C");
   const canUpdate = roleCan(role, table.key, "U");
@@ -325,12 +321,10 @@ export default function Tabel1A1({ role }) {
 
   useEffect(() => {
     if (editing) {
-      setEditIdUnit(editing.id_unit ?? "");
       setEditIdPegawai(editing.id_pegawai ?? "");
       setEditPeriodeMulai(editing.periode_mulai?.split('T')[0] ?? "");
       setEditPeriodeSelesai(editing.periode_selesai?.split('T')[0] ?? "");
       setEditTupoksi(editing.tupoksi ?? "");
-      setEditIdJabatan(editing.id_jabatan ?? "");
       setShowEditModal(true);
     }
   }, [editing]);
@@ -413,12 +407,10 @@ export default function Tabel1A1({ role }) {
       try {
         setLoading(true);
         const payload = {
-            id_unit: parseInt(isEdit ? editIdUnit : newIdUnit || 0),
             id_pegawai: parseInt(isEdit ? editIdPegawai : newIdPegawai || 0),
             periode_mulai: isEdit ? editPeriodeMulai : newPeriodeMulai,
             periode_selesai: isEdit ? editPeriodeSelesai : newPeriodeSelesai,
             tupoksi: (isEdit ? editTupoksi : newTupoksi || "").trim(),
-            id_jabatan: parseInt(isEdit ? editIdJabatan : newIdJabatan || 0),
         };
         
         if (isEdit) {
@@ -429,7 +421,7 @@ export default function Tabel1A1({ role }) {
         } else {
             await apiFetch(table.path, { method: "POST", body: JSON.stringify(payload) });
             setShowCreateModal(false);
-            setNewIdUnit(""); setNewIdPegawai(""); setNewPeriodeMulai(""); setNewPeriodeSelesai(""); setNewTupoksi(""); setNewIdJabatan("");
+            setNewIdPegawai(""); setNewPeriodeMulai(""); setNewPeriodeSelesai(""); setNewTupoksi("");
         }
 
         fetchRows();
@@ -455,14 +447,8 @@ export default function Tabel1A1({ role }) {
       <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                  <label htmlFor="id_unit" className="block text-sm font-semibold text-gray-700">Unit Kerja <span className="text-red-500">*</span></label>
-                  <select id="id_unit" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdUnit : newIdUnit} onChange={(e)=> isEdit ? setEditIdUnit(e.target.value) : setNewIdUnit(e.target.value)} required>
-                      <option value="">Pilih...</option>
-                      {Object.values(maps.units).map(u=> <option key={u.id_unit} value={u.id_unit}>{u.nama_unit || u.nama}</option>)}
-                  </select>
-              </div>
-              <div className="space-y-2">
                   <label htmlFor="id_pegawai" className="block text-sm font-semibold text-gray-700">Nama Pegawai <span className="text-red-500">*</span></label>
+                  <p className="text-xs text-gray-500 mb-1">Unit Kerja dan Jabatan Fungsional akan otomatis diambil dari data pegawai.</p>
                   <select id="id_pegawai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdPegawai : newIdPegawai} onChange={(e)=> isEdit ? setEditIdPegawai(e.target.value) : setNewIdPegawai(e.target.value)} required>
                       <option value="">Pilih...</option>
                       {Object.values(maps.pegawai).map(p=> <option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_lengkap || p.nama}</option>)}
@@ -475,14 +461,6 @@ export default function Tabel1A1({ role }) {
               <div className="space-y-2">
                   <label htmlFor="periode_selesai" className="block text-sm font-semibold text-gray-700">Periode Selesai <span className="text-red-500">*</span></label>
                   <input type="date" id="periode_selesai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editPeriodeSelesai : newPeriodeSelesai} onChange={(e)=> isEdit ? setEditPeriodeSelesai(e.target.value) : setNewPeriodeSelesai(e.target.value)} required/>
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                  <label htmlFor="id_jabatan" className="block text-sm font-semibold text-gray-700">Jabatan Struktural <span className="text-red-500">*</span></label>
-                  <p className="text-xs text-gray-500 mb-1">Jabatan yang diemban saat ini (Contoh: Ketua Prodi, Dekan).</p>
-                  <select id="id_jabatan" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdJabatan : newIdJabatan} onChange={(e)=> isEdit ? setEditIdJabatan(e.target.value) : setNewIdJabatan(e.target.value)} required>
-                      <option value="">Pilih...</option>
-                      {Object.values(maps.ref_jabatan_struktural).map(j=> <option key={j.id_jabatan} value={j.id_jabatan}>{j.nama_jabatan}</option>)}
-                  </select>
               </div>
               <div className="space-y-2 md:col-span-2">
                   <label htmlFor="tupoksi" className="block text-sm font-semibold text-gray-700">Tupoksi <span className="text-red-500">*</span></label>
