@@ -12,7 +12,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
 
 // // --- MOCKS FOR PREVIEW (DELETE THIS BLOCK IN YOUR PROJECT) ---
 // import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, RotateCw, XCircle, MoreVertical } from 'lucide-react';
@@ -448,7 +448,6 @@ export default function Tabel1A1({ role }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                   <label htmlFor="id_pegawai" className="block text-sm font-semibold text-gray-700">Nama Pegawai <span className="text-red-500">*</span></label>
-                  <p className="text-xs text-gray-500 mb-1">Unit Kerja dan Jabatan Fungsional akan otomatis diambil dari data pegawai.</p>
                   <select id="id_pegawai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdPegawai : newIdPegawai} onChange={(e)=> isEdit ? setEditIdPegawai(e.target.value) : setNewIdPegawai(e.target.value)} required>
                       <option value="">Pilih...</option>
                       {Object.values(maps.pegawai).map(p=> <option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_lengkap || p.nama}</option>)}
@@ -461,6 +460,10 @@ export default function Tabel1A1({ role }) {
               <div className="space-y-2">
                   <label htmlFor="periode_selesai" className="block text-sm font-semibold text-gray-700">Periode Selesai <span className="text-red-500">*</span></label>
                   <input type="date" id="periode_selesai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editPeriodeSelesai : newPeriodeSelesai} onChange={(e)=> isEdit ? setEditPeriodeSelesai(e.target.value) : setNewPeriodeSelesai(e.target.value)} required/>
+                  <div className="flex items-start gap-2 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <FiAlertCircle className="text-blue-600 mt-0.5 flex-shrink-0" size={16} />
+                      <p className="text-xs text-blue-700">Unit Kerja dan Jabatan Fungsional akan otomatis diambil dari data pegawai.</p>
+                  </div>
               </div>
               <div className="space-y-2 md:col-span-2">
                   <label htmlFor="tupoksi" className="block text-sm font-semibold text-gray-700">Tupoksi <span className="text-red-500">*</span></label>
