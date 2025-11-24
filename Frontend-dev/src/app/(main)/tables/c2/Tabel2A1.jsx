@@ -149,16 +149,16 @@ export default function Tabel2A1({ role }) {
       const unitProdi = selectedUnitProdi || '4';
       params.append("id_unit_prodi", unitProdi);
       
-      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
+      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
         
         if (currentYearIndex !== -1) {
-          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3
+          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3, TS-4
           const yearIds = [];
-          for (let i = 0; i <= 3; i++) {
+          for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex >= 0 && yearIndex < tahunList.length) {
               yearIds.push(tahunList[yearIndex].id_tahun);
@@ -214,16 +214,16 @@ export default function Tabel2A1({ role }) {
       const unitProdi = selectedUnitProdi || '4';
       params.append("id_unit_prodi", unitProdi);
       
-      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3
+      // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
         
         if (currentYearIndex !== -1) {
-          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3
+          // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3, TS-4
           const yearIds = [];
-          for (let i = 0; i <= 3; i++) {
+          for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex >= 0 && yearIndex < tahunList.length) {
               yearIds.push(tahunList[yearIndex].id_tahun);
@@ -278,7 +278,7 @@ export default function Tabel2A1({ role }) {
 
   useEffect(() => { setRowsGabungan(combineRows(rowsPend, rowsMaba)); }, [rowsPend, rowsMaba]);
 
-  // Fungsi untuk memproses data menjadi format TS-3, TS-2, TS-1, TS
+  // Fungsi untuk memproses data menjadi format TS-4, TS-3, TS-2, TS-1, TS
   const processDataForTable = (unitProdiId) => {
     if (!selectedYear || !maps?.tahun) return [];
 
@@ -290,8 +290,8 @@ export default function Tabel2A1({ role }) {
 
     const result = [];
     
-    // TS, TS-1, TS-2, TS-3
-    for (let i = 0; i <= 3; i++) {
+    // TS, TS-1, TS-2, TS-3, TS-4
+    for (let i = 0; i <= 4; i++) {
       const yearIndex = currentYearIndex - i;
       if (yearIndex < 0 || yearIndex >= tahunList.length) {
         result.push({
@@ -821,8 +821,8 @@ export default function Tabel2A1({ role }) {
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
       
       if (currentYearIndex !== -1) {
-        // TS, TS-1, TS-2, TS-3
-        for (let i = 0; i <= 3; i++) {
+        // TS, TS-1, TS-2, TS-3, TS-4
+        for (let i = 0; i <= 4; i++) {
           const yearIndex = currentYearIndex - i;
           if (yearIndex < 0 || yearIndex >= tahunList.length) {
             displayRows.push({
@@ -1042,8 +1042,8 @@ export default function Tabel2A1({ role }) {
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
       
       if (currentYearIndex !== -1) {
-        // TS, TS-1, TS-2, TS-3
-        for (let i = 0; i <= 3; i++) {
+        // TS, TS-1, TS-2, TS-3, TS-4
+        for (let i = 0; i <= 4; i++) {
           const yearIndex = currentYearIndex - i;
           if (yearIndex < 0 || yearIndex >= tahunList.length) {
             displayRows.push({
@@ -1959,7 +1959,7 @@ export default function Tabel2A1({ role }) {
           <h1 className="text-2xl font-bold text-slate-800">Tabel 2.A.1 Data Mahasiswa</h1>
           <div className="flex justify-between items-center mt-1">
             <p className="text-sm text-slate-500">
-              Data lengkap mahasiswa berdasarkan tahun akademik (TS-3, TS-2, TS-1, TS).
+              Data lengkap mahasiswa berdasarkan tahun akademik (TS-4, TS-3, TS-2, TS-1, TS).
             </p>
             {!loading && (() => {
               const unitProdiId = parseInt(selectedUnitProdi) || 4;
