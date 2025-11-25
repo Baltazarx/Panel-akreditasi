@@ -147,10 +147,14 @@ export const createMataKuliah = async (req, res) => {
   }
 };
 
-// === UPDATE MK (CATATAN: Fungsi ini hanya mengupdate data MK, bukan CPMK-nya) ===
+// === UPDATE MK + CPMK SEKALIGUS ===
 export const updateMataKuliah = async (req, res) => {
+  const conn = await pool.getConnection();
   try {
-    const data = {
+    await conn.beginTransaction();
+
+    // Update data mata kuliah
+    const dataMK = {
       id_unit_prodi: req.body.id_unit_prodi,
       kode_mk: req.body.kode_mk,
       nama_mk: req.body.nama_mk,
@@ -158,24 +162,70 @@ export const updateMataKuliah = async (req, res) => {
       semester: req.body.semester,
     };
     
-    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+    Object.keys(dataMK).forEach(key => dataMK[key] === undefined && delete dataMK[key]);
 
     if (await hasColumn('mata_kuliah', 'updated_by') && req.user?.id_user) {
-      data.updated_by = req.user.id_user;
+      dataMK.updated_by = req.user.id_user;
     }
 
-    await pool.query(`UPDATE mata_kuliah SET ? WHERE id_mk=?`, [data, req.params.id]);
+    await conn.query(`UPDATE mata_kuliah SET ? WHERE id_mk=?`, [dataMK, req.params.id]);
 
-    const [row] = await pool.query(
+    // === UPDATE CPMK ===
+    const cpmkList = req.body.cpmk || [];
+    
+    // Hapus semua CPMK yang terhubung dengan MK ini dulu
+    await conn.query(`DELETE c FROM cpmk c JOIN map_cpmk_mk m ON c.id_cpmk = m.id_cpmk WHERE m.id_mk = ?`, [req.params.id]);
+    
+    // Insert ulang CPMK yang baru
+    for (const cpmk of cpmkList) {
+      if (!cpmk.kode_cpmk || !cpmk.deskripsi) {
+        continue; // Skip CPMK kosong
+      }
+      
+      const dataCpmk = {
+        id_unit_prodi: dataMK.id_unit_prodi,
+        kode_cpmk: cpmk.kode_cpmk,
+        deskripsi_cpmk: cpmk.deskripsi,
+      };
+
+      if (await hasColumn('cpmk', 'created_by') && req.user?.id_user) {
+        dataCpmk.created_by = req.user.id_user;
+      }
+
+      const [cpmkRes] = await conn.query(`INSERT INTO cpmk SET ?`, [dataCpmk]);
+      const cpmkId = cpmkRes.insertId;
+
+      // Hubungkan CPMK yang baru dibuat dengan MK-nya
+      await conn.query(
+        `INSERT INTO map_cpmk_mk (id_cpmk, id_mk) VALUES (?, ?)`,
+        [cpmkId, req.params.id]
+      );
+    }
+
+    await conn.commit();
+
+    // Ambil data lengkap yang baru diupdate
+    const [mkRow] = await pool.query(
       `SELECT mk.*, uk.nama_unit AS nama_unit_prodi 
        FROM mata_kuliah mk LEFT JOIN unit_kerja uk ON mk.id_unit_prodi = uk.id_unit 
        WHERE mk.id_mk=?`,
       [req.params.id]
     );
-    res.json(row[0]);
+    const [cpmkRows] = await pool.query(
+      `SELECT c.* FROM cpmk c JOIN map_cpmk_mk map ON c.id_cpmk = map.id_cpmk WHERE map.id_mk=?`,
+      [req.params.id]
+    );
+
+    res.json({
+      ...mkRow[0],
+      cpmk_list: cpmkRows
+    });
   } catch (err) {
+    await conn.rollback();
     console.error("Error updateMataKuliah:", err);
-    res.status(500).json({ error: 'Update failed' });
+    res.status(500).json({ error: 'Update failed', details: err.sqlMessage || err.message });
+  } finally {
+    conn.release();
   }
 };
 

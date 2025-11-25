@@ -688,7 +688,7 @@ export default function Tabel1A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.pendidikan_terakhir || ""}</td>
                   
                   {/* [UBAH]: Tampilkan Jabatan Fungsional (Auto-Detect dari Backend) */}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium text-[#0384d6]">
+                  <td className="px-6 py-4 border border-slate-200 font-medium text-[#0384d6]">
                       {r.jabatan_fungsional || "-"}
                   </td>
 

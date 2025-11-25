@@ -25,6 +25,7 @@ export function useMaps(authUser = true) {
     audit_mutu_internal: {},
     ref_jabatan_struktural: {},
     ref_jabatan_fungsional: {},
+    mata_kuliah: {},
   });
   const [ready, setReady] = useState(false);
   const mounted = useRef(true);
@@ -77,6 +78,7 @@ export function useMaps(authUser = true) {
           refJabFungsional,
           tendik,
           ami,
+          mataKuliah,
         ] = await Promise.all([
           safeFetch("/unit-kerja"),
           safeFetch("/pegawai"),
@@ -85,6 +87,7 @@ export function useMaps(authUser = true) {
           safeFetch("/ref-jabatan-fungsional"), // <-- ini yang bikin dropdown JAFUNG muncul
           safeFetch("/tendik"),
           safeFetch("/audit-mutu-internal"),
+          safeFetch("/mata-kuliah"),
         ]);
 
         const toMap = (arr, keys) =>
@@ -106,6 +109,7 @@ export function useMaps(authUser = true) {
           audit_mutu_internal: toMap(ami, ["id_audit_mutu", "id_ami", "id_audit"]),
           ref_jabatan_struktural: toMap(refJabStruktural, "id_jabatan"),
           ref_jabatan_fungsional: toMap(refJabFungsional, "id_jafung"),
+          mata_kuliah: toMap(mataKuliah, "id_mk"),
         };
 
         if (mounted.current) {

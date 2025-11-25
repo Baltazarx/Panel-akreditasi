@@ -227,6 +227,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
 
   useEffect(() => {
     if (editing) {
+      // Debug: Log data editing untuk memastikan CPMK terambil
+      console.log('Editing data:', editing);
+      console.log('CPMK list:', editing.cpmk_list);
+      
       // Saat mengedit, ambil data CPMK yang ada
       const existingCpmk = editing.cpmk_list 
         ? editing.cpmk_list.map(c => ({
@@ -234,6 +238,8 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
             deskripsi: c.deskripsi_cpmk || "" // Map dari 'deskripsi_cpmk' (DB) ke 'deskripsi' (Form)
           })) 
         : [{ kode_cpmk: "", deskripsi: "" }];
+        
+      console.log('Processed CPMK for form:', existingCpmk);
         
       setFormState({
         kode_mk: editing.kode_mk || "",
@@ -374,11 +380,29 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           >
             {canUpdate && (
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  setEditing(currentRow);
-                  setShowModal(true);
-                  setOpenDropdownId(null);
+                  // Ambil data lengkap mata kuliah beserta CPMK
+                  const button = e.currentTarget;
+                  const originalContent = button.innerHTML;
+                  
+                  try {
+                    // Tampilkan loading state
+                    button.innerHTML = '<span class="flex items-center gap-2.5"><span class="animate-spin">⏳</span> Memuat...</span>';
+                    button.disabled = true;
+                    
+                    const mkDetail = await apiFetch(`/mata-kuliah/${currentRow.id_mk}`);
+                    setEditing(mkDetail);
+                    setShowModal(true);
+                    setOpenDropdownId(null);
+                  } catch (err) {
+                    console.error("Error fetching mata kuliah detail:", err);
+                    Swal.fire('Error', 'Gagal mengambil data mata kuliah', 'error');
+                  } finally {
+                    // Kembalikan tombol ke state semula
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                  }
                 }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
                 aria-label={`Edit data ${currentRow.kode_mk}`}
