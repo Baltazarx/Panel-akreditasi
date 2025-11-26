@@ -173,12 +173,11 @@ export default function Header() {
     }
   }, []);
 
-  // Show header on all pages including tables page
-  // const isTablesPage = pathname === '/tables';
-  
-  // if (isTablesPage) {
-  //   return null; // Hide header completely on tables page
-  // }
+  // Check if current page is tables page - header tidak sticky di halaman tabel
+  const isTablesPage = pathname === '/tables';
+  // Header akan sticky di semua halaman (termasuk home) kecuali di halaman tabel
+  // Di home (pathname === '/'), header harus sticky
+  const shouldBeSticky = !isTablesPage;
   
   return (
     <>
@@ -186,7 +185,10 @@ export default function Header() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] bg-white text-[#043975] px-3 py-2 rounded-md shadow">
         Skip to content
       </a>
-      <header className={`sticky top-0 z-40 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''}`}>
+      <header 
+        className={`${shouldBeSticky ? 'sticky top-0' : ''} z-40 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''}`}
+        style={shouldBeSticky ? { position: 'sticky', top: 0 } : {}}
+      >
         <div className="w-full max-w-7xl mx-auto h-20 px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-3 items-center gap-6">
           {/* Kiri: Logo */}
           <div className="flex items-center gap-4">
