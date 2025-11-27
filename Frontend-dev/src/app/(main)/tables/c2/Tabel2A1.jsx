@@ -42,37 +42,42 @@ export default function Tabel2A1({ role }) {
   const [openDropdownIdPend, setOpenDropdownIdPend] = useState(null);
   const [openDropdownIdMaba, setOpenDropdownIdMaba] = useState(null);
   const [openDropdownIdGabungan, setOpenDropdownIdGabungan] = useState(null);
+  // State untuk 4 dropdown aksi di tabel Maba (baru-reguler, baru-rpl, aktif-reguler, aktif-rpl)
+  const [openDropdownMaba, setOpenDropdownMaba] = useState(null); // Format: "baru-reguler-{id}" atau "baru-rpl-{id}" atau "aktif-reguler-{id}" atau "aktif-rpl-{id}"
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if ((openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) && 
+      if ((openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) && 
           !event.target.closest('.dropdown-container') && 
           !event.target.closest('.fixed')) {
         setOpenDropdownIdPend(null);
         setOpenDropdownIdMaba(null);
         setOpenDropdownIdGabungan(null);
+        setOpenDropdownMaba(null);
       }
     };
 
     const handleScroll = () => {
-      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) {
         setOpenDropdownIdPend(null);
         setOpenDropdownIdMaba(null);
         setOpenDropdownIdGabungan(null);
+        setOpenDropdownMaba(null);
       }
     };
 
     const handleResize = () => {
-      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+      if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) {
         setOpenDropdownIdPend(null);
         setOpenDropdownIdMaba(null);
         setOpenDropdownIdGabungan(null);
+        setOpenDropdownMaba(null);
       }
     };
 
-    if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan) {
+    if (openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) {
       document.addEventListener('mousedown', handleClickOutside);
       window.addEventListener('scroll', handleScroll, true);
       window.addEventListener('resize', handleResize);
@@ -82,7 +87,7 @@ export default function Tabel2A1({ role }) {
         window.removeEventListener('resize', handleResize);
       };
     }
-  }, [openDropdownIdPend, openDropdownIdMaba, openDropdownIdGabungan]);
+  }, [openDropdownIdPend, openDropdownIdMaba, openDropdownIdGabungan, openDropdownMaba]);
 
   // Close dropdown when modal opens
   useEffect(() => {
@@ -90,6 +95,7 @@ export default function Tabel2A1({ role }) {
       setOpenDropdownIdPend(null);
       setOpenDropdownIdMaba(null);
       setOpenDropdownIdGabungan(null);
+      setOpenDropdownMaba(null);
     }
   }, [showModalPend, showModalMaba]);
 
@@ -1202,37 +1208,34 @@ export default function Tabel2A1({ role }) {
               <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 TS
               </th>
-              <th colSpan={6} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 JUMLAH MAHASISWA BARU
               </th>
-              <th colSpan={6} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 JUMLAH MAHASISWA AKTIF
-              </th>
-              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
               </th>
             </tr>
             {/* Row 2: Sub-header */}
             <tr className="sticky top-0">
-              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+              {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
               {/* Di bawah "Jumlah Mahasiswa Baru" */}
-              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 REGULER
               </th>
-              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 RPL
               </th>
               {/* Di bawah "Jumlah Mahasiswa Aktif" */}
-              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 REGULER
               </th>
-              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 RPL
               </th>
             </tr>
             {/* Row 3: Header detail */}
             <tr className="sticky top-0">
-              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+              {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
               {/* Di bawah "Reguler" (Mahasiswa Baru) */}
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 DITERIMA
@@ -1242,6 +1245,9 @@ export default function Tabel2A1({ role }) {
               </th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 KEBUTUHAN KHUSUS
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
               </th>
               {/* Di bawah "RPL" (Mahasiswa Baru) */}
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
@@ -1253,6 +1259,9 @@ export default function Tabel2A1({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 KEBUTUHAN KHUSUS
               </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
+              </th>
               {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 DITERIMA
@@ -1263,6 +1272,9 @@ export default function Tabel2A1({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 KEBUTUHAN KHUSUS
               </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
+              </th>
               {/* Di bawah "RPL" (Mahasiswa Aktif) */}
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 DITERIMA
@@ -1272,6 +1284,9 @@ export default function Tabel2A1({ role }) {
               </th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 KEBUTUHAN KHUSUS
+              </th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                AKSI
               </th>
             </tr>
           </thead>
@@ -1324,6 +1339,40 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.baruRegulerKebutuhanKhusus || '-'}
                   </td>
+                  {/* Aksi Mahasiswa Baru - Reguler */}
+                  <td className="px-6 py-4 border border-slate-200">
+                    {(() => {
+                      const baruRegulerData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+                      if (!baruRegulerData || baruRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                      const rowId = getIdField(baruRegulerData) ? baruRegulerData[getIdField(baruRegulerData)] : null;
+                      const dropdownKey = `baru-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                      return (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownMaba !== dropdownKey) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownMaba(dropdownKey);
+                              } else {
+                                setOpenDropdownMaba(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi Mahasiswa Baru Reguler"
+                            aria-expanded={openDropdownMaba === dropdownKey}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </td>
                   {/* Mahasiswa Baru - RPL */}
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.baruRPLDiterima || '-'}
@@ -1333,6 +1382,40 @@ export default function Tabel2A1({ role }) {
                   </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.baruRPLKebutuhanKhusus || '-'}
+                  </td>
+                  {/* Aksi Mahasiswa Baru - RPL */}
+                  <td className="px-6 py-4 border border-slate-200">
+                    {(() => {
+                      const baruRPLData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+                      if (!baruRPLData || baruRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                      const rowId = getIdField(baruRPLData) ? baruRPLData[getIdField(baruRPLData)] : null;
+                      const dropdownKey = `baru-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                      return (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownMaba !== dropdownKey) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownMaba(dropdownKey);
+                              } else {
+                                setOpenDropdownMaba(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi Mahasiswa Baru RPL"
+                            aria-expanded={openDropdownMaba === dropdownKey}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </td>
                   {/* Mahasiswa Aktif - Reguler */}
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
@@ -1344,6 +1427,40 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.aktifRegulerKebutuhanKhusus || '-'}
                   </td>
+                  {/* Aksi Mahasiswa Aktif - Reguler */}
+                  <td className="px-6 py-4 border border-slate-200">
+                    {(() => {
+                      const aktifRegulerData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+                      if (!aktifRegulerData || aktifRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                      const rowId = getIdField(aktifRegulerData) ? aktifRegulerData[getIdField(aktifRegulerData)] : null;
+                      const dropdownKey = `aktif-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                      return (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownMaba !== dropdownKey) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownMaba(dropdownKey);
+                              } else {
+                                setOpenDropdownMaba(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi Mahasiswa Aktif Reguler"
+                            aria-expanded={openDropdownMaba === dropdownKey}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </td>
                   {/* Mahasiswa Aktif - RPL */}
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.aktifRPLDiterima || '-'}
@@ -1354,47 +1471,46 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.aktifRPLKebutuhanKhusus || '-'}
                   </td>
+                  {/* Aksi Mahasiswa Aktif - RPL */}
                   <td className="px-6 py-4 border border-slate-200">
-                    {row.rowData && row.rowData.length > 0 && !row.rowData[0]?.deleted_at && (
-                      <div className="flex items-center justify-center dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const firstData = row.rowData[0];
-                            const rowId = getIdField(firstData) ? firstData[getIdField(firstData)] : idx;
-                            if (openDropdownIdMaba !== rowId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const dropdownWidth = 192;
-                              setDropdownPosition({
-                                top: rect.bottom + 4,
-                                left: Math.max(8, rect.right - dropdownWidth)
-                              });
-                              setOpenDropdownIdMaba(rowId);
-                            } else {
-                              setOpenDropdownIdMaba(null);
-                            }
-                          }}
-                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                          aria-label="Menu aksi"
-                          aria-expanded={openDropdownIdMaba === (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : idx)}
-                        >
-                          <FiMoreVertical size={18} />
-                        </button>
-                      </div>
-                    )}
-                    {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
-                      <div className="text-center italic text-red-600">Dihapus</div>
-                    )}
-                    {(!row.rowData || row.rowData.length === 0) && (
-                      <span className="text-center text-slate-400">-</span>
-                    )}
+                    {(() => {
+                      const aktifRPLData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+                      if (!aktifRPLData || aktifRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                      const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
+                      const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                      return (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownMaba !== dropdownKey) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownMaba(dropdownKey);
+                              } else {
+                                setOpenDropdownMaba(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi Mahasiswa Aktif RPL"
+                            aria-expanded={openDropdownMaba === dropdownKey}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               );
             })}
             {displayRows.length === 0 && (
               <tr>
-                <td colSpan={showDeleted ? 16 : 15} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={showDeleted ? 19 : 18} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
@@ -1786,12 +1902,21 @@ export default function Tabel2A1({ role }) {
           {renderTableMaba()}
         </div>
 
-        {/* Dropdown Menu Maba - Fixed Position */}
-        {openDropdownIdMaba !== null && (() => {
-          // Cari row yang sesuai dengan openDropdownIdMaba dari rowsMaba langsung
+        {/* Dropdown Menu Maba - Fixed Position (untuk 4 kolom aksi terpisah) */}
+        {openDropdownMaba !== null && (() => {
+          // Parse dropdown key: format "baru-reguler-{id}" atau "baru-rpl-{id}" atau "aktif-reguler-{id}" atau "aktif-rpl-{id}"
+          const match = openDropdownMaba.match(/^(baru|aktif)-(reguler|rpl)-(.+)$/);
+          if (!match) return null;
+          
+          const jenis = match[1]; // "baru" atau "aktif"
+          const jalur = match[2]; // "reguler" atau "rpl"
+          const idStr = match[3]; // ID
+          const rowId = isNaN(idStr) ? idStr : parseInt(idStr);
+          
+          // Cari data yang sesuai dari rowsMaba
           const currentRowData = rowsMaba.find((r) => {
-            const rowId = getIdField(r) ? r[getIdField(r)] : null;
-            return rowId === openDropdownIdMaba;
+            const rId = getIdField(r) ? r[getIdField(r)] : null;
+            return r.jenis === jenis && r.jalur === jalur && (rId === rowId || String(rId) === String(rowId) || String(rId) === idStr);
           });
           
           if (!currentRowData) return null;
@@ -1811,10 +1936,10 @@ export default function Tabel2A1({ role }) {
                     setEditingMaba(currentRowData);
                     setFormMaba(currentRowData);
                     setShowModalMaba(true);
-                    setOpenDropdownIdMaba(null);
+                    setOpenDropdownMaba(null);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                  aria-label={`Edit data mahasiswa baru & aktif`}
+                  aria-label={`Edit data ${jenis} ${jalur}`}
                 >
                   <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
                   <span>Edit</span>
@@ -1825,10 +1950,10 @@ export default function Tabel2A1({ role }) {
                   onClick={(e) => {
                     e.stopPropagation();
                     doDelete(currentRowData, tableMaba);
-                    setOpenDropdownIdMaba(null);
+                    setOpenDropdownMaba(null);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                  aria-label={`Hapus data mahasiswa baru & aktif`}
+                  aria-label={`Hapus data ${jenis} ${jalur}`}
                 >
                   <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
                   <span>Hapus</span>
@@ -1839,10 +1964,10 @@ export default function Tabel2A1({ role }) {
                   onClick={(e) => {
                     e.stopPropagation();
                     doRestore(currentRowData, tableMaba);
-                    setOpenDropdownIdMaba(null);
+                    setOpenDropdownMaba(null);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
-                  aria-label={`Pulihkan data mahasiswa baru & aktif`}
+                  aria-label={`Pulihkan data ${jenis} ${jalur}`}
                 >
                   <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
                   <span>Pulihkan</span>
@@ -1853,10 +1978,10 @@ export default function Tabel2A1({ role }) {
                   onClick={(e) => {
                     e.stopPropagation();
                     doHardDelete(currentRowData, tableMaba);
-                    setOpenDropdownIdMaba(null);
+                    setOpenDropdownMaba(null);
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                  aria-label={`Hapus permanen data mahasiswa baru & aktif`}
+                  aria-label={`Hapus permanen data ${jenis} ${jalur}`}
                 >
                   <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
                   <span>Hapus Permanen</span>
