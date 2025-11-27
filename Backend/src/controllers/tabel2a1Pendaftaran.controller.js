@@ -64,11 +64,30 @@ export const createPendaftaran = async (req, res) => {
       pendaftar_afirmasi: req.body.pendaftar_afirmasi || 0,
       pendaftar_kebutuhan_khusus: req.body.pendaftar_kebutuhan_khusus || 0
     };
+    
+    // Validasi field wajib
+    if (!data.id_unit_prodi || !data.id_tahun) {
+      return res.status(400).json({ error: "id_unit_prodi dan id_tahun wajib diisi" });
+    }
+    
     const [r] = await pool.query(`INSERT INTO tabel_2a1_pendaftaran SET ?`, [data]);
     const [row] = await pool.query(`SELECT * FROM tabel_2a1_pendaftaran WHERE id = ?`, [r.insertId]);
     res.status(201).json(row[0]);
   } catch (err) {
-    res.status(500).json({ error: "Create failed" });
+    console.error("createPendaftaran error:", err);
+    // Cek apakah error karena duplicate key
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ 
+        error: "Data dengan kombinasi unit prodi dan tahun yang sama sudah ada" 
+      });
+    }
+    // Cek apakah error karena foreign key constraint
+    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({ 
+        error: "Unit prodi atau tahun akademik tidak valid" 
+      });
+    }
+    res.status(500).json({ error: "Create failed", details: err.message });
   }
 };
 

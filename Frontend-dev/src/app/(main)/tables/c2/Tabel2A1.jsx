@@ -695,38 +695,68 @@ export default function Tabel2A1({ role }) {
   const submitPend = async (e) => {
     e.preventDefault();
     try {
+      // Validasi field wajib
+      const unitProdiId = Number(formPend.id_unit_prodi || selectedUnitProdi || 0);
+      const tahunId = Number(formPend.id_tahun);
+
+      if (!unitProdiId || !tahunId) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validasi Gagal',
+          text: 'Unit prodi dan tahun wajib dipilih.'
+        });
+        return;
+      }
+
       const dayaTampungNum = Number(formPend.daya_tampung || 0);
       const pendaftarNum = Number(formPend.pendaftar || 0);
       const afirmasiNum = Number(formPend.pendaftar_afirmasi || 0);
       const kebutuhanKhususNum = Number(formPend.pendaftar_kebutuhan_khusus || 0);
 
-      if (dayaTampungNum > 0 && pendaftarNum > dayaTampungNum) {
+      // Validasi: Total 3 kategori (pendaftar + afirmasi + kebutuhan khusus) tidak boleh melebihi daya tampung
+      const totalPendaftar = pendaftarNum + afirmasiNum + kebutuhanKhususNum;
+      
+      if (dayaTampungNum > 0 && totalPendaftar > dayaTampungNum) {
         Swal.fire({
           icon: 'warning',
           title: 'Validasi Gagal',
-          text: 'Jumlah calon mahasiswa tidak boleh melebihi daya tampung.'
+          html: `
+            Total jumlah calon mahasiswa (${totalPendaftar}) tidak boleh melebihi daya tampung (${dayaTampungNum}).<br/>
+            <small>Rincian: Pendaftar (${pendaftarNum}) + Afirmasi (${afirmasiNum}) + Kebutuhan Khusus (${kebutuhanKhususNum}) = ${totalPendaftar}</small>
+          `
         });
         return;
       }
 
-      if (afirmasiNum + kebutuhanKhususNum > pendaftarNum) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Validasi Gagal',
-          text: 'Total pendaftar afirmasi dan kebutuhan khusus tidak boleh melebihi jumlah calon mahasiswa.'
-        });
-        return;
+      // Cek duplikat: tidak boleh ada data dengan kombinasi id_unit_prodi dan id_tahun yang sama
+      if (!editingPend) {
+        const existingRow = rowsPend.find(row =>
+          row.id_unit_prodi === unitProdiId &&
+          row.id_tahun === tahunId &&
+          !row.deleted_at
+        );
+        
+        if (existingRow) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Data Sudah Ada',
+            text: 'Data dengan kombinasi unit prodi dan tahun yang sama sudah ada. Silakan edit data yang sudah ada atau pilih kombinasi yang berbeda.'
+          });
+          return;
+        }
       }
 
       setLoading(true);
       const target = editingPend ? `${tablePend.path}/${editingPend[getIdField(editingPend)]}` : tablePend.path;
       const method = editingPend ? "PUT" : "POST";
+      // Hanya kirim field yang diharapkan backend dengan format yang benar
       const body = {
-        ...formPend,
-        created_by: "Unknown User",
-        created_at: new Date().toISOString(),
-        updated_by: "Unknown User",
-        updated_at: new Date().toISOString()
+        id_unit_prodi: unitProdiId,
+        id_tahun: tahunId,
+        daya_tampung: dayaTampungNum,
+        pendaftar: pendaftarNum,
+        pendaftar_afirmasi: afirmasiNum,
+        pendaftar_kebutuhan_khusus: kebutuhanKhususNum
       };
       console.log('Submitting Pendaftaran:', { target, method, body });
       console.log('Unit Prodi value:', formPend.id_unit_prodi);
@@ -747,10 +777,31 @@ export default function Tabel2A1({ role }) {
         showConfirmButton: false 
       });
     } catch (e) {
+      console.error('Error submitting Pendaftaran:', e);
+      let errorMessage = e.message || 'Terjadi kesalahan saat menyimpan data';
+      
+      // Handle specific error messages from backend
+      if (e.response) {
+        const responseError = typeof e.response === 'string' ? JSON.parse(e.response) : e.response;
+        if (responseError?.error) {
+          errorMessage = responseError.error;
+        }
+      }
+      
+      // Handle HTTP status codes
+      if (e.status === 409) {
+        errorMessage = 'Data dengan kombinasi unit prodi dan tahun yang sama sudah ada';
+      } else if (e.status === 400) {
+        errorMessage = errorMessage || 'Data yang dikirim tidak valid';
+      } else if (e.status === 500) {
+        errorMessage = errorMessage || 'Terjadi kesalahan di server. Silakan coba lagi.';
+      }
+      
       Swal.fire({ 
         icon: 'error', 
         title: editingPend ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data', 
-        text: e.message 
+        text: errorMessage,
+        footer: e.status ? `Error ${e.status}` : ''
       });
     } finally {
       setLoading(false);
@@ -762,6 +813,7 @@ export default function Tabel2A1({ role }) {
     try {
       const unitProdiId = Number(formMaba.id_unit_prodi || selectedUnitProdi || 0);
       const tahunId = Number(formMaba.id_tahun);
+      const jenisMaba = formMaba.jenis || 'baru';
 
       if (!unitProdiId || !tahunId) {
         Swal.fire({
@@ -772,53 +824,57 @@ export default function Tabel2A1({ role }) {
         return;
       }
 
-      const pendRow = rowsPend.find(row =>
-        row.id_unit_prodi === unitProdiId &&
-        row.id_tahun === tahunId &&
-        !row.deleted_at
-      );
-
-      const pendaftarLimit = Number(pendRow?.pendaftar || 0);
-
-      if (!pendRow || pendaftarLimit <= 0) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Data Pendaftaran Tidak Ditemukan',
-          text: 'Silakan lengkapi data pendaftaran (Jumlah Calon Mahasiswa) terlebih dahulu.'
-        });
-        return;
-      }
-
-      const newContribution =
-        Number(formMaba.jumlah_total || 0) +
-        Number(formMaba.jumlah_afirmasi || 0) +
-        Number(formMaba.jumlah_kebutuhan_khusus || 0);
-
-      const existingContribution = rowsMaba
-        .filter(row =>
+      // Validasi hanya untuk mahasiswa baru, tidak untuk mahasiswa aktif
+      if (jenisMaba === 'baru') {
+        const pendRow = rowsPend.find(row =>
           row.id_unit_prodi === unitProdiId &&
           row.id_tahun === tahunId &&
-          row.jenis === 'baru' &&
-          !row.deleted_at &&
-          (!editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)])
-        )
-        .reduce((sum, row) => {
-          const base = Number(row.jumlah_total || 0);
-          const afirm = Number(row.jumlah_afirmasi || 0);
-          const khusus = Number(row.jumlah_kebutuhan_khusus || 0);
-          return sum + base + afirm + khusus;
-        }, 0);
+          !row.deleted_at
+        );
 
-      if (existingContribution + newContribution > pendaftarLimit) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Validasi Gagal',
-          html: `
-            Total Mahasiswa Baru (${existingContribution + newContribution}) tidak boleh melebihi
-            Jumlah Calon Mahasiswa (${pendaftarLimit}).`
-        });
-        return;
+        const pendaftarLimit = Number(pendRow?.pendaftar || 0);
+
+        if (!pendRow || pendaftarLimit <= 0) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Data Pendaftaran Tidak Ditemukan',
+            text: 'Silakan lengkapi data pendaftaran (Jumlah Calon Mahasiswa) terlebih dahulu.'
+          });
+          return;
+        }
+
+        const newContribution =
+          Number(formMaba.jumlah_total || 0) +
+          Number(formMaba.jumlah_afirmasi || 0) +
+          Number(formMaba.jumlah_kebutuhan_khusus || 0);
+
+        const existingContribution = rowsMaba
+          .filter(row =>
+            row.id_unit_prodi === unitProdiId &&
+            row.id_tahun === tahunId &&
+            row.jenis === 'baru' &&
+            !row.deleted_at &&
+            (!editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)])
+          )
+          .reduce((sum, row) => {
+            const base = Number(row.jumlah_total || 0);
+            const afirm = Number(row.jumlah_afirmasi || 0);
+            const khusus = Number(row.jumlah_kebutuhan_khusus || 0);
+            return sum + base + afirm + khusus;
+          }, 0);
+
+        if (existingContribution + newContribution > pendaftarLimit) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Validasi Gagal',
+            html: `
+              Total Mahasiswa Baru (${existingContribution + newContribution}) tidak boleh melebihi
+              Jumlah Calon Mahasiswa (${pendaftarLimit}).`
+          });
+          return;
+        }
       }
+      // Untuk mahasiswa aktif, tidak ada validasi - langsung submit
 
       setLoading(true);
       const target = editingMaba ? `${tableMaba.path}/${editingMaba[getIdField(editingMaba)]}` : tableMaba.path;
