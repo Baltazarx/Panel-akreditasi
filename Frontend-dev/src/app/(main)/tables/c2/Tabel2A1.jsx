@@ -695,6 +695,29 @@ export default function Tabel2A1({ role }) {
   const submitPend = async (e) => {
     e.preventDefault();
     try {
+      const dayaTampungNum = Number(formPend.daya_tampung || 0);
+      const pendaftarNum = Number(formPend.pendaftar || 0);
+      const afirmasiNum = Number(formPend.pendaftar_afirmasi || 0);
+      const kebutuhanKhususNum = Number(formPend.pendaftar_kebutuhan_khusus || 0);
+
+      if (dayaTampungNum > 0 && pendaftarNum > dayaTampungNum) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validasi Gagal',
+          text: 'Jumlah calon mahasiswa tidak boleh melebihi daya tampung.'
+        });
+        return;
+      }
+
+      if (afirmasiNum + kebutuhanKhususNum > pendaftarNum) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validasi Gagal',
+          text: 'Total pendaftar afirmasi dan kebutuhan khusus tidak boleh melebihi jumlah calon mahasiswa.'
+        });
+        return;
+      }
+
       setLoading(true);
       const target = editingPend ? `${tablePend.path}/${editingPend[getIdField(editingPend)]}` : tablePend.path;
       const method = editingPend ? "PUT" : "POST";
@@ -737,6 +760,66 @@ export default function Tabel2A1({ role }) {
   const submitMaba = async (e) => {
     e.preventDefault();
     try {
+      const unitProdiId = Number(formMaba.id_unit_prodi || selectedUnitProdi || 0);
+      const tahunId = Number(formMaba.id_tahun);
+
+      if (!unitProdiId || !tahunId) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validasi Gagal',
+          text: 'Unit prodi dan tahun wajib dipilih.'
+        });
+        return;
+      }
+
+      const pendRow = rowsPend.find(row =>
+        row.id_unit_prodi === unitProdiId &&
+        row.id_tahun === tahunId &&
+        !row.deleted_at
+      );
+
+      const pendaftarLimit = Number(pendRow?.pendaftar || 0);
+
+      if (!pendRow || pendaftarLimit <= 0) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Data Pendaftaran Tidak Ditemukan',
+          text: 'Silakan lengkapi data pendaftaran (Jumlah Calon Mahasiswa) terlebih dahulu.'
+        });
+        return;
+      }
+
+      const newContribution =
+        Number(formMaba.jumlah_total || 0) +
+        Number(formMaba.jumlah_afirmasi || 0) +
+        Number(formMaba.jumlah_kebutuhan_khusus || 0);
+
+      const existingContribution = rowsMaba
+        .filter(row =>
+          row.id_unit_prodi === unitProdiId &&
+          row.id_tahun === tahunId &&
+          row.jenis === 'baru' &&
+          !row.deleted_at &&
+          (!editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)])
+        )
+        .reduce((sum, row) => {
+          const base = Number(row.jumlah_total || 0);
+          const afirm = Number(row.jumlah_afirmasi || 0);
+          const khusus = Number(row.jumlah_kebutuhan_khusus || 0);
+          return sum + base + afirm + khusus;
+        }, 0);
+
+      if (existingContribution + newContribution > pendaftarLimit) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validasi Gagal',
+          html: `
+            Total Mahasiswa Baru (${existingContribution + newContribution}) tidak boleh melebihi
+            Jumlah Calon Mahasiswa (${pendaftarLimit}).`
+        });
+        return;
+      }
+
       setLoading(true);
       const target = editingMaba ? `${tableMaba.path}/${editingMaba[getIdField(editingMaba)]}` : tableMaba.path;
       const method = editingMaba ? "PUT" : "POST";
@@ -985,7 +1068,7 @@ export default function Tabel2A1({ role }) {
                   </td>
               <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                 {row.dayaTampung || '-'}
-              </td>
+                  </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftar || '-'}
                   </td>
@@ -1479,29 +1562,29 @@ export default function Tabel2A1({ role }) {
                       const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
                       const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                       return (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                               if (openDropdownMaba !== dropdownKey) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
                                 setOpenDropdownMaba(dropdownKey);
-                              } else {
+                            } else {
                                 setOpenDropdownMaba(null);
-                              }
-                            }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                             aria-label="Menu aksi Mahasiswa Aktif RPL"
                             aria-expanded={openDropdownMaba === dropdownKey}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
+                      </div>
                       );
                     })()}
                   </td>

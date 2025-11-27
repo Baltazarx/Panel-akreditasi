@@ -94,18 +94,18 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
             animate={isOpen ? "open" : "closed"}
             className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden"
         >
-            <div
-                className="flex items-center justify-between p-4 flex-shrink-0 cursor-pointer h-14"
+            <div 
+                className="flex items-center justify-between p-4 flex-shrink-0 cursor-pointer h-14" 
                 onClick={() => setIsOpen(!isOpen)}
                 role="button"
                 aria-label={isOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
                 aria-expanded={isOpen}
                 tabIndex={0}
                 onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsOpen(!isOpen);
-                    }
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsOpen(!isOpen);
+                  }
                 }}
             >
                 <div className="flex items-center gap-3">
@@ -136,76 +136,76 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
                                     {sidebarItems.map((key, index) => {
                                         const menuItem = menuMap[key];
                                         if (!menuItem) {
-                                            console.warn(`Menu item not found for key: ${key}`);
-                                            return null;
+                                          console.warn(`Menu item not found for key: ${key}`);
+                                          return null;
                                         }
                                         const { name, icon: Icon, description } = menuItem;
                                         const isActive = activeTable === key;
                                         return (
                                             <li key={key}>
-                                            <button
+                                            <button 
                                                 onClick={() => {
                                                     updateActiveTable(key);
                                                     setIsOpen(false);
-                                                }}
+                                                }} 
                                                 className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
-                                                    isActive
+                                                  isActive 
                                                         ? "bg-[#0384d6] text-white"
-                                                        : "text-[#043975] hover:bg-[#eaf3ff]"
+                                                    : "text-[#043975] hover:bg-[#eaf3ff]"
                                                 }`}
                                                 aria-label={`${name} - ${description}`}
                                                 aria-current={isActive ? 'page' : undefined}
                                             >
                                                 {/* Active indicator */}
                                                 {isActive && (
-                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
                                                 )}
                                                 <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
                                                 <span className="truncate flex-1 text-left">{name}</span>
                                             </button>
                                             </li>
                                         );
-                                    })}
+                                      })}
                                 </ul>
                             </div>
                             {canSeeUserMgmt && adminItems.length > 0 && (
-                                <div>
-                                    <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
-                                    <ul className="space-y-1.5">
-                                    {adminItems.map((key, index) => {
-                                        const menuItem = menuMap[key];
-                                        if (!menuItem) {
-                                            console.warn(`Menu item not found for key: ${key}`);
-                                            return null;
-                                        }
-                                        const { name, icon: Icon, description } = menuItem;
-                                        const isActive = activeTable === key;
-                                        return (
-                                            <li key={key}>
-                                            <button
-                                                onClick={()=>{
-                                                    updateActiveTable(key);
-                                                    setIsOpen(false);
-                                                }}
+                              <div>
+                                <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
+                                <ul className="space-y-1.5">
+                                  {adminItems.map((key, index) => {
+                                    const menuItem = menuMap[key];
+                                    if (!menuItem) {
+                                      console.warn(`Menu item not found for key: ${key}`);
+                                      return null;
+                                    }
+                                    const { name, icon: Icon, description } = menuItem;
+                                    const isActive = activeTable === key;
+                                    return (
+                                      <li key={key}>
+                                        <button 
+                                          onClick={()=>{
+                                            updateActiveTable(key); 
+                                            setIsOpen(false);
+                                          }} 
                                                 className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group ${
-                                                    isActive
+                                            isActive 
                                                         ? "bg-[#0384d6] text-white"
                                                         : "text-[#043975] hover:bg-[#eaf3ff]"
-                                                }`}
-                                                aria-label={`${name} - ${description}`}
-                                                aria-current={isActive ? 'page' : undefined}
-                                            >
-                                                {isActive && (
-                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
-                                                )}
-                                                <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
-                                                <span className="truncate flex-1 text-left">{name}</span>
-                                            </button>
-                                            </li>
-                                        );
-                                    })}
-                                    </ul>
-                                </div>
+                                          }`}
+                                          aria-label={`${name} - ${description}`}
+                                          aria-current={isActive ? 'page' : undefined}
+                                        >
+                                          {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                          )}
+                                          <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                                          <span className="truncate flex-1 text-left">{name}</span>
+                                        </button>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </div>
                             )}
                         </nav>
                     </motion.div>
@@ -228,113 +228,113 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
     }, [contentHeight]);
 
     const sidebarVariants = React.useMemo(() => ({
-        open: {
-            width: "288px",
+    open: { 
+      width: "288px", 
             height: sidebarHeight,
             minHeight: "100vh",
             borderRadius: "0",
-            transition: { type: "spring", stiffness: 120, damping: 20 }
-        },
-        closed: {
+      transition: { type: "spring", stiffness: 120, damping: 20 } 
+    },
+    closed: { 
             width: "4px",
             height: sidebarHeight,
             minHeight: "100vh",
             borderRadius: "0",
-            transition: { type: "spring", stiffness: 300, damping: 30 }
-        },
+      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    },
     }), [sidebarHeight]);
 
-    const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
+  const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
 
     // Sub-komponen untuk konten navigasi
-    const SidebarContent = React.memo(({ activeTable, updateActiveTable, sidebarItems, adminItems }) => {
-        return (
-            <div className="flex flex-col min-h-full pt-16">
-                <div className="flex items-center gap-3 px-5 pb-5 flex-shrink-0 border-b border-slate-200">
-                    <FaTable className="h-8 w-8 text-[#043975]" />
-                    <h2 className="font-bold text-[#043975] text-xl">Tabel</h2>
+  const SidebarContent = React.memo(({ activeTable, updateActiveTable, sidebarItems, adminItems }) => {
+    return (
+      <div className="flex flex-col min-h-full pt-16">
+          <div className="flex items-center gap-3 px-5 pb-5 flex-shrink-0 border-b border-slate-200">
+            <FaTable className="h-8 w-8 text-[#043975]" />
+            <h2 className="font-bold text-[#043975] text-xl">Tabel</h2>
+          </div>
+          
+          <nav className="flex-1 px-2 py-4 space-y-8 overflow-y-auto" role="navigation" aria-label="Menu navigasi tabel">
+              <div>
+                <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
+                <ul className="space-y-1.5">
+                  {sidebarItems.map((key, index) => {
+                      const menuItem = menuMap[key];
+                      if (!menuItem) {
+                        console.warn(`Menu item not found for key: ${key}`);
+                        return null;
+                      }
+                      const { name, icon: Icon, description } = menuItem;
+                      const isActive = activeTable === key;
+                      return (
+                        <li key={key}>
+                          <button 
+                            onClick={() => updateActiveTable(key)} 
+                                        className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                              isActive 
+                                                ? "bg-[#0384d6] text-white"
+                                                : "text-[#043975] hover:bg-[#eaf3ff]"
+                            }`}
+                            aria-label={`${name} - ${description}`}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            {/* Active indicator */}
+                            {isActive && (
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                            )}
+                            <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                            <span className="truncate flex-1 text-left">{name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </div>
+              {canSeeUserMgmt && adminItems.length > 0 && (
+                <div>
+                  <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
+                  <ul className="space-y-1.5">
+                    {adminItems.map((key, index) => {
+                      const menuItem = menuMap[key];
+                      if (!menuItem) {
+                        console.warn(`Menu item not found for key: ${key}`);
+                        return null;
+                      }
+                      const { name, icon: Icon, description } = menuItem;
+                      const isActive = activeTable === key;
+                      return (
+                        <li key={key}>
+                          <button 
+                            onClick={()=>updateActiveTable(key)} 
+                                        className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
+                              isActive 
+                                                ? "bg-[#0384d6] text-white"
+                                                : "text-[#043975] hover:bg-[#eaf3ff]"
+                            }`}
+                            aria-label={`${name} - ${description}`}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                                          {isActive && (
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
+                                          )}
+                            <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
+                            <span className="truncate flex-1 text-left">{name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
+              )}
+          </nav>
+      </div>
+    );
+  });
 
-                <nav className="flex-1 px-2 py-4 space-y-8 overflow-y-auto" role="navigation" aria-label="Menu navigasi tabel">
-                    <div>
-                        <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">List Tabel</h3>
-                        <ul className="space-y-1.5">
-                            {sidebarItems.map((key, index) => {
-                                const menuItem = menuMap[key];
-                                if (!menuItem) {
-                                    console.warn(`Menu item not found for key: ${key}`);
-                                    return null;
-                                }
-                                const { name, icon: Icon, description } = menuItem;
-                                const isActive = activeTable === key;
-                                return (
-                                    <li key={key}>
-                                    <button
-                                        onClick={() => updateActiveTable(key)}
-                                        className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
-                                            isActive
-                                                ? "bg-[#0384d6] text-white"
-                                                : "text-[#043975] hover:bg-[#eaf3ff]"
-                                        }`}
-                                        aria-label={`${name} - ${description}`}
-                                        aria-current={isActive ? 'page' : undefined}
-                                    >
-                                        {/* Active indicator */}
-                                        {isActive && (
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
-                                        )}
-                                        <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
-                                        <span className="truncate flex-1 text-left">{name}</span>
-                                    </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                    {canSeeUserMgmt && adminItems.length > 0 && (
-                        <div>
-                            <h3 className="px-3 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Panel Admin</h3>
-                            <ul className="space-y-1.5">
-                            {adminItems.map((key, index) => {
-                                const menuItem = menuMap[key];
-                                if (!menuItem) {
-                                    console.warn(`Menu item not found for key: ${key}`);
-                                    return null;
-                                }
-                                const { name, icon: Icon, description } = menuItem;
-                                const isActive = activeTable === key;
-                                return (
-                                    <li key={key}>
-                                    <button
-                                        onClick={()=>updateActiveTable(key)}
-                                        className={`w-full flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-colors duration-150 relative group focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 ${
-                                            isActive
-                                                ? "bg-[#0384d6] text-white"
-                                                : "text-[#043975] hover:bg-[#eaf3ff]"
-                                        }`}
-                                        aria-label={`${name} - ${description}`}
-                                        aria-current={isActive ? 'page' : undefined}
-                                    >
-                                        {isActive && (
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full" />
-                                        )}
-                                        <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#043975]'}`} />
-                                        <span className="truncate flex-1 text-left">{name}</span>
-                                    </button>
-                                    </li>
-                                );
-                            })}
-                            </ul>
-                        </div>
-                    )}
-                </nav>
-            </div>
-        );
-    });
-
-    const toggleButton = (
+  const toggleButton = (
         <motion.button
-            onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)} 
             className="absolute z-30 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             animate={{
                 top: 16,
@@ -366,19 +366,19 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                 borderColor: 'rgba(229, 231, 235, 0.9)'
             }}
             whileTap={{ scale: 0.95 }}
-            aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
-            aria-expanded={isOpen}
-        >
-            {isOpen ? (
-                <motion.div
+        aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+        aria-expanded={isOpen}
+      >
+        {isOpen ? (
+          <motion.div
                     initial={{ opacity: 0, rotate: 90 }}
                     animate={{ opacity: 1, rotate: 0 }}
                     transition={{ duration: 0.2 }}
                     className="flex items-center justify-center w-full h-full"
                 >
                     <ChevronLeft size={20} className="text-[#043975]" />
-                </motion.div>
-            ) : (
+          </motion.div>
+        ) : (
                 <motion.div
                     className="flex items-center justify-center w-full h-full"
                     initial={{ opacity: 0, x: -3 }}
@@ -389,42 +389,42 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
                 </motion.div>
             )}
         </motion.button>
-    );
+  );
 
-    return (
-        <motion.aside
-            variants={sidebarVariants}
-            initial={false}
-            animate={isOpen ? "open" : "closed"}
+  return (
+    <motion.aside 
+      variants={sidebarVariants} 
+      initial={false} 
+      animate={isOpen ? "open" : "closed"} 
             className={`flex flex-col relative self-start ${
                 isOpen
                     ? 'bg-white border-r border-gray-200 overflow-hidden ml-0 shadow-sm'
                     : 'bg-gray-200 overflow-visible ml-0'
             }`}
             style={isOpen ? { left: 0, top: 0, borderLeft: '1px solid #000' } : { left: 0, top: 0 }}
-            role="complementary"
-            aria-label="Sidebar navigasi tabel"
-        >
-            {toggleButton}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }}
-                        exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                        className="flex flex-col min-h-full"
-                    >
-                        <SidebarContent
-                            activeTable={activeTable}
-                            updateActiveTable={updateActiveTable}
-                            sidebarItems={sidebarItems}
-                            adminItems={adminItems}
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.aside>
-    );
+      role="complementary"
+      aria-label="Sidebar navigasi tabel"
+    >
+      {toggleButton}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1, transition: { delay: 0.1, duration: 0.2 } }} 
+            exit={{ opacity: 0, transition: { duration: 0.1 } }} 
+            className="flex flex-col min-h-full"
+          >
+            <SidebarContent 
+              activeTable={activeTable} 
+              updateActiveTable={updateActiveTable}
+              sidebarItems={sidebarItems}
+              adminItems={adminItems}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.aside>
+  );
 };
 
 export default function TablesPage() {

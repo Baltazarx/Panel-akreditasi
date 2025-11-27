@@ -1673,7 +1673,7 @@ const GrafikTabel = () => {
                     return 0; // Jika tidak ada tahun params, return 0
                 }
             } else if (tsId) {
-                // Tambahkan parameter ts_id jika diperlukan
+            // Tambahkan parameter ts_id jika diperlukan
                 url += `${url.includes('?') ? '&' : '?'}ts_id=${tsId}`;
             }
             
