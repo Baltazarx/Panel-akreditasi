@@ -24,6 +24,7 @@ import C6Page from "./c6/c6";
 import UserManagementPage from "../../../components/UserManagementPage";
 import TabelDosen from "./c1/TabelDosen";
 import TabelPegawai from "./c1/TabelPegawai";
+import TabelTendik from "./c1/TabelTendik";
 
 // Helper hook untuk mendeteksi ukuran layar
 const useMediaQuery = (query) => {
@@ -56,6 +57,7 @@ const menuMap = {
   ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaShield, description: "Kelola Pengguna Sistem" },
   TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaChalkboard, description: "Data Dosen" },
   TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserTie, description: "Data Pegawai" },
+  TabelTendik: { name: "Tenaga Kependidikan", Component: TabelTendik, icon: FaUserGroup, description: "Data Tenaga Kependidikan" },
 };
 
 // Tooltip component
@@ -73,7 +75,7 @@ const Tooltip = ({ children, text, isVisible }) => {
   );
 };
 
-const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt }) => {
+const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt, authUser }) => {
     const menuVariants = {
         open: {
             height: "auto",
@@ -85,7 +87,15 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
         },
     };
 
-    const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
+    // Filter admin items berdasarkan akses
+    const adminItemsList = [];
+    if (canSeeUserMgmt) {
+      adminItemsList.push('ManajemenAkun');
+      if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
+      if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+      if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminItemsList.push('TabelTendik');
+    }
+    const adminItems = adminItemsList;
 
     return (
         <motion.div
@@ -216,7 +226,7 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
     );
 };
 
-const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt, contentHeight }) => {
+const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, sidebarItems, canSeeUserMgmt, contentHeight, authUser }) => {
     // Calculate sidebar height: follow content height if it's longer than viewport, otherwise use viewport
     const sidebarHeight = React.useMemo(() => {
         const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
@@ -244,7 +254,15 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
     },
     }), [sidebarHeight]);
 
-  const adminItems = canSeeUserMgmt ? ['ManajemenAkun','TabelDosen','TabelPegawai'] : [];
+  // Filter admin items berdasarkan akses
+  const adminItemsList = [];
+  if (canSeeUserMgmt) {
+    adminItemsList.push('ManajemenAkun');
+    if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
+    if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+    if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminItemsList.push('TabelTendik');
+  }
+  const adminItems = adminItemsList;
 
     // Sub-komponen untuk konten navigasi
   const SidebarContent = React.memo(({ activeTable, updateActiveTable, sidebarItems, adminItems }) => {
@@ -492,12 +510,13 @@ export default function TablesPage() {
   ]; // tabel-tabel yang ada di C6
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
-  // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai
+  // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai/tenaga_kependidikan
   // KECUALI role kemahasiswaan, ALA, LPPM, KEPEGAWAIAN, dan SARPRAS yang tidak boleh akses Panel Admin
   const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && loweredRole !== "sarpras" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")
+    || roleCan(authUser?.role, "tenaga_kependidikan", "r")
   );
 
   // Susun item sidebar sesuai akses - Memoized untuk performance
@@ -544,7 +563,17 @@ export default function TablesPage() {
     
     const tableFromUrl = searchParams.get("table");
     const lastTable = localStorage.getItem("lastActiveTable");
-    const adminKeys = canSeeUserMgmt ? ["ManajemenAkun", "TabelDosen", "TabelPegawai"] : [];
+    
+    // Build admin keys based on access (same logic as adminItems)
+    const adminKeysList = [];
+    if (canSeeUserMgmt) {
+      adminKeysList.push('ManajemenAkun');
+      if (roleCan(authUser?.role, "dosen", "r")) adminKeysList.push('TabelDosen');
+      if (roleCan(authUser?.role, "pegawai", "r")) adminKeysList.push('TabelPegawai');
+      if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminKeysList.push('TabelTendik');
+    }
+    const adminKeys = adminKeysList;
+    
     const allowed = new Set([...(sidebarItems || []), ...adminKeys]);
     
     // Determine candidate table - prioritize URL, then last saved, then first available
@@ -553,13 +582,26 @@ export default function TablesPage() {
       ? candidate
       : (sidebarItems[0] || (adminKeys[0] || null));
 
+    // Only update on initial mount or when URL/searchParams change
+    // Don't reset activeTable if user is currently viewing a valid table (like TabelTendik)
     if (initial && initial !== activeTable) {
-      setActiveTable(initial);
+      // Check if current activeTable is still valid before changing
+      const currentIsValid = activeTable && (allowed.has(activeTable) || menuMap[activeTable]);
+      // Only change if:
+      // 1. Current table is not valid, OR
+      // 2. We have a URL param forcing the change, OR
+      // 3. This is the initial mount (no activeTable set yet)
+      if (!currentIsValid || tableFromUrl || !activeTable) {
+        setActiveTable(initial);
+      }
     } else if (!initial && activeTable) {
-      // If no valid table found and activeTable is set, clear it
-      setActiveTable(null);
+      // Only clear if current activeTable is not in allowed set AND not in menuMap
+      const currentIsValid = activeTable && (allowed.has(activeTable) || menuMap[activeTable]);
+      if (!currentIsValid) {
+        setActiveTable(null);
+      }
     }
-  }, [searchParams, sidebarItems, mounted, canSeeUserMgmt, activeTable]);
+  }, [searchParams, sidebarItems, mounted, canSeeUserMgmt, authUser?.role]);
 
   const updateActiveTable = useCallback((key) => {
     if (key === activeTable) return;
@@ -627,7 +669,7 @@ export default function TablesPage() {
     if (activeTable === 'C1') {
       return { lastC1Tab: lastC1TabFromStore };
     }
-    if (activeTable === 'TabelDosen' || activeTable === 'TabelPegawai') {
+    if (activeTable === 'TabelDosen' || activeTable === 'TabelPegawai' || activeTable === 'TabelTendik') {
       return { role: authUser?.role };
     }
     return {};
@@ -685,6 +727,7 @@ export default function TablesPage() {
               updateActiveTable={updateActiveTable}
               sidebarItems={sidebarItems}
               canSeeUserMgmt={canSeeUserMgmt}
+              authUser={authUser}
             />
           </header>
           <main className="px-4 pb-4 overflow-x-hidden relative z-10">
@@ -703,11 +746,15 @@ export default function TablesPage() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                {activeTable && (activeTable === 'C1' ? (
+                {activeTable && ActiveComponent ? (activeTable === 'C1' ? (
                   <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
                 ) : (
                   <ActiveComponent {...activeProps} />
-                ))}
+                )) : (
+                  <div className="p-8 text-center text-slate-600">
+                    <p>Memuat komponen...</p>
+                  </div>
+                )}
               </motion.div>
             )}
           </main>
@@ -748,6 +795,7 @@ export default function TablesPage() {
         sidebarItems={sidebarItems}
         canSeeUserMgmt={canSeeUserMgmt}
         contentHeight={contentHeight}
+        authUser={authUser}
       />
       <div className={`flex-1 flex flex-col min-w-0 overflow-x-hidden relative z-10 ${!isSidebarOpen ? 'ml-8' : ''}`}>
         <main className="flex-1 overflow-x-hidden">
@@ -767,11 +815,15 @@ export default function TablesPage() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                {activeTable && (activeTable === 'C1' ? (
+                {activeTable && ActiveComponent ? (activeTable === 'C1' ? (
                   <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
                 ) : (
                   <ActiveComponent {...activeProps} />
-                ))}
+                )) : (
+                  <div className="p-8 text-center text-slate-600">
+                    <p>Memuat komponen...</p>
+                  </div>
+                )}
               </motion.div>
             )}
           </div>

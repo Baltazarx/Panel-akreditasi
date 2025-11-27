@@ -12,6 +12,8 @@ import Tabel1A3 from "./Tabel1A3";
 import Tabel1A4 from "./Tabel1A4";
 import Tabel1A5 from "./Tabel1A5";
 import Tabel1B from "./Tabel1B";
+// TabelTendik hanya ada di Panel Admin sidebar, tidak di navigasi C1
+// import TabelTendik from "./TabelTendik";
 // Impor komponen TabelDosen dan TabelPegawai jika ada di level C1
 // import TabelDosen from "./TabelDosen";
 // import TabelPegawai from "./TabelPegawai";
@@ -24,6 +26,8 @@ const ALL_TABLES = [
  { key: "1a4", label: "Tabel 1A-4", Component: Tabel1A4, accessKey: "tabel_1a4" }, // Pastikan accessKey cocok dengan roles.js
  { key: "1a5", label: "Tabel 1A-5", Component: Tabel1A5, accessKey: "tabel_1a5" },
  { key: "1b", label: "Tabel 1B", Component: Tabel1B, accessKey: "tabel_1b" }, // Pastikan accessKey cocok dengan roles.js
+ // TabelTendik hanya ada di Panel Admin sidebar, tidak di navigasi C1
+ // { key: "tendik", label: "Tenaga Kependidikan", Component: TabelTendik, accessKey: "tenaga_kependidikan" },
  // Jika Tabel Dosen & Pegawai ada di C1, tambahkan di sini
  // { key: "dosen", label: "Tabel Dosen", Component: TabelDosen, accessKey: "dosen" },
  // { key: "pegawai", label: "Tabel Pegawai", Component: TabelPegawai, accessKey: "pegawai" },
