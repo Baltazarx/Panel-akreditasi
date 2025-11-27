@@ -940,9 +940,11 @@ export default function Tabel2A1({ role }) {
             {displayRows.map((row, idx) => {
               const isSelected = row.rowData && selectedRows.includes(row.rowData[getIdField(row.rowData)]);
               const idField = row.rowData ? getIdField(row.rowData) : null;
-              const rowId = idField && row.rowData ? row.rowData[idField] : idx;
+              const rowId = idField && row.rowData ? row.rowData[idField] : null;
+              // Pastikan key selalu unik dengan menggabungkan rowId dan idx
+              const uniqueKey = `pend-${showDeleted ? 'deleted' : 'active'}-${rowId !== null ? rowId : 'no-id'}-${idx}`;
               return (
-                <tr key={`pend-${showDeleted ? 'deleted' : 'active'}-${rowId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && (
@@ -1272,11 +1274,13 @@ export default function Tabel2A1({ role }) {
                 : [];
               const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
               const firstDataId = row.rowData && row.rowData.length > 0 
-                ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : idx)
-                : idx;
+                ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : null)
+                : null;
+              // Pastikan key selalu unik dengan menggabungkan firstDataId dan idx
+              const uniqueKey = `maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId !== null ? firstDataId : 'no-id'}-${idx}`;
               
               return (
-                <tr key={`maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId || idx}`} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       {row.rowData && row.rowData.length > 0 && (
@@ -1369,110 +1373,11 @@ export default function Tabel2A1({ role }) {
                         </button>
                       </div>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    {row.rowData && row.rowData.length > 0 ? (
-                      <div className="flex items-center justify-center gap-2">
-                        {!showDeleted && canUMaba && (
-                          <button
-                            onClick={async () => {
-                              // Jika hanya ada 1 data, langsung edit
-                              if (row.rowData.length === 1) {
-                                setEditingMaba(row.rowData[0]);
-                                setFormMaba(row.rowData[0]);
-                                setShowModalMaba(true);
-                              } else {
-                                // Jika ada multiple data, tampilkan dialog untuk memilih data yang ingin diedit
-                                const options = {};
-                                row.rowData.forEach((data, index) => {
-                                  const jenisLabel = data.jenis === 'baru' ? 'Baru' : 'Aktif';
-                                  const jalurLabel = data.jalur === 'reguler' ? 'Reguler' : 'RPL';
-                                  const tahunName = maps?.tahun?.[data.id_tahun]?.tahun || data.id_tahun;
-                                  options[`data_${index}`] = `${jenisLabel} - ${jalurLabel} (${tahunName})`;
-                                });
-                                
-                                const { value: selectedData } = await Swal.fire({
-                                  title: 'Pilih Data untuk Diedit',
-                                  text: `Terdapat ${row.rowData.length} data untuk tahun ini. Pilih data yang ingin diedit:`,
-                                  input: 'select',
-                                  inputOptions: options,
-                                  inputPlaceholder: 'Pilih data...',
-                                  showCancelButton: true,
-                                  confirmButtonText: 'Edit',
-                                  cancelButtonText: 'Batal',
-                                  inputValidator: (value) => {
-                                    if (!value) {
-                                      return 'Anda harus memilih data terlebih dahulu';
-                                    }
-                                  }
-                                });
-                                
-                                if (selectedData) {
-                                  const selectedIndex = parseInt(selectedData.replace('data_', ''));
-                                  const selectedRowData = row.rowData[selectedIndex];
-                                  if (selectedRowData) {
-                                    setEditingMaba(selectedRowData);
-                                    setFormMaba(selectedRowData);
-                                    setShowModalMaba(true);
-                                  }
-                                }
-                              }
-                            }}
-                            className="font-medium text-[#0384d6] hover:underline"
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {!showDeleted && canDMaba && (
-                          <button
-                            onClick={() => {
-                              // Hapus semua data untuk TS ini
-                              const firstData = row.rowData[0];
-                              if (firstData) {
-                                doDelete(firstData, tableMaba);
-                              }
-                            }}
-                            className="font-medium text-red-600 hover:underline"
-                          >
-                            Hapus
-                          </button>
-                        )}
-                        {showDeleted && canUMaba && (
-                          <button
-                            onClick={() => {
-                              // Pulihkan semua data untuk TS ini
-                              if (row.rowData.length > 0) {
-                                doRestore(row.rowData[0], tableMaba);
-                              }
-                            }}
-                            className="font-medium text-green-600 hover:underline"
-                          >
-                            Pulihkan
-                          </button>
-                        )}
-                        {showDeleted && canDMaba && (
-                          <button
-                            onClick={() => {
-                              // Hapus permanen semua data untuk TS ini
-                              if (row.rowData.length > 0) {
-                                doHardDelete(row.rowData[0], tableMaba);
-                              }
-                            }}
-                            className="font-medium text-red-800 hover:underline"
-                          >
-                            Hapus Permanen
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <>
-                        {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
-                          <div className="text-center italic text-red-600">Dihapus</div>
-                        )}
-                        {(!row.rowData || row.rowData.length === 0) && (
-                          <span className="text-center text-slate-400">-</span>
-                        )}
-                      </>
+                    {row.rowData && row.rowData.length > 0 && row.rowData[0]?.deleted_at && (
+                      <div className="text-center italic text-red-600">Dihapus</div>
+                    )}
+                    {(!row.rowData || row.rowData.length === 0) && (
+                      <span className="text-center text-slate-400">-</span>
                     )}
                   </td>
                 </tr>
