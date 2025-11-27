@@ -1,140 +1,125 @@
 import { pool } from '../db.js';
-import { hasColumn } from '../utils/queryHelper.js';
+import ExcelJS from 'exceljs';
 
-// ===== LIST (Rekap) =====
+// Query Pivot (Sama persis dengan codinganmu)
+const getPivotQuery = () => `
+  SELECT 
+    tk.jenis_tendik,
+    COALESCE(uk.nama_unit, 'Belum diset') AS unit_kerja,
+    
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'S3' THEN 1 END) AS s3,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'S2' THEN 1 END) AS s2,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'S1' THEN 1 END) AS s1,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'D4' THEN 1 END) AS d4,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'D3' THEN 1 END) AS d3,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'D2' THEN 1 END) AS d2,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) = 'D1' THEN 1 END) AS d1,
+    COUNT(CASE WHEN UPPER(p.pendidikan_terakhir) IN ('SMA', 'SMK', 'MA', 'SLTA', 'SMA/SMK/MA') THEN 1 END) AS sma_smk,
+    
+    COUNT(*) AS total
+
+  FROM tenaga_kependidikan tk
+  JOIN pegawai p ON tk.id_pegawai = p.id_pegawai
+  LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+  
+  WHERE tk.deleted_at IS NULL 
+    AND p.deleted_at IS NULL
+  
+  GROUP BY tk.jenis_tendik, uk.nama_unit
+  ORDER BY tk.jenis_tendik ASC, uk.nama_unit ASC
+`;
+
+// ===== LIST (GET) =====
+// Nama fungsi disesuaikan agar match dengan Route
 export const listKualifikasiTendik = async (req, res) => {
   try {
-    const sql = `
-      SELECT 
-        tk.id_tendik,
-        tk.jenis_tendik AS jenis_tenaga_kependidikan,
-        uk.nama_unit AS unit_kerja,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'S3' THEN 1 ELSE 0 END) AS s3,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'S2' THEN 1 ELSE 0 END) AS s2,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'S1' THEN 1 ELSE 0 END) AS s1,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'D4' THEN 1 ELSE 0 END) AS d4,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'D3' THEN 1 ELSE 0 END) AS d3,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'D2' THEN 1 ELSE 0 END) AS d2,
-        SUM(CASE WHEN kt.jenjang_pendidikan = 'D1' THEN 1 ELSE 0 END) AS d1,
-        SUM(CASE WHEN kt.jenjang_pendidikan IN ('SMA','SMK','MA','SMA/SMK/MA') THEN 1 ELSE 0 END) AS sma_smk
-      FROM tenaga_kependidikan tk
-      LEFT JOIN kualifikasi_tendik kt ON tk.id_tendik = kt.id_tendik
-      LEFT JOIN unit_kerja uk ON kt.id_unit = uk.id_unit
-      WHERE kt.deleted_at IS NULL OR kt.deleted_at IS NULL
-      GROUP BY tk.id_tendik, tk.jenis_tendik, uk.nama_unit
-      ORDER BY tk.jenis_tendik ASC
-    `;
+    const sql = getPivotQuery();
     const [rows] = await pool.query(sql);
     res.json(rows);
   } catch (err) {
     console.error("Error listKualifikasiTendik:", err);
-    res.status(500).json({ error: "List failed" });
+    res.status(500).json({ error: 'Gagal mengambil laporan', details: err.message });
   }
 };
 
-// ===== GET BY ID =====
-export const getKualifikasiTendikById = async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      `SELECT * FROM kualifikasi_tendik WHERE id_kualifikasi=?`,
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Get failed' });
-  }
-};
+// ===== EXPORT EXCEL =====
+// Nama fungsi disesuaikan agar match dengan Route
+export const exportKualifikasiTendik = async (req, res) => {
+    try {
+        const sql = getPivotQuery();
+        const [rows] = await pool.query(sql);
+        
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Tabel 1.A.5');
 
-// ===== CREATE =====
-export const createKualifikasiTendik = async (req, res) => {
-  try {
-    const data = {
-      id_tendik: req.body.id_tendik,
-      jenjang_pendidikan: req.body.jenjang_pendidikan,
-      id_unit: req.body.id_unit,
-    };
-    if (await hasColumn('kualifikasi_tendik', 'created_by') && req.user?.id_user) {
-      data.created_by = req.user.id_user;
+        // Header
+        sheet.mergeCells('A1:K1');
+        sheet.getCell('A1').value = 'Tabel 1.A.5 Kualifikasi Tenaga Kependidikan';
+        sheet.getCell('A1').font = { bold: true, size: 14 };
+        sheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+
+        sheet.mergeCells('A2:A3'); sheet.getCell('A2').value = 'No';
+        sheet.mergeCells('B2:B3'); sheet.getCell('B2').value = 'Jenis Tenaga Kependidikan';
+        sheet.mergeCells('C2:J2'); sheet.getCell('C2').value = 'Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir';
+        
+        sheet.getCell('C3').value = 'S3'; sheet.getCell('D3').value = 'S2'; sheet.getCell('E3').value = 'S1';
+        sheet.getCell('F3').value = 'D4'; sheet.getCell('G3').value = 'D3'; sheet.getCell('H3').value = 'D2';
+        sheet.getCell('I3').value = 'D1'; sheet.getCell('J3').value = 'SMA/SMK';
+        
+        sheet.mergeCells('K2:K3'); sheet.getCell('K2').value = 'Unit Kerja';
+
+        // Styling
+        ['A2','B2','C2','K2','C3','D3','E3','F3','G3','H3','I3','J3'].forEach(c => {
+            sheet.getCell(c).font = { bold: true };
+            sheet.getCell(c).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            sheet.getCell(c).border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+        });
+
+        // Data
+        let rowIndex = 4;
+        rows.forEach((row, index) => {
+            sheet.getCell(`A${rowIndex}`).value = index + 1;
+            sheet.getCell(`B${rowIndex}`).value = row.jenis_tendik;
+            sheet.getCell(`C${rowIndex}`).value = parseInt(row.s3)||0;
+            sheet.getCell(`D${rowIndex}`).value = parseInt(row.s2)||0;
+            sheet.getCell(`E${rowIndex}`).value = parseInt(row.s1)||0;
+            sheet.getCell(`F${rowIndex}`).value = parseInt(row.d4)||0;
+            sheet.getCell(`G${rowIndex}`).value = parseInt(row.d3)||0;
+            sheet.getCell(`H${rowIndex}`).value = parseInt(row.d2)||0;
+            sheet.getCell(`I${rowIndex}`).value = parseInt(row.d1)||0;
+            sheet.getCell(`J${rowIndex}`).value = parseInt(row.sma_smk)||0;
+            sheet.getCell(`K${rowIndex}`).value = row.unit_kerja;
+            
+            ['A','B','C','D','E','F','G','H','I','J','K'].forEach(col => {
+                 sheet.getCell(`${col}${rowIndex}`).border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+            });
+            rowIndex++;
+        });
+        
+        // Footer Total
+        const totalRow = rowIndex;
+        sheet.mergeCells(`A${totalRow}:B${totalRow}`);
+        sheet.getCell(`A${totalRow}`).value = 'Total';
+        sheet.getCell(`A${totalRow}`).font = { bold: true };
+        sheet.getCell(`A${totalRow}`).alignment = { horizontal: 'center' };
+        sheet.getCell(`A${totalRow}`).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+        ['C','D','E','F','G','H','I','J'].forEach(col => {
+            const c = sheet.getCell(`${col}${totalRow}`);
+            c.value = { formula: `SUM(${col}4:${col}${totalRow-1})` };
+            c.font = { bold: true };
+            c.alignment = { horizontal: 'center' };
+            c.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+        sheet.getCell(`K${totalRow}`).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Tabel_1A5_Kualifikasi_Tendik.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (err) {
+        console.error("Error exportKualifikasiTendik:", err);
+        res.status(500).json({ error: 'Gagal export', details: err.message });
     }
-
-    const [r] = await pool.query(`INSERT INTO kualifikasi_tendik SET ?`, [data]);
-    const [row] = await pool.query(
-      `SELECT * FROM kualifikasi_tendik WHERE id_kualifikasi=?`,
-      [r.insertId]
-    );
-    res.status(201).json(row[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Create failed' });
-  }
-};
-
-// ===== UPDATE =====
-export const updateKualifikasiTendik = async (req, res) => {
-  try {
-    const data = {
-      id_tendik: req.body.id_tendik,
-      jenjang_pendidikan: req.body.jenjang_pendidikan,
-      id_unit: req.body.id_unit,
-    };
-    if (await hasColumn('kualifikasi_tendik', 'updated_by') && req.user?.id_user) {
-      data.updated_by = req.user.id_user;
-    }
-
-    await pool.query(
-      `UPDATE kualifikasi_tendik SET ? WHERE id_kualifikasi=?`,
-      [data, req.params.id]
-    );
-    const [row] = await pool.query(
-      `SELECT * FROM kualifikasi_tendik WHERE id_kualifikasi=?`,
-      [req.params.id]
-    );
-    if (!row[0]) return res.status(404).json({ error: 'Not found' });
-    res.json(row[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Update failed' });
-  }
-};
-
-// ===== SOFT DELETE =====
-export const softDeleteKualifikasiTendik = async (req, res) => {
-  try {
-    const payload = { deleted_at: new Date() };
-    if (await hasColumn('kualifikasi_tendik', 'deleted_by')) {
-      payload.deleted_by = req.user?.id_user || null;
-    }
-    await pool.query(
-      `UPDATE kualifikasi_tendik SET ? WHERE id_kualifikasi=?`,
-      [payload, req.params.id]
-    );
-    res.json({ ok: true, softDeleted: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Delete failed' });
-  }
-};
-
-// ===== RESTORE =====
-export const restoreKualifikasiTendik = async (req, res) => {
-  try {
-    await pool.query(
-      `UPDATE kualifikasi_tendik SET deleted_at=NULL, deleted_by=NULL WHERE id_kualifikasi=?`,
-      [req.params.id]
-    );
-    res.json({ ok: true, restored: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Restore failed' });
-  }
-};
-
-// ===== HARD DELETE =====
-export const hardDeleteKualifikasiTendik = async (req, res) => {
-  try {
-    await pool.query(
-      `DELETE FROM kualifikasi_tendik WHERE id_kualifikasi=?`,
-      [req.params.id]
-    );
-    res.json({ ok: true, hardDeleted: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Hard delete failed' });
-  }
 };

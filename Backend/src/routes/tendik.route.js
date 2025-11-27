@@ -12,14 +12,14 @@ import {
 } from '../controllers/tendik.controller.js';
 
 const router = express.Router();
+const resourceKey = 'tenaga_kependidikan'; 
 
-// ===== CRUD =====
-router.get('/', requireAuth, permit('tenaga_kependidikan', 'R'), listTendik);
-router.get('/:id', requireAuth, permit('tenaga_kependidikan', 'R'), getTendikById);
-router.post('/', requireAuth, permit('tenaga_kependidikan', 'C'), createTendik);
-router.put('/:id', requireAuth, permit('tenaga_kependidikan', 'U'), updateTendik);
-router.delete('/:id/hard-delete', requireAuth, permit('tenaga_kependidikan', 'D'), hardDeleteTendik);
-router.delete('/:id', requireAuth, permit('tenaga_kependidikan', 'D'), softDeleteTendik);
-router.post('/:id/restore', requireAuth, permit('tenaga_kependidikan', 'U'), restoreTendik);
+router.get('/', requireAuth, permit(resourceKey, 'R'), listTendik);
+router.get('/:id', requireAuth, permit(resourceKey, 'R'), getTendikById);
+router.post('/', requireAuth, permit(resourceKey, 'C'), createTendik);
+router.put('/:id', requireAuth, permit(resourceKey, 'U'), updateTendik);
+router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteTendik);
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'D'), restoreTendik);
+router.delete('/:id/hard-delete', requireAuth, permit(resourceKey, 'H'), hardDeleteTendik);
 
 export default router;
