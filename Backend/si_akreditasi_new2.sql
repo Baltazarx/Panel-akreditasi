@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 12 Nov 2025 pada 06.30
+-- Waktu pembuatan: 27 Nov 2025 pada 07.34
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -398,7 +398,9 @@ INSERT INTO `mata_kuliah` (`id_mk`, `id_unit_prodi`, `kode_mk`, `nama_mk`, `sks`
 CREATE TABLE `pegawai` (
   `id_pegawai` int(11) NOT NULL,
   `nama_lengkap` varchar(255) NOT NULL,
+  `id_unit` int(11) DEFAULT NULL COMMENT 'Unit Kerja Pegawai (Relasi ke unit_kerja)',
   `pendidikan_terakhir` varchar(50) DEFAULT NULL,
+  `id_jabatan` int(11) DEFAULT NULL COMMENT 'Jabatan Struktural (Relasi ke ref_jabatan_struktural)',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
@@ -409,19 +411,19 @@ CREATE TABLE `pegawai` (
 -- Dumping data untuk tabel `pegawai`
 --
 
-INSERT INTO `pegawai` (`id_pegawai`, `nama_lengkap`, `pendidikan_terakhir`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 'Dr. Budi Santoso, M.Kom.', 'S3', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(2, 'Citra Lestari, S.Kom., M.T.', 'S2', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(3, 'Prof. Dr. Eka Pratama', 'S3', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(4, 'Ani Wijaya, S.E.', 'S1', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(5, 'Dedi Firmansyah, S.Kom.', 'S1', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(6, 'Fajar Nugroho, A.Md.', 'D3', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(7, 'Gita Permata, S.Sos.', 'S1', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(8, 'Hendra Gunawan, M.T.', 'S2', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(9, 'fufufafa', 'S2', '2025-08-22 16:45:03', '2025-09-30 10:08:00', '2025-09-30 17:08:00', 1),
-(10, 'Dandi Ajusta Dharma Putra Samudra', 'S2', '2025-08-22 23:49:45', '2025-09-30 10:08:06', '2025-09-30 17:08:06', 1),
-(11, 'Lupik', 'S2', '2025-08-25 09:06:18', '2025-09-30 10:07:58', '2025-09-30 17:07:58', 1),
-(12, 'Rachman Yulianto, M.Kom', 'S2', '2025-09-30 14:26:54', '2025-09-30 14:26:54', NULL, NULL);
+INSERT INTO `pegawai` (`id_pegawai`, `nama_lengkap`, `id_unit`, `pendidikan_terakhir`, `id_jabatan`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 'Dr. Budi Santoso, M.Kom.', NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(2, 'Citra Lestari, S.Kom., M.T.', NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(3, 'Prof. Dr. Eka Pratama', NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(4, 'Ani Wijaya, S.E.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(5, 'Dedi Firmansyah, S.Kom.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(6, 'Fajar Nugroho, A.Md.', NULL, 'D3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(7, 'Gita Permata, S.Sos.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(8, 'Hendra Gunawan, M.T.', NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(9, 'fufufafa', NULL, 'S2', NULL, '2025-08-22 16:45:03', '2025-09-30 10:08:00', '2025-09-30 17:08:00', 1),
+(10, 'Dandi Ajusta Dharma Putra Samudra', NULL, 'S2', NULL, '2025-08-22 23:49:45', '2025-09-30 10:08:06', '2025-09-30 17:08:06', 1),
+(11, 'Lupik', NULL, 'S2', NULL, '2025-08-25 09:06:18', '2025-09-30 10:07:58', '2025-09-30 17:07:58', 1),
+(12, 'Rachman Yulianto, M.Kom', NULL, 'S2', NULL, '2025-09-30 14:26:54', '2025-09-30 14:26:54', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -465,9 +467,7 @@ INSERT INTO `penggunaan_dana` (`id_penggunaan_dana`, `id_tahun`, `jenis_pengguna
 
 CREATE TABLE `pimpinan_upps_ps` (
   `id_pimpinan` int(11) NOT NULL,
-  `id_unit` int(11) NOT NULL,
   `id_pegawai` int(11) NOT NULL,
-  `id_jabatan` int(11) NOT NULL,
   `periode_mulai` date NOT NULL,
   `periode_selesai` date DEFAULT NULL,
   `tupoksi` text DEFAULT NULL,
@@ -481,13 +481,13 @@ CREATE TABLE `pimpinan_upps_ps` (
 -- Dumping data untuk tabel `pimpinan_upps_ps`
 --
 
-INSERT INTO `pimpinan_upps_ps` (`id_pimpinan`, `id_unit`, `id_pegawai`, `id_jabatan`, `periode_mulai`, `periode_selesai`, `tupoksi`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 2, 1, 2, '2023-01-01', '2027-12-31', 'Bertanggung jawab atas bidang akademik.', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(2, 7, 2, 5, '2024-08-01', '2028-07-31', 'Mengelola kegiatan akademik dan operasional Program Studi Informatika.', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(4, 5, 4, 4, '2024-12-29', '2025-12-29', 'mangan bakso', '2025-08-22 10:32:01', '2025-08-22 10:32:01', NULL, NULL),
-(5, 9, 5, 5, '2024-10-11', '2029-10-11', 'afzsshayskiqsj', '2025-08-22 10:34:13', '2025-08-22 10:34:59', NULL, NULL),
-(6, 1, 10, 4, '2032-12-29', '2033-12-29', 'Mangan baksoo', '2025-08-22 23:52:54', '2025-08-23 01:12:48', '2025-08-23 08:12:48', 1),
-(7, 1, 10, 4, '2023-12-22', '2024-12-22', 'Mangan AFC', '2025-08-25 08:19:13', '2025-09-30 14:25:18', '2025-09-30 21:25:18', 1);
+INSERT INTO `pimpinan_upps_ps` (`id_pimpinan`, `id_pegawai`, `periode_mulai`, `periode_selesai`, `tupoksi`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 1, '2023-01-01', '2027-12-31', 'Bertanggung jawab atas bidang akademik.', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(2, 2, '2024-08-01', '2028-07-31', 'Mengelola kegiatan akademik dan operasional Program Studi Informatika.', '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(4, 4, '2024-12-29', '2025-12-29', 'mangan bakso', '2025-08-22 10:32:01', '2025-08-22 10:32:01', NULL, NULL),
+(5, 5, '2024-10-11', '2029-10-11', 'afzsshayskiqsj', '2025-08-22 10:34:13', '2025-08-22 10:34:59', NULL, NULL),
+(6, 10, '2032-12-29', '2033-12-29', 'Mangan baksoo', '2025-08-22 23:52:54', '2025-08-23 01:12:48', '2025-08-23 08:12:48', 1),
+(7, 10, '2023-12-22', '2024-12-22', 'Mangan AFC', '2025-08-25 08:19:13', '2025-09-30 14:25:18', '2025-09-30 21:25:18', 1);
 
 -- --------------------------------------------------------
 
@@ -1289,26 +1289,9 @@ CREATE TABLE `tabel_2a1_mahasiswa_baru_aktif` (
 --
 
 INSERT INTO `tabel_2a1_mahasiswa_baru_aktif` (`id`, `id_unit_prodi`, `id_tahun`, `jenis`, `jalur`, `jumlah_total`, `jumlah_afirmasi`, `jumlah_kebutuhan_khusus`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(3, 4, 2020, 'baru', 'reguler', 120, 4, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(4, 4, 2020, 'aktif', 'reguler', 400, 12, 3, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(5, 4, 2021, 'baru', 'reguler', 130, 5, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(6, 4, 2021, 'aktif', 'reguler', 410, 14, 4, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(7, 4, 2022, 'baru', 'reguler', 145, 6, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(8, 4, 2022, 'aktif', 'reguler', 420, 15, 4, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(9, 4, 2023, 'baru', 'reguler', 140, 7, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(10, 4, 2023, 'aktif', 'reguler', 425, 16, 3, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(11, 4, 2024, 'baru', 'reguler', 105, 6, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(12, 4, 2024, 'aktif', 'reguler', 120, 8, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(13, 5, 2020, 'baru', 'reguler', 90, 3, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(14, 5, 2020, 'aktif', 'reguler', 250, 8, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(15, 5, 2021, 'baru', 'reguler', 100, 4, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(16, 5, 2021, 'aktif', 'reguler', 260, 9, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(17, 5, 2022, 'baru', 'reguler', 110, 5, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(18, 5, 2022, 'aktif', 'reguler', 270, 10, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(19, 5, 2023, 'baru', 'reguler', 115, 6, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(20, 5, 2023, 'aktif', 'reguler', 280, 11, 2, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(21, 5, 2024, 'baru', 'reguler', 95, 5, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL),
-(22, 5, 2024, 'aktif', 'reguler', 210, 7, 1, '2025-10-09 07:08:37', '2025-10-09 07:08:37', NULL, NULL);
+(23, 4, 2024, 'baru', 'reguler', 300, 15, 15, '2025-11-26 05:39:20', '2025-11-26 05:39:20', NULL, NULL),
+(25, 4, 2025, 'baru', 'reguler', 200, 10, 10, '2025-11-26 05:48:51', '2025-11-26 05:48:51', NULL, NULL),
+(26, 4, 2024, 'aktif', 'reguler', 500, 20, 20, '2025-11-27 06:15:52', '2025-11-27 06:15:52', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1335,7 +1318,7 @@ CREATE TABLE `tabel_2a1_pendaftaran` (
 --
 
 INSERT INTO `tabel_2a1_pendaftaran` (`id`, `id_unit_prodi`, `id_tahun`, `daya_tampung`, `pendaftar`, `pendaftar_afirmasi`, `pendaftar_kebutuhan_khusus`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 1, 2024, 160, 130, 8, 2, '2025-10-03 09:26:23', '2025-10-03 09:27:44', NULL, NULL);
+(3, 4, 2024, 300, 250, 10, 10, '2025-11-26 05:33:48', '2025-11-26 05:33:48', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1364,8 +1347,7 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
 --
 
 INSERT INTO `tabel_2a2_keragaman_asal` (`id`, `id_unit_prodi`, `id_tahun`, `nama_daerah_input`, `kategori_geografis`, `is_afirmasi`, `is_kebutuhan_khusus`, `jumlah_mahasiswa`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(2, 2, 2024, 'KABUPATEN BANYUWANGI', 'Kota/Kab Lain', 0, 0, 30, 'https://drive.google.com/file/abc123', '2025-10-06 06:37:18', '2025-10-06 06:37:18', NULL, NULL),
-(3, 2, 2024, 'KABUPATEN BANYUWANGI', 'Kota/Kab Lain', 0, 0, 30, 'https://drive.google.com/file/abc123', '2025-10-06 09:12:19', '2025-10-06 09:12:19', NULL, NULL);
+(6, 2, 2024, 'KABUPATEN BANYUWANGI', 'Sama Kota/Kab', 0, 0, 60, 'https://youtube.com', '2025-11-26 05:08:49', '2025-11-26 05:47:34', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1391,7 +1373,8 @@ CREATE TABLE `tabel_2a3_kondisi_mahasiswa` (
 
 INSERT INTO `tabel_2a3_kondisi_mahasiswa` (`id`, `id_unit_prodi`, `id_tahun`, `jml_baru`, `jml_aktif`, `jml_lulus`, `jml_do`, `deleted_at`, `deleted_by`) VALUES
 (6, 1, 2024, 0, 0, 30, 5, NULL, NULL),
-(7, 4, 2024, 105, 120, 30, 5, NULL, NULL);
+(7, 4, 2024, 105, 120, 30, 5, NULL, NULL),
+(8, 2, 2025, 0, 0, 30, 10, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1715,6 +1698,210 @@ INSERT INTO `tabel_4a1_sarpras_pkm` (`id`, `id_unit`, `nama_sarpras`, `daya_tamp
 -- --------------------------------------------------------
 
 --
+-- Struktur dari tabel `tabel_4a2_pendanaan_pkm`
+--
+
+CREATE TABLE `tabel_4a2_pendanaan_pkm` (
+  `id_pendanaan` int(11) NOT NULL,
+  `id_pkm` int(11) NOT NULL COMMENT 'Relasi ke tabel_4a2_pkm.id (Induk)',
+  `id_tahun` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `jumlah_dana` bigint(20) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4a2_pkm`
+--
+
+CREATE TABLE `tabel_4a2_pkm` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (LPPM)',
+  `link_roadmap` text DEFAULT NULL,
+  `id_dosen_ketua` int(11) NOT NULL COMMENT 'Relasi ke dosen.id_dosen',
+  `judul_pkm` text NOT NULL,
+  `jml_mhs_terlibat` int(11) DEFAULT 0,
+  `jenis_hibah_pkm` varchar(255) DEFAULT NULL,
+  `sumber_dana` enum('L','N','I') DEFAULT NULL COMMENT 'L: Lokal, N: Nasional, I: Internasional',
+  `durasi_tahun` int(11) DEFAULT NULL,
+  `link_bukti` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4c1_kerjasama_pkm`
+--
+
+CREATE TABLE `tabel_4c1_kerjasama_pkm` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (LPPM)',
+  `judul_kerjasama` text NOT NULL,
+  `mitra_kerja_sama` varchar(255) NOT NULL,
+  `sumber` enum('L','N','I') NOT NULL COMMENT 'L: Lokal, N: Nasional, I: Internasional',
+  `durasi_tahun` int(11) DEFAULT NULL,
+  `link_bukti` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4c1_pendanaan_pkm`
+--
+
+CREATE TABLE `tabel_4c1_pendanaan_pkm` (
+  `id_pendanaan` int(11) NOT NULL,
+  `id_kerjasama_pkm` int(11) NOT NULL COMMENT 'Relasi ke tabel_4c1_kerjasama_pkm.id (Induk)',
+  `id_tahun` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `jumlah_dana` bigint(20) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4c2_diseminasi_pkm`
+--
+
+CREATE TABLE `tabel_4c2_diseminasi_pkm` (
+  `id` int(11) NOT NULL,
+  `id_dosen` int(11) NOT NULL COMMENT 'Relasi ke tabel dosen.id_dosen',
+  `judul_pkm` text NOT NULL COMMENT 'Judul PkM yang didiseminasi',
+  `jenis_diseminasi` enum('L','N','I') NOT NULL COMMENT 'L: Lokal, N: Nasional, I: Internasional',
+  `id_tahun_diseminasi` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `link_bukti` text DEFAULT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Prodi/LPPM)',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_4c3_hki_pkm`
+--
+
+CREATE TABLE `tabel_4c3_hki_pkm` (
+  `id` int(11) NOT NULL,
+  `id_dosen` int(11) NOT NULL COMMENT 'Relasi ke tabel dosen.id_dosen',
+  `judul_hki` text NOT NULL COMMENT 'Judul lengkap HKI PkM',
+  `jenis_hki` varchar(255) NOT NULL COMMENT 'Jenis HKI (cth: Paten, Hak Cipta, dll)',
+  `id_tahun_perolehan` int(11) NOT NULL COMMENT 'Relasi ke tahun_akademik.id_tahun',
+  `link_bukti` text DEFAULT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Prodi/LPPM)',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_5_1_sistem_tata_kelola`
+--
+
+CREATE TABLE `tabel_5_1_sistem_tata_kelola` (
+  `id` int(11) NOT NULL,
+  `jenis_tata_kelola` varchar(255) NOT NULL COMMENT 'Jenis Tata Kelola (Pendidikan, Keuangan, SDM, Sarana Prasarana, Sistem Penjaminan Mutu, dll)',
+  `nama_sistem_informasi` varchar(255) NOT NULL COMMENT 'Nama Sistem Informasi',
+  `akses` enum('Lokal','Internet') DEFAULT NULL COMMENT 'Akses: Lokal atau Internet',
+  `id_unit_pengelola` int(11) NOT NULL COMMENT 'FK ke unit_kerja.id_unit (Unit Kerja Pengelola)',
+  `link_bukti` text DEFAULT NULL COMMENT 'Link Bukti',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_5_1_sistem_tata_kelola`
+--
+
+INSERT INTO `tabel_5_1_sistem_tata_kelola` (`id`, `jenis_tata_kelola`, `nama_sistem_informasi`, `akses`, `id_unit_pengelola`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 'Pendidikan', 'Sistem Informasi Akademik', 'Internet', 2, 'https://example.com/bukti-siakad.pdf', '2025-11-12 07:21:38', '2025-11-12 07:21:38', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_5_2_sarpras_pendidikan`
+--
+
+CREATE TABLE `tabel_5_2_sarpras_pendidikan` (
+  `id` int(11) NOT NULL,
+  `id_unit` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Sarpras)',
+  `nama_sarpras` varchar(255) NOT NULL COMMENT 'Nama Prasarana (misal: ruang kelas, laboratorium, perpustakaan/ruang baca, dsb)',
+  `daya_tampung` int(11) DEFAULT NULL COMMENT 'Daya Tampung (jika relevan)',
+  `luas_ruang_m2` float DEFAULT NULL COMMENT 'Luas Ruang (m²)',
+  `kepemilikan` enum('M','W') DEFAULT NULL COMMENT 'M: Milik Sendiri, W: Sewa',
+  `lisensi` enum('L','P','T') DEFAULT NULL COMMENT 'L: Berlisensi, P: Public Domain, T: Tdk Berlisensi',
+  `perangkat_detail` text DEFAULT NULL COMMENT 'Perangkat keras, perangkat lunak, bandwidth, device, tool dan bahan pustaka, dll.',
+  `link_bukti` text DEFAULT NULL COMMENT 'Link Bukti',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_5_2_sarpras_pendidikan`
+--
+
+INSERT INTO `tabel_5_2_sarpras_pendidikan` (`id`, `id_unit`, `nama_sarpras`, `daya_tampung`, `luas_ruang_m2`, `kepemilikan`, `lisensi`, `perangkat_detail`, `link_bukti`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`) VALUES
+(1, 2, 'Laboratorium Komputer Jaringan', 40, 80.5, 'M', 'L', '40 unit komputer, 1 server, switch 24 port, router, software Windows 10, Microsoft Office, Cisco Packet Tracer', 'https://drive.google.com/file/d/abc123/lab-komputer.pdf', '2025-11-12 07:50:35', 1, NULL, NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tabel_6_kesesuaian_visi_misi`
+--
+
+CREATE TABLE `tabel_6_kesesuaian_visi_misi` (
+  `id` int(11) NOT NULL,
+  `id_unit_prodi` int(11) NOT NULL COMMENT 'Relasi ke unit_kerja.id_unit (Program Studi)',
+  `visi_pt` text DEFAULT NULL COMMENT 'Visi Perguruan Tinggi (PT)',
+  `visi_upps` text DEFAULT NULL COMMENT 'Visi UPPS',
+  `visi_keilmuan_ps` text DEFAULT NULL COMMENT 'Visi Keilmuan Program Studi (PS)',
+  `misi_pt` text DEFAULT NULL COMMENT 'Misi Perguruan Tinggi (PT)',
+  `misi_upps` text DEFAULT NULL COMMENT 'Misi UPPS',
+  `link_bukti` text DEFAULT NULL COMMENT 'Link Bukti (VMTS, rencana pengembangan strategis, pengakuan/apresiasi)',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `updated_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user',
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int(11) DEFAULT NULL COMMENT 'Relasi ke users.id_user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `tabel_6_kesesuaian_visi_misi`
+--
+
+INSERT INTO `tabel_6_kesesuaian_visi_misi` (`id`, `id_unit_prodi`, `visi_pt`, `visi_upps`, `visi_keilmuan_ps`, `misi_pt`, `misi_upps`, `link_bukti`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`) VALUES
+(1, 4, 'Menjadi perguruan tinggi yang unggul dalam bidang teknologi informasi', 'Menjadi unit yang terdepan dalam pengembangan teknologi informasi', 'Menjadi program studi yang menghasilkan lulusan kompeten di bidang teknologi informasi', '1. Menyelenggarakan pendidikan berkualitas\n2. Melakukan penelitian yang bermanfaat\n3. Melakukan pengabdian kepada masyarakat', '1. Mengembangkan kurikulum yang relevan\n2. Meningkatkan kualitas dosen\n3. Membangun kerjasama dengan industri', 'https://drive.google.com/file/d/abc123/vmts.pdf', '2025-11-12 08:16:42', 1, NULL, NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Struktur dari tabel `tahun_akademik`
 --
 
@@ -2019,7 +2206,9 @@ ALTER TABLE `mata_kuliah`
 -- Indeks untuk tabel `pegawai`
 --
 ALTER TABLE `pegawai`
-  ADD PRIMARY KEY (`id_pegawai`);
+  ADD PRIMARY KEY (`id_pegawai`),
+  ADD KEY `idx_pegawai_unit` (`id_unit`),
+  ADD KEY `idx_pegawai_jabatan` (`id_jabatan`);
 
 --
 -- Indeks untuk tabel `penggunaan_dana`
@@ -2034,9 +2223,7 @@ ALTER TABLE `penggunaan_dana`
 --
 ALTER TABLE `pimpinan_upps_ps`
   ADD PRIMARY KEY (`id_pimpinan`),
-  ADD KEY `id_unit` (`id_unit`),
   ADD KEY `id_pegawai` (`id_pegawai`),
-  ADD KEY `id_jabatan` (`id_jabatan`),
   ADD KEY `deleted_at` (`deleted_at`);
 
 --
@@ -2243,6 +2430,83 @@ ALTER TABLE `tabel_4a1_sarpras_pkm`
   ADD KEY `idx_4a1_deleted_at` (`deleted_at`);
 
 --
+-- Indeks untuk tabel `tabel_4a2_pendanaan_pkm`
+--
+ALTER TABLE `tabel_4a2_pendanaan_pkm`
+  ADD PRIMARY KEY (`id_pendanaan`),
+  ADD KEY `idx_4a2_pendanaan_id_pkm` (`id_pkm`),
+  ADD KEY `idx_4a2_pendanaan_id_tahun` (`id_tahun`);
+
+--
+-- Indeks untuk tabel `tabel_4a2_pkm`
+--
+ALTER TABLE `tabel_4a2_pkm`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_4a2_id_unit` (`id_unit`),
+  ADD KEY `idx_4a2_id_dosen_ketua` (`id_dosen_ketua`),
+  ADD KEY `idx_4a2_deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_4c1_kerjasama_pkm`
+--
+ALTER TABLE `tabel_4c1_kerjasama_pkm`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_4c1_id_unit` (`id_unit`),
+  ADD KEY `idx_4c1_deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_4c1_pendanaan_pkm`
+--
+ALTER TABLE `tabel_4c1_pendanaan_pkm`
+  ADD PRIMARY KEY (`id_pendanaan`),
+  ADD KEY `idx_4c1_pendanaan_id_kerjasama_pkm` (`id_kerjasama_pkm`),
+  ADD KEY `idx_4c1_pendanaan_id_tahun` (`id_tahun`);
+
+--
+-- Indeks untuk tabel `tabel_4c2_diseminasi_pkm`
+--
+ALTER TABLE `tabel_4c2_diseminasi_pkm`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_4c2_id_dosen` (`id_dosen`),
+  ADD KEY `idx_4c2_id_tahun` (`id_tahun_diseminasi`),
+  ADD KEY `idx_4c2_id_unit` (`id_unit`),
+  ADD KEY `idx_4c2_deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_4c3_hki_pkm`
+--
+ALTER TABLE `tabel_4c3_hki_pkm`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_4c3_id_dosen` (`id_dosen`),
+  ADD KEY `idx_4c3_id_tahun_perolehan` (`id_tahun_perolehan`),
+  ADD KEY `idx_4c3_id_unit` (`id_unit`),
+  ADD KEY `idx_4c3_deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_5_1_sistem_tata_kelola`
+--
+ALTER TABLE `tabel_5_1_sistem_tata_kelola`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_unit_pengelola` (`id_unit_pengelola`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_5_2_sarpras_pendidikan`
+--
+ALTER TABLE `tabel_5_2_sarpras_pendidikan`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_unit` (`id_unit`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
+-- Indeks untuk tabel `tabel_6_kesesuaian_visi_misi`
+--
+ALTER TABLE `tabel_6_kesesuaian_visi_misi`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unik_prodi` (`id_unit_prodi`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
 -- Indeks untuk tabel `tahun_akademik`
 --
 ALTER TABLE `tahun_akademik`
@@ -2393,25 +2657,25 @@ ALTER TABLE `sumber_rekognisi_master`
 -- AUTO_INCREMENT untuk tabel `tabel_2a1_mahasiswa_baru_aktif`
 --
 ALTER TABLE `tabel_2a1_mahasiswa_baru_aktif`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_2a1_pendaftaran`
 --
 ALTER TABLE `tabel_2a1_pendaftaran`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_2a2_keragaman_asal`
 --
 ALTER TABLE `tabel_2a2_keragaman_asal`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_2a3_kondisi_mahasiswa`
 --
 ALTER TABLE `tabel_2a3_kondisi_mahasiswa`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT untuk tabel `tabel_2b4_masa_tunggu`
@@ -2489,6 +2753,60 @@ ALTER TABLE `tabel_3c3_hki`
 -- AUTO_INCREMENT untuk tabel `tabel_4a1_sarpras_pkm`
 --
 ALTER TABLE `tabel_4a1_sarpras_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4a2_pendanaan_pkm`
+--
+ALTER TABLE `tabel_4a2_pendanaan_pkm`
+  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4a2_pkm`
+--
+ALTER TABLE `tabel_4a2_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4c1_kerjasama_pkm`
+--
+ALTER TABLE `tabel_4c1_kerjasama_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4c1_pendanaan_pkm`
+--
+ALTER TABLE `tabel_4c1_pendanaan_pkm`
+  MODIFY `id_pendanaan` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4c2_diseminasi_pkm`
+--
+ALTER TABLE `tabel_4c2_diseminasi_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_4c3_hki_pkm`
+--
+ALTER TABLE `tabel_4c3_hki_pkm`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_5_1_sistem_tata_kelola`
+--
+ALTER TABLE `tabel_5_1_sistem_tata_kelola`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_5_2_sarpras_pendidikan`
+--
+ALTER TABLE `tabel_5_2_sarpras_pendidikan`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT untuk tabel `tabel_6_kesesuaian_visi_misi`
+--
+ALTER TABLE `tabel_6_kesesuaian_visi_misi`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
@@ -2601,6 +2919,13 @@ ALTER TABLE `mata_kuliah`
   ADD CONSTRAINT `mata_kuliah_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`) ON DELETE CASCADE;
 
 --
+-- Ketidakleluasaan untuk tabel `pegawai`
+--
+ALTER TABLE `pegawai`
+  ADD CONSTRAINT `fk_pegawai_jabatan` FOREIGN KEY (`id_jabatan`) REFERENCES `ref_jabatan_struktural` (`id_jabatan`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_pegawai_unit` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Ketidakleluasaan untuk tabel `penggunaan_dana`
 --
 ALTER TABLE `penggunaan_dana`
@@ -2610,9 +2935,7 @@ ALTER TABLE `penggunaan_dana`
 -- Ketidakleluasaan untuk tabel `pimpinan_upps_ps`
 --
 ALTER TABLE `pimpinan_upps_ps`
-  ADD CONSTRAINT `pimpinan_upps_ps_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`),
-  ADD CONSTRAINT `pimpinan_upps_ps_ibfk_2` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`),
-  ADD CONSTRAINT `pimpinan_upps_ps_ibfk_3` FOREIGN KEY (`id_jabatan`) REFERENCES `ref_jabatan_struktural` (`id_jabatan`);
+  ADD CONSTRAINT `pimpinan_upps_ps_ibfk_2` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`);
 
 --
 -- Ketidakleluasaan untuk tabel `profil_lulusan`
@@ -2742,6 +3065,24 @@ ALTER TABLE `tabel_3c1_kerjasama_penelitian`
 ALTER TABLE `tabel_3c1_pendanaan_kerjasama`
   ADD CONSTRAINT `tabel_3c1_pendanaan_kerjasama_ibfk_1` FOREIGN KEY (`id_kerjasama`) REFERENCES `tabel_3c1_kerjasama_penelitian` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tabel_3c1_pendanaan_kerjasama_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_5_1_sistem_tata_kelola`
+--
+ALTER TABLE `tabel_5_1_sistem_tata_kelola`
+  ADD CONSTRAINT `tabel_5_1_sistem_tata_kelola_ibfk_1` FOREIGN KEY (`id_unit_pengelola`) REFERENCES `unit_kerja` (`id_unit`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_5_2_sarpras_pendidikan`
+--
+ALTER TABLE `tabel_5_2_sarpras_pendidikan`
+  ADD CONSTRAINT `tabel_5_2_sarpras_pendidikan_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`);
+
+--
+-- Ketidakleluasaan untuk tabel `tabel_6_kesesuaian_visi_misi`
+--
+ALTER TABLE `tabel_6_kesesuaian_visi_misi`
+  ADD CONSTRAINT `tabel_6_kesesuaian_visi_misi_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`);
 
 --
 -- Ketidakleluasaan untuk tabel `tenaga_kependidikan`

@@ -12,25 +12,34 @@ export const listKondisiMahasiswa = async (req, res) => {
     const [rows] = await pool.query(`
       SELECT 
         km.id,
-        km.id_unit_prodi,
-        km.id_tahun,
-        COALESCE(mb.jumlah_total, 0) AS jml_baru,
-        COALESCE(ma.jumlah_total, 0) AS jml_aktif,
-        km.jml_lulus,
-        km.jml_do,
+        combos.id_unit_prodi,
+        combos.id_tahun,
+        COALESCE(agg.total_baru, 0) AS jml_baru,
+        COALESCE(agg.total_aktif, 0) AS jml_aktif,
+        COALESCE(km.jml_lulus, 0) AS jml_lulus,
+        COALESCE(km.jml_do, 0) AS jml_do,
         km.deleted_at,
         km.deleted_by
-      FROM tabel_2a3_kondisi_mahasiswa km
-      LEFT JOIN tabel_2a1_mahasiswa_baru_aktif mb 
-        ON mb.id_unit_prodi = km.id_unit_prodi 
-        AND mb.id_tahun = km.id_tahun 
-        AND mb.jenis = 'baru'
-      LEFT JOIN tabel_2a1_mahasiswa_baru_aktif ma 
-        ON ma.id_unit_prodi = km.id_unit_prodi 
-        AND ma.id_tahun = km.id_tahun 
-        AND ma.jenis = 'aktif'
-      WHERE km.deleted_at IS NULL
-      ORDER BY km.id_tahun DESC, km.id_unit_prodi ASC
+      FROM (
+        SELECT id_unit_prodi, id_tahun FROM tabel_2a3_kondisi_mahasiswa WHERE deleted_at IS NULL
+        UNION
+        SELECT id_unit_prodi, id_tahun FROM tabel_2a1_mahasiswa_baru_aktif WHERE deleted_at IS NULL
+      ) combos
+      LEFT JOIN (
+        SELECT
+          id_unit_prodi,
+          id_tahun,
+          SUM(CASE WHEN jenis = 'baru' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS total_baru,
+          SUM(CASE WHEN jenis = 'aktif' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS total_aktif
+        FROM tabel_2a1_mahasiswa_baru_aktif
+        WHERE deleted_at IS NULL
+        GROUP BY id_unit_prodi, id_tahun
+      ) agg ON agg.id_unit_prodi = combos.id_unit_prodi AND agg.id_tahun = combos.id_tahun
+      LEFT JOIN tabel_2a3_kondisi_mahasiswa km
+        ON km.id_unit_prodi = combos.id_unit_prodi 
+       AND km.id_tahun = combos.id_tahun
+       AND km.deleted_at IS NULL
+      ORDER BY combos.id_tahun DESC, combos.id_unit_prodi ASC
     `);
     res.json(rows);
   } catch (err) {
@@ -49,17 +58,27 @@ export const getKondisiMahasiswaById = async (req, res) => {
     const [rows] = await pool.query(`
       SELECT 
         km.*,
-        COALESCE(mb.jumlah_total, 0) AS jml_baru,
-        COALESCE(ma.jumlah_total, 0) AS jml_aktif
+        COALESCE(mb.total_baru, 0) AS jml_baru,
+        COALESCE(ma.total_aktif, 0) AS jml_aktif
       FROM tabel_2a3_kondisi_mahasiswa km
-      LEFT JOIN tabel_2a1_mahasiswa_baru_aktif mb 
-        ON mb.id_unit_prodi = km.id_unit_prodi 
-        AND mb.id_tahun = km.id_tahun 
-        AND mb.jenis = 'baru'
-      LEFT JOIN tabel_2a1_mahasiswa_baru_aktif ma 
-        ON ma.id_unit_prodi = km.id_unit_prodi 
-        AND ma.id_tahun = km.id_tahun 
-        AND ma.jenis = 'aktif'
+      LEFT JOIN (
+        SELECT 
+          id_unit_prodi,
+          id_tahun,
+          SUM(jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) AS total_baru
+        FROM tabel_2a1_mahasiswa_baru_aktif
+        WHERE jenis = 'baru' AND deleted_at IS NULL
+        GROUP BY id_unit_prodi, id_tahun
+      ) mb ON mb.id_unit_prodi = km.id_unit_prodi AND mb.id_tahun = km.id_tahun
+      LEFT JOIN (
+        SELECT 
+          id_unit_prodi,
+          id_tahun,
+          SUM(jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) AS total_aktif
+        FROM tabel_2a1_mahasiswa_baru_aktif
+        WHERE jenis = 'aktif' AND deleted_at IS NULL
+        GROUP BY id_unit_prodi, id_tahun
+      ) ma ON ma.id_unit_prodi = km.id_unit_prodi AND ma.id_tahun = km.id_tahun
       WHERE km.id = ?
     `, [req.params.id]);
 
@@ -83,8 +102,8 @@ export const createKondisiMahasiswa = async (req, res) => {
     // Ambil mahasiswa baru dan aktif dari tabel 2A1
     const [rows] = await pool.query(`
       SELECT 
-        SUM(CASE WHEN jenis = 'baru' THEN jumlah_total ELSE 0 END) AS jml_baru,
-        SUM(CASE WHEN jenis = 'aktif' THEN jumlah_total ELSE 0 END) AS jml_aktif
+        SUM(CASE WHEN jenis = 'baru' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS jml_baru,
+        SUM(CASE WHEN jenis = 'aktif' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS jml_aktif
       FROM tabel_2a1_mahasiswa_baru_aktif
       WHERE id_unit_prodi = ? AND id_tahun = ? AND deleted_at IS NULL
     `, [id_unit_prodi, id_tahun]);
@@ -122,8 +141,8 @@ export const updateKondisiMahasiswa = async (req, res) => {
 
     const [rows] = await pool.query(`
       SELECT 
-        SUM(CASE WHEN jenis = 'baru' THEN jumlah_total ELSE 0 END) AS jml_baru,
-        SUM(CASE WHEN jenis = 'aktif' THEN jumlah_total ELSE 0 END) AS jml_aktif
+        SUM(CASE WHEN jenis = 'baru' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS jml_baru,
+        SUM(CASE WHEN jenis = 'aktif' THEN (jumlah_total + COALESCE(jumlah_afirmasi,0) + COALESCE(jumlah_kebutuhan_khusus,0)) ELSE 0 END) AS jml_aktif
       FROM tabel_2a1_mahasiswa_baru_aktif
       WHERE id_unit_prodi = ? AND id_tahun = ? AND deleted_at IS NULL
     `, [id_unit_prodi, id_tahun]);
