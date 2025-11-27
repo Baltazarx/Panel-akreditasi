@@ -836,6 +836,7 @@ export default function Tabel2A1({ role }) {
               tahun: null,
               tahunId: null,
               tahunName: '',
+              dayaTampung: '',
               pendaftar: '',
               pendaftarAfirmasi: '',
               pendaftarKebutuhanKhusus: '',
@@ -867,6 +868,7 @@ export default function Tabel2A1({ role }) {
             tahun: year.tahun,
             tahunId: yearId,
             tahunName: year.tahun,
+            dayaTampung: pendData?.daya_tampung || '',
             pendaftar: pendData?.pendaftar || '',
             pendaftarAfirmasi: pendData?.pendaftar_afirmasi || '',
             pendaftarKebutuhanKhusus: pendData?.pendaftar_kebutuhan_khusus || '',
@@ -892,6 +894,7 @@ export default function Tabel2A1({ role }) {
         tahun: row.id_tahun,
         tahunId: row.id_tahun,
         tahunName: getTahunName(row.id_tahun),
+        dayaTampung: row.daya_tampung || '',
         pendaftar: row.pendaftar || '',
         pendaftarAfirmasi: row.pendaftar_afirmasi || '',
         pendaftarKebutuhanKhusus: row.pendaftar_kebutuhan_khusus || '',
@@ -920,6 +923,9 @@ export default function Tabel2A1({ role }) {
               </th>
               <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 TS
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                DAYA TAMPUNG
               </th>
               <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 JUMLAH CALON MAHASISWA
@@ -977,6 +983,9 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
                     {row.ts}
                   </td>
+              <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                {row.dayaTampung || '-'}
+              </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftar || '-'}
                   </td>
@@ -1022,7 +1031,7 @@ export default function Tabel2A1({ role }) {
             })}
             {displayRows.length === 0 && (
               <tr>
-                <td colSpan={showDeleted ? 7 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={showDeleted ? 8 : 7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
