@@ -12,7 +12,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle, FiFileText } from 'react-icons/fi';
 
 // // --- MOCKS FOR PREVIEW (DELETE THIS BLOCK IN YOUR PROJECT) ---
 // import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, RotateCw, XCircle, MoreVertical } from 'lucide-react';
@@ -539,16 +539,86 @@ export default function Tabel1A1({ role }) {
             </button>
           </div>
         </div>
-        {canCreate && (
-          <button 
-            onClick={() => setShowCreateModal(true)} 
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-            disabled={loading}
-            aria-label="Tambah data baru"
-          >
-            + Tambah Data
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <div className="relative group">
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+                  const url = `${BASE_URL}${table.path}/export`;
+                  const response = await fetch(url, {
+                    credentials: 'include',
+                    method: 'GET',
+                    mode: 'cors'
+                  });
+
+                  if (!response.ok) {
+                    const text = await response.text();
+                    let errorMsg = 'Gagal mengekspor data';
+                    try {
+                      const json = JSON.parse(text);
+                      errorMsg = json.error || json.message || errorMsg;
+                    } catch (e) {
+                      errorMsg = text || errorMsg;
+                    }
+                    throw new Error(errorMsg);
+                  }
+
+                  const blob = await response.blob();
+                  const urlBlob = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = urlBlob;
+                  a.download = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(urlBlob);
+                  document.body.removeChild(a);
+
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data berhasil diekspor ke Excel.',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                } catch (err) {
+                  console.error("Error exporting data:", err);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mengekspor data',
+                    text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+                  });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading || processedRows.length === 0}
+              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label="Export to Excel"
+            >
+              <FiFileText className="w-4 h-4" />
+              Export Excel
+            </button>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
+              Cek kelengkapan data
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          </div>
+          {canCreate && (
+            <button 
+              onClick={() => setShowCreateModal(true)} 
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              disabled={loading}
+              aria-label="Tambah data baru"
+            >
+              + Tambah Data
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
