@@ -198,7 +198,7 @@ export default function Tabel1A5() {
                     {i + 1}.
                   </td>
                   <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">
-                    {r.jenis_tenaga_kependidikan || "-"}
+                    {r.jenis_tendik || "-"}
                   </td>
                   {educationLevels.map((level) => (
                     <td key={level} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
@@ -247,7 +247,7 @@ export default function Tabel1A5() {
                     <span className="text-lg font-bold text-[#0384d6]">{i + 1}</span>
                   </div>
                   <h3 className="text-lg font-bold text-slate-800 mb-1">
-                    {r.jenis_tenaga_kependidikan || "-"}
+                    {r.jenis_tendik || "-"}
                   </h3>
                   <p className="text-sm text-slate-600">
                     Unit: <span className="font-semibold">{r.unit_kerja || "-"}</span>
