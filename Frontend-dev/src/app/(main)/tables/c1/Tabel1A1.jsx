@@ -791,8 +791,12 @@ export default function Tabel1A1({ role }) {
                 </td>
               </tr>
             ) : (
-              paginatedRows.map((r, i) => (
-                <tr key={`${showDeleted ? 'deleted' : 'active'}-${getIdField(r) ? r[getIdField(r)] : i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+              paginatedRows.map((r, i) => {
+                const idField = getIdField(r);
+                const rowId = idField ? r[idField] : null;
+                const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-${rowId !== null && rowId !== undefined ? rowId : `idx-${i}`}-${i}`;
+                return (
+                <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getUnitName(r)}</td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{getKetuaName(r)}</td>
                   <td className="px-6 py-4 text-slate-600 border border-slate-200">
@@ -819,8 +823,7 @@ export default function Tabel1A1({ role }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                          if (openDropdownId !== rowId) {
+                          if (openDropdownId !== uniqueKey) {
                             // Calculate position for fixed dropdown - align right edge
                             const rect = e.currentTarget.getBoundingClientRect();
                             const dropdownWidth = 192; // w-48 = 192px
@@ -828,21 +831,22 @@ export default function Tabel1A1({ role }) {
                               top: rect.bottom + 4,
                               left: Math.max(8, rect.right - dropdownWidth) // Align right, but ensure it doesn't go off-screen
                             });
-                            setOpenDropdownId(rowId);
+                            setOpenDropdownId(uniqueKey);
                           } else {
                             setOpenDropdownId(null);
                           }
                         }}
                         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                         aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                        aria-expanded={openDropdownId === uniqueKey}
                       >
                         <FiMoreVertical size={18} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
@@ -860,8 +864,10 @@ export default function Tabel1A1({ role }) {
         >
           {(() => {
             const currentRow = paginatedRows.find((r, idx) => {
-              const rowId = getIdField(r) ? r[getIdField(r)] : idx;
-              return rowId === openDropdownId;
+              const idField = getIdField(r);
+              const rowId = idField ? r[idField] : null;
+              const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-${rowId !== null && rowId !== undefined ? rowId : `idx-${idx}`}-${idx}`;
+              return uniqueKey === openDropdownId;
             });
             if (!currentRow) return null;
             

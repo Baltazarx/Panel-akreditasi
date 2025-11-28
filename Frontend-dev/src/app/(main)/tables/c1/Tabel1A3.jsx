@@ -637,65 +637,135 @@ export default function Tabel1A3({ role }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={async () => {
-              try {
-                setLoading(true);
-                const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
-                const url = `${BASE_URL}${ENDPOINT}/export`;
-                const response = await fetch(url, {
-                  credentials: 'include',
-                  method: 'GET',
-                  mode: 'cors'
-                });
-
-                if (!response.ok) {
-                  const text = await response.text();
-                  let errorMsg = 'Gagal mengekspor data';
-                  try {
-                    const json = JSON.parse(text);
-                    errorMsg = json.error || json.message || errorMsg;
-                  } catch (e) {
-                    errorMsg = text || errorMsg;
+          <div className="relative group">
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  
+                  // Helper function untuk get year name
+                  const getYearName = (id) =>
+                    maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
+                  
+                  // Prepare data untuk export (hanya data yang aktif, tidak yang dihapus)
+                  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+                  
+                  if (filteredRows.length === 0) {
+                    throw new Error('Tidak ada data untuk diekspor.');
                   }
-                  throw new Error(errorMsg);
+                  
+                  const exportData = filteredRows.map((row, index) => ({
+                    'No': index + 1,
+                    'Tahun': getYearName(row.id_tahun),
+                    'Jenis Penggunaan': row.jenis_penggunaan || '',
+                    'Jumlah Dana': Number(String(row.jumlah_dana || '0').replace(/[^\d.-]/g, '')) || 0,
+                    'Link Bukti': row.link_bukti || ''
+                  }));
+                  
+                  // Coba import xlsx library
+                  let XLSX;
+                  try {
+                    XLSX = await import('xlsx');
+                  } catch (importErr) {
+                    console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+                    // Fallback ke CSV
+                    const escapeCsv = (str) => {
+                      if (str === null || str === undefined) return '';
+                      const strValue = String(str);
+                      if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                        return `"${strValue.replace(/"/g, '""')}"`;
+                      }
+                      return strValue;
+                    };
+                    
+                    const headers = ['No', 'Tahun', 'Jenis Penggunaan', 'Jumlah Dana', 'Link Bukti'];
+                    const csvRows = [
+                      headers.map(escapeCsv).join(','),
+                      ...exportData.map(row => [
+                        row.No,
+                        escapeCsv(row.Tahun),
+                        escapeCsv(row['Jenis Penggunaan']),
+                        row['Jumlah Dana'],
+                        escapeCsv(row['Link Bukti'])
+                      ].map(escapeCsv).join(','))
+                    ];
+                    const csvContent = '\ufeff' + csvRows.join('\n');
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Tabel_1A3_Penggunaan_Dana_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Berhasil!',
+                      text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                      timer: 1500,
+                      showConfirmButton: false
+                    });
+                    return;
+                  }
+                  
+                  // Buat workbook baru
+                  const wb = XLSX.utils.book_new();
+                  
+                  // Buat worksheet dari data
+                  const ws = XLSX.utils.json_to_sheet(exportData);
+                  
+                  // Set column widths
+                  ws['!cols'] = [
+                    { wch: 5 },   // No
+                    { wch: 15 },  // Tahun
+                    { wch: 30 },  // Jenis Penggunaan
+                    { wch: 20 },  // Jumlah Dana
+                    { wch: 40 }   // Link Bukti
+                  ];
+                  
+                  // Tambahkan worksheet ke workbook
+                  XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1A3');
+                  
+                  // Generate file dan download
+                  const fileName = `Tabel_1A3_Penggunaan_Dana_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  XLSX.writeFile(wb, fileName);
+
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data berhasil diekspor ke Excel.',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                } catch (err) {
+                  console.error("Error exporting data:", err);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mengekspor data',
+                    text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+                  });
+                } finally {
+                  setLoading(false);
                 }
-
-                const blob = await response.blob();
-                const urlBlob = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = urlBlob;
-                a.download = `Tabel_1A3_Penggunaan_Dana_${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(urlBlob);
-                document.body.removeChild(a);
-
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Berhasil!',
-                  text: 'Data berhasil diekspor ke Excel.',
-                  timer: 1500,
-                  showConfirmButton: false
-                });
-              } catch (err) {
-                console.error("Error exporting data:", err);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Gagal mengekspor data',
-                  text: err.message || 'Terjadi kesalahan saat mengekspor data.'
-                });
-              } finally {
-                setLoading(false);
-              }
-            }}
-            disabled={loading || rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length === 0}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            aria-label="Export to Excel"
-          >
-            <FiFileText className="w-4 h-4" />
-            Export Excel
-          </button>
+              }}
+              disabled={loading || rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length === 0}
+              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label="Export Tabel Per Tahun to Excel"
+            >
+              <FiFileText className="w-4 h-4" />
+              Export Tabel Per Tahun
+            </button>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
+              Ekspor data tabel per tahun
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          </div>
           {canCreate && (
             <button
               onClick={() => setShowCreateModal(true)}
@@ -815,11 +885,142 @@ export default function Tabel1A3({ role }) {
           <h2 className="text-lg font-semibold text-slate-700">
           Ringkasan Penggunaan Dana
         </h2>
-          {!loading && (
-            <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{summaryData.length}</span>
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {!loading && (
+              <span className="inline-flex items-center text-sm text-slate-700">
+                Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{summaryData.length}</span>
+              </span>
+            )}
+            <div className="relative group">
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    
+                    // Prepare data untuk export ringkasan
+                    if (summaryData.length === 0) {
+                      throw new Error('Tidak ada data ringkasan untuk diekspor.');
+                    }
+                    
+                    const exportData = summaryData.map((row) => ({
+                      'Jenis Penggunaan': row.jenis_penggunaan || '',
+                      'TS-4': Number(String(n(row.ts_minus_4) || '0').replace(/[^\d.-]/g, '')) || 0,
+                      'TS-3': Number(String(n(row.ts_minus_3) || '0').replace(/[^\d.-]/g, '')) || 0,
+                      'TS-2': Number(String(n(row.ts_minus_2) || '0').replace(/[^\d.-]/g, '')) || 0,
+                      'TS-1': Number(String(n(row.ts_minus_1) || '0').replace(/[^\d.-]/g, '')) || 0,
+                      'TS': Number(String(n(row.ts) || '0').replace(/[^\d.-]/g, '')) || 0,
+                      'Link Bukti': row.link_bukti || ''
+                    }));
+                    
+                    // Coba import xlsx library
+                    let XLSX;
+                    try {
+                      XLSX = await import('xlsx');
+                    } catch (importErr) {
+                      console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+                      // Fallback ke CSV
+                      const escapeCsv = (str) => {
+                        if (str === null || str === undefined) return '';
+                        const strValue = String(str);
+                        if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                          return `"${strValue.replace(/"/g, '""')}"`;
+                        }
+                        return strValue;
+                      };
+                      
+                      const headers = ['Jenis Penggunaan', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'];
+                      const csvRows = [
+                        headers.map(escapeCsv).join(','),
+                        ...exportData.map(row => [
+                          escapeCsv(row['Jenis Penggunaan']),
+                          row['TS-4'],
+                          row['TS-3'],
+                          row['TS-2'],
+                          row['TS-1'],
+                          row['TS'],
+                          escapeCsv(row['Link Bukti'])
+                        ].map(escapeCsv).join(','))
+                      ];
+                      const csvContent = '\ufeff' + csvRows.join('\n');
+                      
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `Tabel_1A3_Ringkasan_${new Date().toISOString().split('T')[0]}.csv`;
+                      document.body.appendChild(a);
+                      a.click();
+                      window.URL.revokeObjectURL(url);
+                      document.body.removeChild(a);
+                      
+                      Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data ringkasan berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                        timer: 1500,
+                        showConfirmButton: false
+                      });
+                      return;
+                    }
+                    
+                    // Buat workbook baru
+                    const wb = XLSX.utils.book_new();
+                    
+                    // Buat worksheet dari data
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // Set column widths
+                    ws['!cols'] = [
+                      { wch: 30 },  // Jenis Penggunaan
+                      { wch: 15 },  // TS-4
+                      { wch: 15 },  // TS-3
+                      { wch: 15 },  // TS-2
+                      { wch: 15 },  // TS-1
+                      { wch: 15 },  // TS
+                      { wch: 40 }   // Link Bukti
+                    ];
+                    
+                    // Tambahkan worksheet ke workbook
+                    XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan 1A3');
+                    
+                    // Generate file dan download
+                    const fileName = `Tabel_1A3_Ringkasan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    XLSX.writeFile(wb, fileName);
+
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Berhasil!',
+                      text: 'Data ringkasan berhasil diekspor ke Excel.',
+                      timer: 1500,
+                      showConfirmButton: false
+                    });
+                  } catch (err) {
+                    console.error("Error exporting summary data:", err);
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Gagal mengekspor data',
+                      text: err.message || 'Terjadi kesalahan saat mengekspor data ringkasan.'
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading || summaryData.length === 0}
+                className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                aria-label="Export Ringkasan to Excel"
+              >
+                <FiFileText className="w-4 h-4" />
+                Export Ringkasan
+              </button>
+              {/* Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
+                Ekspor data ringkasan (TS-4 s.d. TS)
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                  <div className="border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <PrettyTable1A3Summary summaryData={summaryData} />
       </div>
