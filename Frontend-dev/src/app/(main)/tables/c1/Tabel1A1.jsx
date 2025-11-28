@@ -545,34 +545,79 @@ export default function Tabel1A1({ role }) {
               onClick={async () => {
                 try {
                   setLoading(true);
-                  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
-                  const url = `${BASE_URL}${table.path}/export`;
-                  const response = await fetch(url, {
-                    credentials: 'include',
-                    method: 'GET',
-                    mode: 'cors'
+                  
+                  // Prepare data untuk export
+                  const headers = ['No', 'Unit Kerja', 'Nama Ketua', 'Periode Jabatan', 'Pendidikan Terakhir', 'Jabatan Fungsional', 'Tugas Pokok dan Fungsi'];
+                  const exportData = processedRows.map((row, index) => [
+                    index + 1,
+                    getUnitName(row),
+                    getKetuaName(row),
+                    getPeriode(row),
+                    row.pendidikan_terakhir || '',
+                    row.jabatan_fungsional || '',
+                    row.tupoksi || ''
+                  ]);
+                  
+                  // Buat Excel XML format (SpreadsheetML)
+                  const escapeXml = (str) => {
+                    if (str === null || str === undefined) return '';
+                    return String(str)
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&apos;');
+                  };
+                  
+                  const createExcelXML = (headers, rows) => {
+                    let xml = '<?xml version="1.0"?>\n';
+                    xml += '<?mso-application progid="Excel.Sheet"?>\n';
+                    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+                    xml += ' xmlns:o="urn:schemas-microsoft-com:office:office"\n';
+                    xml += ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n';
+                    xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n';
+                    xml += ' xmlns:html="http://www.w3.org/TR/REC-html40">\n';
+                    xml += '<Worksheet ss:Name="Tabel 1A1">\n';
+                    xml += '<Table>\n';
+                    
+                    // Header row
+                    xml += '<Row>\n';
+                    headers.forEach(header => {
+                      xml += `<Cell><Data ss:Type="String">${escapeXml(header)}</Data></Cell>\n`;
+                    });
+                    xml += '</Row>\n';
+                    
+                    // Data rows
+                    rows.forEach(row => {
+                      xml += '<Row>\n';
+                      row.forEach(cell => {
+                        const cellType = typeof cell === 'number' ? 'Number' : 'String';
+                        xml += `<Cell><Data ss:Type="${cellType}">${escapeXml(cell)}</Data></Cell>\n`;
+                      });
+                      xml += '</Row>\n';
+                    });
+                    
+                    xml += '</Table>\n';
+                    xml += '</Worksheet>\n';
+                    xml += '</Workbook>';
+                    return xml;
+                  };
+                  
+                  const excelXML = createExcelXML(headers, exportData);
+                  
+                  // Create blob dengan Excel XML format
+                  const blob = new Blob([excelXML], { 
+                    type: 'application/vnd.ms-excel' 
                   });
-
-                  if (!response.ok) {
-                    const text = await response.text();
-                    let errorMsg = 'Gagal mengekspor data';
-                    try {
-                      const json = JSON.parse(text);
-                      errorMsg = json.error || json.message || errorMsg;
-                    } catch (e) {
-                      errorMsg = text || errorMsg;
-                    }
-                    throw new Error(errorMsg);
-                  }
-
-                  const blob = await response.blob();
-                  const urlBlob = window.URL.createObjectURL(blob);
+                  
+                  // Download file
+                  const url = window.URL.createObjectURL(blob);
                   const a = document.createElement('a');
-                  a.href = urlBlob;
-                  a.download = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  a.href = url;
+                  a.download = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.xls`;
                   document.body.appendChild(a);
                   a.click();
-                  window.URL.revokeObjectURL(urlBlob);
+                  window.URL.revokeObjectURL(url);
                   document.body.removeChild(a);
 
                   Swal.fire({

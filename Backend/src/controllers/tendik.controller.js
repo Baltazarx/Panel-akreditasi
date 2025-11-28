@@ -170,13 +170,60 @@ export const restoreTendik = async (req, res) => {
 // ===== HARD DELETE =====
 export const hardDeleteTendik = async (req, res) => {
   try {
-    await pool.query(
-      `DELETE FROM tenaga_kependidikan WHERE id_tendik=?`,
-      [req.params.id]
+    const idTendik = req.params.id;
+    
+    // Cek apakah data ada
+    const [checkRows] = await pool.query(
+      `SELECT id_tendik FROM tenaga_kependidikan WHERE id_tendik=?`,
+      [idTendik]
     );
-    res.json({ ok: true, hardDeleted: true });
+    
+    if (checkRows.length === 0) {
+      return res.status(404).json({ error: 'Data tidak ditemukan.' });
+    }
+    
+    // Hapus data terkait di kualifikasi_tendik terlebih dahulu (jika ada)
+    // Cek apakah tabel kualifikasi_tendik ada dan punya relasi
+    try {
+      const [kualifikasiRows] = await pool.query(
+        `SELECT id_kualifikasi FROM kualifikasi_tendik WHERE id_tendik=?`,
+        [idTendik]
+      );
+      
+      if (kualifikasiRows.length > 0) {
+        // Hapus data kualifikasi terlebih dahulu
+        await pool.query(
+          `DELETE FROM kualifikasi_tendik WHERE id_tendik=?`,
+          [idTendik]
+        );
+      }
+    } catch (kualifikasiErr) {
+      // Jika tabel tidak ada atau error, lanjutkan saja (mungkin tabel belum dibuat)
+      console.log("Info: Tabel kualifikasi_tendik tidak ditemukan atau error:", kualifikasiErr.message);
+    }
+    
+    // Hapus data utama
+    const [result] = await pool.query(
+      `DELETE FROM tenaga_kependidikan WHERE id_tendik=?`,
+      [idTendik]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Data tidak ditemukan.' });
+    }
+    
+    res.json({ ok: true, hardDeleted: true, message: 'Data berhasil dihapus secara permanen.' });
   } catch (err) {
     console.error("Error hardDeleteTendik:", err);
+    
+    // Handle foreign key constraint error
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.code === 'ER_ROW_IS_REFERENCED') {
+      return res.status(409).json({ 
+        error: 'Data tidak dapat dihapus karena masih digunakan di tabel lain. Hapus data terkait terlebih dahulu.',
+        details: err.message 
+      });
+    }
+    
     res.status(500).json({ error: 'Hard delete failed', details: err.message });
   }
 };

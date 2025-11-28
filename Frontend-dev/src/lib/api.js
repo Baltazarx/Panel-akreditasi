@@ -90,6 +90,7 @@ export function getIdField(row) {
   // Check for common ID field patterns
   if ("id_pimpinan" in row) return "id_pimpinan";
   if ("id_dosen" in row) return "id_dosen";
+  if ("id_tendik" in row) return "id_tendik";
   if ("id_pegawai" in row) return "id_pegawai";
   if ("id_user" in row) return "id_user";
   if ("id" in row) return "id";

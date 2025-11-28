@@ -173,10 +173,16 @@ export default function TabelTendik({ role }) {
       
       // Prepare payload
       const payload = {
-        id_pegawai: formState.id_pegawai ? parseInt(formState.id_pegawai) : null,
         jenis_tendik: formState.jenis_tendik || "",
         nikp: formState.nikp || null,
       };
+      
+      // Untuk create: ambil dari formState, untuk update: ambil dari editing (karena field disabled)
+      if (editing) {
+        payload.id_pegawai = editing.id_pegawai;
+      } else {
+        payload.id_pegawai = formState.id_pegawai ? parseInt(formState.id_pegawai) : null;
+      }
       
       // Validasi
       if (!payload.id_pegawai || !payload.jenis_tendik) {
@@ -361,7 +367,9 @@ export default function TabelTendik({ role }) {
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.length}</span>
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">
+                {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length}
+              </span>
             </span>
           )}
         </div>
@@ -426,8 +434,11 @@ export default function TabelTendik({ role }) {
           <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {rows
               .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
-              .map((row, index) => (
-              <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${row.id_tendik || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+              .map((row, index) => {
+              const idField = getIdField(row);
+              const rowId = row[idField];
+              return (
+              <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${rowId || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_unit || '-'}</td>
@@ -444,7 +455,6 @@ export default function TabelTendik({ role }) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const rowId = getIdField(row) ? row[getIdField(row)] : index;
                           if (openDropdownId !== rowId) {
                             const rect = e.currentTarget.getBoundingClientRect();
                             const dropdownWidth = 192;
@@ -459,7 +469,7 @@ export default function TabelTendik({ role }) {
                         }}
                         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                         aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : index)}
+                        aria-expanded={openDropdownId === rowId}
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -467,12 +477,16 @@ export default function TabelTendik({ role }) {
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
                 <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                  <p className="text-sm">
+                    {showDeleted 
+                      ? 'Belum ada data yang dihapus.' 
+                      : 'Belum ada data yang ditambahkan atau data yang cocok dengan filter.'}
+                  </p>
                 </td>
               </tr>
             )}
@@ -483,10 +497,9 @@ export default function TabelTendik({ role }) {
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
-        const filteredRows = rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at);
-        const currentRow = filteredRows.find((row, idx) => {
-          const rowId = getIdField(row) ? row[getIdField(row)] : idx;
-          return rowId === openDropdownId;
+        const currentRow = rows.find((row) => {
+          const idField = getIdField(row);
+          return row[idField] === openDropdownId;
         });
         if (!currentRow) return null;
         
