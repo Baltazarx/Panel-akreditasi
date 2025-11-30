@@ -622,65 +622,159 @@ export default function Tabel1B({ role }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={async () => {
-              try {
-                setLoading(true);
-                const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
-                const url = `${BASE_URL}${ENDPOINT}/export`;
-                const response = await fetch(url, {
-                  credentials: 'include',
-                  method: 'GET',
-                  mode: 'cors'
-                });
-
-                if (!response.ok) {
-                  const text = await response.text();
-                  let errorMsg = 'Gagal mengekspor data';
-                  try {
-                    const json = JSON.parse(text);
-                    errorMsg = json.error || json.message || errorMsg;
-                  } catch (e) {
-                    errorMsg = text || errorMsg;
+          <div className="relative group">
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  
+                  // Helper function untuk get unit name
+                  const getUnitName = (id) => maps.units[id]?.nama_unit || id;
+                  
+                  // Helper function untuk get year name
+                  const getYearName = (id) => maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
+                  
+                  // Prepare data untuk export (hanya data yang aktif, tidak yang dihapus)
+                  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+                  
+                  if (filteredRows.length === 0) {
+                    throw new Error('Tidak ada data untuk diekspor.');
                   }
-                  throw new Error(errorMsg);
+                  
+                  const exportData = filteredRows.map((row, index) => {
+                    const totalAuditors = (row.jumlah_auditor_certified || 0) + (row.jumlah_auditor_noncertified || 0);
+                    
+                    return {
+                      'No': index + 1,
+                      'Tahun': getYearName(row.id_tahun),
+                      'Unit SPMI': row.id_unit || '',
+                      'Nama Unit SPMI': getUnitName(row.id_unit),
+                      'Dokumen SPMI': row.dokumen_spmi || '',
+                      'Jumlah Auditor Mutu Internal': totalAuditors,
+                      'Certified': row.jumlah_auditor_certified || 0,
+                      'Non Certified': row.jumlah_auditor_noncertified || 0,
+                      'Frekuensi audit/monev per tahun': row.frekuensi_audit || 0,
+                      'Bukti Certified Auditor': row.bukti_certified_uri || '',
+                      'Laporan Audit': row.laporan_audit_url || ''
+                    };
+                  });
+                  
+                  // Coba import xlsx library
+                  let XLSX;
+                  try {
+                    XLSX = await import('xlsx');
+                  } catch (importErr) {
+                    console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+                    // Fallback ke CSV
+                    const escapeCsv = (str) => {
+                      if (str === null || str === undefined) return '';
+                      const strValue = String(str);
+                      if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                        return `"${strValue.replace(/"/g, '""')}"`;
+                      }
+                      return strValue;
+                    };
+                    
+                    const headers = ['No', 'Tahun', 'Unit SPMI', 'Nama Unit SPMI', 'Dokumen SPMI', 'Jumlah Auditor Mutu Internal', 'Certified', 'Non Certified', 'Frekuensi audit/monev per tahun', 'Bukti Certified Auditor', 'Laporan Audit'];
+                    const csvRows = [
+                      headers.map(escapeCsv).join(','),
+                      ...exportData.map(row => [
+                        row.No,
+                        escapeCsv(row.Tahun),
+                        row['Unit SPMI'],
+                        escapeCsv(row['Nama Unit SPMI']),
+                        escapeCsv(row['Dokumen SPMI']),
+                        row['Jumlah Auditor Mutu Internal'],
+                        row.Certified,
+                        row['Non Certified'],
+                        row['Frekuensi audit/monev per tahun'],
+                        escapeCsv(row['Bukti Certified Auditor']),
+                        escapeCsv(row['Laporan Audit'])
+                      ].map(escapeCsv).join(','))
+                    ];
+                    const csvContent = '\ufeff' + csvRows.join('\n');
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Tabel_1B_Audit_Mutu_Internal_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Berhasil!',
+                      text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                      timer: 1500,
+                      showConfirmButton: false
+                    });
+                    return;
+                  }
+                  
+                  // Buat workbook baru
+                  const wb = XLSX.utils.book_new();
+                  
+                  // Buat worksheet dari data
+                  const ws = XLSX.utils.json_to_sheet(exportData);
+                  
+                  // Set column widths
+                  ws['!cols'] = [
+                    { wch: 5 },   // No
+                    { wch: 15 },  // Tahun
+                    { wch: 12 },  // Unit SPMI
+                    { wch: 25 },  // Nama Unit SPMI
+                    { wch: 30 },  // Dokumen SPMI
+                    { wch: 25 },  // Jumlah Auditor Mutu Internal
+                    { wch: 12 },  // Certified
+                    { wch: 15 },  // Non Certified
+                    { wch: 30 },  // Frekuensi audit/monev per tahun
+                    { wch: 40 },  // Bukti Certified Auditor
+                    { wch: 40 }   // Laporan Audit
+                  ];
+                  
+                  // Tambahkan worksheet ke workbook
+                  XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1B');
+                  
+                  // Generate file dan download
+                  const fileName = `Tabel_1B_Audit_Mutu_Internal_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  XLSX.writeFile(wb, fileName);
+
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data berhasil diekspor ke Excel.',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                } catch (err) {
+                  console.error("Error exporting data:", err);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mengekspor data',
+                    text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+                  });
+                } finally {
+                  setLoading(false);
                 }
-
-                const blob = await response.blob();
-                const urlBlob = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = urlBlob;
-                a.download = `Tabel_1B_Audit_Mutu_Internal_${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(urlBlob);
-                document.body.removeChild(a);
-
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Berhasil!',
-                  text: 'Data berhasil diekspor ke Excel.',
-                  timer: 1500,
-                  showConfirmButton: false
-                });
-              } catch (err) {
-                console.error("Error exporting data:", err);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Gagal mengekspor data',
-                  text: err.message || 'Terjadi kesalahan saat mengekspor data.'
-                });
-              } finally {
-                setLoading(false);
-              }
-            }}
-            disabled={loading || rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length === 0}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            aria-label="Export to Excel"
-          >
-            <FiFileText className="w-4 h-4" />
-            Export Excel
-          </button>
+              }}
+              disabled={loading || rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length === 0}
+              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label="Export to Excel"
+            >
+              <FiFileText className="w-4 h-4" />
+              Export Excel
+            </button>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
+              Ekspor data audit mutu internal ke Excel
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          </div>
           {canCreate && (
             <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
               + Tambah Data

@@ -32,7 +32,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        setTahunList(list.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0)));
+        setTahunList(list.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))); // Urut dari terkecil ke terbesar
       } catch (err) {
         console.error("Error fetching tahun:", err);
         setTahunList([]);
@@ -335,10 +335,10 @@ export default function Tabel4C1({ auth, role: propRole }) {
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        const sorted = list.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0));
+        const sorted = list.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          setSelectedTahun(sorted[0].id_tahun);
+          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil sebagai default
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);

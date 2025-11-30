@@ -546,84 +546,101 @@ export default function Tabel1A1({ role }) {
                 try {
                   setLoading(true);
                   
-                  // Prepare data untuk export
-                  const headers = ['No', 'Unit Kerja', 'Nama Ketua', 'Periode Jabatan', 'Pendidikan Terakhir', 'Jabatan Fungsional', 'Tugas Pokok dan Fungsi'];
-                  const exportData = processedRows.map((row, index) => [
-                    index + 1,
-                    getUnitName(row),
-                    getKetuaName(row),
-                    getPeriode(row),
-                    row.pendidikan_terakhir || '',
-                    row.jabatan_fungsional || '',
-                    row.tupoksi || ''
-                  ]);
+                  // Prepare data untuk export - sesuai dengan struktur tabel di tampilan
+                  const exportData = processedRows.map((row, index) => ({
+                    'No': index + 1,
+                    'Unit Kerja': getUnitName(row),
+                    'Nama Ketua': getKetuaName(row),
+                    'Periode Jabatan': getPeriode(row),
+                    'Pendidikan Terakhir': row.pendidikan_terakhir || '',
+                    'Jabatan Fungsional': row.jabatan_fungsional || '',
+                    'Tugas Pokok dan Fungsi': row.tupoksi || ''
+                  }));
                   
-                  // Buat Excel XML format (SpreadsheetML)
-                  const escapeXml = (str) => {
-                    if (str === null || str === undefined) return '';
-                    return String(str)
-                      .replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&apos;');
-                  };
+                  if (exportData.length === 0) {
+                    throw new Error('Tidak ada data untuk diekspor.');
+                  }
                   
-                  const createExcelXML = (headers, rows) => {
-                    let xml = '<?xml version="1.0"?>\n';
-                    xml += '<?mso-application progid="Excel.Sheet"?>\n';
-                    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
-                    xml += ' xmlns:o="urn:schemas-microsoft-com:office:office"\n';
-                    xml += ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n';
-                    xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n';
-                    xml += ' xmlns:html="http://www.w3.org/TR/REC-html40">\n';
-                    xml += '<Worksheet ss:Name="Tabel 1A1">\n';
-                    xml += '<Table>\n';
+                  // Coba import xlsx library
+                  let XLSX;
+                  try {
+                    XLSX = await import('xlsx');
+                  } catch (importErr) {
+                    console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+                    // Fallback ke CSV
+                    const escapeCsv = (str) => {
+                      if (str === null || str === undefined) return '';
+                      const strValue = String(str);
+                      if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                        return `"${strValue.replace(/"/g, '""')}"`;
+                      }
+                      return strValue;
+                    };
                     
-                    // Header row
-                    xml += '<Row>\n';
-                    headers.forEach(header => {
-                      xml += `<Cell><Data ss:Type="String">${escapeXml(header)}</Data></Cell>\n`;
+                    const headers = ['No', 'Unit Kerja', 'Nama Ketua', 'Periode Jabatan', 'Pendidikan Terakhir', 'Jabatan Fungsional', 'Tugas Pokok dan Fungsi'];
+                    const csvRows = [
+                      headers.map(escapeCsv).join(','),
+                      ...exportData.map(row => [
+                        row.No,
+                        escapeCsv(row['Unit Kerja']),
+                        escapeCsv(row['Nama Ketua']),
+                        escapeCsv(row['Periode Jabatan']),
+                        escapeCsv(row['Pendidikan Terakhir']),
+                        escapeCsv(row['Jabatan Fungsional']),
+                        escapeCsv(row['Tugas Pokok dan Fungsi'])
+                      ].map(escapeCsv).join(','))
+                    ];
+                    const csvContent = '\ufeff' + csvRows.join('\n');
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Berhasil!',
+                      text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                      timer: 1500,
+                      showConfirmButton: false
                     });
-                    xml += '</Row>\n';
-                    
-                    // Data rows
-                    rows.forEach(row => {
-                      xml += '<Row>\n';
-                      row.forEach(cell => {
-                        const cellType = typeof cell === 'number' ? 'Number' : 'String';
-                        xml += `<Cell><Data ss:Type="${cellType}">${escapeXml(cell)}</Data></Cell>\n`;
-                      });
-                      xml += '</Row>\n';
-                    });
-                    
-                    xml += '</Table>\n';
-                    xml += '</Worksheet>\n';
-                    xml += '</Workbook>';
-                    return xml;
-                  };
+                    return;
+                  }
                   
-                  const excelXML = createExcelXML(headers, exportData);
+                  // Buat workbook baru
+                  const wb = XLSX.utils.book_new();
                   
-                  // Create blob dengan Excel XML format
-                  const blob = new Blob([excelXML], { 
-                    type: 'application/vnd.ms-excel' 
-                  });
+                  // Buat worksheet dari data
+                  const ws = XLSX.utils.json_to_sheet(exportData);
                   
-                  // Download file
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.xls`;
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  document.body.removeChild(a);
+                  // Set column widths untuk format yang rapi sesuai tampilan tabel
+                  // Struktur kolom: No, Unit Kerja, Nama Ketua, Periode Jabatan, Pendidikan Terakhir, Jabatan Fungsional, Tugas Pokok dan Fungsi
+                  ws['!cols'] = [
+                    { wch: 5 },   // No
+                    { wch: 20 },  // Unit Kerja
+                    { wch: 30 },  // Nama Ketua
+                    { wch: 18 },  // Periode Jabatan
+                    { wch: 20 },  // Pendidikan Terakhir
+                    { wch: 25 },  // Jabatan Fungsional
+                    { wch: 50 }   // Tugas Pokok dan Fungsi (lebih lebar karena teks panjang)
+                  ];
+                  
+                  // Tambahkan worksheet ke workbook
+                  XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1A1');
+                  
+                  // Generate file dan download
+                  const fileName = `Tabel_1A1_Pimpinan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                  XLSX.writeFile(wb, fileName);
 
                   Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
-                    text: 'Data berhasil diekspor ke Excel.',
+                    text: 'Data berhasil diekspor ke Excel dengan format yang rapi.',
                     timer: 1500,
                     showConfirmButton: false
                   });
