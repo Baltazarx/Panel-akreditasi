@@ -61,7 +61,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        setTahunList(list.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0)));
+        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
+        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        setTahunList(filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))); // Urut dari terkecil ke terbesar
       } catch (err) {
         console.error("Error fetching tahun:", err);
         setTahunList([]);
@@ -430,10 +432,12 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        const sorted = list.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
+        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
+        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil sebagai default
+          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil (2024) sebagai default
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
