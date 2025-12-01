@@ -10,7 +10,23 @@ import ExcelJS from 'exceljs';
 // LIST (matrix JSON)
 export const listPemetaanCpmkCpl = async (req, res) => {
   try {
-    const { where, params } = await buildWhere(req, 'cpmk', 'cpmk');
+    const userRole = req.user.role?.toLowerCase();
+    const isSuperAdmin = ['waket1', 'waket2', 'tpm'].includes(userRole);
+    
+    // Build WHERE clause berdasarkan role dan query parameter
+    let whereClause = [];
+    let queryParams = [];
+    
+    if (!isSuperAdmin && req.user.id_unit) {
+      // User prodi: hanya lihat CPMK milik prodi mereka
+      whereClause.push('cpmk.id_unit_prodi = ?');
+      queryParams.push(req.user.id_unit);
+    } else if (req.query.id_unit_prodi) {
+      // Superadmin dengan filter spesifik atau user prodi dengan query param
+      whereClause.push('cpmk.id_unit_prodi = ?');
+      queryParams.push(req.query.id_unit_prodi);
+    }
+    // Superadmin tanpa filter: lihat semua data (whereClause kosong)
 
     // Ambil semua CPL untuk header kolom
     const sqlCpl = `
@@ -18,20 +34,20 @@ export const listPemetaanCpmkCpl = async (req, res) => {
       FROM cpl
       JOIN map_cpmk_cpl mc ON mc.id_cpl = cpl.id_cpl
       JOIN cpmk ON mc.id_cpmk = cpmk.id_cpmk
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ${whereClause.length ? `WHERE ${whereClause.join(' AND ')}` : ''}
       ORDER BY cpl.kode_cpl ASC
     `;
-    const [cplRows] = await pool.query(sqlCpl, params);
+    const [cplRows] = await pool.query(sqlCpl, queryParams);
     const cplCodes = cplRows.map(p => p.kode_cpl);
 
     // Ambil semua CPMK untuk baris
     const sqlCpmk = `
       SELECT DISTINCT cpmk.id_cpmk, cpmk.kode_cpmk
       FROM cpmk
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ${whereClause.length ? `WHERE ${whereClause.join(' AND ')}` : ''}
       ORDER BY cpmk.kode_cpmk ASC
     `;
-    const [cpmkRows] = await pool.query(sqlCpmk, params);
+    const [cpmkRows] = await pool.query(sqlCpmk, queryParams);
 
     // Ambil relasi map_cpmk_cpl
     const cpmkIds = cpmkRows.map(r => r.id_cpmk);
@@ -70,9 +86,16 @@ export const listPemetaanCpmkCpl = async (req, res) => {
 // UPDATE (matrix JSON)
 export const updatePemetaanCpmkCpl = async (req, res) => {
   const { rows } = req.body;
-  const id_unit_prodi = req.user.id_unit_prodi;
-
-  if (!id_unit_prodi) {
+  const userRole = req.user.role?.toLowerCase();
+  
+  // Cek apakah user adalah superadmin
+  const isSuperAdmin = ['waket1', 'waket2', 'tpm'].includes(userRole);
+  
+  // Untuk user prodi, gunakan id_unit sebagai id_unit_prodi
+  // Untuk superadmin, tidak perlu filter (bisa akses semua)
+  const id_unit_prodi = isSuperAdmin ? null : req.user.id_unit;
+  
+  if (!isSuperAdmin && !id_unit_prodi) {
     return res.status(400).json({ error: 'User tidak memiliki id_unit_prodi.' });
   }
   if (!rows || !Array.isArray(rows)) {
@@ -83,11 +106,16 @@ export const updatePemetaanCpmkCpl = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // 1. Ambil semua CPMK milik prodi ini
-    const [cpmks] = await connection.query(
-      `SELECT id_cpmk, kode_cpmk FROM cpmk WHERE id_unit_prodi = ?`,
-      [id_unit_prodi]
-    );
+    // 1. Ambil semua CPMK (superadmin) atau CPMK milik prodi ini (user prodi)
+    let cpmkQuery = `SELECT id_cpmk, kode_cpmk FROM cpmk`;
+    let queryParams = [];
+    
+    if (!isSuperAdmin && id_unit_prodi) {
+      cpmkQuery += ` WHERE id_unit_prodi = ?`;
+      queryParams = [id_unit_prodi];
+    }
+    
+    const [cpmks] = await connection.query(cpmkQuery, queryParams);
     const cpmkCodeToId = new Map(cpmks.map(c => [c.kode_cpmk, c.id_cpmk]));
     const allCpmkIdsInProdi = cpmks.map(c => c.id_cpmk);
 
@@ -100,7 +128,9 @@ export const updatePemetaanCpmkCpl = async (req, res) => {
       return res.status(200).json({ message: 'Tidak ada CPMK untuk prodi ini.' });
     }
 
-    // 3. DELETE semua mapping yang ada untuk CPMK milik prodi ini
+    // 3. DELETE semua mapping yang ada untuk CPMK yang relevant
+    // Superadmin: delete semua mapping untuk semua CPMK
+    // User prodi: delete mapping hanya untuk CPMK milik prodi ini
     const deletePlaceholders = allCpmkIdsInProdi.map(() => '?').join(',');
     await connection.query(
       `DELETE FROM map_cpmk_cpl WHERE id_cpmk IN (${deletePlaceholders})`,

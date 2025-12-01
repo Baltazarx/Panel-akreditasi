@@ -36,13 +36,13 @@ loginRouter.post('/login', async (req, res) => {
 
     // ==========================================================
     // PERBAIKAN PAYLOAD:
-    // Kita kirim KEDUA ID (id_unit dan id_unit_prodi)
+    // Gunakan id_unit yang ada di database
+    // Untuk superadmin, id_unit bisa digunakan sebagai akses global
     // ==========================================================
     const payload = {
       id_user: user.id_user,
       username: user.username,
       id_unit: user.id_unit, // <-- AMBIL id_unit DARI DATABASE
-      id_unit_prodi: user.id_unit_prodi, // <-- AMBIL id_unit_prodi DARI DATABASE
       role: user.role
     };
 
@@ -88,7 +88,6 @@ loginRouter.get('/me', (req, res) => {
       id_user: decoded.id_user,
       username: decoded.username,
       id_unit: decoded.id_unit, // <-- Kirim id_unit
-      id_unit_prodi: decoded.id_unit_prodi, // <-- Kirim id_unit_prodi
       role: decoded.role
     });
   } catch (err) {

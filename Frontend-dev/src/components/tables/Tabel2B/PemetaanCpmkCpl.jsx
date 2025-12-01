@@ -21,8 +21,8 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
   
-  // Ambil id_unit_prodi dari authUser jika user adalah prodi user
-  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  // Ambil id_unit dari authUser (ini adalah id_unit_prodi untuk user prodi)
+  const userProdiId = authUser?.id_unit;
   
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
