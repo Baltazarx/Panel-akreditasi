@@ -482,6 +482,7 @@ export default function TabelDosen({ role }) {
           <table className="w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr className="sticky top-0">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIDN</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NUPTK</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
@@ -507,6 +508,7 @@ export default function TabelDosen({ role }) {
                   : `dosen-no-id-${index}`;
                 return (
               <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nidn || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nuptk || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
@@ -543,7 +545,7 @@ export default function TabelDosen({ role }) {
             )})}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>

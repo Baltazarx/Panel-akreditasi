@@ -152,13 +152,11 @@ export default function TabelTendik({ role }) {
       setFormState({
         id_pegawai: editing.id_pegawai || "",
         jenis_tendik: editing.jenis_tendik || "",
-        nikp: editing.nikp || "",
       });
     } else {
       setFormState({
         id_pegawai: "",
         jenis_tendik: "",
-        nikp: "",
       });
     }
   }, [editing]);
@@ -174,7 +172,6 @@ export default function TabelTendik({ role }) {
       // Prepare payload
       const payload = {
         jenis_tendik: formState.jenis_tendik || "",
-        nikp: formState.nikp || null,
       };
       
       // Untuk create: ambil dari formState, untuk update: ambil dari editing (karena field disabled)
@@ -427,7 +424,6 @@ export default function TabelTendik({ role }) {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Tendik</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIKP</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
@@ -448,7 +444,6 @@ export default function TabelTendik({ role }) {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jenis_tendik || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nikp || '-'}</td>
                 <td className="px-6 py-4 text-center border border-slate-200">
                   <div className="flex items-center justify-center gap-2">
                     <div className="flex items-center justify-center dropdown-container">
@@ -480,7 +475,7 @@ export default function TabelTendik({ role }) {
             )})}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">
                     {showDeleted 
@@ -612,17 +607,6 @@ export default function TabelTendik({ role }) {
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan jenis tendik (contoh: Administrasi, Teknisi, dll)"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">NIKP</label>
-                    <input
-                      type="text"
-                      value={formState.nikp || ""}
-                      onChange={(e) => setFormState({...formState, nikp: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      placeholder="Masukkan NIKP (opsional)"
                     />
                   </div>
                 </div>

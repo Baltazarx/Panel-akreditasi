@@ -72,10 +72,19 @@ export default function Tabel2D({ role }) {
 
     // --- Utility Hooks ---
     const availableYears = useMemo(() => {
-        return Object.values(maps.tahun || {})
+        const allYears = Object.values(maps.tahun || {})
           .map((t) => ({ id: t.id_tahun ?? t.id, text: t.tahun ?? t.nama ?? String(t.id_tahun ?? t.id) }))
           .filter((t) => t.id)
           .sort((a, b) => Number(a.id) - Number(b.id));
+        
+        // Filter tahun mulai dari 2020/2021 (id >= 2020 atau text mengandung "2020")
+        const filteredYears = allYears.filter((t) => {
+            const yearId = Number(t.id);
+            const yearText = String(t.text || "").toLowerCase();
+            return yearId >= 2020 || yearText.includes("2020");
+        });
+        
+        return filteredYears;
     }, [maps.tahun]);
 
     // Get available prodi for dropdown (hanya TI dan MI)
@@ -96,6 +105,12 @@ export default function Tabel2D({ role }) {
 
     const yearOrder = useMemo(() => {
         if (!selectedYear) return [];
+        
+        // Jika "Semua Tahun" dipilih, kembalikan semua tahun yang tersedia
+        if (selectedYear === "all") {
+            return availableYears.map(y => y.id).filter(y => y != null);
+        }
+        
         const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
         if (idx === -1) return [];
         const ts = availableYears[idx]?.id;
@@ -112,6 +127,9 @@ export default function Tabel2D({ role }) {
             if (latestYear) setSelectedYear(String(latestYear));
         }
     }, [availableYears, selectedYear]);
+    
+    // State untuk menandai apakah "Semua Tahun" dipilih
+    const isAllYearsSelected = selectedYear === "all";
 
     // Default ke prodi pertama untuk superadmin
     useEffect(() => {
@@ -339,8 +357,8 @@ export default function Tabel2D({ role }) {
     const handleSubmitBulk = async (e) => {
         e.preventDefault();
         
-        if (!selectedYear || !canManageData) {
-            Swal.fire("Error", "Tahun akademik tidak valid atau Anda tidak memiliki izin", "error");
+        if (!selectedYear || isAllYearsSelected || !canManageData) {
+            Swal.fire("Error", "Pilih tahun akademik spesifik untuk menambah atau mengedit data", "error");
             return;
         }
 
@@ -413,8 +431,8 @@ export default function Tabel2D({ role }) {
 
     // Handler untuk membuka modal edit data TS
     const handleEditTS = () => {
-        if (!selectedYear || !dataByYear[selectedYear]?.hasData) {
-            Swal.fire("Info", "Tidak ada data untuk diedit.", "info");
+        if (!selectedYear || isAllYearsSelected || !dataByYear[selectedYear]?.hasData) {
+            Swal.fire("Info", isAllYearsSelected ? "Pilih tahun akademik spesifik untuk mengedit data" : "Tidak ada data untuk diedit.", "info");
             return;
         }
 
@@ -441,6 +459,10 @@ export default function Tabel2D({ role }) {
     
     // Handler untuk memulihkan data TS yang sudah di-soft delete
     const handleRestoreTS = async () => {
+        if (isAllYearsSelected) {
+            Swal.fire("Info", "Pilih tahun akademik spesifik untuk memulihkan data", "info");
+            return false;
+        }
         const yearId = selectedYear || yearOrder[0];
         const data = getYearData(yearId);
         
@@ -481,6 +503,10 @@ export default function Tabel2D({ role }) {
 
     // Handler Hard Delete Seluruh Data TS (Permanent)
     const handleHardDeleteTS = async () => {
+        if (isAllYearsSelected) {
+            Swal.fire("Info", "Pilih tahun akademik spesifik untuk menghapus data", "info");
+            return false;
+        }
         const yearId = selectedYear || yearOrder[0];
         const data = getYearData(yearId);
         
@@ -517,6 +543,10 @@ export default function Tabel2D({ role }) {
     
     // Handler Soft Delete Seluruh Data TS
     const handleDeleteTS = async () => {
+        if (isAllYearsSelected) {
+            Swal.fire("Info", "Pilih tahun akademik spesifik untuk menghapus data", "info");
+            return false;
+        }
         const yearId = selectedYear || yearOrder[0];
         const data = getYearData(yearId);
         
@@ -577,6 +607,7 @@ export default function Tabel2D({ role }) {
                         onChange={(e) => setSelectedYear(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
                     >
+                        <option value="all">Semua Tahun</option>
                         {availableYears.map((y) => (
                             <option key={y.id} value={y.id}>{y.text}</option>
                         ))}
@@ -650,7 +681,8 @@ export default function Tabel2D({ role }) {
                                 setShowAddModal(true);
                             }}
                             className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={loading || !selectedYear}
+                            disabled={loading || !selectedYear || isAllYearsSelected}
+                            title={isAllYearsSelected ? "Pilih tahun spesifik untuk menambah data" : ""}
                         >
                             + Tambah Data
                         </button>
@@ -661,7 +693,7 @@ export default function Tabel2D({ role }) {
                     >
                         Export Excel
                     </button>
-                    {canManageData && dataByYear[selectedYear]?.hasData && (
+                    {canManageData && !isAllYearsSelected && dataByYear[selectedYear]?.hasData && (
                         <>
                             {showDeleted ? (
                                 <>
@@ -730,9 +762,15 @@ export default function Tabel2D({ role }) {
                                 </tr>
                                 <tr>
                                     {yearOrder.map((y, idx) => {
-                                        // Label TS-4, TS-3, TS-2, TS-1, TS berdasarkan urutan
-                                        const labels = ['TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS'];
-                                        const label = labels[idx] || getTahunName(y);
+                                        // Jika "Semua Tahun" dipilih, tampilkan nama tahun
+                                        // Jika tidak, gunakan label TS-4, TS-3, TS-2, TS-1, TS
+                                        let label;
+                                        if (isAllYearsSelected) {
+                                            label = getTahunName(y);
+                                        } else {
+                                            const labels = ['TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS'];
+                                            label = labels[idx] || getTahunName(y);
+                                        }
                                         return (
                                             <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
                                                 {label}

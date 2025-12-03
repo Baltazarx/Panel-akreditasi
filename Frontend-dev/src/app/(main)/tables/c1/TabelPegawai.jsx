@@ -137,6 +137,7 @@ export default function TabelPegawai({ role }) {
         pendidikan_terakhir: editing.pendidikan_terakhir || "",
         id_unit: editing.id_unit || "",
         id_jabatan: editing.id_jabatan || "",
+        nikp: editing.nikp || "",
       });
     } else {
       setFormState({
@@ -144,6 +145,7 @@ export default function TabelPegawai({ role }) {
         pendidikan_terakhir: "",
         id_unit: "",
         id_jabatan: "",
+        nikp: "",
       });
     }
   }, [editing]);
@@ -162,6 +164,7 @@ export default function TabelPegawai({ role }) {
         pendidikan_terakhir: formState.pendidikan_terakhir || "",
         id_unit: formState.id_unit ? parseInt(formState.id_unit) : null,
         id_jabatan: formState.id_jabatan ? parseInt(formState.id_jabatan) : null,
+        nikp: formState.nikp || null,
       };
       
       console.log('Edit pegawai data:', {
@@ -350,11 +353,12 @@ export default function TabelPegawai({ role }) {
           <table className="w-full text-sm text-left">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr className="sticky top-0">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID Pegawai</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Struktural</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIKP</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
@@ -363,7 +367,7 @@ export default function TabelPegawai({ role }) {
               .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
               .map((row, index) => (
               <tr key={`${showDeleted ? 'deleted' : 'active'}-pegawai-${row.id_pegawai || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{row.id_pegawai || '-'}</td>
+                <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_unit || '-'}</td>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_struktural || '-'}</td>
@@ -372,6 +376,7 @@ export default function TabelPegawai({ role }) {
                     {row.pendidikan_terakhir || '-'}
                   </span>
                 </td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nikp || '-'}</td>
                 <td className="px-6 py-4 text-center border border-slate-200">
                   <div className="flex items-center justify-center gap-2">
                     <div className="flex items-center justify-center dropdown-container">
@@ -404,7 +409,7 @@ export default function TabelPegawai({ role }) {
             ))}
             {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
@@ -531,6 +536,17 @@ export default function TabelPegawai({ role }) {
                       <option value="S2">S2</option>
                       <option value="S3">S3</option>
                     </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">NIKP</label>
+                    <input
+                      type="text"
+                      value={formState.nikp || ""}
+                      onChange={(e) => setFormState({...formState, nikp: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                      placeholder="Masukkan NIKP (opsional)"
+                    />
                   </div>
 
                   <div className="space-y-2">

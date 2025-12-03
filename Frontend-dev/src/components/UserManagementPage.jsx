@@ -282,6 +282,7 @@ export default function UserManagementPage() {
         <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
             <tr>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Username</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Role</th>
@@ -299,6 +300,7 @@ export default function UserManagementPage() {
                   idx % 2 === 0 ? "bg-white" : "bg-slate-50"
                 } hover:bg-[#eaf4ff]`}
               >
+                <td className="px-6 py-4 border border-slate-200 text-center font-semibold text-slate-800">{idx + 1}.</td>
                 <td className="px-6 py-4 border border-slate-200 text-center font-semibold text-slate-700">{u.id_user}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.username}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.role}</td>
