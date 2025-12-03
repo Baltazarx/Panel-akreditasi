@@ -138,6 +138,7 @@ export const listTabel4c2DiseminasiPkm = async (req, res) => {
         d.id_unit,
         uk.nama_unit,
         d.link_bukti,
+        d.deleted_at, -- [FIX] Tambahkan deleted_at untuk frontend filtering
         
         -- Panggil helper PIVOT Checkmark (5 tahun)
         ${pivotDiseminasiCheckmarkSQL(tahunIds, 'd')}

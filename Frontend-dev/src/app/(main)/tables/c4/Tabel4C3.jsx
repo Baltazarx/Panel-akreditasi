@@ -50,25 +50,60 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     if (isOpen) fetchDosen();
   }, [isOpen]);
 
-  // Fetch tahun akademik (hanya 3 tahun: TS-2, TS-1, TS)
+  // Fetch tahun akademik (5 tahun: TS-4, TS-3, TS-2, TS-1, TS)
   useEffect(() => {
     const fetchTahun = async () => {
       try {
-        if (tahunLaporan) {
-          // Ambil hanya 3 tahun terakhir
-          const tahunIds = [tahunLaporan.id_ts2, tahunLaporan.id_ts1, tahunLaporan.id_ts];
+        let tahunIds = [];
+        let order = [];
+        
+        if (tahunLaporan && tahunLaporan.id_ts && tahunLaporan.id_ts1 && tahunLaporan.id_ts2 && tahunLaporan.id_ts3 && tahunLaporan.id_ts4) {
+          // Gunakan tahunLaporan jika semua 5 tahun tersedia
+          tahunIds = [
+            tahunLaporan.id_ts4, 
+            tahunLaporan.id_ts3, 
+            tahunLaporan.id_ts2, 
+            tahunLaporan.id_ts1, 
+            tahunLaporan.id_ts
+          ];
+          order = [
+            tahunLaporan.id_ts,
+            tahunLaporan.id_ts1,
+            tahunLaporan.id_ts2,
+            tahunLaporan.id_ts3,
+            tahunLaporan.id_ts4
+          ];
+        } else if (selectedTahun) {
+          // Fallback: hitung dari selectedTahun jika tahunLaporan belum lengkap atau belum ada
+          const ts = parseInt(selectedTahun, 10);
+          if (!isNaN(ts)) {
+            tahunIds = [ts - 4, ts - 3, ts - 2, ts - 1, ts];
+            order = [ts, ts - 1, ts - 2, ts - 3, ts - 4];
+          }
+        }
+        
+        if (tahunIds.length > 0) {
           const data = await apiFetch("/tahun-akademik");
           const list = Array.isArray(data) ? data : [];
           const filtered = list.filter(t => tahunIds.includes(t.id_tahun));
-          setTahunList(filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)));
+          // Urutkan dari TS ke TS-4 (dari terbaru ke terlama)
+          setTahunList(filtered.sort((a, b) => {
+            const indexA = order.indexOf(a.id_tahun);
+            const indexB = order.indexOf(b.id_tahun);
+            return indexA - indexB;
+          }));
+        } else {
+          setTahunList([]);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
         setTahunList([]);
       }
     };
-    if (isOpen && tahunLaporan) fetchTahun();
-  }, [isOpen, tahunLaporan]);
+    if (isOpen && (tahunLaporan || selectedTahun)) {
+      fetchTahun();
+    }
+  }, [isOpen, tahunLaporan, selectedTahun]);
 
   // Initialize form data
   useEffect(() => {
@@ -183,11 +218,27 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                 <option value="">-- Pilih Tahun --</option>
                 {tahunList.map((t) => {
                   let label = t.tahun || t.nama || t.id_tahun;
+                  
+                  // Tentukan label TS berdasarkan tahunLaporan atau selectedTahun
                   if (tahunLaporan) {
-                    if (t.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
+                    if (t.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
+                    else if (t.id_tahun === tahunLaporan.id_ts3) label = `TS-3 (${label})`;
+                    else if (t.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
                     else if (t.id_tahun === tahunLaporan.id_ts1) label = `TS-1 (${label})`;
                     else if (t.id_tahun === tahunLaporan.id_ts) label = `TS (${label})`;
+                  } else if (selectedTahun) {
+                    // Fallback: hitung dari selectedTahun
+                    const ts = parseInt(selectedTahun, 10);
+                    if (!isNaN(ts)) {
+                      const tId = parseInt(t.id_tahun, 10);
+                      if (tId === ts) label = `TS (${label})`;
+                      else if (tId === ts - 1) label = `TS-1 (${label})`;
+                      else if (tId === ts - 2) label = `TS-2 (${label})`;
+                      else if (tId === ts - 3) label = `TS-3 (${label})`;
+                      else if (tId === ts - 4) label = `TS-4 (${label})`;
+                    }
                   }
+                  
                   return (
                     <option key={t.id_tahun} value={t.id_tahun}>
                       {label}
@@ -267,12 +318,22 @@ export default function Tabel4C3({ auth, role: propRole }) {
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
-        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        // Filter tahun mulai dari 2020/2021 (id_tahun >= 2020 atau tahun string mengandung "2020")
+        const filtered = list.filter(t => {
+          const idTahun = parseInt(t.id_tahun) || 0;
+          const tahunStr = String(t.tahun || t.nama || t.id_tahun || "").toLowerCase();
+          return idTahun >= 2020 || tahunStr.includes("2020") || tahunStr.includes("2021");
+        });
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil (2024) sebagai default
+          // Set default ke tahun 2020/2021 jika ada, jika tidak ambil tahun terkecil
+          const defaultTahun = sorted.find(t => {
+            const idTahun = parseInt(t.id_tahun) || 0;
+            const tahunStr = String(t.tahun || t.nama || "").toLowerCase();
+            return idTahun === 2020 || tahunStr.includes("2020/2021") || tahunStr.includes("2020");
+          });
+          setSelectedTahun(defaultTahun ? defaultTahun.id_tahun : sorted[0].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -387,7 +448,17 @@ export default function Tabel4C3({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}`, { method: 'DELETE' });
         Swal.fire('Berhasil!', 'Data berhasil dihapus.', 'success');
-        fetchRows();
+        // Refresh dengan parameter yang sesuai dengan state showDeleted
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
+        if (response.tahun_laporan) {
+          setTahunLaporan(response.tahun_laporan);
+        }
+        const data = Array.isArray(response.data) ? response.data : (response.items || []);
+        setRows(data);
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }
@@ -425,7 +496,17 @@ export default function Tabel4C3({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}/hard`, { method: 'DELETE' });
         Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
-        fetchRows();
+        // Refresh dengan parameter yang sesuai dengan state showDeleted
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
+        if (response.tahun_laporan) {
+          setTahunLaporan(response.tahun_laporan);
+        }
+        const data = Array.isArray(response.data) ? response.data : (response.items || []);
+        setRows(data);
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }
@@ -468,9 +549,11 @@ export default function Tabel4C3({ auth, role: propRole }) {
   // Filter rows
   const filteredRows = useMemo(() => {
     if (showDeleted) {
-      return rows.filter(r => r.deleted_at);
+      // Filter data yang dihapus: deleted_at tidak null dan tidak undefined
+      return rows.filter(r => r.deleted_at !== null && r.deleted_at !== undefined);
     }
-    return rows.filter(r => !r.deleted_at);
+    // Filter data aktif: deleted_at null atau undefined
+    return rows.filter(r => r.deleted_at === null || r.deleted_at === undefined);
   }, [rows, showDeleted]);
 
   // Calculate summary (hanya dari data yang tidak dihapus)
@@ -478,12 +561,22 @@ export default function Tabel4C3({ auth, role: propRole }) {
     const activeRows = rows.filter(r => !r.deleted_at);
     
     // Jumlah HKI per tahun
+    let jumlahHkiTS4 = 0;
+    let jumlahHkiTS3 = 0;
     let jumlahHkiTS2 = 0;
     let jumlahHkiTS1 = 0;
     let jumlahHkiTS = 0;
     
     activeRows.forEach(row => {
       if (tahunLaporan) {
+        // Check TS-4
+        if (row.id_tahun_perolehan === tahunLaporan.id_ts4 || row.tahun_ts4 === '√') {
+          jumlahHkiTS4++;
+        }
+        // Check TS-3
+        if (row.id_tahun_perolehan === tahunLaporan.id_ts3 || row.tahun_ts3 === '√') {
+          jumlahHkiTS3++;
+        }
         // Check TS-2
         if (row.id_tahun_perolehan === tahunLaporan.id_ts2 || row.tahun_ts2 === '√') {
           jumlahHkiTS2++;
@@ -500,6 +593,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
     });
     
     return {
+      jumlahHkiTS4,
+      jumlahHkiTS3,
       jumlahHkiTS2,
       jumlahHkiTS1,
       jumlahHkiTS
@@ -614,7 +709,7 @@ export default function Tabel4C3({ auth, role: propRole }) {
                 Nama DTPR
               </th>
               {tahunLaporan && (
-                <th colSpan="3" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                <th colSpan="5" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   Tahun Perolehan<br/>(beri tanda √)
                 </th>
               )}
@@ -625,6 +720,12 @@ export default function Tabel4C3({ auth, role: propRole }) {
             </tr>
             {tahunLaporan && (
               <tr>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                  TS-4<br/>({tahunLaporan.nama_ts4})
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                  TS-3<br/>({tahunLaporan.nama_ts3})
+                </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   TS-2<br/>({tahunLaporan.nama_ts2})
                 </th>
@@ -640,14 +741,14 @@ export default function Tabel4C3({ auth, role: propRole }) {
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 11 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <p className="mt-4">Memuat data...</p>
                 </td>
               </tr>
             ) : filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 11 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -656,16 +757,20 @@ export default function Tabel4C3({ auth, role: propRole }) {
               <>
                 {filteredRows.map((r, i) => {
                   const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
+                  // Buat key yang unik dengan menggabungkan rowId dan index untuk menghindari duplikasi
+                  const uniqueKey = `${rowId}-${i}`;
                   const isDeleted = r.deleted_at;
                   
-                  // Check checkmark untuk 3 tahun
+                  // Check checkmark untuk 5 tahun
+                  const checkTS4 = tahunLaporan && (r.id_tahun_perolehan === tahunLaporan.id_ts4 || r.tahun_ts4 === '√');
+                  const checkTS3 = tahunLaporan && (r.id_tahun_perolehan === tahunLaporan.id_ts3 || r.tahun_ts3 === '√');
                   const checkTS2 = tahunLaporan && (r.id_tahun_perolehan === tahunLaporan.id_ts2 || r.tahun_ts2 === '√');
                   const checkTS1 = tahunLaporan && (r.id_tahun_perolehan === tahunLaporan.id_ts1 || r.tahun_ts1 === '√');
                   const checkTS = tahunLaporan && (r.id_tahun_perolehan === tahunLaporan.id_ts || r.tahun_ts === '√');
                   
                   return (
                     <tr
-                      key={rowId}
+                      key={uniqueKey}
                       className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${isDeleted ? "opacity-60" : ""}`}
                     >
                       <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
@@ -678,6 +783,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
                       <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.nama_dtpr || "-"}</td>
                       {tahunLaporan && (
                         <>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{checkTS4 ? "√" : ""}</td>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{checkTS3 ? "√" : ""}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{checkTS2 ? "√" : ""}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{checkTS1 ? "√" : ""}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{checkTS ? "√" : ""}</td>
@@ -733,6 +840,12 @@ export default function Tabel4C3({ auth, role: propRole }) {
                   <tr className="font-semibold">
                     <td colSpan="4" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                       Jumlah HKI
+                    </td>
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
+                      {summary.jumlahHkiTS4}
+                    </td>
+                    <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
+                      {summary.jumlahHkiTS3}
                     </td>
                     <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                       {summary.jumlahHkiTS2}

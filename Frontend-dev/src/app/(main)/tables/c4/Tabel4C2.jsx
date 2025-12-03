@@ -428,7 +428,17 @@ export default function Tabel4C2({ auth, role: propRole }) {
       }
       setShowForm(false);
       setEditData(null);
-      fetchRows();
+      // Refresh dengan parameter yang sesuai dengan state showDeleted
+      let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+      if (showDeleted) {
+        url += "&include_deleted=1";
+      }
+      const response = await apiFetch(url);
+      if (response.tahun_laporan) {
+        setTahunLaporan(response.tahun_laporan);
+      }
+      const data = Array.isArray(response.data) ? response.data : (response.items || []);
+      setRows(data);
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal menyimpan data", 'error');
     }
@@ -451,7 +461,17 @@ export default function Tabel4C2({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}`, { method: 'DELETE' });
         Swal.fire('Berhasil!', 'Data berhasil dihapus.', 'success');
-        fetchRows();
+        // Refresh dengan parameter yang sesuai dengan state showDeleted
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
+        if (response.tahun_laporan) {
+          setTahunLaporan(response.tahun_laporan);
+        }
+        const data = Array.isArray(response.data) ? response.data : (response.items || []);
+        setRows(data);
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }
@@ -477,7 +497,17 @@ export default function Tabel4C2({ auth, role: propRole }) {
           method: 'POST'
         });
         Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
-        fetchRows();
+        // Refresh dengan parameter yang sesuai dengan state showDeleted
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
+        if (response.tahun_laporan) {
+          setTahunLaporan(response.tahun_laporan);
+        }
+        const data = Array.isArray(response.data) ? response.data : (response.items || []);
+        setRows(data);
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
       }
@@ -501,7 +531,17 @@ export default function Tabel4C2({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}/hard`, { method: 'DELETE' });
         Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
-        fetchRows();
+        // Refresh dengan parameter yang sesuai dengan state showDeleted
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
+        if (response.tahun_laporan) {
+          setTahunLaporan(response.tahun_laporan);
+        }
+        const data = Array.isArray(response.data) ? response.data : (response.items || []);
+        setRows(data);
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }
@@ -544,9 +584,11 @@ export default function Tabel4C2({ auth, role: propRole }) {
   // Filter rows
   const filteredRows = useMemo(() => {
     if (showDeleted) {
-      return rows.filter(r => r.deleted_at);
+      // Filter data yang dihapus: deleted_at tidak null dan tidak undefined
+      return rows.filter(r => r.deleted_at !== null && r.deleted_at !== undefined);
     }
-    return rows.filter(r => !r.deleted_at);
+    // Filter data aktif: deleted_at null atau undefined
+    return rows.filter(r => r.deleted_at === null || r.deleted_at === undefined);
   }, [rows, showDeleted]);
 
   // Group rows by judul_pkm and nama_dtpr untuk menghitung summary
@@ -814,6 +856,8 @@ export default function Tabel4C2({ auth, role: propRole }) {
               <>
                 {filteredRows.map((r, i) => {
                   const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
+                  // Buat key yang unik dengan menggabungkan rowId dan index untuk menghindari duplikasi
+                  const uniqueKey = `${rowId}-${i}`;
                   const isDeleted = r.deleted_at;
                   
                   // Check checkmark untuk 5 tahun
@@ -825,7 +869,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                   
                   return (
                     <tr
-                      key={rowId}
+                      key={uniqueKey}
                       className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${isDeleted ? "opacity-60" : ""}`}
                     >
                       <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
