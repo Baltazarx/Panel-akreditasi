@@ -69,6 +69,18 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
     }
   }, [initialData, activeYear]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -81,8 +93,20 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000]" style={{ zIndex: 10000 }}>
+    <div 
+      className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+      style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000] pointer-events-auto"
+        style={{ zIndex: 10000 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Sumber Dana" : "Tambah Sumber Dana"}

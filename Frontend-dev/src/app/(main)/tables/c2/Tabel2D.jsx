@@ -937,8 +937,20 @@ export default function Tabel2D({ role }) {
 
             {/* Modal Tambah Data */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
+                <div 
+                  className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+                  style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setShowAddModal(false);
+                    }
+                  }}
+                >
+                    <div 
+                      className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+                      style={{ zIndex: 10000 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0">
                             <h3 className="text-xl font-bold">{isEditMode ? "Edit Data Rekognisi Lulusan" : "Tambah Data Rekognisi Lulusan"}</h3>
                             <p className="text-white/80 mt-1 text-sm">Lengkapi data rekognisi lulusan untuk tahun TS ({getTahunName(selectedYear)})</p>

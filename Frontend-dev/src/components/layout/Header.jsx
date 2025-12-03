@@ -186,8 +186,8 @@ export default function Header() {
         Skip to content
       </a>
       <header 
-        className={`${shouldBeSticky ? 'sticky top-0' : ''} z-10 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''}`}
-        style={shouldBeSticky ? { position: 'sticky', top: 0, zIndex: 10 } : { zIndex: 10 }}
+        className={`${shouldBeSticky ? 'sticky top-0' : ''} z-50 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''}`}
+        style={shouldBeSticky ? { position: 'sticky', top: 0, zIndex: 50 } : { zIndex: 50 }}
       >
         <div className="w-full max-w-7xl mx-auto h-20 px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-3 items-center gap-6">
           {/* Kiri: Logo */}
@@ -302,8 +302,8 @@ export default function Header() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200 bg-white shadow-xl focus:outline-none z-10"
-                      style={{ zIndex: 10 }}
+                      className="absolute right-0 mt-4 w-72 origin-top-right rounded-xl border border-gray-200 bg-white shadow-xl focus:outline-none z-[60]"
+                      style={{ zIndex: 60 }}
                     >
                       <div className="p-3 relative">
                         {/* Arrow */}
@@ -347,11 +347,11 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-20 lg:hidden"
-            style={{ zIndex: 20 }}
+            className="fixed inset-0 z-[60] lg:hidden"
+            style={{ zIndex: 60 }}
             onClick={() => setNavMenuOpen(false)}
           >
-            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" style={{ zIndex: 20 }} />
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" style={{ zIndex: 60 }} />
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}

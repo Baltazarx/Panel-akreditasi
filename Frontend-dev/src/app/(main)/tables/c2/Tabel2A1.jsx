@@ -2349,8 +2349,20 @@ export default function Tabel2A1({ role }) {
 
       {/* Modal Form Pendaftaran */}
       {showModalPend && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000]" style={{ zIndex: 10000 }}>
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+          style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowModalPend(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000] pointer-events-auto"
+            style={{ zIndex: 10000 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h3 className="text-xl font-bold">{editingPend?"Edit Pendaftaran":"Tambah Pendaftaran"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir daya tampung & pendaftar per tahun.</p>
@@ -2418,8 +2430,20 @@ export default function Tabel2A1({ role }) {
 
       {/* Modal Form Maba */}
       {showModalMaba && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000]" style={{ zIndex: 10000 }}>
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+          style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowModalPend(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000] pointer-events-auto"
+            style={{ zIndex: 10000 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h3 className="text-xl font-bold">{editingMaba?"Edit Mahasiswa Baru/Aktif":"Tambah Mahasiswa Baru/Aktif"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir jumlah mahasiswa berdasarkan jenis dan tahun.</p>
