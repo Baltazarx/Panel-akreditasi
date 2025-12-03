@@ -2,13 +2,14 @@ import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
 
-// 1. Impor 7 fungsi dari controller 4C2
+// 1. Impor 8 fungsi dari controller 4C2 (termasuk restore)
 import {
     listTabel4c2DiseminasiPkm,
     getTabel4c2DiseminasiPkmById,
     createTabel4c2DiseminasiPkm,
     updateTabel4c2DiseminasiPkm,
     softDeleteTabel4c2DiseminasiPkm,
+    restoreTabel4c2DiseminasiPkm,
     hardDeleteTabel4c2DiseminasiPkm,
     exportTabel4c2DiseminasiPkm
 } from '../controllers/tabel4c2DiseminasiPkm.controller.js';
@@ -35,8 +36,7 @@ router.get('/:id', requireAuth, permit(resourceKey, 'R'), getTabel4c2DiseminasiP
 router.post('/', requireAuth, permit(resourceKey, 'C'), createTabel4c2DiseminasiPkm);
 router.put('/:id', requireAuth, permit(resourceKey, 'U'), updateTabel4c2DiseminasiPkm);
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteTabel4c2DiseminasiPkm);
-
-// Rute Hard Delete (Super Admin / high-level)
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreTabel4c2DiseminasiPkm);
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteTabel4c2DiseminasiPkm);
 
 export default router;

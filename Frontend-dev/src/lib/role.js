@@ -129,13 +129,13 @@ export const ACCESS_MATRIX = {
     'tabel_1a3':  { c: true, r: true, u: true, d: true }, // Asumsi CRUD tanpa H
     'tabel_3a2_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.A.2 Penelitian DTPR
     'tabel_3a3_pengembangan_dtpr': { c: true, r: true, u: true, d: true }, // Tabel 3.A.3 Pengembangan DTPR
-    'tabel_3c1_kerjasama_penelitian': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.1 Kerjasama Penelitian
-    'tabel_3c2_publikasi_penelitian': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.2 Publikasi Penelitian
-    'tabel_3c3_hki': { c: true, r: true, u: true, d: true, h: true }, // Tabel 3.C.3 HKI
-    'tabel_4a2_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.A.2 PKM
-    'tabel_4c1_kerjasama_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.1 Kerjasama PKM
-    'tabel_4c2_diseminasi_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.2 Diseminasi PKM
-    'tabel_4c3_hki_pkm': { c: true, r: true, u: true, d: true, h: true }, // Tabel 4.C.3 HKI PKM
+    'tabel_3c1_kerjasama_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.C.1 Kerjasama Penelitian
+    'tabel_3c2_publikasi_penelitian': { c: true, r: true, u: true, d: true }, // Tabel 3.C.2 Publikasi Penelitian
+    'tabel_3c3_hki': { c: true, r: true, u: true, d: true }, // Tabel 3.C.3 HKI
+    'tabel_4a2_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.A.2 PKM
+    'tabel_4c1_kerjasama_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.C.1 Kerjasama PKM
+    'tabel_4c2_diseminasi_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.C.2 Diseminasi PKM
+    'tabel_4c3_hki_pkm': { c: true, r: true, u: true, d: true }, // Tabel 4.C.3 HKI PKM
     'penelitian': { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'pkm':        { c: true, r: true, u: true, d: true }, // Dari backend roles.js
     'sumber_pendanaan_summary': { r: true },
@@ -154,10 +154,10 @@ export const ACCESS_MATRIX = {
   // ========== KEPEGAWAIAN (sesuai aturan baru C1) ==========
   'kepegawaian': { // Menambahkan role ini jika belum ada
     'tabel_1a5': { c: true, r: true, u: true, d: true }, // Tabel 1.A.5 Data Kepegawaian
-    'kualifikasi_tendik': { c: true, r: true, u: true, d: true, h: true }, // Kualifikasi Tenaga Kependidikan
-    'dosen': { c: true, r: true, u: true, d: true, h: true }, // Data Dosen
-    'pegawai': { c: true, r: true, u: true, d: true, h: true }, // Data Pegawai
-    'tendik': { c: true, r: true, u: true, d: true, h: true }, // Data Tenaga Kependidikan
+    'kualifikasi_tendik': { c: true, r: true, u: true, d: true }, // Kualifikasi Tenaga Kependidikan
+    'dosen': { c: true, r: true, u: true, d: true }, // Data Dosen
+    'pegawai': { c: true, r: true, u: true, d: true }, // Data Pegawai
+    'tendik': { c: true, r: true, u: true, d: true }, // Data Tenaga Kependidikan
     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
     'unit_kerja': { r: true }, // Untuk dropdown unit kerja
     'tahun_akademik': { r: true }, // Untuk dropdown tahun akademik

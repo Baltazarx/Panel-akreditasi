@@ -272,19 +272,30 @@ export const createTabel3c2Publikasi = async (req, res) => {
         });
     }
     
-    const id_unit = req.user?.id_unit;
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
+    // Debug: Log req.user untuk melihat strukturnya
+    console.log("createTabel3c2Publikasi - req.user:", req.user);
+    console.log("createTabel3c2Publikasi - req.user?.id_unit:", req.user?.id_unit);
+    console.log("createTabel3c2Publikasi - req.user?.id_unit_prodi:", req.user?.id_unit_prodi);
+    
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    
+    if (!final_id_unit) { 
+      console.error("createTabel3c2Publikasi - req.user tidak memiliki id_unit atau id_unit_prodi:", req.user);
+      return res.status(400).json({ 
+        error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user. Pastikan user sudah memiliki unit. Silakan logout dan login ulang untuk mendapatkan token baru.' 
+      }); 
     }
 
+    const id_user = req.user?.id_user;
     const dataToInsert = {
       id_dosen,
       judul_publikasi,
       jenis_publikasi,
       id_tahun_terbit,
       link_bukti,
-      id_unit: id_unit
+      id_unit: final_id_unit // Otomatis dari user yang login
     };
 
     if (await hasColumn('tabel_3c2_publikasi_penelitian', 'created_by') && id_user) { 
@@ -344,19 +355,21 @@ export const updateTabel3c2Publikasi = async (req, res) => {
         });
     }
     
-    const id_unit = req.user?.id_unit;
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
     }
 
+    const id_user = req.user?.id_user;
     const dataToUpdate = {
       id_dosen,
       judul_publikasi,
       jenis_publikasi,
       id_tahun_terbit,
       link_bukti,
-      id_unit: id_unit 
+      id_unit: final_id_unit // Update dengan unit dari user yang login
     };
 
     if (await hasColumn('tabel_3c2_publikasi_penelitian', 'updated_by') && id_user) { 
@@ -394,7 +407,6 @@ export const updateTabel3c2Publikasi = async (req, res) => {
 /*
 ================================
  SOFT DELETE
- (TIDAK BERUBAH)
 ================================
 */
 export const softDeleteTabel3c2Publikasi = async (req, res) => {
@@ -412,6 +424,59 @@ export const softDeleteTabel3c2Publikasi = async (req, res) => {
   } catch (err) {
     console.error("Error softDeleteTabel3c2Publikasi:", err);
     res.status(500).json({ error: 'Gagal menghapus data', details: err.message });
+  }
+};
+
+/*
+================================
+ RESTORE (konsisten dengan 3a1)
+================================
+*/
+export const restoreTabel3c2Publikasi = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_3c2_publikasi_penelitian', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_3c2_publikasi_penelitian', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c2_publikasi_penelitian SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data publikasi penelitian berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c2_publikasi_penelitian SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data publikasi penelitian berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel3c2Publikasi:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
   }
 };
 

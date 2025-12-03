@@ -233,15 +233,16 @@ export const createTabel4c1KerjasamaPkm = async (req, res) => {
         return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
     }
 
-    // 3. Ambil data User
-    const id_unit = req.user?.id_unit;
-    if (!id_unit) { 
+    // 3. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' }); 
     }
 
     // 4. Siapkan data Induk
     const dataParent = {
-      id_unit: id_unit, 
+      id_unit: final_id_unit, // Otomatis dari user yang login
       judul_kerjasama, mitra_kerja_sama, sumber, durasi_tahun, link_bukti
     };
     if (await hasColumn('tabel_4c1_kerjasama_pkm', 'created_by') && req.user?.id_user) { 
@@ -308,15 +309,16 @@ export const updateTabel4c1KerjasamaPkm = async (req, res) => {
         return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
     }
 
-    // 3. Ambil data User
-    const id_unit = req.user?.id_unit;
-    if (!id_unit) { 
+    // 3. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' }); 
     }
 
     // 4. Siapkan data Induk
     const dataParent = {
-      id_unit: id_unit, 
+      id_unit: final_id_unit, // Update dengan unit dari user yang login
       judul_kerjasama, mitra_kerja_sama, sumber, durasi_tahun, link_bukti
     };
     if (await hasColumn('tabel_4c1_kerjasama_pkm', 'updated_by') && req.user?.id_user) { 
@@ -391,23 +393,94 @@ export const softDeleteTabel4c1KerjasamaPkm = async (req, res) => {
 
 /*
 ================================
- HARD DELETE
+ RESTORE (konsisten dengan 3a1)
+================================
+*/
+export const restoreTabel4c1KerjasamaPkm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_4c1_kerjasama_pkm', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_4c1_kerjasama_pkm', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_4c1_kerjasama_pkm SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data kerjasama PkM berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_4c1_kerjasama_pkm SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data kerjasama PkM berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel4c1KerjasamaPkm:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
+  }
+};
+
+/*
+================================
+ HARD DELETE (Transactional - konsisten dengan 3a2)
 ================================
 */
 export const hardDeleteTabel4c1KerjasamaPkm = async (req, res) => {
+  let connection;
   try {
-    // Solusi Tanpa Constraint: Hapus anak dulu, baru induk
-    await pool.query('DELETE FROM tabel_4c1_pendanaan_pkm WHERE id_kerjasama_pkm = ?', [req.params.id]);
-    const [result] = await pool.query(
+    const { id } = req.params;
+    
+    // Mulai transaksi
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
+    // Hapus data anak (pendanaan) dulu
+    await connection.query('DELETE FROM tabel_4c1_pendanaan_pkm WHERE id_kerjasama_pkm = ?', [id]);
+    
+    // Hapus data induk
+    const [result] = await connection.query(
       'DELETE FROM tabel_4c1_kerjasama_pkm WHERE id = ?', 
-      [req.params.id]
+      [id]
     );
     
-    if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data kerjasama PkM tidak ditemukan.' }); }
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Data kerjasama PkM tidak ditemukan.' });
+    }
+    
+    // Commit transaksi
+    await connection.commit();
     res.json({ message: 'Data kerjasama PkM berhasil dihapus secara permanen (hard delete).' });
   } catch (err) {
+    if (connection) await connection.rollback();
     console.error("Error hardDeleteTabel4c1KerjasamaPkm:", err);
-    res.status(500).json({ error: 'Gagal menghapus data kerjasama PkM secara permanen.' });
+    res.status(500).json({ error: 'Gagal menghapus data kerjasama PkM secara permanen.', details: err.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 

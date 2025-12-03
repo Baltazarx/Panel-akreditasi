@@ -11,13 +11,14 @@ import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
 
-// 1. Impor 7 fungsi dari controller 3C3
+// 1. Impor 8 fungsi dari controller 3C3 (termasuk restore)
 import {
     listTabel3c3Hki,
     getTabel3c3HkiById,
     createTabel3c3Hki,
     updateTabel3c3Hki,
     softDeleteTabel3c3Hki,
+    restoreTabel3c3Hki,
     hardDeleteTabel3c3Hki,
     exportTabel3c3Hki
 } from '../controllers/tabel3c3Hki.controller.js';
@@ -44,8 +45,7 @@ router.get('/:id', requireAuth, permit(resourceKey, 'R'), getTabel3c3HkiById);
 router.post('/', requireAuth, permit(resourceKey, 'C'), createTabel3c3Hki);
 router.put('/:id', requireAuth, permit(resourceKey, 'U'), updateTabel3c3Hki);
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteTabel3c3Hki);
-
-// Rute Hard Delete (Super Admin / high-level)
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreTabel3c3Hki);
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteTabel3c3Hki);
 
 export default router;

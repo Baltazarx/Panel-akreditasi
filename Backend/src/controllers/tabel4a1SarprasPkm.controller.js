@@ -86,17 +86,18 @@ export const createTabel4a1SarprasPkm = async (req, res) => {
         });
     }
     
-    // 2. Ambil data User (id_unit & id_user)
-    // [FIX] Menggunakan id_unit, bukan id_unit_prodi
-    const id_unit = req.user?.id_unit; 
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
+    // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (Sarpras) tidak ditemukan dari data user.' }); 
     }
+    
+    const id_user = req.user?.id_user;
 
     // 3. Siapkan data
     const dataToInsert = {
-      id_unit: id_unit,
+      id_unit: final_id_unit, // Otomatis dari user yang login
       nama_sarpras,
       daya_tampung,
       luas_ruang_m2,
@@ -153,7 +154,6 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
       lisensi,
       perangkat_detail,
       link_bukti,
-      deleted_at
     } = req.body;
 
     // 1. Validasi Input
@@ -163,17 +163,17 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
         });
     }
     
-    // 2. Ambil data User (id_unit & id_user)
-    // [FIX] Menggunakan id_unit, bukan id_unit_prodi
-    const id_unit = req.user?.id_unit;
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
+    // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (Sarpras) tidak ditemukan dari data user.' }); 
     }
 
+    const id_user = req.user?.id_user;
     // 3. Siapkan data
     const dataToUpdate = {
-      id_unit: id_unit,
+      id_unit: final_id_unit, // Update dengan unit dari user yang login
       nama_sarpras,
       daya_tampung,
       luas_ruang_m2,
@@ -183,14 +183,6 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
       link_bukti
     };
 
-    // 4. Handle restore (deleted_at = null)
-    if (deleted_at === null && await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_at')) {
-      dataToUpdate.deleted_at = null;
-      // Jika ada kolom deleted_by, set ke null juga
-      if (await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_by')) {
-        dataToUpdate.deleted_by = null;
-      }
-    }
 
     // 5. Tambah audit columns
     if (await hasColumn('tabel_4a1_sarpras_pkm', 'updated_by') && id_user) { 
@@ -213,12 +205,8 @@ export const updateTabel4a1SarprasPkm = async (req, res) => {
         [id]
     );
 
-    const message = deleted_at === null 
-      ? 'Data Sarpras PkM berhasil dipulihkan'
-      : 'Data Sarpras PkM berhasil diperbarui';
-
     res.json({ 
-        message: message,
+        message: 'Data Sarpras PkM berhasil diperbarui',
         data: rows[0]
     });
 
@@ -248,6 +236,59 @@ export const softDeleteTabel4a1SarprasPkm = async (req, res) => {
   } catch (err) {
     console.error("Error softDeleteTabel4a1SarprasPkm:", err);
     res.status(500).json({ error: 'Gagal menghapus data', details: err.message });
+  }
+};
+
+/*
+================================
+ RESTORE (konsisten dengan 3a1)
+================================
+*/
+export const restoreTabel4a1SarprasPkm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_4a1_sarpras_pkm', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_4a1_sarpras_pkm SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data Sarpras PkM berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_4a1_sarpras_pkm SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data Sarpras PkM berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel4a1SarprasPkm:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
   }
 };
 

@@ -124,13 +124,13 @@ export const AccessMatrix = {
     'tabel_1a3':  { C: true, R: true, U: true, D: true },
     'tabel_3a2_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
-    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_3c3_hki': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_4a2_pkm': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true },
+    'tabel_3c2_publikasi_penelitian': { C: true, R: true, U: true, D: true },
+    'tabel_3c3_hki': { C: true, R: true, U: true, D: true },
+    'tabel_4a2_pkm': { C: true, R: true, U: true, D: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true },
+    'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true },
+    'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true },
   
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
@@ -157,11 +157,11 @@ export const AccessMatrix = {
   'kepegawaian': { // Menambahkan role ini
     // ---- Tabel C1 ----
     'tabel_1a5': { C: true, R: true, U: true, D: true }, // Data Kepegawaian
-    'kualifikasi_tendik': { C: true, R: true, U: true, D: true, H: true }, // Kualifikasi Tenaga Kependidikan
+    'kualifikasi_tendik': { C: true, R: true, U: true, D: true }, // Kualifikasi Tenaga Kependidikan
     // ---- Master Data ----
-    'dosen': { C: true, R: true, U: true, D: true, H: true }, // Data Dosen
-    'pegawai': { C: true, R: true, U: true, D: true, H: true }, // Data Pegawai
-    'tendik': { C: true, R: true, U: true, D: true, H: true }, // Data Tenaga Kependidikan
+    'dosen': { C: true, R: true, U: true, D: true }, // Data Dosen
+    'pegawai': { C: true, R: true, U: true, D: true }, // Data Pegawai
+    'tendik': { C: true, R: true, U: true, D: true }, // Data Tenaga Kependidikan
     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
     'unit_kerja': { R: true }, // Untuk dropdown unit kerja
     'tahun_akademik': { R: true }, // Untuk dropdown tahun akademik
@@ -235,8 +235,8 @@ export const AccessMatrix = {
 // ========== KERJASAMA ==========
   'kerjasama': {
     // ---- Tabel 3C1 (CRUD + Hard Delete) ----
-    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true, H: true },
-    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true, H: true },
+    'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true },
+    'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true },
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },

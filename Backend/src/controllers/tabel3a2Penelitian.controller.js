@@ -208,20 +208,34 @@ export const createTabel3a2Penelitian = async (req, res) => {
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
       link_bukti,
       pendanaan, // Ini adalah JSON string
-      link_roadmap // <-- [PERBAIKAN] 1. Ambil link_roadmap dari body
+      link_roadmap
     } = req.body;
 
     // Validasi
-    if (!id_unit) { return res.status(400).json({ error: 'Unit/Prodi wajib dipilih.' }); }
     if (!id_dosen_ketua) { return res.status(400).json({ error: 'Dosen Ketua wajib diisi.' }); }
     if (!judul_penelitian) { return res.status(400).json({ error: 'Judul Penelitian wajib diisi.' }); }
     
-    // [PERBAIKAN] 2. Tambahkan link_roadmap ke parentData
+    // Debug: Log req.user untuk melihat strukturnya
+    console.log("createTabel3a2Penelitian - req.user:", req.user);
+    console.log("createTabel3a2Penelitian - req.user?.id_unit:", req.user?.id_unit);
+    console.log("createTabel3a2Penelitian - req.body.id_unit:", req.body.id_unit);
+    
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada di user, gunakan dari body
+    let final_id_unit = id_unit || req.user?.id_unit || req.user?.id_unit_prodi;
+    
+    if (!final_id_unit) { 
+      console.error("createTabel3a2Penelitian - req.user tidak memiliki id_unit:", req.user);
+      return res.status(400).json({ 
+        error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit. Silakan logout dan login ulang untuk mendapatkan token baru.' 
+      }); 
+    }
+    
     const parentData = {
-      id_unit: id_unit, 
+      id_unit: final_id_unit, // Otomatis dari user yang login atau dari body
       id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
-      link_roadmap // <-- [PERBAIKAN] 2. Tambahkan di sini
+      link_roadmap
     };
     if (await hasColumn('tabel_3a2_penelitian', 'created_by') && req.user?.id_user) {
       parentData.created_by = req.user.id_user;
@@ -288,21 +302,27 @@ export const updateTabel3a2Penelitian = async (req, res) => {
     const { 
       id_unit, id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
-      link_bukti, // Tetap ambil dari body
+      link_bukti,
       pendanaan, // JSON string
-      link_roadmap // <-- [PERBAIKAN] 1. Ambil link_roadmap dari body
+      link_roadmap
     } = req.body;
 
     // Validasi
-    if (!id_unit) { return res.status(400).json({ error: 'Unit/Prodi wajib dipilih.' }); }
-    // ... (validasi lain)
+    if (!id_dosen_ketua) { return res.status(400).json({ error: 'Dosen Ketua wajib diisi.' }); }
+    if (!judul_penelitian) { return res.status(400).json({ error: 'Judul Penelitian wajib diisi.' }); }
+    
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada di user, gunakan dari body
+    let final_id_unit = id_unit || req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
+      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user.' }); 
+    }
 
-    // [PERBAIKAN] 2. Tambahkan link_roadmap ke parentData
     const parentData = {
-      id_unit: id_unit,
+      id_unit: final_id_unit, // Update dengan unit dari user yang login atau dari body
       id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
-      link_roadmap // <-- [PERBAIKAN] 2. Tambahkan di sini
+      link_roadmap
     };
     if (await hasColumn('tabel_3a2_penelitian', 'updated_by') && req.user?.id_user) {
       parentData.updated_by = req.user.id_user;
@@ -379,6 +399,57 @@ export const softDeleteTabel3a2Penelitian = async (req, res) => {
   } catch (err) {
     console.error("Error softDeleteTabel3a2Penelitian:", err);
     res.status(500).json({ error: 'Gagal menghapus data' });
+  }
+};
+
+/**
+ * [RESTORE] Memulihkan data yang di-soft delete (konsisten dengan 3a1).
+ */
+export const restoreTabel3a2Penelitian = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_3a2_penelitian', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_3a2_penelitian', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_3a2_penelitian SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data penelitian berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_3a2_penelitian SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data penelitian berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel3a2Penelitian:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
   }
 };
 

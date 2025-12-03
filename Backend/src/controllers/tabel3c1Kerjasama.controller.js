@@ -242,13 +242,24 @@ export const createTabel3c1Kerjasama = async (req, res) => {
         return res.status(400).json({ error: 'Data pendanaan (TS-4 s/d TS) wajib diisi.' });
     }
 
-    const id_unit = req.user?.id_unit;
-    if (!id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (LPPM/Kerjasama) tidak ditemukan dari data user.' }); 
+    // Debug: Log req.user untuk melihat strukturnya
+    console.log("createTabel3c1Kerjasama - req.user:", req.user);
+    console.log("createTabel3c1Kerjasama - req.user?.id_unit:", req.user?.id_unit);
+    console.log("createTabel3c1Kerjasama - req.user?.id_unit_prodi:", req.user?.id_unit_prodi);
+    
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    
+    if (!final_id_unit) { 
+      console.error("createTabel3c1Kerjasama - req.user tidak memiliki id_unit atau id_unit_prodi:", req.user);
+      return res.status(400).json({ 
+        error: 'Unit kerja (LPPM/Kerjasama) tidak ditemukan dari data user. Pastikan user sudah memiliki unit. Silakan logout dan login ulang untuk mendapatkan token baru.' 
+      }); 
     }
 
     const dataParent = {
-      id_unit: id_unit, 
+      id_unit: final_id_unit, // Otomatis dari user yang login
       judul_kerjasama, mitra_kerja_sama, sumber, durasi_tahun, link_bukti
     };
     if (await hasColumn('tabel_3c1_kerjasama_penelitian', 'created_by') && req.user?.id_user) { 
@@ -311,13 +322,15 @@ export const updateTabel3c1Kerjasama = async (req, res) => {
         return res.status(400).json({ error: 'Data pendanaan (TS-4 s/d TS) wajib diisi.' });
     }
 
-    const id_unit = req.user?.id_unit;
-    if (!id_unit) { 
+    // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (LPPM/Kerjasama) tidak ditemukan dari data user.' }); 
     }
 
     const dataParent = {
-      id_unit: id_unit, 
+      id_unit: final_id_unit, // Update dengan unit dari user yang login
       judul_kerjasama, mitra_kerja_sama, sumber, durasi_tahun, link_bukti
     };
     if (await hasColumn('tabel_3c1_kerjasama_penelitian', 'updated_by') && req.user?.id_user) { 
@@ -366,7 +379,7 @@ export const updateTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- SOFT DELETE (TIDAK BERUBAH)
+ SOFT DELETE
 ================================
 */
 export const softDeleteTabel3c1Kerjasama = async (req, res) => {
@@ -389,20 +402,89 @@ export const softDeleteTabel3c1Kerjasama = async (req, res) => {
 
 /*
 ================================
- HARD DELETE (TIDAK BERUBAH)
+ RESTORE (konsisten dengan 3a1)
+================================
+*/
+export const restoreTabel3c1Kerjasama = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_3c1_kerjasama_penelitian', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_3c1_kerjasama_penelitian', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c1_kerjasama_penelitian SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data kerjasama penelitian berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c1_kerjasama_penelitian SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data kerjasama penelitian berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel3c1Kerjasama:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
+  }
+};
+
+/*
+================================
+ HARD DELETE (konsisten dengan 3a2 - transactional)
 ================================
 */
 export const hardDeleteTabel3c1Kerjasama = async (req, res) => {
+  let connection;
   try {
-    const [result] = await pool.query(
-      'DELETE FROM tabel_3c1_kerjasama_penelitian WHERE id = ?', 
-      [req.params.id]
-    );
-    if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
+    const { id } = req.params;
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
+    // 1. Hapus data Child (pendanaan)
+    await connection.query('DELETE FROM tabel_3c1_pendanaan_kerjasama WHERE id_kerjasama = ?', [id]);
+    
+    // 2. Hapus data Parent
+    const [parentResult] = await connection.query('DELETE FROM tabel_3c1_kerjasama_penelitian WHERE id = ?', [id]);
+    if (parentResult.affectedRows === 0) {
+        throw new Error('Data tidak ditemukan.');
+    }
+    
+    await connection.commit();
     res.json({ message: 'Data berhasil dihapus secara permanen (hard delete).' });
   } catch (err) {
+    if (connection) await connection.rollback();
     console.error("Error hardDeleteTabel3c1Kerjasama:", err);
-    res.status(500).json({ error: 'Gagal menghapus data secara permanen.' });
+    if (err.message.includes('tidak ditemukan')) {
+        return res.status(404).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Gagal menghapus data secara permanen.', details: err.sqlMessage || err.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 

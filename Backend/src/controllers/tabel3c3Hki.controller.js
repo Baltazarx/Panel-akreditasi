@@ -241,13 +241,14 @@ export const createTabel3c3Hki = async (req, res) => {
         });
     }
     
-    // 2. Ambil data User (id_unit & id_user)
-    const id_unit = req.user?.id_unit;
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
+    // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
     }
 
+    const id_user = req.user?.id_user;
     // 3. Siapkan data
     const dataToInsert = {
       id_dosen,
@@ -255,7 +256,7 @@ export const createTabel3c3Hki = async (req, res) => {
       jenis_hki,
       id_tahun_perolehan,
       link_bukti,
-      id_unit: id_unit
+      id_unit: final_id_unit // Otomatis dari user yang login
     };
 
     // 4. Tambah audit columns
@@ -315,13 +316,14 @@ export const updateTabel3c3Hki = async (req, res) => {
         });
     }
     
-    // 2. Ambil data User (id_unit & id_user)
-    const id_unit = req.user?.id_unit;
-    const id_user = req.user?.id_user;
-    if (!id_unit) { 
+    // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
+    // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
+    let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+    if (!final_id_unit) { 
       return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
     }
 
+    const id_user = req.user?.id_user;
     // 3. Siapkan data
     const dataToUpdate = {
       id_dosen,
@@ -329,7 +331,7 @@ export const updateTabel3c3Hki = async (req, res) => {
       jenis_hki,
       id_tahun_perolehan,
       link_bukti,
-      id_unit: id_unit 
+      id_unit: final_id_unit // Update dengan unit dari user yang login
     };
 
     // 4. Tambah audit columns
@@ -384,6 +386,59 @@ export const softDeleteTabel3c3Hki = async (req, res) => {
   } catch (err) {
     console.error("Error softDeleteTabel3c3Hki:", err);
     res.status(500).json({ error: 'Gagal menghapus data', details: err.message });
+  }
+};
+
+/*
+================================
+ RESTORE (konsisten dengan 3a1)
+================================
+*/
+export const restoreTabel3c3Hki = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validasi ID
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'ID tidak valid.' });
+    }
+    
+    // Cek apakah kolom deleted_at ada
+    const hasDeletedAt = await hasColumn('tabel_3c3_hki', 'deleted_at');
+    if (!hasDeletedAt) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+    
+    // Cek apakah kolom deleted_by ada
+    const hasDeletedBy = await hasColumn('tabel_3c3_hki', 'deleted_by');
+    
+    // Restore data
+    if (hasDeletedBy) {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c3_hki SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data HKI penelitian berhasil dipulihkan' });
+    } else {
+      const [result] = await pool.query(
+        'UPDATE tabel_3c3_hki SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
+      }
+      
+      res.json({ ok: true, restored: true, message: 'Data HKI penelitian berhasil dipulihkan' });
+    }
+  } catch (err) {
+    console.error("Error restoreTabel3c3Hki:", err);
+    res.status(500).json({ error: 'Gagal memulihkan data', message: err.message });
   }
 };
 
