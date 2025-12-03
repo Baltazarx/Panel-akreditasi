@@ -81,8 +81,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Sumber Dana" : "Tambah Sumber Dana"}

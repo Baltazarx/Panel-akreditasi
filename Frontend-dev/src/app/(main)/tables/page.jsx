@@ -353,7 +353,8 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
   const toggleButton = (
         <motion.button
         onClick={() => setIsOpen(!isOpen)} 
-            className="absolute z-30 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+            className="absolute z-10 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+            style={{ zIndex: 10 }}
             animate={{
                 top: 16,
                 left: isOpen ? 256 : 0,
