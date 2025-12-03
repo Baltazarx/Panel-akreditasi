@@ -113,23 +113,63 @@ export default function Tabel2D({ role }) {
         
         const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
         if (idx === -1) return [];
-        const ts = availableYears[idx]?.id;
-        const ts1 = idx > 0 ? availableYears[idx - 1]?.id : null;
-        const ts2 = idx > 1 ? availableYears[idx - 2]?.id : null;
-        const ts3 = idx > 2 ? availableYears[idx - 3]?.id : null;
-        const ts4 = idx > 3 ? availableYears[idx - 4]?.id : null;
-        return [ts4, ts3, ts2, ts1, ts].filter(y => y != null); // TS-4, TS-3, TS-2, TS-1, TS
+        
+        // PENTING: Tahun yang dipilih (selectedYear) SELALU menjadi TS di kolom paling kanan
+        // ts adalah tahun yang dipilih, akan masuk ke kolom TS (index terakhir array)
+        const ts = availableYears[idx]?.id; // Tahun yang dipilih = TS (kolom paling kanan)
+        const ts1 = idx > 0 ? availableYears[idx - 1]?.id : null; // Tahun sebelumnya = TS-1
+        const ts2 = idx > 1 ? availableYears[idx - 2]?.id : null; // Tahun sebelumnya lagi = TS-2
+        const ts3 = idx > 2 ? availableYears[idx - 3]?.id : null; // Tahun sebelumnya lagi = TS-3
+        const ts4 = idx > 3 ? availableYears[idx - 4]?.id : null; // Tahun sebelumnya lagi = TS-4
+        
+        // Urutan array dari kiri ke kanan: [TS-4, TS-3, TS-2, TS-1, TS]
+        // ts (tahun yang dipilih/selectedYear) SELALU ada di index terakhir, sesuai dengan label 'TS' di index terakhir
+        // Contoh: Pilih 2021/2022 → ts = 2021/2022 (TS), ts1 = 2020/2021 (TS-1), dst.
+        return [ts4, ts3, ts2, ts1, ts].filter(y => y != null);
     }, [availableYears, selectedYear]);
+
+    // State untuk menandai apakah "Semua Tahun" dipilih
+    const isAllYearsSelected = selectedYear === "all";
+
+    // Mapping tahun ke label untuk memastikan label selalu sesuai dengan posisi relatif terhadap tahun yang dipilih
+    const yearLabelMap = useMemo(() => {
+        if (!selectedYear || selectedYear === "all" || isAllYearsSelected) return {};
+        
+        const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
+        if (idx === -1) return {};
+        
+        const map = {};
+        // Tahun yang dipilih = TS
+        map[availableYears[idx]?.id] = 'TS';
+        // Tahun sebelumnya = TS-1
+        if (idx > 0) map[availableYears[idx - 1]?.id] = 'TS-1';
+        // Tahun sebelumnya lagi = TS-2
+        if (idx > 1) map[availableYears[idx - 2]?.id] = 'TS-2';
+        // Tahun sebelumnya lagi = TS-3
+        if (idx > 2) map[availableYears[idx - 3]?.id] = 'TS-3';
+        // Tahun sebelumnya lagi = TS-4
+        if (idx > 3) map[availableYears[idx - 4]?.id] = 'TS-4';
+        
+        return map;
+    }, [availableYears, selectedYear, isAllYearsSelected]);
 
     useEffect(() => {
         if (!selectedYear && availableYears.length) {
-            const latestYear = availableYears[availableYears.length - 1]?.id;
-            if (latestYear) setSelectedYear(String(latestYear));
+            // Default ke tahun 2020/2021 (tahun pertama setelah filter)
+            // Cari tahun yang id-nya 2020 atau text mengandung "2020/2021"
+            const defaultYear = availableYears.find(y => {
+                const yearId = Number(y.id);
+                const yearText = String(y.text || "").toLowerCase();
+                return yearId === 2020 || yearText.includes("2020/2021") || yearText.includes("2020");
+            });
+            
+            // Jika tidak ditemukan, gunakan tahun pertama yang tersedia
+            const yearToSelect = defaultYear || availableYears[0];
+            if (yearToSelect?.id) {
+                setSelectedYear(String(yearToSelect.id));
+            }
         }
     }, [availableYears, selectedYear]);
-    
-    // State untuk menandai apakah "Semua Tahun" dipilih
-    const isAllYearsSelected = selectedYear === "all";
 
     // Default ke prodi pertama untuk superadmin
     useEffect(() => {
@@ -154,13 +194,16 @@ export default function Tabel2D({ role }) {
             const yearParams = `id_tahun_in=${validYears.join(',')}`;
             const deletedParam = showDeleted ? '&include_deleted=1' : '';
             
-            // Tambahkan parameter prodi jika superadmin atau user prodi
+            // Tambahkan parameter prodi jika superadmin memilih prodi atau user prodi
+            // Untuk superadmin: hanya kirim id_unit_prodi jika memilih prodi di dropdown (biarkan backend tidak filter jika tidak dipilih)
+            // Untuk prodi user: selalu kirim id_unit_prodi untuk filter data mereka
             let prodiParam = '';
             if (isSuperAdmin && selectedProdi) {
                 prodiParam = `&id_unit_prodi=${selectedProdi}`;
             } else if (isProdiUser && authUser?.id_unit_prodi) {
                 prodiParam = `&id_unit_prodi=${authUser.id_unit_prodi}`;
             }
+            // Jika superadmin tidak memilih prodi, jangan kirim prodiParam agar backend tidak filter (superadmin bisa lihat semua)
             
             const resAll = await apiFetch(`/tabel2d-rekognisi-lulusan?${yearParams}${deletedParam}${prodiParam}`);
             
@@ -224,19 +267,32 @@ export default function Tabel2D({ role }) {
         fetchData();
     }, [fetchData]);
 
+    // State untuk track apakah modal baru saja dibuka (untuk mencegah reset detailsToSubmit yang tidak perlu)
+    const [modalJustOpened, setModalJustOpened] = useState(false);
+
     // Menggabungkan data existing dan data baru untuk ditampilkan di daftar submit
+    // Hanya reset detailsToSubmit saat modal pertama kali dibuka (ketika modalJustOpened = true)
     useEffect(() => {
-        if (selectedYear && dataByYear[selectedYear] && showAddModal) {
+        if (selectedYear && dataByYear[selectedYear] && showAddModal && modalJustOpened) {
             const existingDetails = dataByYear[selectedYear]?.details || [];
             const id_tahunan = dataByYear[selectedYear]?.id_tahunan;
-            // Buat tempId unik untuk data existing agar bisa dihapus dari daftar submit
+            
+            // Reset detailsToSubmit dengan data existing saat modal baru dibuka
             setDetailsToSubmit(existingDetails.map((d, i) => ({ 
                 ...d, 
                 jumlah_mahasiswa_rekognisi: String(d.jumlah_mahasiswa_rekognisi),
-                tempId: (id_tahunan || 'existing') + '_' + d.id_sumber + '_' + i // ID unik sementara
+                tempId: (id_tahunan || 'existing') + '_' + d.id_sumber + '_' + i
             })));
+            setModalJustOpened(false);
         }
-    }, [selectedYear, dataByYear, showAddModal]);
+    }, [selectedYear, dataByYear, showAddModal, modalJustOpened]);
+    
+    // Reset flag saat modal ditutup
+    useEffect(() => {
+        if (!showAddModal) {
+            setModalJustOpened(false);
+        }
+    }, [showAddModal]);
     
     // --- Perhitungan Total dan Persentase ---
     const totalsByYear = useMemo(() => {
@@ -293,8 +349,10 @@ export default function Tabel2D({ role }) {
         
         const { id_sumber, jenis_pengakuan, jumlah_mahasiswa_rekognisi, link_bukti } = singleInput;
 
-        if (!id_sumber || !jenis_pengakuan.trim() || !Number(jumlah_mahasiswa_rekognisi)) {
-            Swal.fire("Peringatan", "Semua kolom input rincian wajib diisi (Sumber, Jenis Pengakuan, Jumlah Lulusan > 0).", "warning");
+        // Validasi: id_sumber dan jenis_pengakuan wajib, jumlah_mahasiswa_rekognisi harus angka dan >= 0
+        const jumlahNum = Number(jumlah_mahasiswa_rekognisi);
+        if (!id_sumber || !jenis_pengakuan.trim() || isNaN(jumlahNum) || jumlahNum < 0) {
+            Swal.fire("Peringatan", "Semua kolom input rincian wajib diisi (Sumber, Jenis Pengakuan, Jumlah Mahasiswa >= 0).", "warning");
             return;
         }
 
@@ -395,9 +453,22 @@ export default function Tabel2D({ role }) {
                  return;
             }
 
+            // Tentukan id_unit_prodi untuk payload
+            // Untuk superadmin: gunakan selectedProdi jika ada, atau fallback ke id_unit_prodi/id_unit dari authUser
+            // Untuk prodi user: gunakan id_unit_prodi dari authUser
+            let id_unit_prodi_payload = null;
+            if (isSuperAdmin && selectedProdi) {
+                id_unit_prodi_payload = Number(selectedProdi);
+            } else if (isSuperAdmin && (authUser?.id_unit_prodi || authUser?.unit)) {
+                id_unit_prodi_payload = Number(authUser.id_unit_prodi || authUser.unit);
+            } else if (isProdiUser && authUser?.id_unit_prodi) {
+                id_unit_prodi_payload = Number(authUser.id_unit_prodi);
+            }
+
             const payload = {
                 id_tahun: Number(selectedYear),
-                details: payloadDetails
+                details: payloadDetails,
+                ...(id_unit_prodi_payload && { id_unit_prodi: id_unit_prodi_payload })
             };
 
             await apiFetch("/tabel2d-rekognisi-lulusan", {
@@ -454,6 +525,7 @@ export default function Tabel2D({ role }) {
         });
         setIsEditMode(true);
         setEditingDetail(null);
+        setModalJustOpened(true);
         setShowAddModal(true);
     };
     
@@ -489,7 +561,7 @@ export default function Tabel2D({ role }) {
 
         if (confirm.isConfirmed) {
             try {
-                await apiFetch(`/tabel2d-rekognisi-lulusan/${data.id_tahunan}/restore`, { method: "PUT" });
+                await apiFetch(`/tabel2d-rekognisi-lulusan/${data.id_tahunan}/restore`, { method: "POST" });
                 Swal.fire("Berhasil", "Data berhasil dipulihkan.", "success");
                 await fetchData(); 
                 return true; 
@@ -678,6 +750,7 @@ export default function Tabel2D({ role }) {
                                 });
                                 setIsEditMode(false);
                                 setEditingDetail(null);
+                                setModalJustOpened(true);
                                 setShowAddModal(true);
                             }}
                             className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -763,13 +836,13 @@ export default function Tabel2D({ role }) {
                                 <tr>
                                     {yearOrder.map((y, idx) => {
                                         // Jika "Semua Tahun" dipilih, tampilkan nama tahun
-                                        // Jika tidak, gunakan label TS-4, TS-3, TS-2, TS-1, TS
+                                        // Jika tidak, gunakan mapping label berdasarkan posisi relatif terhadap tahun yang dipilih
                                         let label;
                                         if (isAllYearsSelected) {
                                             label = getTahunName(y);
                                         } else {
-                                            const labels = ['TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS'];
-                                            label = labels[idx] || getTahunName(y);
+                                            // Gunakan mapping label untuk memastikan tahun yang dipilih selalu mendapat label 'TS'
+                                            label = yearLabelMap[y] || getTahunName(y);
                                         }
                                         return (
                                             <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
@@ -787,7 +860,7 @@ export default function Tabel2D({ role }) {
                                         return yearData?.details.find(d => d.id_sumber === sumber.id_sumber) || null;
                                     });
                                     
-                                    // Ambil jenis pengakuan dari tahun TS (terakhir)
+                                    // Ambil jenis pengakuan dari tahun TS (tahun yang dipilih, index terakhir)
                                     const jenisPengakuan = detailsByYear[detailsByYear.length - 1]?.jenis_pengakuan || '-';
                                     const linkBukti = detailsByYear[detailsByYear.length - 1]?.link_bukti || '';
                                     
@@ -871,8 +944,8 @@ export default function Tabel2D({ role }) {
                             <p className="text-white/80 mt-1 text-sm">Lengkapi data rekognisi lulusan untuk tahun TS ({getTahunName(selectedYear)})</p>
                         </div>
                         <div className="p-8">
-                            {/* Form Input Rincian Baris Tunggal - Hanya tampil jika mode tambah dan tidak sedang edit detail */}
-                            {!isEditMode && !editingDetail && (
+                            {/* Form Input Rincian Baris Tunggal - Tampil jika tidak sedang edit detail (bisa tambah rincian baru baik dalam mode tambah maupun edit) */}
+                            {!editingDetail && (
                                 <form onSubmit={handleAddRekognisi} className="space-y-4 mb-6 pb-6 border-b border-gray-200">
                                     <h4 className="text-lg font-semibold text-slate-800 mb-4">Tambah Rincian Rekognisi</h4>
                                     

@@ -90,11 +90,17 @@ export const createOrUpdateRekognisi = async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    const { id_tahun, details } = req.body;
-    const id_unit_prodi = req.user?.id_unit_prodi;
-
+    const { id_tahun, details, id_unit_prodi: id_unit_prodi_from_body } = req.body;
+    
+    // Prioritas: id_unit_prodi dari body (jika superadmin mengirim), lalu dari user yang login
+    // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
+    let id_unit_prodi = id_unit_prodi_from_body || req.user?.id_unit_prodi || req.user?.id_unit;
+    
     if (!id_unit_prodi) {
-      return res.status(403).json({ error: 'Hanya user prodi yang dapat mengubah data ini.' });
+      console.error("createOrUpdateRekognisi - req.user tidak memiliki id_unit_prodi atau id_unit:", req.user);
+      return res.status(400).json({ 
+        error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit/prodi. Silakan logout dan login ulang untuk mendapatkan token baru.' 
+      });
     }
     if (!id_tahun) {
       return res.status(400).json({ error: 'Tahun Akademik wajib diisi.' });
