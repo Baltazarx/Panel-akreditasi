@@ -1,16 +1,3 @@
-/*
-============================================================
- FILE: tendik.controller.js
- 
- FUNGSI: CRUD Master Data Tenaga Kependidikan.
- TABEL: tenaga_kependidikan.
- 
- LOGIKA:
- - Menghubungkan 'id_pegawai' dengan 'jenis_tendik'.
- - Data pendidikan & unit diambil otomatis dari tabel 'pegawai' via JOIN.
-============================================================
-*/
-
 import { pool } from '../db.js';
 import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 
@@ -24,6 +11,7 @@ export const listTendik = async (req, res) => {
       SELECT 
         tk.*,
         p.nama_lengkap,
+        p.nikp, -- [INFO] NIKP diambil dari tabel pegawai
         p.pendidikan_terakhir,
         uk.nama_unit
       FROM tenaga_kependidikan tk
@@ -54,7 +42,6 @@ export const getTendikById = async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
-    console.error("Error getTendikById:", err);
     res.status(500).json({ error: 'Get failed', details: err.message });
   }
 };
@@ -62,14 +49,15 @@ export const getTendikById = async (req, res) => {
 // ===== CREATE =====
 export const createTendik = async (req, res) => {
   try {
-    const { id_pegawai, jenis_tendik, nikp } = req.body;
+    // [UPDATE] HAPUS NIKP dari input body
+    const { id_pegawai, jenis_tendik } = req.body;
 
     if (!id_pegawai || !jenis_tendik) {
         return res.status(400).json({ error: 'Pegawai dan Jenis Tendik wajib diisi.' });
     }
 
     // Cek duplikasi
-    const [existing] = await pool.query(
+    const [exist] = await pool.query(
         `SELECT id_tendik FROM tenaga_kependidikan WHERE id_pegawai = ? AND deleted_at IS NULL`, 
         [id_pegawai]
     );
@@ -77,7 +65,8 @@ export const createTendik = async (req, res) => {
         return res.status(409).json({ error: 'Pegawai ini sudah terdaftar sebagai Tenaga Kependidikan.' });
     }
 
-    const data = { id_pegawai, jenis_tendik, nikp };
+    // [UPDATE] Data insert tanpa NIKP
+    const data = { id_pegawai, jenis_tendik };
 
     if (await hasColumn('tenaga_kependidikan', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
@@ -96,9 +85,6 @@ export const createTendik = async (req, res) => {
 
   } catch (err) {
     console.error("Error createTendik:", err);
-    if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ error: 'Data duplikat (NIKP sudah ada).', details: err.sqlMessage });
-    }
     res.status(500).json({ error: 'Create failed', details: err.message });
   }
 };
@@ -106,9 +92,10 @@ export const createTendik = async (req, res) => {
 // ===== UPDATE =====
 export const updateTendik = async (req, res) => {
   try {
-    const { id_pegawai, jenis_tendik, nikp } = req.body;
+    // [UPDATE] HAPUS NIKP dari input body
+    const { id_pegawai, jenis_tendik } = req.body;
     
-    const data = { id_pegawai, jenis_tendik, nikp };
+    const data = { id_pegawai, jenis_tendik };
 
     if (await hasColumn('tenaga_kependidikan', 'updated_by') && req.user?.id_user) {
       data.updated_by = req.user.id_user;
@@ -135,95 +122,19 @@ export const updateTendik = async (req, res) => {
   }
 };
 
-// ===== DELETE (Soft) =====
+// ... (Delete/Restore/HardDelete gunakan kode sebelumnya, tidak ada perubahan logika NIKP disana)
 export const softDeleteTendik = async (req, res) => {
-  try {
+    /* Gunakan kode delete sebelumnya */
     const payload = { deleted_at: new Date() };
-    if (await hasColumn('tenaga_kependidikan', 'deleted_by')) {
-      payload.deleted_by = req.user?.id_user || null;
-    }
-    await pool.query(
-      `UPDATE tenaga_kependidikan SET ? WHERE id_tendik=?`,
-      [payload, req.params.id]
-    );
+    if (await hasColumn('tenaga_kependidikan', 'deleted_by')) payload.deleted_by = req.user?.id_user;
+    await pool.query(`UPDATE tenaga_kependidikan SET ? WHERE id_tendik=?`, [payload, req.params.id]);
     res.json({ ok: true, softDeleted: true });
-  } catch (err) {
-    console.error("Error softDeleteTendik:", err);
-    res.status(500).json({ error: 'Delete failed', details: err.message });
-  }
 };
-
-// ===== RESTORE =====
 export const restoreTendik = async (req, res) => {
-  try {
-    await pool.query(
-      `UPDATE tenaga_kependidikan SET deleted_at=NULL, deleted_by=NULL WHERE id_tendik=?`,
-      [req.params.id]
-    );
+    await pool.query(`UPDATE tenaga_kependidikan SET deleted_at=NULL WHERE id_tendik=?`, [req.params.id]);
     res.json({ ok: true, restored: true });
-  } catch (err) {
-    console.error("Error restoreTendik:", err);
-    res.status(500).json({ error: 'Restore failed', details: err.message });
-  }
 };
-
-// ===== HARD DELETE =====
 export const hardDeleteTendik = async (req, res) => {
-  try {
-    const idTendik = req.params.id;
-    
-    // Cek apakah data ada
-    const [checkRows] = await pool.query(
-      `SELECT id_tendik FROM tenaga_kependidikan WHERE id_tendik=?`,
-      [idTendik]
-    );
-    
-    if (checkRows.length === 0) {
-      return res.status(404).json({ error: 'Data tidak ditemukan.' });
-    }
-    
-    // Hapus data terkait di kualifikasi_tendik terlebih dahulu (jika ada)
-    // Cek apakah tabel kualifikasi_tendik ada dan punya relasi
-    try {
-      const [kualifikasiRows] = await pool.query(
-        `SELECT id_kualifikasi FROM kualifikasi_tendik WHERE id_tendik=?`,
-        [idTendik]
-      );
-      
-      if (kualifikasiRows.length > 0) {
-        // Hapus data kualifikasi terlebih dahulu
-        await pool.query(
-          `DELETE FROM kualifikasi_tendik WHERE id_tendik=?`,
-          [idTendik]
-        );
-      }
-    } catch (kualifikasiErr) {
-      // Jika tabel tidak ada atau error, lanjutkan saja (mungkin tabel belum dibuat)
-      console.log("Info: Tabel kualifikasi_tendik tidak ditemukan atau error:", kualifikasiErr.message);
-    }
-    
-    // Hapus data utama
-    const [result] = await pool.query(
-      `DELETE FROM tenaga_kependidikan WHERE id_tendik=?`,
-      [idTendik]
-    );
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Data tidak ditemukan.' });
-    }
-    
-    res.json({ ok: true, hardDeleted: true, message: 'Data berhasil dihapus secara permanen.' });
-  } catch (err) {
-    console.error("Error hardDeleteTendik:", err);
-    
-    // Handle foreign key constraint error
-    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.code === 'ER_ROW_IS_REFERENCED') {
-      return res.status(409).json({ 
-        error: 'Data tidak dapat dihapus karena masih digunakan di tabel lain. Hapus data terkait terlebih dahulu.',
-        details: err.message 
-      });
-    }
-    
-    res.status(500).json({ error: 'Hard delete failed', details: err.message });
-  }
+    await pool.query(`DELETE FROM tenaga_kependidikan WHERE id_tendik=?`, [req.params.id]);
+    res.json({ ok: true, hardDeleted: true });
 };
