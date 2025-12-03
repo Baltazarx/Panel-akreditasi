@@ -23,6 +23,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     pendanaan: [] // Array untuk 3 tahun (TS-2, TS-1, TS): [{id_tahun, jumlah_dana}, ...]
   });
 
+  // State untuk form input pendanaan baru
+  const [selectedTahunPendanaan, setSelectedTahunPendanaan] = useState("");
+  const [jumlahDanaPendanaan, setJumlahDanaPendanaan] = useState("");
+
   const [tahunList, setTahunList] = useState([]);
   const [tahunLaporan, setTahunLaporan] = useState(null);
 
@@ -32,8 +36,13 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
-        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        // Filter hanya tahun mulai dari 2020/2021 (id_tahun >= 2020)
+        const filtered = list.filter(t => {
+          const idTahun = parseInt(t.id_tahun) || 0;
+          const tahunStr = String(t.tahun || t.nama || "");
+          // Filter tahun dengan id_tahun >= 2020 atau nama tahun mengandung "2020"
+          return idTahun >= 2020 || tahunStr.includes("2020");
+        });
         setTahunList(filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))); // Urut dari terkecil ke terbesar
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -46,6 +55,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   // Initialize form data
   useEffect(() => {
     if (isOpen) {
+      // Reset input pendanaan setiap kali form dibuka
+      setSelectedTahunPendanaan("");
+      setJumlahDanaPendanaan("");
+      
       if (initialData) {
         // Load existing data
         setForm({
@@ -62,29 +75,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           apiFetch(`${ENDPOINT}/${initialData.id}`)
             .then(data => {
               if (data.pendanaan && Array.isArray(data.pendanaan)) {
-                // Filter hanya 3 tahun terakhir (TS-2, TS-1, TS)
-                apiFetch(`${ENDPOINT}?ts_id=${selectedTahun || new Date().getFullYear()}`)
-                  .then(response => {
-                    if (response.tahun_laporan) {
-                      const tahunIds = [
-                        response.tahun_laporan.id_ts2,
-                        response.tahun_laporan.id_ts1,
-                        response.tahun_laporan.id_ts
-                      ];
-                      const filteredPendanaan = tahunIds.map(id => {
-                        const existing = data.pendanaan.find(p => p.id_tahun === id);
-                        return existing || { id_tahun: id, jumlah_dana: 0 };
-                      });
-                      setForm(prev => ({ ...prev, pendanaan: filteredPendanaan }));
-                    } else {
-                      const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
-                      setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
-                    }
-                  })
-                  .catch(() => {
-                    const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
-                    setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
-                  });
+                // Tampilkan semua pendanaan yang ada (tidak perlu filter)
+                setForm(prev => ({ ...prev, pendanaan: data.pendanaan }));
               }
             })
             .catch(err => console.error("Error fetching detail:", err));
@@ -101,9 +93,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         });
       }
     }
-  }, [initialData, isOpen, selectedTahun]);
+  }, [initialData, isOpen]);
 
-  // Get tahun laporan untuk menentukan 3 tahun (TS-2, TS-1, TS)
+  // Get tahun laporan untuk menentukan tahun laporan (untuk display di tabel)
   useEffect(() => {
     const getTahunLaporan = async () => {
       try {
@@ -111,16 +103,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
           if (response.tahun_laporan) {
             setTahunLaporan(response.tahun_laporan);
-            
-            // Initialize pendanaan dengan 3 tahun (TS-2, TS-1, TS) jika belum ada
-            if (!initialData && form.pendanaan.length === 0) {
-              const pendanaanInit = [
-                { id_tahun: response.tahun_laporan.id_ts2, jumlah_dana: 0 },
-                { id_tahun: response.tahun_laporan.id_ts1, jumlah_dana: 0 },
-                { id_tahun: response.tahun_laporan.id_ts, jumlah_dana: 0 }
-              ];
-              setForm(prev => ({ ...prev, pendanaan: pendanaanInit }));
-            }
           }
         }
       } catch (err) {
@@ -128,10 +110,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       }
     };
     
-    if (isOpen && tahunList.length > 0 && !initialData && selectedTahun) {
+    if (isOpen && tahunList.length > 0 && selectedTahun) {
       getTahunLaporan();
     }
-  }, [isOpen, tahunList, initialData, selectedTahun]);
+  }, [isOpen, tahunList, selectedTahun]);
 
   if (!isOpen) return null;
 
@@ -139,25 +121,82 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handlePendanaanChange = (index, field, value) => {
+  const handleAddPendanaan = () => {
+    if (!selectedTahunPendanaan) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pilih Tahun',
+        text: 'Silakan pilih tahun terlebih dahulu.'
+      });
+      return;
+    }
+    const jumlahDanaNum = parseFloat(jumlahDanaPendanaan) || 0;
+    if (jumlahDanaNum < 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Jumlah Dana Tidak Valid',
+        text: 'Jumlah dana harus lebih besar atau sama dengan 0.'
+      });
+      return;
+    }
+    // Cek apakah tahun sudah ada di list
+    const tahunSudahAda = form.pendanaan.some(p => p.id_tahun === selectedTahunPendanaan);
+    if (tahunSudahAda) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tahun Sudah Ada',
+        text: 'Tahun yang dipilih sudah ada dalam daftar pendanaan. Silakan pilih tahun lain atau edit yang sudah ada.'
+      });
+      return;
+    }
+    // Tambahkan ke list pendanaan
+    setForm((prev) => ({
+      ...prev,
+      pendanaan: [...(Array.isArray(prev.pendanaan) ? prev.pendanaan : []), { 
+        id_tahun: selectedTahunPendanaan, 
+        jumlah_dana: jumlahDanaNum 
+      }]
+    }));
+    // Reset input
+    setSelectedTahunPendanaan("");
+    setJumlahDanaPendanaan("");
+  };
+
+  const removePendanaanRow = (index) => {
     setForm((prev) => {
-      const newPendanaan = [...prev.pendanaan];
-      newPendanaan[index] = {
-        ...newPendanaan[index],
-        [field]: field === 'jumlah_dana' ? parseFloat(value) || 0 : value
-      };
+      const newPendanaan = prev.pendanaan.filter((_, i) => i !== index);
       return { ...prev, pendanaan: newPendanaan };
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Validasi minimal 1 pendanaan
+    const pendanaanArray = Array.isArray(form.pendanaan) ? form.pendanaan : [];
+    if (pendanaanArray.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pendanaan Wajib',
+        text: 'Minimal harus ada 1 data pendanaan.'
+      });
+      return;
+    }
+    // Validasi semua pendanaan harus memiliki tahun dan jumlah dana
+    const invalidPendanaan = pendanaanArray.some(p => !p.id_tahun || p.jumlah_dana === undefined || p.jumlah_dana === null || p.jumlah_dana < 0);
+    if (invalidPendanaan) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Pendanaan Tidak Lengkap',
+        text: 'Semua pendanaan harus memiliki tahun yang dipilih dan jumlah dana yang valid (minimal 0).'
+      });
+      return;
+    }
     onSave(form);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Kerjasama PKM" : "Tambah Kerjasama PKM"}
@@ -234,39 +273,87 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
             </div>
           </div>
 
-          {/* Pendanaan 3 Tahun (TS-2, TS-1, TS) */}
-          {tahunLaporan && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Pendanaan (Rp Juta) - 3 Tahun Terakhir
-              </label>
-              <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50">
+          {/* Pendanaan */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-3">
+              Pendanaan (Rp Juta) <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-3">Pilih tahun dan masukkan jumlah dana, lalu klik "Tambah" untuk menambahkan ke daftar.</p>
+            
+            {/* Form Input Pendanaan Baru */}
+            <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Pilih Tahun</label>
+                  <select
+                    value={selectedTahunPendanaan}
+                    onChange={(e) => setSelectedTahunPendanaan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                  >
+                    <option value="">-- Pilih Tahun --</option>
+                    {tahunList.map((t) => (
+                      <option key={t.id_tahun} value={t.id_tahun}>
+                        {t.tahun || t.nama || t.id_tahun}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Jumlah Dana (Rp)</label>
+                  <input
+                    type="number"
+                    value={jumlahDanaPendanaan}
+                    onChange={(e) => setJumlahDanaPendanaan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                    placeholder="0"
+                    min="0"
+                    step="1"
+                    autoComplete="off"
+                    autoFocus={false}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPendanaan}
+                  className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
+                >
+                  Tambah
+                </button>
+              </div>
+            </div>
+
+            {/* Daftar Pendanaan yang Sudah Ditambahkan */}
+            {form.pendanaan.length > 0 && (
+              <div className="space-y-2 border border-gray-200 rounded-lg p-4 bg-white">
+                <label className="block text-xs font-medium text-slate-700 mb-2">Daftar Pendanaan:</label>
                 {form.pendanaan.map((p, idx) => {
                   const tahunInfo = tahunList.find(t => t.id_tahun === p.id_tahun);
-                  const tahunLabel = tahunLaporan && idx === 0 ? `TS-2 (${tahunLaporan.nama_ts2})` :
-                                   tahunLaporan && idx === 1 ? `TS-1 (${tahunLaporan.nama_ts1})` :
-                                   tahunLaporan && idx === 2 ? `TS (${tahunLaporan.nama_ts})` :
-                                   tahunInfo ? tahunInfo.tahun : `Tahun ${p.id_tahun}`;
+                  const tahunLabel = tahunInfo ? (tahunInfo.tahun || tahunInfo.nama || tahunInfo.id_tahun) : `Tahun ${p.id_tahun}`;
                   
                   return (
-                    <div key={idx} className="flex items-center gap-3">
-                      <label className="w-32 text-sm text-slate-600 font-medium">{tahunLabel}</label>
-                      <input
-                        type="number"
-                        value={p.jumlah_dana || 0}
-                        onChange={(e) => handlePendanaanChange(idx, 'jumlah_dana', e.target.value)}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                        placeholder="0"
-                        min="0"
-                        step="0.01"
-                      />
-                      <span className="text-sm text-slate-500">Rp Juta</span>
+                    <div key={`pendanaan-${idx}-${p.id_tahun}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-slate-700">{tahunLabel}</span>
+                        <span className="text-sm text-slate-500 ml-2">
+                          : Rp {new Intl.NumberFormat('id-ID').format(p.jumlah_dana || 0)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removePendanaanRow(idx)}
+                        className="px-3 py-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                        title="Hapus pendanaan"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Link Bukti */}
           <div>
@@ -337,12 +424,22 @@ export default function Tabel4C1({ auth, role: propRole }) {
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
-        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        // Filter hanya tahun mulai dari 2020/2021 (id_tahun >= 2020)
+        const filtered = list.filter(t => {
+          const idTahun = parseInt(t.id_tahun) || 0;
+          const tahunStr = String(t.tahun || t.nama || "");
+          // Filter tahun dengan id_tahun >= 2020 atau nama tahun mengandung "2020"
+          return idTahun >= 2020 || tahunStr.includes("2020");
+        });
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil (2024) sebagai default
+          // Prioritaskan tahun 2020/2021, jika tidak ada gunakan tahun terkecil
+          const tahun2020 = sorted.find(t => {
+            const tahunStr = String(t.tahun || t.nama || "");
+            return tahunStr.includes("2020") || parseInt(t.id_tahun) === 2020;
+          });
+          setSelectedTahun(tahun2020 ? tahun2020.id_tahun : sorted[0].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);

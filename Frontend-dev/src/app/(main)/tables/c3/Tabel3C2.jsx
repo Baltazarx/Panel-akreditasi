@@ -119,8 +119,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <div className="flex justify-between items-center">
             <div>
@@ -275,7 +275,14 @@ function DataTable({
   handleSelectAll,
   tahunLaporan,
 }) {
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  const filteredRows = rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    if (showDeleted) {
+      return hasDeletedAt; // Tampilkan hanya data yang terhapus
+    } else {
+      return !hasDeletedAt; // Tampilkan hanya data yang tidak terhapus
+    }
+  });
   
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -338,11 +345,12 @@ function DataTable({
   // Format checkmark untuk tahun terbit
   const formatTahunTerbit = (row) => {
     // Backend mengembalikan tahun_ts4, tahun_ts3, tahun_ts2, tahun_ts1, tahun_ts
-    // Tapi dari gambar, hanya TS-2, TS-1, TS yang ditampilkan
+    const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+    const ts3 = row.tahun_ts3 === '√' ? '√' : '';
     const ts2 = row.tahun_ts2 === '√' ? '√' : '';
     const ts1 = row.tahun_ts1 === '√' ? '√' : '';
     const ts = row.tahun_ts === '√' ? '√' : '';
-    return { ts2, ts1, ts };
+    return { ts4, ts3, ts2, ts1, ts };
   };
 
   return (
@@ -365,7 +373,7 @@ function DataTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Nama DTPR</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Judul Publikasi</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Jenis Publikasi<br/>(IB/I/S1,S2,S3,S4,T)</th>
-            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Tahun Terbit (beri tanda √)
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
@@ -373,6 +381,12 @@ function DataTable({
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+              {tahunLaporan?.nama_ts4 || 'TS-4'}
+            </th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+              {tahunLaporan?.nama_ts3 || 'TS-3'}
+            </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               {tahunLaporan?.nama_ts2 || 'TS-2'}
             </th>
@@ -388,7 +402,7 @@ function DataTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td 
-                colSpan={showDeleted ? 10 : 9} 
+                colSpan={showDeleted ? 12 : 11} 
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -423,6 +437,8 @@ function DataTable({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{row.jenis_publikasi || "-"}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts4}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts3}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts2}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts1}</td>
                   <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 bg-white">{tahunTerbit.ts}</td>
@@ -481,6 +497,12 @@ function DataTable({
                 Jumlah Publikasi
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
+                {filteredRows.filter(r => r.tahun_ts4 === '√').length}
+              </td>
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
+                {filteredRows.filter(r => r.tahun_ts3 === '√').length}
+              </td>
+              <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
                 {filteredRows.filter(r => r.tahun_ts2 === '√').length}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
@@ -521,9 +543,9 @@ function DataTable({
                   onEdit(currentRow);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                className="w-full text-left px-4 py-2 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] flex items-center gap-2"
               >
-                <FiEdit2 className="w-4 h-4" />
+                <FiEdit2 className="w-4 h-4 text-[#0384d6]" />
                 Edit
               </button>
             )}
@@ -599,23 +621,46 @@ export default function Tabel3C2({ auth, role }) {
       return [];
     }
     const tahun = Object.values(maps.tahun);
-    const sorted = tahun
-      .filter(t => t && t.id_tahun) // Filter out invalid entries
+    const filtered = tahun
+      .filter(t => {
+        if (!t || !t.id_tahun) return false;
+        const tahunStr = String(t.tahun || t.nama || t.id_tahun || "");
+        const idTahun = parseInt(t.id_tahun) || 0;
+        // Hapus tahun 2019 (baik dari id_tahun atau nama)
+        if (idTahun === 2019 || tahunStr.includes("2019")) {
+          return false;
+        }
+        // Filter tahun yang bisa dipilih: minimal tahun yang menghasilkan TS-4 >= 2020
+        // TS-4 = TS - 4, jadi TS minimal harus >= 2024 agar TS-4 >= 2020
+        // Atau kita bisa lebih fleksibel: filter tahun yang id_tahun >= 2020
+        if (idTahun >= 2020) {
+          return true;
+        }
+        // Jika id_tahun < 2020, cek apakah nama tahun mengandung 2020 atau lebih baru
+        if (tahunStr.match(/20[2-9][0-9]/) || tahunStr.includes("2024") || tahunStr.includes("2025")) {
+          return true;
+        }
+        return false;
+      })
       .sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
-    return sorted;
+    return filtered;
   }, [maps?.tahun]);
 
-  // Auto-select tahun TS (cari tahun 2025, jika tidak ada gunakan tahun terakhir) jika belum dipilih
+  // Auto-select tahun TS (prioritaskan 2024/2025, jika tidak ada gunakan tahun terakhir) jika belum dipilih
   useEffect(() => {
     if (tahunList.length > 0 && !selectedTahun) {
-      const tahun2025 = tahunList.find(t => {
+      // Prioritaskan tahun 2024/2025
+      const tahun2024_2025 = tahunList.find(t => {
         const tahunStr = String(t.tahun || t.nama || t.id_tahun || "");
-        return tahunStr.includes("2025") || tahunStr.includes("2024");
+        const idTahun = parseInt(t.id_tahun) || 0;
+        return tahunStr.includes("2024/2025") || tahunStr.includes("2024-2025") || 
+               (idTahun >= 2024 && idTahun <= 2025) ||
+               tahunStr.includes("2025") || tahunStr.includes("2024");
       });
-      if (tahun2025) {
-        setSelectedTahun(tahun2025.id_tahun);
+      if (tahun2024_2025) {
+        setSelectedTahun(tahun2024_2025.id_tahun);
       } else {
-        // Gunakan tahun terakhir
+        // Gunakan tahun terakhir (yang paling baru)
         const lastTahun = tahunList[tahunList.length - 1];
         if (lastTahun) {
           setSelectedTahun(lastTahun.id_tahun);
@@ -631,11 +676,19 @@ export default function Tabel3C2({ auth, role }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
         if (response && response.data) {
+          console.log('Tabel3C2 - Fetched data:', response.data.length, 'rows');
+          console.log('Tabel3C2 - showDeleted:', showDeleted);
+          console.log('Tabel3C2 - Sample row:', response.data[0]);
           setRows(response.data);
           setTahunLaporan(response.tahun_laporan);
         } else {
+          console.log('Tabel3C2 - No data in response:', response);
           setRows([]);
           setTahunLaporan(null);
         }
@@ -654,7 +707,7 @@ export default function Tabel3C2({ auth, role }) {
     };
 
     fetchData();
-  }, [selectedTahun]);
+  }, [selectedTahun, showDeleted]);
 
   const handleSave = async (formData) => {
     try {
@@ -684,7 +737,11 @@ export default function Tabel3C2({ auth, role }) {
       setEditingRow(null);
       // Refresh data
       if (selectedTahun) {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
         if (response && response.data) {
           setRows(response.data);
           setTahunLaporan(response.tahun_laporan);
@@ -710,7 +767,8 @@ export default function Tabel3C2({ auth, role }) {
       showCancelButton: true,
       confirmButtonText: 'Hapus',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#3085d6'
     });
 
     if (result.isConfirmed) {
@@ -723,7 +781,11 @@ export default function Tabel3C2({ auth, role }) {
         });
         // Refresh data
         if (selectedTahun) {
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
           if (response && response.data) {
             setRows(response.data);
             setTahunLaporan(response.tahun_laporan);
@@ -741,32 +803,48 @@ export default function Tabel3C2({ auth, role }) {
   };
 
   const handleRestore = async (id) => {
-    try {
-      // Restore menggunakan PUT dengan deleted_at = null
-      await apiFetch(`${ENDPOINT}/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ deleted_at: null }),
-      });
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil',
-        text: 'Data berhasil direstore'
-      });
-      // Refresh data
-      if (selectedTahun) {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
-        if (response && response.data) {
-          setRows(response.data);
-          setTahunLaporan(response.tahun_laporan);
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Pulihkan Data?',
+      text: 'Data akan dipulihkan dan kembali ke status aktif.',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Pulihkan',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Restore menggunakan POST ke endpoint /restore
+        await apiFetch(`${ENDPOINT}/${id}/restore`, {
+          method: "POST",
+        });
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data berhasil direstore'
+        });
+        // Refresh data
+        if (selectedTahun) {
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
+          if (response && response.data) {
+            setRows(response.data);
+            setTahunLaporan(response.tahun_laporan);
+          }
         }
+      } catch (err) {
+        console.error("Error restoring data:", err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err.message || 'Gagal restore data'
+        });
       }
-    } catch (err) {
-      console.error("Error restoring data:", err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Gagal restore data'
-      });
     }
   };
 
@@ -778,7 +856,8 @@ export default function Tabel3C2({ auth, role }) {
       showCancelButton: true,
       confirmButtonText: 'Hapus Permanen',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#3085d6'
     });
 
     if (result.isConfirmed) {
@@ -791,7 +870,11 @@ export default function Tabel3C2({ auth, role }) {
         });
         // Refresh data
         if (selectedTahun) {
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
           if (response && response.data) {
             setRows(response.data);
             setTahunLaporan(response.tahun_laporan);
@@ -853,9 +936,15 @@ export default function Tabel3C2({ auth, role }) {
     }
   };
 
-  const isAllSelected = selectedRows.length > 0 && selectedRows.length === rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length;
+  const isAllSelected = selectedRows.length > 0 && selectedRows.length === rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    return showDeleted ? hasDeletedAt : !hasDeletedAt;
+  }).length;
   const handleSelectAll = () => {
-    const filtered = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+    const filtered = rows.filter(r => {
+      const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+      return showDeleted ? hasDeletedAt : !hasDeletedAt;
+    });
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
@@ -863,7 +952,14 @@ export default function Tabel3C2({ auth, role }) {
     }
   };
 
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  const filteredRows = rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    if (showDeleted) {
+      return hasDeletedAt; // Tampilkan hanya data yang terhapus
+    } else {
+      return !hasDeletedAt; // Tampilkan hanya data yang tidak terhapus
+    }
+  });
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">

@@ -151,6 +151,7 @@ export const listTabel3c3Hki = async (req, res) => {
         h.id_unit,
         uk.nama_unit,
         h.link_bukti,
+        h.deleted_at, -- [FIX] Tambahkan deleted_at untuk frontend filtering
         
         -- Panggil helper PIVOT Checkmark (5 tahun)
         ${pivotHkiCheckmarkSQL(tahunIds, 'h')}

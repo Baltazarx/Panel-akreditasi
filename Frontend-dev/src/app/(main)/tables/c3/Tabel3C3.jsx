@@ -120,8 +120,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <div className="flex justify-between items-center">
             <div>
@@ -276,7 +276,14 @@ function DataTable({
   handleSelectAll,
   tahunLaporan,
 }) {
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  const filteredRows = rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    if (showDeleted) {
+      return hasDeletedAt; // Tampilkan hanya data yang terhapus
+    } else {
+      return !hasDeletedAt; // Tampilkan hanya data yang tidak terhapus
+    }
+  });
   
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -537,9 +544,9 @@ function DataTable({
                   onEdit(currentRow);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                className="w-full text-left px-4 py-2 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] flex items-center gap-2"
               >
-                <FiEdit2 className="w-4 h-4" />
+                <FiEdit2 className="w-4 h-4 text-[#0384d6]" />
                 Edit
               </button>
             )}
@@ -647,7 +654,11 @@ export default function Tabel3C3({ auth, role }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
         if (response && response.data) {
           setRows(response.data);
           setTahunLaporan(response.tahun_laporan);
@@ -670,7 +681,7 @@ export default function Tabel3C3({ auth, role }) {
     };
 
     fetchData();
-  }, [selectedTahun]);
+  }, [selectedTahun, showDeleted]);
 
   const handleSave = async (formData) => {
     try {
@@ -700,7 +711,11 @@ export default function Tabel3C3({ auth, role }) {
       setEditingRow(null);
       // Refresh data
       if (selectedTahun) {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+        if (showDeleted) {
+          url += "&include_deleted=1";
+        }
+        const response = await apiFetch(url);
         if (response && response.data) {
           setRows(response.data);
           setTahunLaporan(response.tahun_laporan);
@@ -726,7 +741,8 @@ export default function Tabel3C3({ auth, role }) {
       showCancelButton: true,
       confirmButtonText: 'Hapus',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#3085d6'
     });
 
     if (result.isConfirmed) {
@@ -739,7 +755,11 @@ export default function Tabel3C3({ auth, role }) {
         });
         // Refresh data
         if (selectedTahun) {
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
           if (response && response.data) {
             setRows(response.data);
             setTahunLaporan(response.tahun_laporan);
@@ -757,32 +777,48 @@ export default function Tabel3C3({ auth, role }) {
   };
 
   const handleRestore = async (id) => {
-    try {
-      // Restore menggunakan PUT dengan deleted_at = null
-      await apiFetch(`${ENDPOINT}/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ deleted_at: null }),
-      });
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil',
-        text: 'Data berhasil direstore'
-      });
-      // Refresh data
-      if (selectedTahun) {
-        const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
-        if (response && response.data) {
-          setRows(response.data);
-          setTahunLaporan(response.tahun_laporan);
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Pulihkan Data?',
+      text: 'Data akan dipulihkan dan kembali ke status aktif.',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Pulihkan',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Restore menggunakan POST ke endpoint /restore
+        await apiFetch(`${ENDPOINT}/${id}/restore`, {
+          method: "POST",
+        });
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Data berhasil direstore'
+        });
+        // Refresh data
+        if (selectedTahun) {
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
+          if (response && response.data) {
+            setRows(response.data);
+            setTahunLaporan(response.tahun_laporan);
+          }
         }
+      } catch (err) {
+        console.error("Error restoring data:", err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err.message || 'Gagal restore data'
+        });
       }
-    } catch (err) {
-      console.error("Error restoring data:", err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Gagal restore data'
-      });
     }
   };
 
@@ -794,7 +830,8 @@ export default function Tabel3C3({ auth, role }) {
       showCancelButton: true,
       confirmButtonText: 'Hapus Permanen',
       cancelButtonText: 'Batal',
-      confirmButtonColor: '#dc2626'
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#3085d6'
     });
 
     if (result.isConfirmed) {
@@ -807,7 +844,11 @@ export default function Tabel3C3({ auth, role }) {
         });
         // Refresh data
         if (selectedTahun) {
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
+          let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
+          if (showDeleted) {
+            url += "&include_deleted=1";
+          }
+          const response = await apiFetch(url);
           if (response && response.data) {
             setRows(response.data);
             setTahunLaporan(response.tahun_laporan);
@@ -869,9 +910,15 @@ export default function Tabel3C3({ auth, role }) {
     }
   };
 
-  const isAllSelected = selectedRows.length > 0 && selectedRows.length === rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length;
+  const isAllSelected = selectedRows.length > 0 && selectedRows.length === rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    return showDeleted ? hasDeletedAt : !hasDeletedAt;
+  }).length;
   const handleSelectAll = () => {
-    const filtered = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+    const filtered = rows.filter(r => {
+      const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+      return showDeleted ? hasDeletedAt : !hasDeletedAt;
+    });
     if (isAllSelected) {
       setSelectedRows([]);
     } else {
@@ -879,7 +926,14 @@ export default function Tabel3C3({ auth, role }) {
     }
   };
 
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  const filteredRows = rows.filter(r => {
+    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+    if (showDeleted) {
+      return hasDeletedAt; // Tampilkan hanya data yang terhapus
+    } else {
+      return !hasDeletedAt; // Tampilkan hanya data yang tidak terhapus
+    }
+  });
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">

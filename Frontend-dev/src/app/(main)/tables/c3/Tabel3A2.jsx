@@ -192,8 +192,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Data Penelitian DTPR" : "Input Data Penelitian DTPR"}
@@ -970,10 +970,42 @@ export default function Tabel3A2({ auth, role }) {
       setModalOpen(false);
       setEditingRow(null);
 
-      // Refresh data
-      const url = `${ENDPOINT}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
-      const data = await apiFetch(url);
-      setRows(Array.isArray(data) ? data : data?.items || []);
+      // Validasi: Pastikan data yang ditambahkan memiliki pendanaan dalam rentang TS sampai TS-4
+      if (!editingRow && form.pendanaan && form.pendanaan.length > 0) {
+        const tahunPendanaan = form.pendanaan.map(p => parseInt(p.id_tahun)).filter(t => t);
+        const tahunFilter = [tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4].filter(t => t);
+        const adaTahunSesuai = tahunPendanaan.some(t => tahunFilter.includes(t));
+        
+        if (!adaTahunSesuai && tahunFilter.length > 0) {
+          // Tampilkan peringatan setelah modal ditutup
+          setTimeout(() => {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Perhatian!',
+              html: `Data berhasil ditambahkan, namun tidak muncul di tabel karena tahun pendanaan yang dipilih tidak termasuk dalam rentang tahun yang ditampilkan (TS sampai TS-4).<br/><br/>Silakan pilih tahun pendanaan yang sesuai dengan filter TS yang dipilih, atau ubah filter TS ke tahun yang sesuai dengan data yang ditambahkan.`,
+              timer: 6000,
+              showConfirmButton: true
+            });
+          }, 500);
+        }
+      }
+
+      // Refresh data - pastikan tahun TS sampai TS-4 sudah terisi
+      // useEffect akan otomatis trigger refresh saat tahunTS, tahunTS1, dll berubah
+      // Tapi untuk memastikan, kita juga trigger manual refresh setelah sedikit delay
+      setTimeout(async () => {
+        if (tahunTS && tahunTS1 && tahunTS2 && tahunTS3 && tahunTS4) {
+          try {
+            const url = `${ENDPOINT}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
+            const data = await apiFetch(url);
+            setRows(Array.isArray(data) ? data : data?.items || []);
+          } catch (err) {
+            console.error("Error refreshing data after save:", err);
+          }
+        } else {
+          console.warn("Tahun TS sampai TS-4 belum lengkap, menunggu useEffect untuk refresh");
+        }
+      }, 300);
     } catch (err) {
       console.error("Save error:", err);
       Swal.fire({

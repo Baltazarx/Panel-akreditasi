@@ -62,8 +62,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Sarpras PkM" : "Tambah Sarpras PkM"}
@@ -215,10 +215,10 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
   const filteredRows = useMemo(() => {
     if (showDeleted) {
       // Hanya tampilkan data yang benar-benar dihapus (deleted_at IS NOT NULL)
-      return rows.filter(r => r.deleted_at);
+      return rows.filter(r => r.deleted_at !== null && r.deleted_at !== undefined);
     }
     // Tampilkan data yang tidak dihapus (deleted_at IS NULL)
-    return rows.filter(r => !r.deleted_at);
+    return rows.filter(r => r.deleted_at === null || r.deleted_at === undefined);
   }, [rows, showDeleted]);
 
   if (loading) {
@@ -271,7 +271,6 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                 Berlisensi (L)/<br /><em>Public Domain</em><br />(P)/Tidak<br />Berlisensi (T)
               </th>
               <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
-              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">...</th>
               <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
               {(canUpdate || canDelete) && (
                 <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
@@ -281,10 +280,10 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
           <tbody className="divide-y divide-slate-200">
             {filteredRows.length === 0 ? (
               <tr>
-                <td 
-                  colSpan={showDeleted ? 11 : 10} 
-                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
-                >
+              <td 
+                colSpan={showDeleted ? 10 : 9} 
+                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+              >
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -336,7 +335,6 @@ function DataTable({ rows, loading, showDeleted, selectedRows, setSelectedRows, 
                         {r.perangkat_detail || "-"}
                       </div>
                     </td>
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700 text-center">-</td>
                     <td className="px-6 py-4 border border-slate-200 text-slate-700">
                       {r.link_bukti ? (
                         <a 
@@ -677,22 +675,16 @@ export default function Tabel4A1({ auth, role: propRole }) {
       if (result.isConfirmed) {
         try {
           setLoading(true);
-          // Restore menggunakan PUT dengan semua field yang ada + deleted_at = null
-          // Karena controller update memerlukan nama_sarpras sebagai field wajib
-          const restoreData = {
-            nama_sarpras: row.nama_sarpras || "",
-            daya_tampung: row.daya_tampung || "",
-            luas_ruang_m2: row.luas_ruang_m2 || "",
-            kepemilikan: row.kepemilikan || "",
-            lisensi: row.lisensi || "",
-            perangkat_detail: row.perangkat_detail || "",
-            link_bukti: row.link_bukti || "",
-            deleted_at: null
-          };
+          const idField = getIdField(row);
+          const rowId = idField ? row[idField] : row.id;
           
-          await apiFetch(`${ENDPOINT}/${row.id}`, {
-            method: "PUT",
-            body: JSON.stringify(restoreData),
+          if (!rowId) {
+            throw new Error('ID data tidak valid. Silakan refresh halaman dan coba lagi.');
+          }
+
+          // Gunakan endpoint restore yang terpisah (POST /:id/restore)
+          await apiFetch(`${ENDPOINT}/${rowId}/restore`, {
+            method: "POST",
           });
           
           Swal.fire({
@@ -703,16 +695,17 @@ export default function Tabel4A1({ auth, role: propRole }) {
             showConfirmButton: false
           });
           
-          // Refresh data
+          // Refresh data - pastikan refresh dengan include_deleted jika sedang di tab Data Terhapus
           const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
           const data = await apiFetch(url);
           setRows(Array.isArray(data) ? data : data?.items || []);
         } catch (err) {
           console.error("Restore error:", err);
+          const errorMessage = err.message || err.error || 'Terjadi kesalahan saat memulihkan data';
           Swal.fire({
             icon: 'error',
             title: 'Gagal memulihkan data',
-            text: err.message || 'Terjadi kesalahan saat memulihkan data.'
+            text: errorMessage
           });
         } finally {
           setLoading(false);

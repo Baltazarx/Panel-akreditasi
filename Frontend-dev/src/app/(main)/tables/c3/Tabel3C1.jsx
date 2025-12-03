@@ -106,8 +106,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Kerjasama Penelitian" : "Tambah Kerjasama Penelitian"}
@@ -370,7 +370,7 @@ function DataTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Mitra Kerja Sama</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Sumber</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Durasi (Tahun)</th>
-            <th colSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+            <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Pendanaan (Rp Juta)
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
@@ -378,6 +378,8 @@ function DataTable({
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-4</th>
+            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-3</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-2</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-1</th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS</th>
@@ -387,7 +389,7 @@ function DataTable({
           {filteredRows.length === 0 ? (
             <tr>
               <td 
-                colSpan={showDeleted ? 11 : 10} 
+                colSpan={12} 
                 className="px-6 py-16 text-center text-slate-500 border border-slate-300"
               >
                 <p className="font-medium">Data tidak ditemukan</p>
@@ -402,22 +404,6 @@ function DataTable({
                   i % 2 === 0 ? "bg-white" : "bg-white"
                 } hover:bg-[#eaf4ff]`}
               >
-                {showDeleted && (
-                  <td className="px-4 py-3 text-center border border-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(r.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRows([...selectedRows, r.id]);
-                        } else {
-                          setSelectedRows(selectedRows.filter(id => id !== r.id));
-                        }
-                      }}
-                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                    />
-                  </td>
-                )}
                 <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{i + 1}</td>
                 <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
                   <div className="truncate" title={r.judul_kerjasama || ""}>
@@ -429,6 +415,8 @@ function DataTable({
                   {r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-"}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.durasi_tahun || "-"}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts4 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts3 || 0)}</td>
                 <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts2 || 0)}</td>
                 <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts1 || 0)}</td>
                 <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts || 0)}</td>
@@ -480,12 +468,17 @@ function DataTable({
             <>
               {/* Jumlah Dana */}
               <tr className="bg-white">
-                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={5} 
                   className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
                 >
                   Jumlah Dana
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts4) || 0), 0))}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts3) || 0), 0))}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
                   {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0))}
@@ -501,7 +494,6 @@ function DataTable({
               </tr>
               {/* Jumlah Mitra Kerjasama */}
               <tr className="bg-white">
-                {showDeleted && <td className="px-4 py-3 border border-slate-300 bg-white"></td>}
                 <td 
                   colSpan={2} 
                   className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white"
@@ -512,7 +504,7 @@ function DataTable({
                   {filteredRows.length}
                 </td>
                 <td 
-                  colSpan={7} 
+                  colSpan={9} 
                   className="px-4 py-3 border border-slate-300 bg-white"
                 ></td>
               </tr>
@@ -1006,17 +998,6 @@ export default function Tabel3C1({ auth, role }) {
               Data Terhapus
             </button>
           </div>
-          {canUpdate && showDeleted && selectedRows.length > 0 && (
-            <button
-              onClick={() => {
-                Swal.fire('Info', 'Fitur bulk restore akan segera ditambahkan.', 'info');
-              }}
-              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={false}
-            >
-              Pulihkan ({selectedRows.length})
-            </button>
-          )}
         </div>
         <div className="flex items-center gap-4">
           {canCreate && (

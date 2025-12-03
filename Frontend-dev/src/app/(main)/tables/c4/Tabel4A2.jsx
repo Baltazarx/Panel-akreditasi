@@ -13,7 +13,7 @@ const TABLE_KEY = "tabel_4a2_pkm";
 const LABEL = "4.A.2 PkM DTPR";
 
 /* ---------- Modal Form Tambah/Edit ---------- */
-function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
+function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selectedTahun }) {
   const [form, setForm] = useState({
     link_roadmap: "",
     id_dosen_ketua: "",
@@ -23,8 +23,12 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
     sumber_dana: "",
     durasi_tahun: "",
     link_bukti: "",
-    pendanaan: [] // Array untuk 3 tahun (TS-2, TS-1, TS): [{id_tahun, jumlah_dana}, ...]
+    pendanaan: [] // Array untuk pendanaan: [{id_tahun, jumlah_dana}, ...]
   });
+
+  // State untuk form input pendanaan baru
+  const [selectedTahunPendanaan, setSelectedTahunPendanaan] = useState("");
+  const [jumlahDanaPendanaan, setJumlahDanaPendanaan] = useState("");
 
   const [dosenList, setDosenList] = useState([]);
   const [tahunList, setTahunList] = useState([]);
@@ -61,8 +65,13 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
-        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        // Filter hanya tahun mulai dari 2020/2021 (id_tahun >= 2020)
+        const filtered = list.filter(t => {
+          const idTahun = parseInt(t.id_tahun) || 0;
+          const tahunStr = String(t.tahun || t.nama || "");
+          // Filter tahun dengan id_tahun >= 2020 atau nama tahun mengandung "2020"
+          return idTahun >= 2020 || tahunStr.includes("2020");
+        });
         setTahunList(filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0))); // Urut dari terkecil ke terbesar
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -75,6 +84,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
   // Initialize form data
   useEffect(() => {
     if (isOpen) {
+      // Reset input pendanaan setiap kali form dibuka
+      setSelectedTahunPendanaan("");
+      setJumlahDanaPendanaan("");
+      
       if (initialData) {
         // Load existing data
         setForm({
@@ -94,32 +107,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
           apiFetch(`${ENDPOINT}/${initialData.id}`)
             .then(data => {
               if (data.pendanaan && Array.isArray(data.pendanaan)) {
-                // Filter hanya 3 tahun terakhir (TS-2, TS-1, TS)
-                // Backend mengirim semua tahun, kita ambil yang sesuai dengan tahun_laporan
-                apiFetch(`${ENDPOINT}?ts_id=${selectedTahun || new Date().getFullYear()}`)
-                  .then(response => {
-                    if (response.tahun_laporan) {
-                      const tahunIds = [
-                        response.tahun_laporan.id_ts2,
-                        response.tahun_laporan.id_ts1,
-                        response.tahun_laporan.id_ts
-                      ];
-                      const filteredPendanaan = tahunIds.map(id => {
-                        const existing = data.pendanaan.find(p => p.id_tahun === id);
-                        return existing || { id_tahun: id, jumlah_dana: 0 };
-                      });
-                      setForm(prev => ({ ...prev, pendanaan: filteredPendanaan }));
-                    } else {
-                      // Fallback: ambil 3 tahun terakhir dari data
-                      const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
-                      setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
-                    }
-                  })
-                  .catch(() => {
-                    // Fallback: ambil 3 tahun terakhir dari data
-                    const sorted = data.pendanaan.sort((a, b) => b.id_tahun - a.id_tahun);
-                    setForm(prev => ({ ...prev, pendanaan: sorted.slice(0, 3) }));
-                  });
+                // Tampilkan semua pendanaan yang ada (tidak perlu filter)
+                setForm(prev => ({ ...prev, pendanaan: data.pendanaan }));
               }
             })
             .catch(err => console.error("Error fetching detail:", err));
@@ -141,29 +130,18 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
     }
   }, [initialData, isOpen]);
 
-  // Get tahun laporan untuk menentukan 3 tahun (TS-2, TS-1, TS)
+  // Get tahun laporan untuk menentukan tahun laporan (untuk display di tabel)
   useEffect(() => {
     const getTahunLaporan = async () => {
       try {
-        // Ambil tahun terbaru sebagai default
-        if (tahunList.length > 0) {
-          const latestTahun = tahunList[0];
-          const ts_id = latestTahun.id_tahun;
+        // Prioritaskan tahun 2020/2021, jika tidak ada gunakan tahun pertama
+        if (tahunList.length > 0 && selectedTahun) {
+          const ts_id = selectedTahun;
           
           // Fetch data untuk mendapatkan tahun_laporan
           const response = await apiFetch(`${ENDPOINT}?ts_id=${ts_id}`);
           if (response.tahun_laporan) {
             setTahunLaporan(response.tahun_laporan);
-            
-            // Initialize pendanaan dengan 3 tahun (TS-2, TS-1, TS) jika belum ada
-            if (!initialData && form.pendanaan.length === 0) {
-              const pendanaanInit = [
-                { id_tahun: response.tahun_laporan.id_ts2, jumlah_dana: 0 },
-                { id_tahun: response.tahun_laporan.id_ts1, jumlah_dana: 0 },
-                { id_tahun: response.tahun_laporan.id_ts, jumlah_dana: 0 }
-              ];
-              setForm(prev => ({ ...prev, pendanaan: pendanaanInit }));
-            }
           }
         }
       } catch (err) {
@@ -171,10 +149,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
       }
     };
     
-    if (isOpen && tahunList.length > 0 && !initialData) {
+    if (isOpen && tahunList.length > 0 && selectedTahun) {
       getTahunLaporan();
     }
-  }, [isOpen, tahunList, initialData]);
+  }, [isOpen, tahunList, selectedTahun]);
 
   if (!isOpen) return null;
 
@@ -193,14 +171,82 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
     });
   };
 
+  const handleAddPendanaan = () => {
+    if (!selectedTahunPendanaan) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pilih Tahun',
+        text: 'Silakan pilih tahun terlebih dahulu.'
+      });
+      return;
+    }
+    const jumlahDanaNum = parseFloat(jumlahDanaPendanaan) || 0;
+    if (jumlahDanaNum < 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Jumlah Dana Tidak Valid',
+        text: 'Jumlah dana harus lebih besar atau sama dengan 0.'
+      });
+      return;
+    }
+    // Cek apakah tahun sudah ada di list
+    const tahunSudahAda = form.pendanaan.some(p => p.id_tahun === selectedTahunPendanaan);
+    if (tahunSudahAda) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tahun Sudah Ada',
+        text: 'Tahun yang dipilih sudah ada dalam daftar pendanaan. Silakan pilih tahun lain atau edit yang sudah ada.'
+      });
+      return;
+    }
+    // Tambahkan ke list pendanaan
+    setForm((prev) => ({
+      ...prev,
+      pendanaan: [...(Array.isArray(prev.pendanaan) ? prev.pendanaan : []), { 
+        id_tahun: selectedTahunPendanaan, 
+        jumlah_dana: jumlahDanaNum 
+      }]
+    }));
+    // Reset input
+    setSelectedTahunPendanaan("");
+    setJumlahDanaPendanaan("");
+  };
+
+  const removePendanaanRow = (index) => {
+    setForm((prev) => {
+      const newPendanaan = prev.pendanaan.filter((_, i) => i !== index);
+      return { ...prev, pendanaan: newPendanaan };
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Validasi minimal 1 pendanaan
+    const pendanaanArray = Array.isArray(form.pendanaan) ? form.pendanaan : [];
+    if (pendanaanArray.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Pendanaan Wajib',
+        text: 'Minimal harus ada 1 data pendanaan.'
+      });
+      return;
+    }
+    // Validasi semua pendanaan harus memiliki tahun dan jumlah dana
+    const invalidPendanaan = pendanaanArray.some(p => !p.id_tahun || p.jumlah_dana === undefined || p.jumlah_dana === null || p.jumlah_dana < 0);
+    if (invalidPendanaan) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Pendanaan Tidak Lengkap',
+        text: 'Semua pendanaan harus memiliki tahun yang dipilih dan jumlah dana yang valid (minimal 0).'
+      });
+      return;
+    }
     onSave(form);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]" style={{ zIndex: 9999 }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000]" style={{ zIndex: 10000 }}>
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit PkM DTPR" : "Tambah PkM DTPR"}
@@ -328,39 +374,87 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
             </select>
           </div>
 
-          {/* Pendanaan 3 Tahun (TS-2, TS-1, TS) */}
-          {tahunLaporan && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Pendanaan (Rp Juta) - 3 Tahun Terakhir
-              </label>
-              <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50">
+          {/* Pendanaan */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-3">
+              Pendanaan (Rp Juta) <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-3">Pilih tahun dan masukkan jumlah dana, lalu klik "Tambah" untuk menambahkan ke daftar.</p>
+            
+            {/* Form Input Pendanaan Baru */}
+            <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Pilih Tahun</label>
+                  <select
+                    value={selectedTahunPendanaan}
+                    onChange={(e) => setSelectedTahunPendanaan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
+                  >
+                    <option value="">-- Pilih Tahun --</option>
+                    {tahunList.map((t) => (
+                      <option key={t.id_tahun} value={t.id_tahun}>
+                        {t.tahun || t.nama || t.id_tahun}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-slate-600 mb-1">Jumlah Dana (Rp)</label>
+                  <input
+                    type="number"
+                    value={jumlahDanaPendanaan}
+                    onChange={(e) => setJumlahDanaPendanaan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                    placeholder="0"
+                    min="0"
+                    step="1"
+                    autoComplete="off"
+                    autoFocus={false}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPendanaan}
+                  className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors"
+                >
+                  Tambah
+                </button>
+              </div>
+            </div>
+
+            {/* Daftar Pendanaan yang Sudah Ditambahkan */}
+            {form.pendanaan.length > 0 && (
+              <div className="space-y-2 border border-gray-200 rounded-lg p-4 bg-white">
+                <label className="block text-xs font-medium text-slate-700 mb-2">Daftar Pendanaan:</label>
                 {form.pendanaan.map((p, idx) => {
                   const tahunInfo = tahunList.find(t => t.id_tahun === p.id_tahun);
-                  const tahunLabel = tahunLaporan && idx === 0 ? `TS-2 (${tahunLaporan.nama_ts2})` :
-                                   tahunLaporan && idx === 1 ? `TS-1 (${tahunLaporan.nama_ts1})` :
-                                   tahunLaporan && idx === 2 ? `TS (${tahunLaporan.nama_ts})` :
-                                   tahunInfo ? tahunInfo.tahun : `Tahun ${p.id_tahun}`;
+                  const tahunLabel = tahunInfo ? (tahunInfo.tahun || tahunInfo.nama || tahunInfo.id_tahun) : `Tahun ${p.id_tahun}`;
                   
                   return (
-                    <div key={idx} className="flex items-center gap-3">
-                      <label className="w-32 text-sm text-slate-600 font-medium">{tahunLabel}</label>
-                      <input
-                        type="number"
-                        value={p.jumlah_dana || 0}
-                        onChange={(e) => handlePendanaanChange(idx, 'jumlah_dana', e.target.value)}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                        placeholder="0"
-                        min="0"
-                        step="0.01"
-                      />
-                      <span className="text-sm text-slate-500">Rp Juta</span>
+                    <div key={`pendanaan-${idx}-${p.id_tahun}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-slate-700">{tahunLabel}</span>
+                        <span className="text-sm text-slate-500 ml-2">
+                          : Rp {new Intl.NumberFormat('id-ID').format(p.jumlah_dana || 0)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removePendanaanRow(idx)}
+                        className="px-3 py-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                        title="Hapus pendanaan"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Link Bukti */}
           <div>
@@ -432,12 +526,22 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
       try {
         const data = await apiFetch("/tahun-akademik");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya tahun mulai dari 2024/2025 (id_tahun >= 2024)
-        const filtered = list.filter(t => (t.id_tahun || 0) >= 2024);
+        // Filter hanya tahun mulai dari 2020/2021 (id_tahun >= 2020)
+        const filtered = list.filter(t => {
+          const idTahun = parseInt(t.id_tahun) || 0;
+          const tahunStr = String(t.tahun || t.nama || "");
+          // Filter tahun dengan id_tahun >= 2020 atau nama tahun mengandung "2020"
+          return idTahun >= 2020 || tahunStr.includes("2020");
+        });
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          setSelectedTahun(sorted[0].id_tahun); // Set tahun terkecil (2024) sebagai default
+          // Prioritaskan tahun 2020/2021, jika tidak ada gunakan tahun terkecil
+          const tahun2020 = sorted.find(t => {
+            const tahunStr = String(t.tahun || t.nama || "");
+            return tahunStr.includes("2020") || parseInt(t.id_tahun) === 2020;
+          });
+          setSelectedTahun(tahun2020 ? tahun2020.id_tahun : sorted[0].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -561,17 +665,50 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
 
   // Handle restore
   const handleRestore = async (row) => {
-    try {
-      // Restore dengan mengupdate deleted_at menjadi null
-      await apiFetch(`${ENDPOINT}/${row.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...row, deleted_at: null })
-      });
-      Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
-      fetchRows();
-    } catch (e) {
-      Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
-    }
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: `Data "${row.judul_pkm || 'data ini'}" akan dipulihkan.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const idField = getIdField(row);
+          const rowId = idField ? row[idField] : row.id;
+          
+          if (!rowId) {
+            throw new Error('ID data tidak valid. Silakan refresh halaman dan coba lagi.');
+          }
+
+          // Gunakan endpoint restore yang terpisah (POST /:id/restore)
+          await apiFetch(`${ENDPOINT}/${rowId}/restore`, {
+            method: "POST",
+          });
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Dipulihkan!',
+            text: 'Data telah berhasil dipulihkan.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          
+          fetchRows();
+        } catch (e) {
+          console.error("Restore error:", e);
+          const errorMessage = e.message || e.error || 'Terjadi kesalahan saat memulihkan data';
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal memulihkan data',
+            text: errorMessage
+          });
+        }
+      }
+    });
   };
 
   // Handle hard delete
@@ -635,16 +772,18 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
   const filteredRows = useMemo(() => {
     if (showDeleted) {
       // Hanya tampilkan data yang benar-benar dihapus (deleted_at IS NOT NULL)
-      return rows.filter(r => r.deleted_at);
+      return rows.filter(r => r.deleted_at !== null && r.deleted_at !== undefined);
     }
     // Tampilkan data yang tidak dihapus (deleted_at IS NULL)
-    return rows.filter(r => !r.deleted_at);
+    return rows.filter(r => r.deleted_at === null || r.deleted_at === undefined);
   }, [rows, showDeleted]);
 
   // Calculate summary (hanya dari data yang tidak dihapus)
   const summary = useMemo(() => {
     // Selalu hitung dari data yang tidak dihapus, bukan dari filteredRows
     const activeRows = rows.filter(r => !r.deleted_at);
+    const totalDanaTS4 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts4) || 0), 0);
+    const totalDanaTS3 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts3) || 0), 0);
     const totalDanaTS2 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts2) || 0), 0);
     const totalDanaTS1 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts1) || 0), 0);
     const totalDanaTS = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts) || 0), 0);
@@ -653,6 +792,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
     const jumlahJenisHibah = uniqueJenisHibah.size;
     
     return {
+      totalDanaTS4,
+      totalDanaTS3,
       totalDanaTS2,
       totalDanaTS1,
       totalDanaTS,
@@ -805,7 +946,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                 Durasi<br/>(tahun)
               </th>
               {tahunLaporan && (
-                <th colSpan="3" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                <th colSpan="5" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   Pendanaan (Rp Juta)
                 </th>
               )}
@@ -816,6 +957,12 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
             </tr>
             {tahunLaporan && (
               <tr>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                  TS-4<br/>({tahunLaporan.nama_ts4})
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                  TS-3<br/>({tahunLaporan.nama_ts3})
+                </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   TS-2<br/>({tahunLaporan.nama_ts2})
                 </th>
@@ -831,14 +978,14 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={tahunLaporan ? 11 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 13 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <p className="mt-4">Memuat data...</p>
                 </td>
               </tr>
             ) : filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={tahunLaporan ? 11 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={tahunLaporan ? 13 : 8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -873,6 +1020,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
                       {tahunLaporan && (
                         <>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts4)}</td>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts3)}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts2)}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts1)}</td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts)}</td>
@@ -934,6 +1083,12 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       {tahunLaporan && (
                         <>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                            {(summary.totalDanaTS4 / 1000000).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                            {(summary.totalDanaTS3 / 1000000).toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
                             {(summary.totalDanaTS2 / 1000000).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
@@ -955,7 +1110,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
                         {summary.jumlahPkm}
                       </td>
-                      <td colSpan={tahunLaporan ? 7 : 4} className="px-6 py-4 border border-slate-200"></td>
+                      <td colSpan={tahunLaporan ? 9 : 4} className="px-6 py-4 border border-slate-200"></td>
                       {(canUpdate || canDelete) && (
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}
@@ -969,7 +1124,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
                         {summary.jumlahJenisHibah}
                       </td>
-                      <td colSpan={tahunLaporan ? 5 : 2} className="px-6 py-4 border border-slate-200"></td>
+                      <td colSpan={tahunLaporan ? 7 : 2} className="px-6 py-4 border border-slate-200"></td>
                       {(canUpdate || canDelete) && (
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}
@@ -1072,6 +1227,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
         initialData={editData}
         maps={maps}
         authUser={authUser}
+        selectedTahun={selectedTahun}
       />
     </div>
   );
