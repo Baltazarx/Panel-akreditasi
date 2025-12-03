@@ -1,31 +1,31 @@
 import express from 'express';
 import { requireAuth } from '../auth/auth.middleware.js';
 import { permit } from '../rbac/permit.middleware.js';
+
 import {
   listFleksibilitas,
+  getFleksibilitasById,
   createOrUpdateFleksibilitas,
   softDeleteFleksibilitas,
-  exportFleksibilitas,
+  restoreFleksibilitas,
   hardDeleteFleksibilitas,
-  restoreFleksibilitas
+  exportFleksibilitas
 } from '../controllers/tabel2cFleksibilitasPembelajaran.controller.js';
 
 const router = express.Router();
-const resourceKey = 'fleksibilitas_pembelajaran';
+
+// Resource key untuk RBAC
+const resourceKey = 'tabel_2c_fleksibilitas_pembelajaran';
 
 router.get('/', requireAuth, permit(resourceKey, 'R'), listFleksibilitas);
-router.post('/', requireAuth, permit(resourceKey, 'C'), createOrUpdateFleksibilitas); 
+router.get('/:id', requireAuth, permit(resourceKey, 'R'), getFleksibilitasById);
+router.post('/', requireAuth, permit(resourceKey, 'C'), createOrUpdateFleksibilitas);
+router.put('/:id', requireAuth, permit(resourceKey, 'U'), createOrUpdateFleksibilitas);
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteFleksibilitas);
-
-// === RUTE EXPORT ===
-router.get('/export', requireAuth, permit(resourceKey, 'R'), exportFleksibilitas);
-
-// === RUTE BARU UNTUK HARD DELETE ===
-// Hanya bisa diakses oleh super admin dengan izin 'H'
+router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreFleksibilitas);
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteFleksibilitas);
 
-// === RUTE UNTUK RESTORE ===
-router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreFleksibilitas);
+// EXPORT
+router.get('/export', requireAuth, permit(resourceKey, 'R'), exportFleksibilitas);
 
 export default router;
-

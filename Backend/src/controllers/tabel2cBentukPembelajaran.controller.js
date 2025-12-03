@@ -1,5 +1,6 @@
 import { pool } from '../db.js';
 import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
+import ExcelJS from 'exceljs';
 
 // === LIST SEMUA BENTUK PEMBELAJARAN ===
 export const listBentukPembelajaran = async (req, res) => {
@@ -22,6 +23,19 @@ export const listBentukPembelajaran = async (req, res) => {
   } catch (err) {
     console.error("Error listBentukPembelajaran:", err);
     res.status(500).json({ error: 'Gagal mengambil daftar bentuk pembelajaran' });
+  }
+};
+
+// === GET BY ID ===
+export const getBentukPembelajaranById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rows] = await pool.query('SELECT * FROM bentuk_pembelajaran_master WHERE id_bentuk = ?', [id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Data tidak ditemukan' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Error getBentukPembelajaranById:", err);
+    res.status(500).json({ error: 'Gagal mengambil detail bentuk pembelajaran' });
   }
 };
 
@@ -79,14 +93,54 @@ export const updateBentukPembelajaran = async (req, res) => {
   }
 };
 
-// === HARD DELETE BENTUK PEMBELAJARAN ===
+// === SOFT DELETE BENTUK PEMBELAJARAN ===
+export const softDeleteBentukPembelajaran = async (req, res) => {
+  try {
+    const idBentuk = req.params.id;
+    const payload = { deleted_at: new Date() };
+    if (await hasColumn('bentuk_pembelajaran_master', 'deleted_by')) {
+      payload.deleted_by = req.user?.id_user || null;
+    }
+    const [result] = await pool.query('UPDATE bentuk_pembelajaran_master SET ? WHERE id_bentuk = ?', [payload, idBentuk]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Data tidak ditemukan.' });
+    res.json({ message: 'Bentuk pembelajaran berhasil dihapus (soft delete)' });
+  } catch (err) {
+    console.error("Error softDeleteBentukPembelajaran:", err);
+    res.status(500).json({ error: 'Gagal menghapus bentuk pembelajaran' });
+  }
+};
+
+// === RESTORE BENTUK PEMBELAJARAN ===
+export const restoreBentukPembelajaran = async (req, res) => {
+  try {
+    const idBentuk = req.params.id;
+    // Cek apakah kolom deleted_at ada (jika tidak, restore tidak relevan)
+    if (!(await hasColumn('bentuk_pembelajaran_master', 'deleted_at'))) {
+      return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+    }
+
+    if (await hasColumn('bentuk_pembelajaran_master', 'deleted_by')) {
+      const [result] = await pool.query('UPDATE bentuk_pembelajaran_master SET deleted_at = NULL, deleted_by = NULL WHERE id_bentuk = ? AND deleted_at IS NOT NULL', [idBentuk]);
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan.' });
+    } else {
+      const [result] = await pool.query('UPDATE bentuk_pembelajaran_master SET deleted_at = NULL WHERE id_bentuk = ? AND deleted_at IS NOT NULL', [idBentuk]);
+      if (result.affectedRows === 0) return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan.' });
+    }
+
+    res.json({ message: 'Bentuk pembelajaran berhasil dipulihkan.' });
+  } catch (err) {
+    console.error("Error restoreBentukPembelajaran:", err);
+    res.status(500).json({ error: 'Gagal memulihkan bentuk pembelajaran.' });
+  }
+};
+
+// === HARD DELETE BENTUK PEMBELAJARAN (sudah ada, sedikit perkuatan) ===
 export const hardDeleteBentukPembelajaran = async (req, res) => {
   try {
     const idBentuk = req.params.id;
     
     // PENTING: Periksa dulu apakah bentuk pembelajaran ini sedang digunakan
     // di tabel fleksibilitas_pembelajaran_detail yang terkait dengan data yang belum dihapus.
-    // Hanya hitung detail yang terkait dengan fleksibilitas_pembelajaran_tahunan yang belum dihapus (deleted_at IS NULL)
     const [usage] = await pool.query(
         `SELECT COUNT(*) as count 
          FROM fleksibilitas_pembelajaran_detail fpd
@@ -95,10 +149,7 @@ export const hardDeleteBentukPembelajaran = async (req, res) => {
         [idBentuk]
     );
 
-    console.log(`Checking usage for id_bentuk ${idBentuk}:`, usage[0].count);
-
     if (usage[0].count > 0) {
-        // Ambil info detail tentang data yang menggunakan bentuk pembelajaran ini
         const [details] = await pool.query(
             `SELECT fpt.id, fpt.id_tahun, fpt.id_unit_prodi, th.tahun, uk.nama_unit
              FROM fleksibilitas_pembelajaran_detail fpd
@@ -116,40 +167,47 @@ export const hardDeleteBentukPembelajaran = async (req, res) => {
         });
     }
 
-    // Jika tidak digunakan, lanjutkan hard delete
     const [result] = await pool.query('DELETE FROM bentuk_pembelajaran_master WHERE id_bentuk = ?', [idBentuk]);
-
-    if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Data tidak ditemukan.' });
-    }
-
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Data tidak ditemukan.' });
     res.json({ message: 'Bentuk pembelajaran berhasil dihapus secara permanen.' });
   } catch (err) {
     console.error("Error hardDeleteBentukPembelajaran:", err);
-    // Tangani error foreign key jika ada (meskipun sudah dicek di atas)
     if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-         return res.status(400).json({ 
-            error: 'Gagal menghapus: Bentuk pembelajaran ini sedang digunakan (constraint error).' 
-        });
+         return res.status(400).json({ error: 'Gagal menghapus: Bentuk pembelajaran ini sedang digunakan (constraint error).' });
     }
     res.status(500).json({ error: 'Gagal menghapus bentuk pembelajaran secara permanen.', details: err.sqlMessage || err.message });
   }
 };
 
-// Fungsi softDeleteBentukPembelajaran (sudah tidak dipakai di rute, bisa dihapus)
-/*
-export const softDeleteBentukPembelajaran = async (req, res) => {
+// === EXPORT BENTUK PEMBELAJARAN KE EXCEL ===
+export const exportBentukPembelajaran = async (req, res) => {
   try {
-    const payload = { deleted_at: new Date() };
-    if (await hasColumn('bentuk_pembelajaran_master', 'deleted_by')) {
-      payload.deleted_by = req.user?.id_user || null;
-    }
-    await pool.query('UPDATE bentuk_pembelajaran_master SET ? WHERE id_bentuk = ?', [payload, req.params.id]);
-    res.json({ message: 'Bentuk pembelajaran berhasil dihapus (soft delete)' });
+    const { where, params } = await buildWhere(req, 'bentuk_pembelajaran_master', 'bpm');
+    const orderBy = buildOrderBy(req.query?.order_by, 'id_bentuk', 'bpm');
+
+    const sql = `
+      SELECT id_bentuk, nama_bentuk
+      FROM bentuk_pembelajaran_master bpm
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY ${orderBy}
+    `;
+    const [rows] = await pool.query(sql, params);
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Bentuk Pembelajaran');
+    sheet.columns = [
+      { header: 'ID', key: 'id_bentuk', width: 10 },
+      { header: 'Nama Bentuk', key: 'nama_bentuk', width: 50 }
+    ];
+    sheet.addRows(rows);
+    sheet.getRow(1).font = { bold: true };
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Bentuk_Pembelajaran.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
-    console.error("Error softDeleteBentukPembelajaran:", err);
-    res.status(500).json({ error: 'Gagal menghapus bentuk pembelajaran' });
+    console.error("Error exportBentukPembelajaran:", err);
+    res.status(500).json({ error: 'Gagal mengekspor data bentuk pembelajaran.' });
   }
 };
-*/
-

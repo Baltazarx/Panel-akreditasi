@@ -9,7 +9,6 @@ export const listFleksibilitas = async (req, res) => {
 
     const [masterBentuk] = await pool.query('SELECT id_bentuk, nama_bentuk FROM bentuk_pembelajaran_master WHERE deleted_at IS NULL ORDER BY id_bentuk');
 
-    // PERBAIKAN: Ganti 'th.tahun_akademik' menjadi 'th.tahun'
     const sqlTahunan = `
       SELECT 
         fpt.id, fpt.id_tahun, fpt.id_unit_prodi, th.tahun,
@@ -38,6 +37,28 @@ export const listFleksibilitas = async (req, res) => {
   }
 };
 
+// === GET FLEKSIBILITAS BY ID (tahunan + details) ===
+export const getFleksibilitasById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rows] = await pool.query(
+      `SELECT fpt.*, th.tahun, uk.nama_unit 
+       FROM fleksibilitas_pembelajaran_tahunan fpt
+       LEFT JOIN tahun_akademik th ON fpt.id_tahun = th.id_tahun
+       LEFT JOIN unit_kerja uk ON fpt.id_unit_prodi = uk.id_unit
+       WHERE fpt.id = ?`, [id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Data tidak ditemukan' });
+
+    const [details] = await pool.query('SELECT * FROM fleksibilitas_pembelajaran_detail WHERE id_tahunan = ?', [id]);
+
+    res.json({ tahunan: rows[0], details });
+  } catch (err) {
+    console.error("Error getFleksibilitasById:", err);
+    res.status(500).json({ error: 'Gagal mengambil detail fleksibilitas' });
+  }
+};
+
 // === CREATE / UPDATE DATA UNTUK SATU TAHUN ===
 export const createOrUpdateFleksibilitas = async (req, res) => {
   const conn = await pool.getConnection();
@@ -50,7 +71,7 @@ export const createOrUpdateFleksibilitas = async (req, res) => {
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
     let id_unit_prodi = body_id_unit_prodi || req.user?.id_unit_prodi;
 
-    // Jika bukan superadmin dan tidak ada id_unit_prodi, gunakan dari user
+    // Jika bukan superadmin dan tidak ada id_unit_prodi, gunakan dari user (jika role prodi)
     if (!isSuperAdmin && !id_unit_prodi && req.user?.role === 'prodi') {
       id_unit_prodi = req.user.id_unit_prodi;
     }
@@ -113,7 +134,6 @@ export const exportFleksibilitas = async (req, res) => {
     try {
         const { where, params } = await buildWhere(req, 'fleksibilitas_pembelajaran_tahunan', 'fpt');
 
-        // PERBAIKAN: Ganti 'tahun_akademik' menjadi 'tahun'
         const [allYears] = await pool.query('SELECT id_tahun, tahun FROM tahun_akademik WHERE deleted_at IS NULL ORDER BY tahun DESC LIMIT 5');
         const years = allYears.reverse();
 
@@ -136,7 +156,6 @@ export const exportFleksibilitas = async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const sheet = workbook.addWorksheet('Tabel 2.C');
         
-        // PERBAIKAN: Gunakan 'tahun' untuk header
         const header = ['Tahun Akademik', ...years.map(y => y.tahun), 'Link Bukti'];
         const headerRow = sheet.addRow(header);
         headerRow.font = { bold: true };
@@ -214,7 +233,8 @@ export const softDeleteFleksibilitas = async (req, res) => {
         if (await hasColumn('fleksibilitas_pembelajaran_tahunan', 'deleted_by')) {
             payload.deleted_by = req.user?.id_user || null;
         }
-        await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET ? WHERE id = ?', [payload, id]);
+        const [result] = await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET ? WHERE id = ?', [payload, id]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Data tidak ditemukan.' });
         res.json({ message: 'Data berhasil dihapus (soft delete)' });
     } catch (err) {
         console.error("Error softDeleteFleksibilitas:", err);
@@ -226,7 +246,10 @@ export const softDeleteFleksibilitas = async (req, res) => {
 export const hardDeleteFleksibilitas = async (req, res) => {
     const { id } = req.params;
     try {
-        await pool.query('DELETE FROM fleksibilitas_pembelajaran_tahunan WHERE id = ?', [id]);
+        const [result] = await pool.query('DELETE FROM fleksibilitas_pembelajaran_tahunan WHERE id = ?', [id]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Data tidak ditemukan.' });
+        // Hapus juga detail supaya data konsisten
+        await pool.query('DELETE FROM fleksibilitas_pembelajaran_detail WHERE id_tahunan = ?', [id]);
         res.json({ message: 'Data berhasil dihapus secara permanen (hard delete).' });
     } catch (err) {
         console.error("Error hardDeleteFleksibilitas:", err);
@@ -238,11 +261,22 @@ export const hardDeleteFleksibilitas = async (req, res) => {
 export const restoreFleksibilitas = async (req, res) => {
     const { id } = req.params;
     try {
-        await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET deleted_at=NULL, deleted_by=NULL WHERE id=?', [id]);
+        // Cek kolom deleted_at
+        if (!(await hasColumn('fleksibilitas_pembelajaran_tahunan', 'deleted_at'))) {
+            return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
+        }
+
+        if (await hasColumn('fleksibilitas_pembelajaran_tahunan', 'deleted_by')) {
+            const [result] = await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET deleted_at=NULL, deleted_by=NULL WHERE id=? AND deleted_at IS NOT NULL', [id]);
+            if (result.affectedRows === 0) return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan.' });
+        } else {
+            const [result] = await pool.query('UPDATE fleksibilitas_pembelajaran_tahunan SET deleted_at=NULL WHERE id=? AND deleted_at IS NOT NULL', [id]);
+            if (result.affectedRows === 0) return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan.' });
+        }
+
         res.json({ message: 'Data berhasil dipulihkan.' });
     } catch (err) {
         console.error("Error restoreFleksibilitas:", err);
         res.status(500).json({ error: 'Gagal memulihkan data.' });
     }
 };
-

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 27 Nov 2025 pada 07.34
+-- Waktu pembuatan: 03 Des 2025 pada 04.21
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -158,7 +158,8 @@ INSERT INTO `cpmk` (`id_cpmk`, `id_unit_prodi`, `kode_cpmk`, `deskripsi_cpmk`, `
 (4, 4, 'CPMK-BD2', 'Mampu melakukan normalisasi', NULL, NULL),
 (5, 5, 'CPMK-SIM1', 'Mampu menganalisis kebutuhan sistem', NULL, NULL),
 (6, 5, 'CPMK-SIM2', 'Mampu mendesain alur proses bisnis', NULL, NULL),
-(7, 5, 'CPMK-EB1', 'Mampu merancang model bisnis digital', NULL, NULL);
+(7, 5, 'CPMK-EB1', 'Mampu merancang model bisnis digital', NULL, NULL),
+(8, 4, 'CPMK-01', 'blabla', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -245,7 +246,7 @@ CREATE TABLE `fleksibilitas_pembelajaran_tahunan` (
 INSERT INTO `fleksibilitas_pembelajaran_tahunan` (`id`, `id_unit_prodi`, `id_tahun`, `jumlah_mahasiswa_aktif`, `link_bukti`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
 (2, 4, 2022, 145, 'http://bukti-valid.com/ti/2022-2023', '2025-10-20 09:05:42', '2025-10-20 09:05:42', NULL, NULL),
 (3, 5, 2023, 75, 'http://bukti-valid.com/mi/2022-2023', '2025-10-21 06:02:37', '2025-10-21 06:02:37', NULL, NULL),
-(4, 4, 2023, 150, 'http://bukti-valid.com/ti/2023-2024', '2025-10-22 02:43:03', '2025-10-22 02:43:03', NULL, NULL);
+(4, 4, 2023, 150, 'http://bukti-valid.com/ti/2023-2024', '2025-10-22 02:43:03', '2025-12-03 03:14:00', '2025-12-03 10:14:00', 1);
 
 -- --------------------------------------------------------
 
@@ -336,7 +337,8 @@ INSERT INTO `map_cpmk_cpl` (`id_cpmk`, `id_cpl`) VALUES
 (4, 1),
 (5, 3),
 (6, 3),
-(7, 4);
+(7, 4),
+(8, 1);
 
 -- --------------------------------------------------------
 
@@ -360,7 +362,8 @@ INSERT INTO `map_cpmk_mk` (`id_cpmk`, `id_mk`) VALUES
 (4, 2),
 (5, 3),
 (6, 3),
-(7, 4);
+(7, 4),
+(8, 5);
 
 -- --------------------------------------------------------
 
@@ -387,7 +390,8 @@ INSERT INTO `mata_kuliah` (`id_mk`, `id_unit_prodi`, `kode_mk`, `nama_mk`, `sks`
 (1, 4, 'IF401', 'Dasar Kecerdasan Buatan', 3, 3, NULL, NULL),
 (2, 4, 'IF201', 'Basis Data', 3, 2, NULL, NULL),
 (3, 5, 'MI301', 'Sistem Informasi Manajemen', 3, 4, NULL, NULL),
-(4, 5, 'MI402', 'E-Business', 3, 5, NULL, NULL);
+(4, 5, 'MI402', 'E-Business', 3, 5, NULL, NULL),
+(5, 4, 'IF-202', 'RPL', 3, 3, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -398,6 +402,7 @@ INSERT INTO `mata_kuliah` (`id_mk`, `id_unit_prodi`, `kode_mk`, `nama_mk`, `sks`
 CREATE TABLE `pegawai` (
   `id_pegawai` int(11) NOT NULL,
   `nama_lengkap` varchar(255) NOT NULL,
+  `nikp` varchar(50) DEFAULT NULL COMMENT 'Nomor Induk Kepegawaian',
   `id_unit` int(11) DEFAULT NULL COMMENT 'Unit Kerja Pegawai (Relasi ke unit_kerja)',
   `pendidikan_terakhir` varchar(50) DEFAULT NULL,
   `id_jabatan` int(11) DEFAULT NULL COMMENT 'Jabatan Struktural (Relasi ke ref_jabatan_struktural)',
@@ -411,19 +416,19 @@ CREATE TABLE `pegawai` (
 -- Dumping data untuk tabel `pegawai`
 --
 
-INSERT INTO `pegawai` (`id_pegawai`, `nama_lengkap`, `id_unit`, `pendidikan_terakhir`, `id_jabatan`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 'Dr. Budi Santoso, M.Kom.', NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(2, 'Citra Lestari, S.Kom., M.T.', NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(3, 'Prof. Dr. Eka Pratama', NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(4, 'Ani Wijaya, S.E.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(5, 'Dedi Firmansyah, S.Kom.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(6, 'Fajar Nugroho, A.Md.', NULL, 'D3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(7, 'Gita Permata, S.Sos.', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(8, 'Hendra Gunawan, M.T.', NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
-(9, 'fufufafa', NULL, 'S2', NULL, '2025-08-22 16:45:03', '2025-09-30 10:08:00', '2025-09-30 17:08:00', 1),
-(10, 'Dandi Ajusta Dharma Putra Samudra', NULL, 'S2', NULL, '2025-08-22 23:49:45', '2025-09-30 10:08:06', '2025-09-30 17:08:06', 1),
-(11, 'Lupik', NULL, 'S2', NULL, '2025-08-25 09:06:18', '2025-09-30 10:07:58', '2025-09-30 17:07:58', 1),
-(12, 'Rachman Yulianto, M.Kom', NULL, 'S2', NULL, '2025-09-30 14:26:54', '2025-09-30 14:26:54', NULL, NULL);
+INSERT INTO `pegawai` (`id_pegawai`, `nama_lengkap`, `nikp`, `id_unit`, `pendidikan_terakhir`, `id_jabatan`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 'Dr. Budi Santoso, M.Kom.', NULL, NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(2, 'Citra Lestari, S.Kom., M.T.', NULL, NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(3, 'Prof. Dr. Eka Pratama', NULL, NULL, 'S3', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(4, 'Ani Wijaya, S.E.', 'KEP001', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-12-02 05:14:47', NULL, NULL),
+(5, 'Dedi Firmansyah, S.Kom.', 'KEP002', NULL, 'S1', NULL, '2025-08-21 23:54:41', '2025-12-02 05:14:47', NULL, NULL),
+(6, 'Fajar Nugroho, A.Md.', 'KEP003', NULL, 'D3', NULL, '2025-08-21 23:54:41', '2025-12-02 05:14:47', NULL, NULL),
+(7, 'Gita Permata, S.Sos.', 'KEP004', 12, 'S1', NULL, '2025-08-21 23:54:41', '2025-12-02 05:14:47', NULL, NULL),
+(8, 'Hendra Gunawan, M.T.', NULL, NULL, 'S2', NULL, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
+(9, 'fufufafa', NULL, NULL, 'S2', NULL, '2025-08-22 16:45:03', '2025-09-30 10:08:00', '2025-09-30 17:08:00', 1),
+(10, 'Dandi Ajusta Dharma Putra Samudra', NULL, NULL, 'S2', NULL, '2025-08-22 23:49:45', '2025-09-30 10:08:06', '2025-09-30 17:08:06', 1),
+(11, 'Lupik', NULL, NULL, 'S2', NULL, '2025-08-25 09:06:18', '2025-09-30 10:07:58', '2025-09-30 17:07:58', 1),
+(12, 'Rachman Yulianto, M.Kom', NULL, NULL, 'S2', NULL, '2025-09-30 14:26:54', '2025-09-30 14:26:54', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -535,7 +540,8 @@ INSERT INTO `ref_jabatan_fungsional` (`id_jafung`, `nama_jafung`, `deleted_at`, 
 (1, 'Asisten Ahli', NULL, NULL),
 (2, 'Lektor', NULL, NULL),
 (3, 'Lektor Kepala', NULL, NULL),
-(4, 'Guru Besar (Profesor)', NULL, NULL);
+(4, 'Guru Besar (Profesor)', NULL, NULL),
+(5, 'Tenaga Pengajar', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -556,11 +562,8 @@ CREATE TABLE `ref_jabatan_struktural` (
 --
 
 INSERT INTO `ref_jabatan_struktural` (`id_jabatan`, `nama_jabatan`, `sks_beban`, `deleted_at`, `deleted_by`) VALUES
-(1, 'Ketua STIKOM', 12, NULL, NULL),
-(2, 'Wakil Ketua I', 10, NULL, NULL),
-(3, 'Wakil Ketua II', 10, NULL, NULL),
-(4, 'Kepala LPPM', 8, NULL, NULL),
-(5, 'Ketua Program Studi', 4, NULL, NULL);
+(1, 'Ketua', 12, NULL, NULL),
+(2, 'Staff', 10, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1531,7 +1534,7 @@ CREATE TABLE `tabel_3a2_penelitian` (
 --
 
 INSERT INTO `tabel_3a2_penelitian` (`id`, `id_unit`, `link_roadmap`, `id_dosen_ketua`, `judul_penelitian`, `jml_mhs_terlibat`, `jenis_hibah`, `sumber_dana`, `durasi_tahun`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 2, 'https://www.youtube.com/', 12, 'Testing', 2, 'Terapan', 'L', 1, '2025-11-04 09:28:58', '2025-11-05 04:06:18', NULL, NULL),
+(1, 2, 'https://www.youtube.com/', 12, 'Testing', 2, 'Terapan', 'L', 1, '2025-11-04 09:28:58', '2025-12-02 04:13:20', '2025-12-02 11:13:20', 4),
 (2, 12, 'https://www.youtube.com/', 3, 'Tes 2', 1, 'Hibah Dasar', 'N', 2, '2025-11-05 04:15:38', '2025-11-05 04:15:38', NULL, NULL),
 (3, 12, 'https://www.youtube1.com/', 1, 'Tes 3', 0, 'Hibah Dasar', 'I', 3, '2025-11-05 04:28:57', '2025-11-05 04:39:29', NULL, NULL),
 (4, 2, 'https://www.youtube2.com/', 1, 'Mancing', 1, 'Hibah Dasar', 'I', 1, '2025-11-11 04:04:23', '2025-11-11 04:04:23', NULL, NULL);
@@ -2009,7 +2012,6 @@ CREATE TABLE `tenaga_kependidikan` (
   `id_tendik` int(11) NOT NULL,
   `id_pegawai` int(11) NOT NULL,
   `jenis_tendik` varchar(100) DEFAULT NULL,
-  `nikp` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
@@ -2020,11 +2022,11 @@ CREATE TABLE `tenaga_kependidikan` (
 -- Dumping data untuk tabel `tenaga_kependidikan`
 --
 
-INSERT INTO `tenaga_kependidikan` (`id_tendik`, `id_pegawai`, `jenis_tendik`, `nikp`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 4, 'PUSTAKAWAN', 'KEP001', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
-(2, 5, 'Laboran/Teknisi', 'KEP002', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
-(3, 6, 'Administrasi', 'KEP003', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
-(4, 7, 'TUKANG TAMBAL BAN', 'KEP004', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL);
+INSERT INTO `tenaga_kependidikan` (`id_tendik`, `id_pegawai`, `jenis_tendik`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
+(1, 4, 'PUSTAKAWAN', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
+(2, 5, 'Laboran/Teknisi', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
+(3, 6, 'Administrasi', '2025-08-21 23:54:41', '2025-08-22 09:51:26', NULL, NULL),
+(4, 7, 'TUKANG TAMBAL BAN', '2025-08-21 23:54:41', '2025-12-01 02:53:01', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2090,7 +2092,10 @@ INSERT INTO `users` (`id_user`, `id_pegawai`, `username`, `password`, `id_unit`,
 (6, 7, 'tpm', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 9, 'tpm', 1, '2025-08-21 23:54:41', '2025-09-29 08:12:54', NULL, NULL),
 (7, 6, 'prodi_mi', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 5, 'prodi', 1, '2025-08-21 23:54:41', '2025-08-21 23:54:41', NULL, NULL),
 (8, 4, 'sarpras', '$2b$10$ohecv6usneiCe.L0G258H.wBQWme11K4Dwk99RIspsatdJUyJnqMm', 11, 'SARPRAS', 1, '2025-10-29 06:19:51', '2025-10-29 06:19:51', NULL, NULL),
-(9, 1, 'kemahasiswaan', '$2b$10$DIdZNEjirnWlE90bb7P/nu4dazkXzb8H5z4rxVKg1rrOGYkJuBWyu', 8, 'KEMAHASISWAAN', 1, '2025-11-03 05:14:47', '2025-11-03 05:14:47', NULL, NULL);
+(9, 1, 'kemahasiswaan', '$2b$10$DIdZNEjirnWlE90bb7P/nu4dazkXzb8H5z4rxVKg1rrOGYkJuBWyu', 8, 'KEMAHASISWAAN', 1, '2025-11-03 05:14:47', '2025-11-03 05:14:47', NULL, NULL),
+(11, 4, 'ketua', '$2b$10$TRZKkTZ.mJcXDHYQTQUM0OUWWKm4z8zN4ybbOpUtqHEB2JaqAIEeK', 1, 'KETUASTIKOM', 1, '2025-11-30 14:28:50', '2025-11-30 14:28:50', NULL, NULL),
+(12, 1, 'ala', '$2b$10$XxZehO.42Zwh3dmuMXUD0ed43CeGPD1iRqXLZ2EJPj0pkqGLtAz36', 6, 'ALA', 1, '2025-11-30 14:29:06', '2025-11-30 14:29:06', NULL, NULL),
+(13, 1, 'pmb', '$2b$10$P4SpenEZdkt9OLplo4y3b.oOlByLg/xuSt4HCgGeQoNhVkRlLpBlS', 7, 'PMB', 1, '2025-11-30 14:29:26', '2025-11-30 14:29:26', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -2517,7 +2522,6 @@ ALTER TABLE `tahun_akademik`
 --
 ALTER TABLE `tenaga_kependidikan`
   ADD PRIMARY KEY (`id_tendik`),
-  ADD UNIQUE KEY `nikp` (`nikp`),
   ADD KEY `id_pegawai` (`id_pegawai`);
 
 --
@@ -2567,7 +2571,7 @@ ALTER TABLE `cpl`
 -- AUTO_INCREMENT untuk tabel `cpmk`
 --
 ALTER TABLE `cpmk`
-  MODIFY `id_cpmk` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_cpmk` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT untuk tabel `dosen`
@@ -2597,7 +2601,7 @@ ALTER TABLE `log_aktivitas`
 -- AUTO_INCREMENT untuk tabel `mata_kuliah`
 --
 ALTER TABLE `mata_kuliah`
-  MODIFY `id_mk` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_mk` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT untuk tabel `pegawai`
@@ -2627,7 +2631,7 @@ ALTER TABLE `profil_lulusan`
 -- AUTO_INCREMENT untuk tabel `ref_jabatan_fungsional`
 --
 ALTER TABLE `ref_jabatan_fungsional`
-  MODIFY `id_jafung` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_jafung` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT untuk tabel `ref_jabatan_struktural`
@@ -2825,7 +2829,7 @@ ALTER TABLE `unit_kerja`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
