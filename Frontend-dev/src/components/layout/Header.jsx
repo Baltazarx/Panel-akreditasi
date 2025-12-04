@@ -46,6 +46,7 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const [hasShadow, setHasShadow] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const menuRef = useRef(null);
   const drawerRef = useRef(null);
@@ -178,6 +179,26 @@ export default function Header() {
   // Header akan sticky di semua halaman (termasuk home) kecuali di halaman tabel
   // Di home (pathname === '/'), header harus sticky
   const shouldBeSticky = !isTablesPage;
+
+  // Deteksi modal form terbuka dengan memeriksa class di body
+  useEffect(() => {
+    const checkModalOpen = () => {
+      const hasModalOpen = document.body.classList.contains('modal-open');
+      setIsModalOpen(hasModalOpen);
+    };
+
+    // Check initial state
+    checkModalOpen();
+
+    // Watch for changes using MutationObserver
+    const observer = new MutationObserver(checkModalOpen);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
   
   return (
     <>
@@ -186,7 +207,7 @@ export default function Header() {
         Skip to content
       </a>
       <header 
-        className={`${shouldBeSticky ? 'sticky top-0' : ''} z-50 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''}`}
+        className={`${shouldBeSticky ? 'sticky top-0' : ''} z-50 w-full bg-white/95 backdrop-blur-lg border-b border-gray-200/60 ${hasShadow ? 'shadow-xl shadow-gray-200/40' : ''} ${isModalOpen ? 'hidden' : ''}`}
         style={shouldBeSticky ? { position: 'sticky', top: 0, zIndex: 50 } : { zIndex: 50 }}
       >
         <div className="w-full max-w-7xl mx-auto h-20 px-4 sm:px-6 lg:px-8 grid grid-cols-2 lg:grid-cols-3 items-center gap-6">

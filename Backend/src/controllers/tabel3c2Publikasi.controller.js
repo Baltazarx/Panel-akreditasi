@@ -179,7 +179,6 @@ export const listTabel3c2Publikasi = async (req, res) => {
         p.id_unit,
         uk.nama_unit,
         p.link_bukti,
-        p.deleted_at, -- [FIX] Tambahkan deleted_at untuk frontend filtering
         
         -- [FIX] Panggil helper PIVOT Checkmark (5 tahun)
         ${pivotPublikasiCheckmarkSQL(tahunIds, 'p')}

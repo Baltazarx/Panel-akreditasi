@@ -65,11 +65,14 @@ function ModalForm({ isOpen, onClose, onSave, initialData }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     } else {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     };
   }, [isOpen]);
 
@@ -520,12 +523,14 @@ export default function Tabel4A1({ auth, role: propRole }) {
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
         window.scrollTo(0, scrollY);
       };
     }

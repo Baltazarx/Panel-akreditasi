@@ -195,11 +195,14 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     } else {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
     };
   }, [isOpen]);
 
@@ -747,12 +750,14 @@ export default function Tabel3A2({ auth, role }) {
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
         window.scrollTo(0, scrollY);
       };
     }

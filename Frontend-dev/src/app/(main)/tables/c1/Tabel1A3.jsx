@@ -339,12 +339,14 @@ export default function Tabel1A3({ role }) {
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
         window.scrollTo(0, scrollY);
       };
     }
