@@ -58,8 +58,21 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+      style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+      onClick={(e) => {
+        // Close modal when clicking backdrop
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+        style={{ zIndex: 10000 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Sarana dan Prasarana Penelitian" : "Tambah Sarana dan Prasarana Penelitian"}
@@ -517,14 +530,18 @@ export default function Tabel3A1({ auth, role }) {
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
       
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
         window.scrollTo(0, scrollY);
       };
+    } else {
+      document.body.classList.remove('modal-open');
     }
   }, [modalOpen]);
 

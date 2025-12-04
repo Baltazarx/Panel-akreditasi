@@ -762,6 +762,8 @@ export default function Tabel3A2({ auth, role }) {
         document.body.classList.remove('modal-open');
         window.scrollTo(0, scrollY);
       };
+    } else {
+      document.body.classList.remove('modal-open');
     }
   }, [modalOpen]);
 
