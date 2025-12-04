@@ -60,7 +60,23 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
     }
   }, [initialData, isOpen]);
 
-  // Early return setelah semua hook dipanggil
+  // Lock body scroll when modal is open
+  // PERBAIKAN: Pindahkan useEffect SEBELUM early return untuk mematuhi Rules of Hooks
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
+
+  // Early return HARUS setelah semua hooks
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -104,18 +120,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
     }
     onSave(form);
   };
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
 
   return (
     <div 

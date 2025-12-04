@@ -128,18 +128,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     }
   }, [initialData, isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(form);
-  };
-
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open - HARUS SEBELUM EARLY RETURN
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -153,6 +142,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       document.body.classList.remove('modal-open');
     };
   }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(form);
+  };
 
   return (
     <div 

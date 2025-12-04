@@ -115,6 +115,21 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     }
   }, [isOpen, tahunList, selectedTahun]);
 
+  // Lock body scroll when modal is open - HARUS SEBELUM EARLY RETURN
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
@@ -193,21 +208,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     }
     onSave(form);
   };
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.classList.remove('modal-open');
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.body.classList.remove('modal-open');
-    };
-  }, [isOpen]);
 
   return (
     <div 
