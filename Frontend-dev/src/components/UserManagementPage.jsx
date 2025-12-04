@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiKey } from 'react-icons/fi';
 
 export default function UserManagementPage() {
   const api = useApi();
@@ -15,7 +15,6 @@ export default function UserManagementPage() {
   const [units, setUnits] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [pegawaiQuery, setPegawaiQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // "all", "active", "inactive"
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -68,11 +67,7 @@ export default function UserManagementPage() {
   // Ambil data users
   const fetchUsers = async () => {
     try {
-      let url = "/users";
-      if (statusFilter !== "all") {
-        url += `?status=${statusFilter}`;
-      }
-      const data = await api.get(url);
+      const data = await api.get("/users");
       setUsers(data);
     } catch (err) {
       console.error("Gagal ambil users:", err);
@@ -93,7 +88,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [statusFilter]); // Fetch ulang ketika filter berubah
+  }, []); // Fetch sekali saat mount
 
   useEffect(() => {
     fetchUnits();
@@ -104,10 +99,22 @@ export default function UserManagementPage() {
     if (isReadOnlyRole) return;
     e.preventDefault();
     try {
-      if (editMode) {
-        await api.put(`/users/${formData.id_user}`, formData);
+      // Siapkan payload
+      const payload = { ...formData };
+      
+      // Untuk create: gunakan password default "123"
+      // Untuk edit: jangan kirim password (biarkan backend tidak mengubah password)
+      if (!editMode) {
+        payload.password = "123"; // Password default untuk akun baru
       } else {
-        await api.post("/users", formData);
+        // Saat edit, hapus password dari payload agar tidak diubah
+        delete payload.password;
+      }
+      
+      if (editMode) {
+        await api.put(`/users/${formData.id_user}`, payload);
+      } else {
+        await api.post("/users", payload);
       }
       setShowForm(false);
       setEditMode(false);
@@ -116,8 +123,8 @@ export default function UserManagementPage() {
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
-        text: `Akun berhasil ${editMode ? 'diperbarui' : 'dibuat'}.`,
-        timer: 1500,
+        text: `Akun berhasil ${editMode ? 'diperbarui' : 'dibuat'} dengan password default "123".`,
+        timer: 2000,
         showConfirmButton: false
       });
     } catch (err) {
@@ -131,7 +138,7 @@ export default function UserManagementPage() {
     setFormData({
       id_user: null,
       username: "",
-      password: "",
+      password: "", // Tidak digunakan lagi, tapi tetap di state untuk kompatibilitas
       id_unit: "",
       id_pegawai: "",
       role: "PRODI",
@@ -146,7 +153,7 @@ export default function UserManagementPage() {
     setFormData({
       id_user: user.id_user,
       username: user.username,
-      password: "",
+      password: "", // Tidak digunakan lagi, tapi tetap di state untuk kompatibilitas
       id_unit: user.id_unit,
       id_pegawai: user.id_pegawai,
       role: user.role,
@@ -156,53 +163,27 @@ export default function UserManagementPage() {
     setShowForm(true);
   };
 
-  // Nonaktifkan user
+  // Hapus user (soft delete)
   const handleDelete = (id) => {
     if (isReadOnlyRole) return;
     Swal.fire({
-      title: 'Nonaktifkan Akun?',
-      text: "Anda yakin ingin menonaktifkan akun ini?",
+      title: 'Hapus Akun?',
+      text: "Anda yakin ingin menghapus akun ini?",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Ya, nonaktifkan!',
+      confirmButtonText: 'Ya, hapus!',
       cancelButtonText: 'Batal'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await api.delete(`/users/${id}`);
           fetchUsers();
-          Swal.fire('Berhasil!', 'Akun telah dinonaktifkan.', 'success');
+          Swal.fire('Berhasil!', 'Akun telah dihapus.', 'success');
         } catch (err) {
-          console.error("Gagal nonaktifkan user:", err);
-          Swal.fire('Gagal!', `Gagal menonaktifkan akun: ${err.message}`, 'error');
-        }
-      }
-    });
-  };
-
-  // Restore user
-  const handleRestore = (id) => {
-    if (isReadOnlyRole) return;
-    Swal.fire({
-      title: 'Aktifkan Kembali Akun?',
-      text: "Anda yakin ingin mengaktifkan kembali akun ini?",
-      icon: 'info',
-      showCancelButton: true,
-      confirmButtonColor: '#28a745',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Ya, aktifkan!',
-      cancelButtonText: 'Batal'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await api.post(`/users/${id}/restore`, {});
-          fetchUsers();
-          Swal.fire('Berhasil!', 'Akun telah diaktifkan kembali.', 'success');
-        } catch (err) {
-          console.error("Gagal restore user:", err);
-          Swal.fire('Gagal!', `Gagal mengaktifkan akun: ${err.message}`, 'error');
+          console.error("Gagal hapus user:", err);
+          Swal.fire('Gagal!', `Gagal menghapus akun: ${err.message}`, 'error');
         }
       }
     });
@@ -234,6 +215,55 @@ export default function UserManagementPage() {
     });
   };
 
+  // Reset password untuk superadmin
+  const handleResetPassword = (user) => {
+    if (isReadOnlyRole) return;
+    
+    // Cek apakah user adalah superadmin (waket1, waket2, tpm)
+    const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
+    const userRole = user.role?.toLowerCase();
+    const isSuperAdmin = superAdminRoles.includes(userRole);
+    
+    if (!isSuperAdmin) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Akses Ditolak',
+        text: 'Reset password hanya tersedia untuk role superadmin (WAKET-1, WAKET-2, TPM).'
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: 'Reset Password?',
+      text: `Password untuk akun "${user.username}" akan direset ke "123".`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, reset password!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.put(`/users/${user.id_user}`, {
+            password: "123"
+          });
+          fetchUsers();
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: `Password untuk akun "${user.username}" telah direset ke "123".`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } catch (err) {
+          console.error("Gagal reset password:", err);
+          Swal.fire('Gagal!', `Gagal mereset password: ${err.message}`, 'error');
+        }
+      }
+    });
+  };
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -250,19 +280,6 @@ export default function UserManagementPage() {
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          {/* Filter Status */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-slate-700">Filter:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
-            >
-              <option value="all">Semua Akun</option>
-              <option value="active">Akun Aktif</option>
-              <option value="inactive">Akun Nonaktif</option>
-            </select>
-          </div>
           {!isReadOnlyRole && (
             <button
               onClick={() => {
@@ -288,7 +305,6 @@ export default function UserManagementPage() {
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Role</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pegawai</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Status</th>
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
@@ -306,17 +322,6 @@ export default function UserManagementPage() {
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.role}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.unit_name || "-"}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.pegawai_name || "-"}</td>
-                <td className="px-6 py-4 border border-slate-200 text-center">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      !u.is_active || u.deleted_at
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {!u.is_active || u.deleted_at ? "Nonaktif" : "Aktif"}
-                  </span>
-                </td>
                 <td className="px-6 py-4 border border-slate-200">
                   <div className="flex items-center justify-center dropdown-container">
                     {isReadOnlyRole ? (
@@ -357,8 +362,6 @@ export default function UserManagementPage() {
         const currentUser = users.find(u => u.id_user === openDropdownId);
         if (!currentUser) return null;
 
-        const isDeleted = currentUser.deleted_at || !currentUser.is_active;
-
         return (
           <div 
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
@@ -367,62 +370,54 @@ export default function UserManagementPage() {
               left: `${dropdownPosition.left}px`
             }}
           >
-            {!isDeleted && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEdit(currentUser);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                aria-label="Edit akun"
-              >
-                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
-                <span>Edit</span>
-              </button>
-            )}
-            {!isDeleted && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(currentUser.id_user);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                aria-label="Nonaktifkan akun"
-              >
-                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
-                <span>Nonaktifkan</span>
-              </button>
-            )}
-            {isDeleted && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRestore(currentUser.id_user);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
-                aria-label="Aktifkan akun"
-              >
-                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
-                <span>Aktifkan</span>
-              </button>
-            )}
-            {isDeleted && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleHardDelete(currentUser.id_user);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label="Hapus permanen akun"
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(currentUser);
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+              aria-label="Edit akun"
+            >
+              <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+              <span>Edit</span>
+            </button>
+            {(() => {
+              // Cek apakah user adalah superadmin (waket1, waket2, tpm, superadmin)
+              const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
+              const userRole = currentUser.role?.toLowerCase();
+              const isSuperAdmin = superAdminRoles.includes(userRole);
+              
+              if (isSuperAdmin) {
+                return (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResetPassword(currentUser);
+                      setOpenDropdownId(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left"
+                    aria-label="Reset password"
+                  >
+                    <FiKey size={16} className="flex-shrink-0 text-orange-600" />
+                    <span>Reset Password</span>
+                  </button>
+                );
+              }
+              return null;
+            })()}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(currentUser.id_user);
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+              aria-label="Hapus akun"
+            >
+              <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+              <span>Hapus</span>
+            </button>
           </div>
         );
       })()}
@@ -455,22 +450,6 @@ export default function UserManagementPage() {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  placeholder={editMode ? "(biarkan kosong jika tidak diubah)" : "Masukkan password"}
-                  {...(editMode ? {} : { required: true })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Unit Kerja
@@ -527,7 +506,9 @@ export default function UserManagementPage() {
                         }}
                       >
                         <div className="font-medium text-slate-700">{p.nama_lengkap}</div>
-                        <div className="text-sm text-slate-500">{p.nip || 'NIP tidak tersedia'}</div>
+                        {p.nip && (
+                          <div className="text-sm text-slate-500">{p.nip}</div>
+                        )}
                       </li>
                     ))}
                   </ul>
