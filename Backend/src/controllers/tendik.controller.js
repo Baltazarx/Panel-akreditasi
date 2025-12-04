@@ -61,7 +61,7 @@ export const createTendik = async (req, res) => {
         `SELECT id_tendik FROM tenaga_kependidikan WHERE id_pegawai = ? AND deleted_at IS NULL`, 
         [id_pegawai]
     );
-    if (existing.length > 0) {
+    if (exist.length > 0) {
         return res.status(409).json({ error: 'Pegawai ini sudah terdaftar sebagai Tenaga Kependidikan.' });
     }
 
