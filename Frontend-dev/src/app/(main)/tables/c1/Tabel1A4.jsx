@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiUser } from 'react-icons/fi';
 
 const ENDPOINT = "/beban-kerja-dosen";
 const TABLE_KEY = "tabel_1a4";
@@ -144,6 +144,15 @@ export default function Tabel1A4({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Tahun dropdown state (for filter and form)
+  const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
+  const [openNewTahunDropdown, setOpenNewTahunDropdown] = useState(false);
+  const [openEditTahunDropdown, setOpenEditTahunDropdown] = useState(false);
+  
+  // Dosen dropdown state (for form)
+  const [openNewDosenDropdown, setOpenNewDosenDropdown] = useState(false);
+  const [openEditDosenDropdown, setOpenEditDosenDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -181,8 +190,45 @@ export default function Tabel1A4({ role }) {
   useEffect(() => {
     if (showCreateModal || showEditModal) {
       setOpenDropdownId(null);
+      setOpenNewTahunDropdown(false);
+      setOpenEditTahunDropdown(false);
+      setOpenNewDosenDropdown(false);
+      setOpenEditDosenDropdown(false);
     }
   }, [showCreateModal, showEditModal]);
+
+  // Close tahun and dosen dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
+        setOpenYearFilterDropdown(false);
+      }
+      if (openNewTahunDropdown && !event.target.closest('.new-tahun-dropdown-container') && !event.target.closest('.new-tahun-dropdown-menu')) {
+        setOpenNewTahunDropdown(false);
+      }
+      if (openEditTahunDropdown && !event.target.closest('.edit-tahun-dropdown-container') && !event.target.closest('.edit-tahun-dropdown-menu')) {
+        setOpenEditTahunDropdown(false);
+      }
+      if (openNewDosenDropdown && !event.target.closest('.new-dosen-dropdown-container') && !event.target.closest('.new-dosen-dropdown-menu')) {
+        setOpenNewDosenDropdown(false);
+      }
+      if (openEditDosenDropdown && !event.target.closest('.edit-dosen-dropdown-container') && !event.target.closest('.edit-dosen-dropdown-menu')) {
+        setOpenEditDosenDropdown(false);
+      }
+    };
+
+    if (openYearFilterDropdown || openNewTahunDropdown || openEditTahunDropdown || openNewDosenDropdown || openEditDosenDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openYearFilterDropdown, openNewTahunDropdown, openEditTahunDropdown, openNewDosenDropdown, openEditDosenDropdown]);
+
+  // Close dropdown when selectedYear changes
+  useEffect(() => {
+    setOpenYearFilterDropdown(false);
+  }, [selectedYear]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -279,6 +325,8 @@ export default function Tabel1A4({ role }) {
       setEditManajemenPtSendiri(manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : "");
       setEditManajemenPtLain(manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : "");
       setShowEditModal(true);
+      setOpenEditTahunDropdown(false);
+      setOpenEditDosenDropdown(false);
     }
   }, [editing]);
 
@@ -450,18 +498,85 @@ export default function Tabel1A4({ role }) {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             <label htmlFor="filter-tahun" className="text-sm font-medium text-slate-700">Tahun:</label>
-            <select
-              id="filter-tahun"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
-              disabled={loading}
-            >
-              <option value="" disabled>Pilih Tahun</option>
-              {Object.values(maps.tahun).map((y) => (
-                <option key={y.id_tahun} value={y.id_tahun} className="text-slate-700">{y.tahun}</option>
-              ))}
-            </select>
+            <div className="relative year-filter-dropdown-container w-48">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpenYearFilterDropdown(!openYearFilterDropdown);
+                }}
+                disabled={loading}
+                className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  selectedYear 
+                    ? 'border-[#0384d6] bg-white' 
+                    : 'border-slate-300 bg-white hover:border-gray-400'
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label="Pilih tahun"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                  <span className={`truncate ${selectedYear ? 'text-slate-700' : 'text-slate-500'}`}>
+                    {selectedYear 
+                      ? (() => {
+                          const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(selectedYear));
+                          return found ? (found.tahun || found.nama || selectedYear) : selectedYear;
+                        })()
+                      : "Pilih Tahun"}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    openYearFilterDropdown ? 'rotate-180' : ''
+                  }`} 
+                  size={16} 
+                />
+              </button>
+              {openYearFilterDropdown && (
+                <div 
+                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedYear("");
+                      setOpenYearFilterDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                      !selectedYear
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                    <span>Pilih Tahun</span>
+                  </button>
+                  {Object.values(maps.tahun || {}).length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Tidak ada data tahun
+                    </div>
+                  ) : (
+                    Object.values(maps.tahun || {}).map((y) => (
+                      <button
+                        key={y.id_tahun}
+                        type="button"
+                        onClick={() => {
+                          setSelectedYear(y.id_tahun.toString());
+                          setOpenYearFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                          selectedYear === y.id_tahun.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                        <span className="truncate">{y.tahun || y.nama}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {canDelete && (
@@ -795,8 +910,29 @@ export default function Tabel1A4({ role }) {
               className="space-y-4"
               onSubmit={async (e) => {
                 e.preventDefault();
+                
+                // Validasi tahun dan dosen harus dipilih
+                if (!newIdTahun || newIdTahun === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Tahun terlebih dahulu.'
+                  });
+                  return;
+                }
+                if (!newIdDosen || newIdDosen === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Nama Dosen terlebih dahulu.'
+                  });
+                  return;
+                }
+                
                 try {
                   setLoading(true);
+                  setOpenNewTahunDropdown(false);
+                  setOpenNewDosenDropdown(false);
                   const body = { id_tahun: parseInt(newIdTahun), id_dosen: parseInt(newIdDosen), sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), sks_penelitian: n(newPenelitian), sks_pkm: n(newPkm), sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain), created_by: role?.user?.name || role?.user?.username || "Unknown User", created_at: new Date().toISOString() };
                   await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
                   setShowCreateModal(false);
@@ -809,18 +945,138 @@ export default function Tabel1A4({ role }) {
               }}
             >
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Tahun</label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={newIdTahun} onChange={(e) => setNewIdTahun(e.target.value)} required>
-                    <option value="">Pilih Tahun...</option>
-                    {Object.values(maps.tahun).map((y) => (<option key={y.id_tahun} value={y.id_tahun}>{y.tahun}</option>))}
-                </select>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
+                <div className="relative new-tahun-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenNewTahunDropdown(!openNewTahunDropdown);
+                      setOpenNewDosenDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      newIdTahun 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih tahun"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${newIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {newIdTahun 
+                          ? (() => {
+                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(newIdTahun));
+                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                            })()
+                          : "Pilih tahun..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openNewTahunDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openNewTahunDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-tahun-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.tahun || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data tahun
+                        </div>
+                      ) : (
+                        Object.values(maps.tahun || {}).map((y) => (
+                          <button
+                            key={y.id_tahun}
+                            type="button"
+                            onClick={() => {
+                              setNewIdTahun(y.id_tahun.toString());
+                              setOpenNewTahunDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              newIdTahun === y.id_tahun.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{y.tahun || y.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Dosen</label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={newIdDosen} onChange={(e) => setNewIdDosen(e.target.value)} required>
-                    <option value="">Pilih Dosen...</option>
-                    {Object.values(maps.pegawai).map((p) => (<option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_lengkap}</option>))}
-                </select>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
+                <div className="relative new-dosen-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenNewDosenDropdown(!openNewDosenDropdown);
+                      setOpenNewTahunDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      newIdDosen 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih dosen"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${newIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {newIdDosen 
+                          ? (() => {
+                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(newIdDosen));
+                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                            })()
+                          : "Pilih dosen..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openNewDosenDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openNewDosenDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-dosen-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data dosen
+                        </div>
+                      ) : (
+                        Object.values(maps.pegawai || {}).map((p) => (
+                          <button
+                            key={p.id_pegawai}
+                            type="button"
+                            onClick={() => {
+                              setNewIdDosen(p.id_pegawai.toString());
+                              setOpenNewDosenDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              newIdDosen === p.id_pegawai.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="mb-4">
@@ -872,7 +1128,11 @@ export default function Tabel1A4({ role }) {
                 <button 
                     className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                     type="button" 
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setOpenNewTahunDropdown(false);
+                      setOpenNewDosenDropdown(false);
+                    }}
                 >
                     <span className="relative z-10">Batal</span>
                     <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
@@ -904,8 +1164,29 @@ export default function Tabel1A4({ role }) {
               className="space-y-4"
               onSubmit={async (e) => {
                 e.preventDefault();
+                
+                // Validasi tahun dan dosen harus dipilih
+                if (!editIdTahun || editIdTahun === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Tahun terlebih dahulu.'
+                  });
+                  return;
+                }
+                if (!editIdDosen || editIdDosen === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Nama Dosen terlebih dahulu.'
+                  });
+                  return;
+                }
+                
                 try {
                   setLoading(true);
+                  setOpenEditTahunDropdown(false);
+                  setOpenEditDosenDropdown(false);
                   const idField = getIdField(editing);
                   const body = { id_tahun: parseInt(editIdTahun), id_dosen: parseInt(editIdDosen), sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), sks_penelitian: n(editPenelitian), sks_pkm: n(editPkm), sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain), updated_by: role?.user?.name || role?.user?.username || "Unknown User", updated_at: new Date().toISOString() };
                   await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
@@ -919,18 +1200,138 @@ export default function Tabel1A4({ role }) {
               }}
             >
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Tahun</label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={editIdTahun} onChange={(e) => setEditIdTahun(e.target.value)} required>
-                    <option value="">Pilih Tahun...</option>
-                    {Object.values(maps.tahun).map((y) => (<option key={y.id_tahun} value={y.id_tahun}>{y.tahun}</option>))}
-                </select>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
+                <div className="relative edit-tahun-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenEditTahunDropdown(!openEditTahunDropdown);
+                      setOpenEditDosenDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      editIdTahun 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih tahun"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${editIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {editIdTahun 
+                          ? (() => {
+                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(editIdTahun));
+                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                            })()
+                          : "Pilih tahun..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openEditTahunDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openEditTahunDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-tahun-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.tahun || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data tahun
+                        </div>
+                      ) : (
+                        Object.values(maps.tahun || {}).map((y) => (
+                          <button
+                            key={y.id_tahun}
+                            type="button"
+                            onClick={() => {
+                              setEditIdTahun(y.id_tahun.toString());
+                              setOpenEditTahunDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              editIdTahun === y.id_tahun.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{y.tahun || y.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Dosen</label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={editIdDosen} onChange={(e) => setEditIdDosen(e.target.value)} required>
-                    <option value="">Pilih Dosen...</option>
-                    {Object.values(maps.pegawai).map((p) => (<option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_lengkap}</option>))}
-                </select>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
+                <div className="relative edit-dosen-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenEditDosenDropdown(!openEditDosenDropdown);
+                      setOpenEditTahunDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      editIdDosen 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih dosen"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${editIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {editIdDosen 
+                          ? (() => {
+                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(editIdDosen));
+                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                            })()
+                          : "Pilih dosen..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openEditDosenDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openEditDosenDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-dosen-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data dosen
+                        </div>
+                      ) : (
+                        Object.values(maps.pegawai || {}).map((p) => (
+                          <button
+                            key={p.id_pegawai}
+                            type="button"
+                            onClick={() => {
+                              setEditIdDosen(p.id_pegawai.toString());
+                              setOpenEditDosenDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              editIdDosen === p.id_pegawai.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mb-4">
@@ -982,7 +1383,12 @@ export default function Tabel1A4({ role }) {
                 <button 
                     className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                     type="button" 
-                    onClick={() => setShowEditModal(false)}
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditing(null);
+                      setOpenEditTahunDropdown(false);
+                      setOpenEditDosenDropdown(false);
+                    }}
                 >
                     <span className="relative z-10">Batal</span>
                     <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>

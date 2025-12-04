@@ -12,7 +12,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle, FiFileText } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle, FiFileText, FiUser } from 'react-icons/fi';
 
 // // --- MOCKS FOR PREVIEW (DELETE THIS BLOCK IN YOUR PROJECT) ---
 // import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, RotateCw, XCircle, MoreVertical } from 'lucide-react';
@@ -115,6 +115,12 @@ export default function Tabel1A1({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Pegawai dropdown state (for form)
+  const [openPegawaiDropdown, setOpenPegawaiDropdown] = useState(false);
+  const [pegawaiDropdownPosition, setPegawaiDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [openEditPegawaiDropdown, setOpenEditPegawaiDropdown] = useState(false);
+  const [editPegawaiDropdownPosition, setEditPegawaiDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -268,8 +274,29 @@ export default function Tabel1A1({ role }) {
   useEffect(() => {
     if (showCreateModal || showEditModal) {
       setOpenDropdownId(null);
+      setOpenPegawaiDropdown(false);
+      setOpenEditPegawaiDropdown(false);
     }
   }, [showCreateModal, showEditModal]);
+
+  // Close pegawai dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openPegawaiDropdown && !event.target.closest('.pegawai-dropdown-container') && !event.target.closest('.pegawai-dropdown-menu')) {
+        setOpenPegawaiDropdown(false);
+      }
+      if (openEditPegawaiDropdown && !event.target.closest('.edit-pegawai-dropdown-container') && !event.target.closest('.edit-pegawai-dropdown-menu')) {
+        setOpenEditPegawaiDropdown(false);
+      }
+    };
+
+    if (openPegawaiDropdown || openEditPegawaiDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openPegawaiDropdown, openEditPegawaiDropdown]);
 
   const [newIdPegawai, setNewIdPegawai] = useState("");
   const [newPeriodeMulai, setNewPeriodeMulai] = useState("");
@@ -406,10 +433,22 @@ export default function Tabel1A1({ role }) {
   const renderModalForm = (isEdit = false) => {
     const handleSubmit = async (e) => {
       e.preventDefault();
+      
+      // Validasi pegawai harus dipilih
+      const selectedPegawai = isEdit ? editIdPegawai : newIdPegawai;
+      if (!selectedPegawai || selectedPegawai === "") {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data Belum Lengkap',
+          text: 'Silakan pilih Nama Pegawai terlebih dahulu.'
+        });
+        return;
+      }
+      
       try {
         setLoading(true);
         const payload = {
-            id_pegawai: parseInt(isEdit ? editIdPegawai : newIdPegawai || 0),
+            id_pegawai: parseInt(selectedPegawai),
             periode_mulai: isEdit ? editPeriodeMulai : newPeriodeMulai,
             periode_selesai: isEdit ? editPeriodeSelesai : newPeriodeSelesai,
             tupoksi: (isEdit ? editTupoksi : newTupoksi || "").trim(),
@@ -419,11 +458,13 @@ export default function Tabel1A1({ role }) {
             const idField = getIdField(editing);
             await apiFetch(`${table.path}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(payload) });
             setShowEditModal(false); 
-            setEditing(null); 
+            setEditing(null);
+            setOpenEditPegawaiDropdown(false);
         } else {
             await apiFetch(table.path, { method: "POST", body: JSON.stringify(payload) });
             setShowCreateModal(false);
             setNewIdPegawai(""); setNewPeriodeMulai(""); setNewPeriodeSelesai(""); setNewTupoksi("");
+            setOpenPegawaiDropdown(false);
         }
 
         fetchRows();
@@ -450,10 +491,94 @@ export default function Tabel1A1({ role }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                   <label htmlFor="id_pegawai" className="block text-sm font-semibold text-gray-700">Nama Pegawai <span className="text-red-500">*</span></label>
-                  <select id="id_pegawai" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={isEdit ? editIdPegawai : newIdPegawai} onChange={(e)=> isEdit ? setEditIdPegawai(e.target.value) : setNewIdPegawai(e.target.value)} required>
-                      <option value="">Pilih...</option>
-                      {Object.values(maps.pegawai).map(p=> <option key={p.id_pegawai} value={p.id_pegawai}>{p.nama_lengkap || p.nama}</option>)}
-                  </select>
+                  <div className="relative pegawai-dropdown-container">
+                      <button
+                          type="button"
+                          onClick={(e) => {
+                              e.preventDefault();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              if (isEdit) {
+                                  setEditPegawaiDropdownPosition({
+                                      top: rect.bottom + 4,
+                                      left: rect.left,
+                                      width: rect.width
+                                  });
+                                  setOpenEditPegawaiDropdown(!openEditPegawaiDropdown);
+                                  setOpenPegawaiDropdown(false);
+                              } else {
+                                  setPegawaiDropdownPosition({
+                                      top: rect.bottom + 4,
+                                      left: rect.left,
+                                      width: rect.width
+                                  });
+                                  setOpenPegawaiDropdown(!openPegawaiDropdown);
+                                  setOpenEditPegawaiDropdown(false);
+                              }
+                          }}
+                          className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                              (isEdit ? editIdPegawai : newIdPegawai) 
+                                  ? 'border-[#0384d6] bg-white' 
+                                  : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
+                          aria-label="Pilih pegawai"
+                      >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                              <span className={`truncate ${(isEdit ? editIdPegawai : newIdPegawai) ? 'text-gray-900' : 'text-gray-500'}`}>
+                                  {(isEdit ? editIdPegawai : newIdPegawai) 
+                                      ? (Object.values(maps.pegawai).find(p => p.id_pegawai === parseInt(isEdit ? editIdPegawai : newIdPegawai))?.nama_lengkap || Object.values(maps.pegawai).find(p => p.id_pegawai === parseInt(isEdit ? editIdPegawai : newIdPegawai))?.nama || "Pilih...")
+                                      : "Pilih pegawai..."}
+                              </span>
+                          </div>
+                          <FiChevronDown 
+                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                  (isEdit ? openEditPegawaiDropdown : openPegawaiDropdown) ? 'rotate-180' : ''
+                              }`} 
+                              size={18} 
+                          />
+                      </button>
+                      {(isEdit ? openEditPegawaiDropdown : openPegawaiDropdown) && (
+                          <div 
+                              className="fixed z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto pegawai-dropdown-menu"
+                              style={{
+                                  top: `${(isEdit ? editPegawaiDropdownPosition : pegawaiDropdownPosition).top}px`,
+                                  left: `${(isEdit ? editPegawaiDropdownPosition : pegawaiDropdownPosition).left}px`,
+                                  width: `${(isEdit ? editPegawaiDropdownPosition : pegawaiDropdownPosition).width || 300}px`,
+                                  minWidth: '200px'
+                              }}
+                          >
+                              {Object.values(maps.pegawai).length === 0 ? (
+                                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                      Tidak ada data pegawai
+                                  </div>
+                              ) : (
+                                  Object.values(maps.pegawai).map((p) => (
+                                      <button
+                                          key={p.id_pegawai}
+                                          type="button"
+                                          onClick={() => {
+                                              if (isEdit) {
+                                                  setEditIdPegawai(p.id_pegawai.toString());
+                                                  setOpenEditPegawaiDropdown(false);
+                                              } else {
+                                                  setNewIdPegawai(p.id_pegawai.toString());
+                                                  setOpenPegawaiDropdown(false);
+                                              }
+                                          }}
+                                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                              (isEdit ? editIdPegawai : newIdPegawai) === p.id_pegawai.toString()
+                                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                  : 'text-gray-700'
+                                          }`}
+                                      >
+                                          <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                                          <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                                      </button>
+                                  ))
+                              )}
+                          </div>
+                      )}
+                  </div>
               </div>
               <div className="space-y-2">
                   <label htmlFor="periode_mulai" className="block text-sm font-semibold text-gray-700">Periode Mulai <span className="text-red-500">*</span></label>
@@ -478,7 +603,15 @@ export default function Tabel1A1({ role }) {
               <button 
                   className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                   type="button" 
-                  onClick={()=> isEdit ? setShowEditModal(false) : setShowCreateModal(false)}
+                  onClick={()=> {
+                      if (isEdit) {
+                          setShowEditModal(false);
+                          setOpenEditPegawaiDropdown(false);
+                      } else {
+                          setShowCreateModal(false);
+                          setOpenPegawaiDropdown(false);
+                      }
+                  }}
               >
                   <span className="relative z-10">Batal</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>

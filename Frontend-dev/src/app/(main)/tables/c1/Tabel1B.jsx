@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiBriefcase } from 'react-icons/fi';
 
 const ENDPOINT = "/audit-mutu-internal";
 const TABLE_KEY = "tabel_1b";
@@ -16,19 +16,111 @@ const n = (v) => Number(v || 0);
 function YearSelector({ maps, activeYear, setActiveYear }) {
   const tahunData = Object.values(maps.tahun || {});
   
+  // Dropdown state
+  const [openYearDropdown, setOpenYearDropdown] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openYearDropdown && !event.target.closest('.year-selector-dropdown-container') && !event.target.closest('.year-selector-dropdown-menu')) {
+        setOpenYearDropdown(false);
+      }
+    };
+
+    if (openYearDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openYearDropdown]);
+
+  // Close dropdown when activeYear changes
+  useEffect(() => {
+    setOpenYearDropdown(false);
+  }, [activeYear]);
+
+  // Get selected year label
+  const getSelectedYearLabel = () => {
+    if (!activeYear) return "Semua Tahun";
+    const found = tahunData.find((y) => String(y.id_tahun) === String(activeYear));
+    return found ? (found.tahun || found.nama || activeYear) : activeYear;
+  };
+  
   return (
-    <select
-      className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
-      value={activeYear}
-      onChange={(e) => setActiveYear(e.target.value)}
-    >
-      <option value="">Semua Tahun</option>
-      {tahunData.map((y) => (
-        <option key={y.id_tahun} value={y.id_tahun}>
-          {y.tahun || y.nama}
-        </option>
-      ))}
-    </select>
+    <div className="relative year-selector-dropdown-container w-48">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          setOpenYearDropdown(!openYearDropdown);
+        }}
+        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+          activeYear 
+            ? 'border-[#0384d6] bg-white' 
+            : 'border-slate-300 bg-white hover:border-gray-400'
+        }`}
+        aria-label="Pilih tahun"
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+          <span className={`truncate ${activeYear ? 'text-slate-700' : 'text-slate-500'}`}>
+            {getSelectedYearLabel()}
+          </span>
+        </div>
+        <FiChevronDown 
+          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+            openYearDropdown ? 'rotate-180' : ''
+          }`} 
+          size={16} 
+        />
+      </button>
+      {openYearDropdown && (
+        <div 
+          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-selector-dropdown-menu mt-1 w-full"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setActiveYear("");
+              setOpenYearDropdown(false);
+            }}
+            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+              !activeYear
+                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                : 'text-gray-700'
+            }`}
+          >
+            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+            <span>Semua Tahun</span>
+          </button>
+          {tahunData.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+              Tidak ada data tahun
+            </div>
+          ) : (
+            tahunData.map((y) => (
+              <button
+                key={y.id_tahun}
+                type="button"
+                onClick={() => {
+                  setActiveYear(y.id_tahun.toString());
+                  setOpenYearDropdown(false);
+                }}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                  activeYear === y.id_tahun.toString()
+                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                    : 'text-gray-700'
+                }`}
+              >
+                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                <span className="truncate">{y.tahun || y.nama}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -172,6 +264,12 @@ export default function Tabel1B({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Tahun and Unit dropdown state (for form)
+  const [openNewTahunDropdown, setOpenNewTahunDropdown] = useState(false);
+  const [openEditTahunDropdown, setOpenEditTahunDropdown] = useState(false);
+  const [openNewUnitDropdown, setOpenNewUnitDropdown] = useState(false);
+  const [openEditUnitDropdown, setOpenEditUnitDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -209,8 +307,37 @@ export default function Tabel1B({ role }) {
   useEffect(() => {
     if (showCreateModal || showEditModal) {
       setOpenDropdownId(null);
+      setOpenNewTahunDropdown(false);
+      setOpenEditTahunDropdown(false);
+      setOpenNewUnitDropdown(false);
+      setOpenEditUnitDropdown(false);
     }
   }, [showCreateModal, showEditModal]);
+
+  // Close tahun and unit dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openNewTahunDropdown && !event.target.closest('.new-tahun-dropdown-container') && !event.target.closest('.new-tahun-dropdown-menu')) {
+        setOpenNewTahunDropdown(false);
+      }
+      if (openEditTahunDropdown && !event.target.closest('.edit-tahun-dropdown-container') && !event.target.closest('.edit-tahun-dropdown-menu')) {
+        setOpenEditTahunDropdown(false);
+      }
+      if (openNewUnitDropdown && !event.target.closest('.new-unit-dropdown-container') && !event.target.closest('.new-unit-dropdown-menu')) {
+        setOpenNewUnitDropdown(false);
+      }
+      if (openEditUnitDropdown && !event.target.closest('.edit-unit-dropdown-container') && !event.target.closest('.edit-unit-dropdown-menu')) {
+        setOpenEditUnitDropdown(false);
+      }
+    };
+
+    if (openNewTahunDropdown || openEditTahunDropdown || openNewUnitDropdown || openEditUnitDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openNewTahunDropdown, openEditTahunDropdown, openNewUnitDropdown, openEditUnitDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -305,6 +432,8 @@ export default function Tabel1B({ role }) {
       setEditJumlahAuditorNoncertified(editing.jumlah_auditor_noncertified || "");
       setEditBuktiCertifiedUri(editing.bukti_certified_uri || "");
       setShowEditModal(true);
+      setOpenEditTahunDropdown(false);
+      setOpenEditUnitDropdown(false);
     }
   }, [editing]);
 
@@ -450,11 +579,37 @@ export default function Tabel1B({ role }) {
   const renderModalForm = (isEdit = false) => {
     const handleSubmit = async (e) => {
       e.preventDefault();
+      
+      // Validasi unit dan tahun harus dipilih
+      const selectedUnit = isEdit ? editIdUnit : newIdUnit;
+      const selectedTahun = isEdit ? editIdTahun : newIdTahun;
+      
+      if (!selectedUnit || selectedUnit === "") {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data Belum Lengkap',
+          text: 'Silakan pilih Unit SPMI terlebih dahulu.'
+        });
+        return;
+      }
+      if (!selectedTahun || selectedTahun === "") {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Data Belum Lengkap',
+          text: 'Silakan pilih Tahun terlebih dahulu.'
+        });
+        return;
+      }
+      
       try {
         setLoading(true);
+        setOpenNewTahunDropdown(false);
+        setOpenEditTahunDropdown(false);
+        setOpenNewUnitDropdown(false);
+        setOpenEditUnitDropdown(false);
         const body = {
-          id_unit: parseInt(isEdit ? editIdUnit : newIdUnit),
-          id_tahun: parseInt(isEdit ? editIdTahun : newIdTahun),
+          id_unit: parseInt(selectedUnit),
+          id_tahun: parseInt(selectedTahun),
           frekuensi_audit: n(isEdit ? editFrekuensiAudit : newFrekuensiAudit),
           dokumen_spmi: isEdit ? editDokumenSpmi : newDokumenSpmi,
           laporan_audit_url: isEdit ? editLaporanAuditUrl : newLaporanAuditUrl,
@@ -496,18 +651,158 @@ export default function Tabel1B({ role }) {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Unit SPMI</label>
-            <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={isEdit ? editIdUnit : newIdUnit} onChange={(e) => isEdit ? setEditIdUnit(e.target.value) : setNewIdUnit(e.target.value)} required>
-              <option value="">Pilih Unit...</option>
-              {Object.values(maps.units).map((u) => (<option key={u.id_unit} value={u.id_unit}>{u.nama_unit}</option>))}
-            </select>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Unit SPMI <span className="text-red-500">*</span></label>
+            <div className={`relative ${isEdit ? 'edit-unit-dropdown-container' : 'new-unit-dropdown-container'}`}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (isEdit) {
+                    setOpenEditUnitDropdown(!openEditUnitDropdown);
+                    setOpenEditTahunDropdown(false);
+                  } else {
+                    setOpenNewUnitDropdown(!openNewUnitDropdown);
+                    setOpenNewTahunDropdown(false);
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  (isEdit ? editIdUnit : newIdUnit)
+                    ? 'border-[#0384d6] bg-white' 
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                }`}
+                aria-label="Pilih unit SPMI"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                  <span className={`truncate ${(isEdit ? editIdUnit : newIdUnit) ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {(isEdit ? editIdUnit : newIdUnit) 
+                      ? (() => {
+                          const found = Object.values(maps.units || {}).find((u) => String(u.id_unit) === String(isEdit ? editIdUnit : newIdUnit));
+                          return found ? (found.nama_unit || "Pilih...") : "Pilih unit...";
+                        })()
+                      : "Pilih unit..."}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    (isEdit ? openEditUnitDropdown : openNewUnitDropdown) ? 'rotate-180' : ''
+                  }`} 
+                  size={18} 
+                />
+              </button>
+              {(isEdit ? openEditUnitDropdown : openNewUnitDropdown) && (
+                <div 
+                  className={`absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto ${isEdit ? 'edit-unit-dropdown-menu' : 'new-unit-dropdown-menu'} mt-1 w-full`}
+                >
+                  {Object.values(maps.units || {}).length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Tidak ada data unit
+                    </div>
+                  ) : (
+                    Object.values(maps.units || {}).map((u) => (
+                      <button
+                        key={u.id_unit}
+                        type="button"
+                        onClick={() => {
+                          if (isEdit) {
+                            setEditIdUnit(u.id_unit.toString());
+                            setOpenEditUnitDropdown(false);
+                          } else {
+                            setNewIdUnit(u.id_unit.toString());
+                            setOpenNewUnitDropdown(false);
+                          }
+                        }}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                          (isEdit ? editIdUnit : newIdUnit) === u.id_unit.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                        <span className="truncate">{u.nama_unit}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Tahun</label>
-            <select className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" value={isEdit ? editIdTahun : newIdTahun} onChange={(e) => isEdit ? setEditIdTahun(e.target.value) : setNewIdTahun(e.target.value)} required>
-              <option value="">Pilih Tahun...</option>
-              {Object.values(maps.tahun).map((y) => (<option key={y.id_tahun} value={y.id_tahun}>{y.tahun}</option>))}
-            </select>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
+            <div className={`relative ${isEdit ? 'edit-tahun-dropdown-container' : 'new-tahun-dropdown-container'}`}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (isEdit) {
+                    setOpenEditTahunDropdown(!openEditTahunDropdown);
+                    setOpenEditUnitDropdown(false);
+                  } else {
+                    setOpenNewTahunDropdown(!openNewTahunDropdown);
+                    setOpenNewUnitDropdown(false);
+                  }
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  (isEdit ? editIdTahun : newIdTahun)
+                    ? 'border-[#0384d6] bg-white' 
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                }`}
+                aria-label="Pilih tahun"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                  <span className={`truncate ${(isEdit ? editIdTahun : newIdTahun) ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {(isEdit ? editIdTahun : newIdTahun) 
+                      ? (() => {
+                          const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(isEdit ? editIdTahun : newIdTahun));
+                          return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                        })()
+                      : "Pilih tahun..."}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    (isEdit ? openEditTahunDropdown : openNewTahunDropdown) ? 'rotate-180' : ''
+                  }`} 
+                  size={18} 
+                />
+              </button>
+              {(isEdit ? openEditTahunDropdown : openNewTahunDropdown) && (
+                <div 
+                  className={`absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto ${isEdit ? 'edit-tahun-dropdown-menu' : 'new-tahun-dropdown-menu'} mt-1 w-full`}
+                >
+                  {Object.values(maps.tahun || {}).length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Tidak ada data tahun
+                    </div>
+                  ) : (
+                    Object.values(maps.tahun || {}).map((y) => (
+                      <button
+                        key={y.id_tahun}
+                        type="button"
+                        onClick={() => {
+                          if (isEdit) {
+                            setEditIdTahun(y.id_tahun.toString());
+                            setOpenEditTahunDropdown(false);
+                          } else {
+                            setNewIdTahun(y.id_tahun.toString());
+                            setOpenNewTahunDropdown(false);
+                          }
+                        }}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                          (isEdit ? editIdTahun : newIdTahun) === y.id_tahun.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                        <span className="truncate">{y.tahun || y.nama}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
@@ -546,7 +841,17 @@ export default function Tabel1B({ role }) {
            <button 
                className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                type="button" 
-               onClick={() => isEdit ? setShowEditModal(false) : setShowCreateModal(false)}
+               onClick={() => {
+                 if (isEdit) {
+                   setShowEditModal(false);
+                   setOpenEditTahunDropdown(false);
+                   setOpenEditUnitDropdown(false);
+                 } else {
+                   setShowCreateModal(false);
+                   setOpenNewTahunDropdown(false);
+                   setOpenNewUnitDropdown(false);
+                 }
+               }}
            >
                <span className="relative z-10">Batal</span>
                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>

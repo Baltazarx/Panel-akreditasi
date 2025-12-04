@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown } from 'react-icons/fi';
 
 const ENDPOINT = "/penggunaan-dana";
 const TABLE_KEY = "tabel_1a3";
@@ -16,19 +16,111 @@ const n = (v) => Number(v || 0);
 function YearSelector({ maps, activeYear, setActiveYear }) {
   const tahunData = Object.values(maps.tahun || {});
   
+  // Dropdown state
+  const [openYearDropdown, setOpenYearDropdown] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openYearDropdown && !event.target.closest('.year-selector-dropdown-container') && !event.target.closest('.year-selector-dropdown-menu')) {
+        setOpenYearDropdown(false);
+      }
+    };
+
+    if (openYearDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openYearDropdown]);
+
+  // Close dropdown when activeYear changes
+  useEffect(() => {
+    setOpenYearDropdown(false);
+  }, [activeYear]);
+
+  // Get selected year label
+  const getSelectedYearLabel = () => {
+    if (!activeYear) return "Semua Tahun";
+    const found = tahunData.find((y) => String(y.id_tahun) === String(activeYear));
+    return found ? (found.tahun || found.nama || activeYear) : activeYear;
+  };
+  
   return (
-    <select
-      className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
-      value={activeYear}
-      onChange={(e) => setActiveYear(e.target.value)}
-    >
-      <option value="">Semua Tahun</option>
-      {tahunData.map((y) => (
-        <option key={y.id_tahun} value={y.id_tahun}>
-          {y.tahun || y.nama}
-        </option>
-      ))}
-    </select>
+    <div className="relative year-selector-dropdown-container w-48">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          setOpenYearDropdown(!openYearDropdown);
+        }}
+        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+          activeYear 
+            ? 'border-[#0384d6] bg-white' 
+            : 'border-slate-300 bg-white hover:border-gray-400'
+        }`}
+        aria-label="Pilih tahun"
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+          <span className={`truncate ${activeYear ? 'text-slate-700' : 'text-slate-500'}`}>
+            {getSelectedYearLabel()}
+          </span>
+        </div>
+        <FiChevronDown 
+          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+            openYearDropdown ? 'rotate-180' : ''
+          }`} 
+          size={16} 
+        />
+      </button>
+      {openYearDropdown && (
+        <div 
+          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-selector-dropdown-menu mt-1 w-full"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setActiveYear("");
+              setOpenYearDropdown(false);
+            }}
+            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+              !activeYear
+                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                : 'text-gray-700'
+            }`}
+          >
+            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+            <span>Semua Tahun</span>
+          </button>
+          {tahunData.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+              Tidak ada data tahun
+            </div>
+          ) : (
+            tahunData.map((y) => (
+              <button
+                key={y.id_tahun}
+                type="button"
+                onClick={() => {
+                  setActiveYear(y.id_tahun.toString());
+                  setOpenYearDropdown(false);
+                }}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                  activeYear === y.id_tahun.toString()
+                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                    : 'text-gray-700'
+                }`}
+              >
+                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                <span className="truncate">{y.tahun || y.nama}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -291,6 +383,10 @@ export default function Tabel1A3({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Tahun dropdown state (for form)
+  const [openNewTahunDropdown, setOpenNewTahunDropdown] = useState(false);
+  const [openEditTahunDropdown, setOpenEditTahunDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -328,8 +424,29 @@ export default function Tabel1A3({ role }) {
   useEffect(() => {
     if (showCreateModal || showEditModal) {
       setOpenDropdownId(null);
+      setOpenNewTahunDropdown(false);
+      setOpenEditTahunDropdown(false);
     }
   }, [showCreateModal, showEditModal]);
+
+  // Close tahun dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openNewTahunDropdown && !event.target.closest('.new-tahun-dropdown-container') && !event.target.closest('.new-tahun-dropdown-menu')) {
+        setOpenNewTahunDropdown(false);
+      }
+      if (openEditTahunDropdown && !event.target.closest('.edit-tahun-dropdown-container') && !event.target.closest('.edit-tahun-dropdown-menu')) {
+        setOpenEditTahunDropdown(false);
+      }
+    };
+
+    if (openNewTahunDropdown || openEditTahunDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openNewTahunDropdown, openEditTahunDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -422,6 +539,7 @@ export default function Tabel1A3({ role }) {
       setEditJumlah(editing.jumlah_dana || "");
       setEditLink(editing.link_bukti || "");
       setShowEditModal(true);
+      setOpenEditTahunDropdown(false);
     }
   }, [editing]);
 
@@ -1038,7 +1156,19 @@ export default function Tabel1A3({ role }) {
               className="p-8 space-y-6"
               onSubmit={async (e) => {
                 e.preventDefault();
+                
+                // Validasi tahun harus dipilih
+                if (!newIdTahun || newIdTahun === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Tahun terlebih dahulu.'
+                  });
+                  return;
+                }
+                
                 setLoading(true);
+                setOpenNewTahunDropdown(false);
                 try {
                   const body = { id_tahun: parseInt(newIdTahun), jenis_penggunaan: newJenis, jumlah_dana: n(newJumlah), link_bukti: newLink, created_by: role?.user?.name || role?.user?.username || "Unknown User", created_at: new Date().toISOString() };
                   await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
@@ -1055,22 +1185,73 @@ export default function Tabel1A3({ role }) {
               }}
             >
               <div className="">
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tahun
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Tahun <span className="text-red-500">*</span>
                 </label>
-                <select
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                  value={newIdTahun}
-                  onChange={(e) => setNewIdTahun(e.target.value)}
-                  required
-                >
-                  <option value="">Pilih...</option>
-                  {Object.values(maps.tahun || {}).map((y) => (
-                    <option key={y.id_tahun} value={y.id_tahun}>
-                      {y.tahun || y.nama}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative new-tahun-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenNewTahunDropdown(!openNewTahunDropdown);
+                      setOpenEditTahunDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      newIdTahun 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih tahun"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${newIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {newIdTahun 
+                          ? (() => {
+                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(newIdTahun));
+                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                            })()
+                          : "Pilih tahun..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openNewTahunDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openNewTahunDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-tahun-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.tahun || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data tahun
+                        </div>
+                      ) : (
+                        Object.values(maps.tahun || {}).map((y) => (
+                          <button
+                            key={y.id_tahun}
+                            type="button"
+                            onClick={() => {
+                              setNewIdTahun(y.id_tahun.toString());
+                              setOpenNewTahunDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              newIdTahun === y.id_tahun.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{y.tahun || y.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1109,7 +1290,10 @@ export default function Tabel1A3({ role }) {
                 <button
                   className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setOpenNewTahunDropdown(false);
+                  }}
                 >
                   <span className="relative z-10">Batal</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
@@ -1139,7 +1323,19 @@ export default function Tabel1A3({ role }) {
               className="p-8 space-y-6"
               onSubmit={async (e) => {
                 e.preventDefault();
+                
+                // Validasi tahun harus dipilih
+                if (!editIdTahun || editIdTahun === "") {
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Belum Lengkap',
+                    text: 'Silakan pilih Tahun terlebih dahulu.'
+                  });
+                  return;
+                }
+                
                 setLoading(true);
+                setOpenEditTahunDropdown(false);
                 try {
                   const idField = getIdField(editing);
                   const body = { id_tahun: parseInt(editIdTahun), jenis_penggunaan: editJenis, jumlah_dana: n(editJumlah), link_bukti: editLink, updated_by: role?.user?.name || role?.user?.username || "Unknown User", updated_at: new Date().toISOString() };
@@ -1157,22 +1353,73 @@ export default function Tabel1A3({ role }) {
               }}
             >
               <div className="">
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Tahun
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Tahun <span className="text-red-500">*</span>
                 </label>
-                <select
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                  value={editIdTahun}
-                  onChange={(e) => setEditIdTahun(e.target.value)}
-                  required
-                >
-                  <option value="">Pilih...</option>
-                  {Object.values(maps.tahun || {}).map((y) => (
-                    <option key={y.id_tahun} value={y.id_tahun}>
-                      {y.tahun || y.nama}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative edit-tahun-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenEditTahunDropdown(!openEditTahunDropdown);
+                      setOpenNewTahunDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      editIdTahun 
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih tahun"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${editIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {editIdTahun 
+                          ? (() => {
+                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(editIdTahun));
+                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                            })()
+                          : "Pilih tahun..."}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openEditTahunDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openEditTahunDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-tahun-dropdown-menu mt-1 w-full"
+                    >
+                      {Object.values(maps.tahun || {}).length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data tahun
+                        </div>
+                      ) : (
+                        Object.values(maps.tahun || {}).map((y) => (
+                          <button
+                            key={y.id_tahun}
+                            type="button"
+                            onClick={() => {
+                              setEditIdTahun(y.id_tahun.toString());
+                              setOpenEditTahunDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              editIdTahun === y.id_tahun.toString()
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{y.tahun || y.nama}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -1213,6 +1460,7 @@ export default function Tabel1A3({ role }) {
                   onClick={() => {
                     setShowEditModal(false);
                     setEditing(null);
+                    setOpenEditTahunDropdown(false);
                   }}
                 >
                   <span className="relative z-10">Batal</span>
