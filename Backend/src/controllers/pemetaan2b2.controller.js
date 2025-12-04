@@ -26,17 +26,23 @@ export const listPemetaan2b2 = async (req, res) => {
     // gunakan buildWhere agar otomatis filter per prodi jika ada id_unit_prodi column
     const { where, params } = await buildWhere(req, 'cpl', 'cpl');
 
-    // ambil semua PL untuk header
-    // Query ini mengambil PL yang relevan (pernah dipetakan) dengan CPL prodi ini
-    const sqlPl = `
+    // ambil PL untuk header - PERBAIKAN: Filter berdasarkan prodi yang sama dengan CPL
+    // Ambil PL yang memiliki id_unit_prodi yang sama dengan prodi yang dipilih
+    let sqlPl = `
       SELECT DISTINCT pl.id_pl, pl.kode_pl
       FROM profil_lulusan pl
-      JOIN map_cpl_pl mc ON mc.id_pl = pl.id_pl
-      JOIN cpl ON mc.id_cpl = cpl.id_cpl
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY pl.kode_pl ASC
     `;
-    const [plRows] = await pool.query(sqlPl, params);
+    let plParams = [];
+    
+    // Jika ada query parameter id_unit_prodi, filter PL berdasarkan prodi yang sama
+    const prodiId = req.query?.id_unit_prodi;
+    if (prodiId) {
+      sqlPl += ` WHERE pl.id_unit_prodi = ?`;
+      plParams.push(prodiId);
+    }
+    
+    sqlPl += ` ORDER BY pl.kode_pl ASC`;
+    const [plRows] = await pool.query(sqlPl, plParams);
     const plCodes = plRows.map(p => p.kode_pl);
 
     // ambil semua CPL yang perlu ditampilkan (sesuai where)
@@ -89,16 +95,22 @@ export const exportPemetaan2b2 = async (req, res) => {
   try {
     const { where, params } = await buildWhere(req, 'cpl', 'cpl');
 
-    // fetch PL codes (those that are mapped to the selected CPLs)
-    const sqlPl = `
+    // fetch PL codes - PERBAIKAN: Filter berdasarkan prodi yang sama dengan CPL
+    let sqlPl = `
       SELECT DISTINCT pl.id_pl, pl.kode_pl
       FROM profil_lulusan pl
-      JOIN map_cpl_pl mc ON mc.id_pl = pl.id_pl
-      JOIN cpl ON mc.id_cpl = cpl.id_cpl
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY pl.kode_pl ASC
     `;
-    const [plRows] = await pool.query(sqlPl, params);
+    let plParams = [];
+    
+    // Jika ada query parameter id_unit_prodi, filter PL berdasarkan prodi yang sama
+    const prodiId = req.query?.id_unit_prodi;
+    if (prodiId) {
+      sqlPl += ` WHERE pl.id_unit_prodi = ?`;
+      plParams.push(prodiId);
+    }
+    
+    sqlPl += ` ORDER BY pl.kode_pl ASC`;
+    const [plRows] = await pool.query(sqlPl, plParams);
     const plCodes = plRows.map(p => p.kode_pl);
 
     // fetch CPLs
@@ -169,10 +181,15 @@ export const exportPemetaan2b2 = async (req, res) => {
  */
 export const updatePemetaan2b2 = async (req, res) => {
   // Input body: { rows: [ { kode_cpl: 'CPL01', row: { PL1: true, ... } }, ... ] }
-  const { rows } = req.body;
+  const { rows, id_unit_prodi: id_unit_prodi_from_body } = req.body;
   
-  // Ambil id_unit_prodi dari user yang login (diasumsikan oleh middleware requireAuth)
-  const id_unit_prodi = req.user.id_unit_prodi;
+  // Cek apakah user adalah superadmin
+  const userRole = req.user?.role?.toLowerCase();
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+  
+  // Prioritas: id_unit_prodi dari body (jika superadmin mengirim), lalu dari user yang login
+  // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
+  let id_unit_prodi = id_unit_prodi_from_body || req.user?.id_unit_prodi || req.user?.id_unit;
 
   if (!id_unit_prodi) {
     return res.status(400).json({ error: 'User tidak memiliki id_unit_prodi. Update gagal.' });

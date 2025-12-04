@@ -22,18 +22,18 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
   
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
-  const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
+  const userProdiId = authUser?.id_unit_prodi || authUser?.id_unit || authUser?.unit;
   
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
 
-  // Set selectedProdi untuk user prodi
+  // Set selectedProdi untuk user prodi atau default untuk superadmin
   useEffect(() => {
     if (!isSuperAdmin && userProdiId && !selectedProdi) {
       // User prodi: set ke prodi mereka
       setSelectedProdi(String(userProdiId));
     } else if (isSuperAdmin && !selectedProdi) {
-      // Superadmin: default ke "Semua Prodi" (empty string)
+      // Superadmin: default ke "Semua Prodi"
       setSelectedProdi("");
     }
   }, [isSuperAdmin, userProdiId, selectedProdi]);
@@ -42,14 +42,18 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
     if (!canRead) return;
     setLoading(true);
     
-    // Tambahkan query parameter jika filter aktif
+    // Tambahkan query parameter untuk filter prodi
     const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
     if (!isSuperAdmin && userProdiId) {
+      // User prodi: filter berdasarkan prodi mereka
       queryParams.append("id_unit_prodi", String(userProdiId));
-    } else if (isSuperAdmin && selectedProdi) {
+    } else if (isSuperAdmin && selectedProdi && selectedProdi !== "") {
+      // Superadmin: filter berdasarkan prodi yang dipilih di dropdown
+      // Hanya kirim query parameter jika bukan "Semua Prodi" (empty string)
       queryParams.append("id_unit_prodi", selectedProdi);
     }
+    // Jika superadmin memilih "Semua Prodi" (empty string), tidak kirim query parameter
+    // Backend akan menggunakan req.user.id_unit_prodi dari token
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
     
     try {
@@ -88,33 +92,89 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   const handleSave = async () => {
     if (!canUpdate) return;
     
-    // Tambahkan query parameter jika filter aktif
-    const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
-    if (!isSuperAdmin && userProdiId) {
-      queryParams.append("id_unit_prodi", String(userProdiId));
-    } else if (isSuperAdmin && selectedProdi) {
-      queryParams.append("id_unit_prodi", selectedProdi);
+    // Validasi: Pastikan id_unit_prodi tersedia
+    let targetProdiId = null;
+    
+    if (!isSuperAdmin) {
+      // User prodi: gunakan id_unit_prodi dari authUser
+      if (!userProdiId) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Unit/Prodi Tidak Ditemukan',
+          html: `
+            <p>Unit/Prodi tidak ditemukan dari data user Anda.</p>
+            <p><strong>Solusi:</strong></p>
+            <ol style="text-align: left; margin: 10px 0;">
+              <li>Pastikan akun Anda memiliki Unit/Prodi di database</li>
+              <li>Silakan <strong>logout</strong> dan <strong>login ulang</strong> untuk mendapatkan token baru</li>
+              <li>Jika masih error, hubungi administrator untuk memastikan akun Anda memiliki Unit/Prodi</li>
+            </ol>
+          `,
+          confirmButtonText: 'Mengerti'
+        });
+        return;
+      }
+      targetProdiId = userProdiId;
+    } else {
+      // Superadmin: gunakan prodi yang dipilih di dropdown
+      // Jika "Semua Prodi" dipilih, tidak bisa save (harus pilih prodi spesifik)
+      if (!selectedProdi) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Pilih Prodi Terlebih Dahulu',
+          text: 'Silakan pilih Prodi spesifik (TI atau MI) di dropdown sebelum menyimpan data. Opsi "Semua Prodi" hanya untuk melihat data.',
+          confirmButtonText: 'Mengerti'
+        });
+        return;
+      }
+      targetProdiId = selectedProdi;
     }
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+    
+    // Query parameter untuk filter
+    const queryParams = new URLSearchParams();
+    queryParams.append("id_unit_prodi", String(targetProdiId));
+    const queryString = `?${queryParams.toString()}`;
+    
+    // Body request
+    const requestBody = {
+      rows: data.rows,
+      id_unit_prodi: Number(targetProdiId)
+    };
     
     try {
+      // Validasi: pastikan ada data rows yang akan disimpan
+      if (!requestBody.rows || requestBody.rows.length === 0) {
+        Swal.fire('Warning', 'Tidak ada data untuk disimpan', 'warning');
+        return;
+      }
+      
+      // Validasi: pastikan setiap row memiliki kode_cpl dan row
+      const invalidRows = requestBody.rows.filter(row => !row.kode_cpl || !row.row);
+      if (invalidRows.length > 0) {
+        console.error('Invalid rows:', invalidRows);
+        Swal.fire('Error', 'Format data tidak valid. Pastikan setiap baris memiliki kode_cpl dan row.', 'error');
+        return;
+      }
+      
       await apiFetch(`/pemetaan-2b2${queryString}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: data.rows })
+        body: JSON.stringify(requestBody)
       });
       
-      Swal.fire('Success', 'Data pemetaan berhasil disimpan', 'success');
+      // Trigger refresh untuk tab lain (terutama 2B.1)
+      if (onDataChange) {
+        onDataChange();
+      }
       
-      // Tunggu sebentar sebelum refresh untuk memastikan backend selesai memproses
-      setTimeout(async () => {
-        await fetchData(); // Refresh data untuk Pemetaan2B2
-        if (onDataChange) onDataChange(); // Trigger refresh untuk tab lain
-      }, 500);
+      // Refresh data
+      await fetchData();
+      
+      Swal.fire('Success', 'Data pemetaan berhasil disimpan. Tabel 2B.1 akan otomatis ter-update.', 'success');
     } catch (err) {
       console.error('Error saving Pemetaan2B2:', err);
-      Swal.fire('Error', `Gagal menyimpan data pemetaan: ${err.message}`, 'error');
+      const errorMessage = err.response?.error || err.message || 'Gagal menyimpan data pemetaan';
+      Swal.fire('Error', errorMessage, 'error');
     }
   };
 
@@ -123,7 +183,6 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
     
     // Tambahkan query parameter jika filter aktif
     const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
     if (!isSuperAdmin && userProdiId) {
       queryParams.append("id_unit_prodi", String(userProdiId));
     } else if (isSuperAdmin && selectedProdi) {
@@ -155,10 +214,9 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   };
 
   useEffect(() => {
-    // Hanya fetch jika:
-    // - User prodi dan userProdiId sudah ada, ATAU
-    // - Superadmin (bisa fetch tanpa filter atau dengan filter)
-    if ((!isSuperAdmin && userProdiId) || isSuperAdmin) {
+    // Fetch data ketika selectedProdi berubah atau refreshTrigger berubah
+    // Untuk superadmin, fetch data jika selectedProdi sudah di-set (termasuk empty string untuk "Semua Prodi")
+    if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
       fetchData();
     }
   }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]);
@@ -174,13 +232,23 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-slate-800">Pemetaan CPL vs Profil Lulusan</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">Pemetaan CPL vs Profil Lulusan</h2>
+          {!isSuperAdmin && userProdiId && (
+            <p className="text-sm text-slate-600 mt-1">
+              Prodi: {userProdiId === "4" || userProdiId === 4 ? "Teknik Informatika (TI)" : userProdiId === "5" || userProdiId === 5 ? "Manajemen Informatika (MI)" : userProdiId}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-3">
-          {/* Tampilkan filter HANYA jika superadmin */}
+          {/* Tampilkan dropdown HANYA jika superadmin */}
           {isSuperAdmin && (
             <select
               value={selectedProdi}
-              onChange={(e) => setSelectedProdi(e.target.value)}
+              onChange={(e) => {
+                setSelectedProdi(e.target.value);
+                // fetchData akan dipanggil otomatis oleh useEffect ketika selectedProdi berubah
+              }}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
             >
               <option value="">Semua Prodi</option>
@@ -244,6 +312,22 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      
+      {/* Peringatan untuk superadmin jika belum memilih prodi */}
+      {isSuperAdmin && !selectedProdi && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-yellow-800 font-medium">
+              Peringatan: Mode "Semua Prodi" hanya untuk melihat data. Jika ingin mencentang checkbox atau menyimpan data, silakan pilih Prodi spesifik (TI atau MI) di menu dropdown di atas.
+            </p>
+          </div>
         </div>
       )}
     </div>

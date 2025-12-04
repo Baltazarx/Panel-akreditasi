@@ -88,32 +88,86 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
   const handleSave = async () => {
     if (!canUpdate) return;
     
-    // Tambahkan query parameter jika filter aktif
+    // Tentukan id_unit_prodi yang akan digunakan
+    let targetProdiId = null;
+    
+    if (!isSuperAdmin) {
+      // User prodi: gunakan id_unit_prodi dari authUser
+      if (!userProdiId) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Unit/Prodi Tidak Ditemukan',
+          html: `
+            <p>Unit/Prodi tidak ditemukan dari data user Anda.</p>
+            <p><strong>Solusi:</strong></p>
+            <ol style="text-align: left; margin: 10px 0;">
+              <li>Pastikan akun Anda memiliki Unit/Prodi di database</li>
+              <li>Silakan <strong>logout</strong> dan <strong>login ulang</strong> untuk mendapatkan token baru</li>
+              <li>Jika masih error, hubungi administrator untuk memastikan akun Anda memiliki Unit/Prodi</li>
+            </ol>
+          `,
+          confirmButtonText: 'Mengerti'
+        });
+        return;
+      }
+      targetProdiId = userProdiId;
+    } else {
+      // Superadmin: harus memilih prodi di dropdown untuk bisa save
+      if (!selectedProdi) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Pilih Prodi Terlebih Dahulu',
+          text: 'Silakan pilih Prodi di dropdown sebelum menyimpan data. Mode "Semua Prodi" hanya untuk melihat.',
+          confirmButtonText: 'Mengerti'
+        });
+        return;
+      }
+      targetProdiId = selectedProdi;
+    }
+    
+    // Query parameter untuk filter (opsional, untuk konsistensi dengan fetch)
     const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
-    if (!isSuperAdmin && userProdiId) {
-      queryParams.append("id_unit_prodi", String(userProdiId));
-    } else if (isSuperAdmin && selectedProdi) {
-      queryParams.append("id_unit_prodi", selectedProdi);
+    if (targetProdiId) {
+      queryParams.append("id_unit_prodi", String(targetProdiId));
     }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
     
+    // Body request: kirim id_unit_prodi untuk semua user (backend akan menggunakan ini jika ada)
+    const requestBody = {
+      rows: data.rows
+    };
+    
+    // Selalu kirim id_unit_prodi di body request jika ada targetProdiId
+    if (targetProdiId) {
+      requestBody.id_unit_prodi = Number(targetProdiId);
+    }
+    
     try {
+      // Validasi: pastikan ada data rows yang akan disimpan
+      if (!requestBody.rows || requestBody.rows.length === 0) {
+        Swal.fire('Warning', 'Tidak ada data untuk disimpan', 'warning');
+        return;
+      }
+      
       await apiFetch(`/pemetaan-cpmk-cpl${queryString}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: data.rows })
+        body: JSON.stringify(requestBody)
       });
       
       Swal.fire('Success', 'Data pemetaan CPMK vs CPL berhasil disimpan', 'success');
       
-      setTimeout(async () => {
-        await fetchData(); // Refresh data
-        if (onDataChange) onDataChange(); // Trigger refresh tab lain
-      }, 500);
+      // Trigger refresh untuk tab lain SEBELUM menampilkan success message
+      if (onDataChange) {
+        onDataChange(); // Trigger refresh untuk Pemetaan2B1, Pemetaan2B3, dll
+      }
+      
+      // Refresh data
+      await fetchData();
     } catch (err) {
       console.error('Error saving PemetaanCpmkCpl:', err);
-      Swal.fire('Error', `Gagal menyimpan data pemetaan CPMK vs CPL: ${err.message}`, 'error');
+      const errorMessage = err.response?.error || err.message || 'Gagal menyimpan data pemetaan';
+      Swal.fire('Error', errorMessage, 'error');
     }
   };
 
