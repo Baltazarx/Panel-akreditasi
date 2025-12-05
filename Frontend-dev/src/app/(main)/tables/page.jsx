@@ -740,23 +740,29 @@ export default function TablesPage() {
                 </div>
               </div>
             ) : (
-              <motion.div
-                key={activeTable}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                {activeTable && ActiveComponent ? (activeTable === 'C1' ? (
-                  <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
+              <AnimatePresence mode="wait">
+                {activeTable && ActiveComponent ? (
+                  <motion.div
+                    key={activeTable}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ActiveComponent {...activeProps} />
+                  </motion.div>
                 ) : (
-                  <ActiveComponent {...activeProps} />
-                )) : (
-                  <div className="p-8 text-center text-slate-600">
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-8 text-center text-slate-600"
+                  >
                     <p>Memuat komponen...</p>
-                  </div>
+                  </motion.div>
                 )}
-              </motion.div>
+              </AnimatePresence>
             )}
           </main>
         </div>
@@ -809,23 +815,29 @@ export default function TablesPage() {
                 </div>
               </div>
             ) : (
-              <motion.div
-                key={activeTable}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                {activeTable && ActiveComponent ? (activeTable === 'C1' ? (
-                  <ActiveComponent {...activeProps} key={`c1-${lastC1TabFromStore || 'none'}`} />
+              <AnimatePresence mode="wait">
+                {activeTable && ActiveComponent ? (
+                  <motion.div
+                    key={activeTable}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ActiveComponent {...activeProps} />
+                  </motion.div>
                 ) : (
-                  <ActiveComponent {...activeProps} />
-                )) : (
-                  <div className="p-8 text-center text-slate-600">
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-8 text-center text-slate-600"
+                  >
                     <p>Memuat komponen...</p>
-                  </div>
+                  </motion.div>
                 )}
-              </motion.div>
+              </AnimatePresence>
             )}
           </div>
         </main>

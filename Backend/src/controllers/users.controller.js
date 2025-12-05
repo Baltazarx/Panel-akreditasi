@@ -20,8 +20,13 @@ export const listUsers = async (req, res) => {
     } else if (statusFilter === 'inactive') {
       // Akun Nonaktif: is_active = 0 ATAU deleted_at IS NOT NULL
       whereNoDeleted.push('(u.is_active = 0 OR u.deleted_at IS NOT NULL)');
+    } else if (statusFilter === 'all') {
+      // Tampilkan semua termasuk yang sudah di-soft delete
+      // Tidak perlu filter tambahan
+    } else {
+      // Default: hanya tampilkan akun yang aktif (tidak di-soft delete)
+      whereNoDeleted.push('u.deleted_at IS NULL');
     }
-    // Jika status = 'all' atau tidak ada, tampilkan semua (tidak perlu filter tambahan)
 
     const sql = `
       SELECT u.id_user, u.username, u.role, u.is_active, u.deleted_at,
@@ -124,6 +129,18 @@ export const updateUser = async (req, res) => {
 // ===== SOFT DELETE (NONAKTIFKAN) =====
 export const softDeleteUser = async (req, res) => {
   try {
+    const userId = req.params.id;
+    
+    // Cek apakah user ada
+    const [existing] = await pool.query(
+      `SELECT id_user FROM users WHERE id_user = ?`,
+      [userId]
+    );
+    
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     // Nonaktifkan = set is_active = 0 dan deleted_at (mencegah login)
     const payload = { 
       deleted_at: new Date(),
@@ -132,14 +149,21 @@ export const softDeleteUser = async (req, res) => {
     if (await hasColumn('users', 'deleted_by')) {
       payload.deleted_by = req.user?.id_user || null;
     }
-    await pool.query(
-      `UPDATE users SET ? WHERE id_user=?`,
-      [payload, req.params.id]
+    
+    const [result] = await pool.query(
+      `UPDATE users SET ? WHERE id_user = ?`,
+      [payload, userId]
     );
-    res.json({ ok: true, softDeleted: true });
+    
+    // Verifikasi update berhasil
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found or already deleted' });
+    }
+    
+    res.json({ ok: true, softDeleted: true, message: 'User deleted successfully' });
   } catch (err) {
     console.error("Error softDeleteUser:", err);
-    res.status(500).json({ error: 'Delete failed' });
+    res.status(500).json({ error: 'Delete failed', details: err.message });
   }
 };
 

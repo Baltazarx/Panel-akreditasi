@@ -15,6 +15,8 @@ export default function UserManagementPage() {
   const [units, setUnits] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [pegawaiQuery, setPegawaiQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -67,12 +69,16 @@ export default function UserManagementPage() {
   // Ambil data users
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const data = await api.get("/users");
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Gagal ambil users:", err);
-      // Notifikasi bisa ditambahkan di sini jika diperlukan
-      Swal.fire('Gagal!', `Gagal memuat data pengguna: ${err.message}`, 'error');
+      const errorMessage = err?.response?.data?.error || err?.message || 'Gagal memuat data pengguna.';
+      Swal.fire('Gagal!', errorMessage, 'error');
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,38 +104,70 @@ export default function UserManagementPage() {
   const handleSubmit = async (e) => {
     if (isReadOnlyRole) return;
     e.preventDefault();
+    
+    // Validasi form
+    if (!formData.username || !formData.username.trim()) {
+      Swal.fire('Gagal!', 'Username tidak boleh kosong.', 'error');
+      return;
+    }
+    
+    if (!formData.id_unit) {
+      Swal.fire('Gagal!', 'Unit kerja harus dipilih.', 'error');
+      return;
+    }
+    
+    if (!formData.role) {
+      Swal.fire('Gagal!', 'Role harus dipilih.', 'error');
+      return;
+    }
+    
     try {
+      setSubmitting(true);
+      
       // Siapkan payload
-      const payload = { ...formData };
+      const payload = {
+        username: formData.username.trim(),
+        id_unit: formData.id_unit || null,
+        id_pegawai: formData.id_pegawai || null,
+        role: formData.role,
+      };
       
       // Untuk create: gunakan password default "123"
       // Untuk edit: jangan kirim password (biarkan backend tidak mengubah password)
       if (!editMode) {
         payload.password = "123"; // Password default untuk akun baru
-      } else {
-        // Saat edit, hapus password dari payload agar tidak diubah
-        delete payload.password;
       }
       
       if (editMode) {
         await api.put(`/users/${formData.id_user}`, payload);
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Akun berhasil diperbarui.',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
         await api.post("/users", payload);
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Akun berhasil dibuat dengan password default "123".',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
+      
       setShowForm(false);
       setEditMode(false);
       resetForm();
-      fetchUsers();
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: `Akun berhasil ${editMode ? 'diperbarui' : 'dibuat'} dengan password default "123".`,
-        timer: 2000,
-        showConfirmButton: false
-      });
+      await fetchUsers();
     } catch (err) {
       console.error("Gagal simpan user:", err);
-      Swal.fire('Gagal!', `Gagal menyimpan akun: ${err.message}`, 'error');
+      const errorMessage = err?.response?.data?.error || err?.message || 'Terjadi kesalahan saat menyimpan akun.';
+      Swal.fire('Gagal!', errorMessage, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -145,6 +183,7 @@ export default function UserManagementPage() {
     });
     setPegawaiQuery("");
     setPegawaiList([]);
+    setEditMode(false);
   };
 
   // Edit user
@@ -152,13 +191,14 @@ export default function UserManagementPage() {
     if (isReadOnlyRole) return;
     setFormData({
       id_user: user.id_user,
-      username: user.username,
+      username: user.username || "",
       password: "", // Tidak digunakan lagi, tapi tetap di state untuk kompatibilitas
-      id_unit: user.id_unit,
-      id_pegawai: user.id_pegawai,
-      role: user.role,
+      id_unit: user.id_unit || "",
+      id_pegawai: user.id_pegawai || "",
+      role: user.role || "PRODI",
     });
     setPegawaiQuery(user.pegawai_name || "");
+    setPegawaiList([]);
     setEditMode(true);
     setShowForm(true);
   };
@@ -179,11 +219,19 @@ export default function UserManagementPage() {
       if (result.isConfirmed) {
         try {
           await api.delete(`/users/${id}`);
-          fetchUsers();
-          Swal.fire('Berhasil!', 'Akun telah dihapus.', 'success');
+          // Refresh data setelah delete
+          await fetchUsers();
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Akun telah dihapus.',
+            timer: 2000,
+            showConfirmButton: false
+          });
         } catch (err) {
           console.error("Gagal hapus user:", err);
-          Swal.fire('Gagal!', `Gagal menghapus akun: ${err.message}`, 'error');
+          const errorMessage = err?.response?.data?.error || err?.message || 'Gagal menghapus akun.';
+          Swal.fire('Gagal!', errorMessage, 'error');
         }
       }
     });
@@ -295,21 +343,36 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <tr>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Username</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Role</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pegawai</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {users.map((u, idx) => (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#043975] mx-auto mb-2"></div>
+            <p className="text-slate-500">Memuat data...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Username</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Role</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pegawai</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500">
+                    Tidak ada data pengguna.
+                  </td>
+                </tr>
+              ) : (
+                users.map((u, idx) => (
               <tr
                 key={u.id_user}
                 className={`transition-colors ${
@@ -352,10 +415,12 @@ export default function UserManagementPage() {
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Dropdown Menu - Fixed Position */}
       {!isReadOnlyRole && openDropdownId !== null && (() => {
@@ -423,8 +488,20 @@ export default function UserManagementPage() {
       })()}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100">
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowForm(false);
+              setEditMode(false);
+              resetForm();
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h2 className="text-xl font-bold">
                 {editMode ? 'Edit' : 'Tambah'} Akun Pengguna
@@ -469,6 +546,11 @@ export default function UserManagementPage() {
                     </option>
                   ))}
                 </select>
+                {formData.id_unit && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Unit dipilih: {units.find(u => u.id_unit === formData.id_unit)?.nama_unit}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -548,6 +630,7 @@ export default function UserManagementPage() {
                   onClick={() => {
                     setShowForm(false);
                     setEditMode(false);
+                    resetForm();
                   }}
                   className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
                 >
@@ -555,9 +638,17 @@ export default function UserManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white shadow-md transition-colors"
+                  disabled={submitting}
+                  className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Simpan
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan</span>
+                  )}
                 </button>
               </div>
             </form>
