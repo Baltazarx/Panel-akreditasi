@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiUser, FiBriefcase, FiShield } from 'react-icons/fi';
 
 const ENDPOINT_BASE = "/tabel-3a3-pengembangan-dtpr";
 const ENDPOINT_SUMMARY = "/tabel-3a3-pengembangan-dtpr/summary";
@@ -22,6 +22,10 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
     jumlah_dtpr: "",
     link_bukti: "",
   });
+
+  // Dropdown state
+  const [openUnitDropdown, setOpenUnitDropdown] = useState(false);
+  const [openTahunDropdown, setOpenTahunDropdown] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -40,12 +44,33 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
         link_bukti: "",
       });
     }
-  }, [initialData, authUser]);
+    setOpenUnitDropdown(false);
+    setOpenTahunDropdown(false);
+  }, [initialData, authUser, isOpen]);
 
   const unitOptions = useMemo(() => {
     const units = maps?.units || maps?.unit_kerja || {};
     return Object.values(units);
   }, [maps]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openUnitDropdown && !event.target.closest('.unit-dropdown-container') && !event.target.closest('.unit-dropdown-menu')) {
+        setOpenUnitDropdown(false);
+      }
+      if (openTahunDropdown && !event.target.closest('.tahun-dropdown-container') && !event.target.closest('.tahun-dropdown-menu')) {
+        setOpenTahunDropdown(false);
+      }
+    };
+
+    if (openUnitDropdown || openTahunDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openUnitDropdown, openTahunDropdown]);
 
   if (!isOpen) return null;
 
@@ -55,6 +80,8 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setOpenUnitDropdown(false);
+    setOpenTahunDropdown(false);
     onSave(form);
   };
 
@@ -83,45 +110,148 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
           <div className="grid grid-cols-1 gap-6">
             {/* Unit */}
             <div>
-              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-2">
                 Unit/Prodi <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_unit"
-                value={form.id_unit}
-                onChange={(e) => handleChange("id_unit", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-                disabled={!!initialData}
-              >
-                <option value="">Pilih Unit/Prodi</option>
-                {unitOptions.map((unit) => (
-                  <option key={unit.id_unit} value={unit.id_unit}>
-                    {unit.nama_unit}
-                  </option>
-                ))}
-              </select>
+              <div className="relative unit-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!initialData) {
+                      setOpenUnitDropdown(!openUnitDropdown);
+                      setOpenTahunDropdown(false);
+                    }
+                  }}
+                  disabled={!!initialData}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_unit
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label="Pilih unit/prodi"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_unit 
+                        ? (() => {
+                            const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
+                            return found ? found.nama_unit : "Pilih Unit/Prodi...";
+                          })()
+                        : "Pilih Unit/Prodi"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openUnitDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openUnitDropdown && !initialData && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-dropdown-menu mt-1 w-full"
+                  >
+                    {unitOptions.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data unit
+                      </div>
+                    ) : (
+                      unitOptions.map((unit) => (
+                        <button
+                          key={unit.id_unit}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_unit", unit.id_unit.toString());
+                            setOpenUnitDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_unit === unit.id_unit.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{unit.nama_unit}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tahun */}
             <div>
-              <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-2">
                 Tahun Akademik <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_tahun"
-                value={form.id_tahun}
-                onChange={(e) => handleChange("id_tahun", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-              >
-                <option value="">Pilih Tahun</option>
-                {tahunList.map((tahun) => (
-                  <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                    {tahun.tahun || tahun.nama || tahun.id_tahun}
-                  </option>
-                ))}
-              </select>
+              <div className="relative tahun-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenTahunDropdown(!openTahunDropdown);
+                    setOpenUnitDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_tahun
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih tahun akademik"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_tahun 
+                        ? (() => {
+                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                            return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
+                          })()
+                        : "Pilih Tahun"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openTahunDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openTahunDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu mt-1 w-full"
+                    style={{ minWidth: '200px' }}
+                  >
+                    {tahunList.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data tahun
+                      </div>
+                    ) : (
+                      tahunList.map((tahun) => (
+                        <button
+                          key={tahun.id_tahun}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_tahun", tahun.id_tahun.toString());
+                            setOpenTahunDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_tahun === tahun.id_tahun.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
               {initialData && (
                 <p className="text-xs text-gray-500 mt-1">
                   Pilih tahun yang ingin di-edit (TS, TS-1, TS-2, TS-3, atau TS-4)
@@ -164,7 +294,11 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setOpenUnitDropdown(false);
+                setOpenTahunDropdown(false);
+                onClose();
+              }}
               className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               <span className="relative z-10">Batal</span>
@@ -195,6 +329,12 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
   });
 
   const [dosenList, setDosenList] = useState([]);
+
+  // Dropdown state
+  const [openUnitDropdown, setOpenUnitDropdown] = useState(false);
+  const [openDosenDropdown, setOpenDosenDropdown] = useState(false);
+  const [openJenisDropdown, setOpenJenisDropdown] = useState(false);
+  const [openTahunDropdown, setOpenTahunDropdown] = useState(false);
 
   useEffect(() => {
     const fetchDosen = async () => {
@@ -242,12 +382,41 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
         link_bukti: "",
       });
     }
-  }, [initialData, authUser]);
+    setOpenUnitDropdown(false);
+    setOpenDosenDropdown(false);
+    setOpenJenisDropdown(false);
+    setOpenTahunDropdown(false);
+  }, [initialData, authUser, isOpen]);
 
   const unitOptions = useMemo(() => {
     const units = maps?.units || maps?.unit_kerja || {};
     return Object.values(units);
   }, [maps]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openUnitDropdown && !event.target.closest('.unit-detail-dropdown-container') && !event.target.closest('.unit-detail-dropdown-menu')) {
+        setOpenUnitDropdown(false);
+      }
+      if (openDosenDropdown && !event.target.closest('.dosen-dropdown-container') && !event.target.closest('.dosen-dropdown-menu')) {
+        setOpenDosenDropdown(false);
+      }
+      if (openJenisDropdown && !event.target.closest('.jenis-dropdown-container') && !event.target.closest('.jenis-dropdown-menu')) {
+        setOpenJenisDropdown(false);
+      }
+      if (openTahunDropdown && !event.target.closest('.tahun-detail-dropdown-container') && !event.target.closest('.tahun-detail-dropdown-menu')) {
+        setOpenTahunDropdown(false);
+      }
+    };
+
+    if (openUnitDropdown || openDosenDropdown || openJenisDropdown || openTahunDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openUnitDropdown, openDosenDropdown, openJenisDropdown, openTahunDropdown]);
 
   if (!isOpen) return null;
 
@@ -297,88 +466,290 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
           <div className="grid grid-cols-1 gap-6">
             {/* Unit */}
             <div>
-              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-2">
                 Unit/Prodi <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_unit"
-                value={form.id_unit}
-                onChange={(e) => handleChange("id_unit", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-                disabled={!!initialData}
-              >
-                <option value="">Pilih Unit/Prodi</option>
-                {unitOptions.map((unit) => (
-                  <option key={unit.id_unit} value={unit.id_unit}>
-                    {unit.nama_unit}
-                  </option>
-                ))}
-              </select>
+              <div className="relative unit-detail-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!initialData) {
+                      setOpenUnitDropdown(!openUnitDropdown);
+                      setOpenDosenDropdown(false);
+                      setOpenJenisDropdown(false);
+                      setOpenTahunDropdown(false);
+                    }
+                  }}
+                  disabled={!!initialData}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_unit
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label="Pilih unit/prodi"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_unit 
+                        ? (() => {
+                            const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
+                            return found ? found.nama_unit : "Pilih Unit/Prodi...";
+                          })()
+                        : "Pilih Unit/Prodi"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openUnitDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openUnitDropdown && !initialData && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-detail-dropdown-menu mt-1 w-full"
+                  >
+                    {unitOptions.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data unit
+                      </div>
+                    ) : (
+                      unitOptions.map((unit) => (
+                        <button
+                          key={unit.id_unit}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_unit", unit.id_unit.toString());
+                            setOpenUnitDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_unit === unit.id_unit.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{unit.nama_unit}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Dosen */}
             <div>
-              <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-2">
                 Dosen DTPR <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_dosen"
-                value={form.id_dosen}
-                onChange={(e) => handleChange("id_dosen", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-              >
-                <option value="">Pilih Dosen</option>
-                {dosenList.map((dosen) => (
-                  <option key={dosen.id_dosen} value={dosen.id_dosen}>
-                    {dosen.nama || `${dosen.nama_depan || ""} ${dosen.nama_belakang || ""}`.trim() || `Dosen ${dosen.id_dosen}`}
-                  </option>
-                ))}
-              </select>
+              <div className="relative dosen-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDosenDropdown(!openDosenDropdown);
+                    setOpenUnitDropdown(false);
+                    setOpenJenisDropdown(false);
+                    setOpenTahunDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_dosen
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih dosen DTPR"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_dosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_dosen 
+                        ? (() => {
+                            const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
+                            return found ? (found.nama || `Dosen ${d.id_dosen}`) : "Pilih Dosen...";
+                          })()
+                        : "Pilih Dosen"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openDosenDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openDosenDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto dosen-dropdown-menu mt-1 w-full"
+                  >
+                    {dosenList.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data dosen
+                      </div>
+                    ) : (
+                      dosenList.map((dosen) => (
+                        <button
+                          key={dosen.id_dosen}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_dosen", dosen.id_dosen.toString());
+                            setOpenDosenDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_dosen === dosen.id_dosen.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{dosen.nama || `Dosen ${dosen.id_dosen}`}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Jenis Pengembangan */}
             <div>
-              <label htmlFor="jenis_pengembangan" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="jenis_pengembangan" className="block text-sm font-medium text-slate-700 mb-2">
                 Jenis Pengembangan <span className="text-red-500">*</span>
               </label>
-              <select
-                id="jenis_pengembangan"
-                value={form.jenis_pengembangan}
-                onChange={(e) => handleChange("jenis_pengembangan", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-              >
-                <option value="">Pilih Jenis Pengembangan</option>
-                {jenisPengembanganOptions.map((jenis) => (
-                  <option key={jenis} value={jenis}>
-                    {jenis}
-                  </option>
-                ))}
-              </select>
+              <div className="relative jenis-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenJenisDropdown(!openJenisDropdown);
+                    setOpenUnitDropdown(false);
+                    setOpenDosenDropdown(false);
+                    setOpenTahunDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.jenis_pengembangan
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih jenis pengembangan"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.jenis_pengembangan ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.jenis_pengembangan || "Pilih Jenis Pengembangan"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openJenisDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openJenisDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto jenis-dropdown-menu mt-1 w-full"
+                  >
+                    {jenisPengembanganOptions.map((jenis) => (
+                      <button
+                        key={jenis}
+                        type="button"
+                        onClick={() => {
+                          handleChange("jenis_pengembangan", jenis);
+                          setOpenJenisDropdown(false);
+                        }}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                          form.jenis_pengembangan === jenis
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
+                        <span className="truncate">{jenis}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tahun */}
             <div>
-              <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-2">
                 Tahun Akademik <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_tahun"
-                value={form.id_tahun}
-                onChange={(e) => handleChange("id_tahun", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-                disabled={!!initialData}
-              >
-                <option value="">Pilih Tahun</option>
-                {tahunList.map((tahun) => (
-                  <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                    {tahun.tahun || tahun.nama || tahun.id_tahun}
-                  </option>
-                ))}
-              </select>
+              <div className="relative tahun-detail-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!initialData) {
+                      setOpenTahunDropdown(!openTahunDropdown);
+                      setOpenUnitDropdown(false);
+                      setOpenDosenDropdown(false);
+                      setOpenJenisDropdown(false);
+                    }
+                  }}
+                  disabled={!!initialData}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_tahun
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label="Pilih tahun akademik"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_tahun 
+                        ? (() => {
+                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                            return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
+                          })()
+                        : "Pilih Tahun"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openTahunDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openTahunDropdown && !initialData && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-detail-dropdown-menu mt-1 w-full"
+                    style={{ minWidth: '200px' }}
+                  >
+                    {tahunList.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data tahun
+                      </div>
+                    ) : (
+                      tahunList.map((tahun) => (
+                        <button
+                          key={tahun.id_tahun}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_tahun", tahun.id_tahun.toString());
+                            setOpenTahunDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_tahun === tahun.id_tahun.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Link Bukti */}
@@ -400,7 +771,13 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setOpenUnitDropdown(false);
+                setOpenDosenDropdown(false);
+                setOpenJenisDropdown(false);
+                setOpenTahunDropdown(false);
+                onClose();
+              }}
               className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               <span className="relative z-10">Batal</span>
@@ -912,6 +1289,7 @@ export default function Tabel3A3({ auth, role }) {
   const [showDeletedSummary, setShowDeletedSummary] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState(null);
+  const [openTahunFilterDropdown, setOpenTahunFilterDropdown] = useState(false);
 
   // Modal state
   const [modalSummaryOpen, setModalSummaryOpen] = useState(false);
@@ -990,6 +1368,27 @@ export default function Tabel3A3({ auth, role }) {
       }
     }
   }, [tahunList, selectedTahun]);
+
+  // Close tahun filter dropdown when selectedTahun changes
+  useEffect(() => {
+    setOpenTahunFilterDropdown(false);
+  }, [selectedTahun]);
+
+  // Close tahun filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openTahunFilterDropdown && !event.target.closest('.tahun-filter-dropdown-container') && !event.target.closest('.tahun-filter-dropdown-menu')) {
+        setOpenTahunFilterDropdown(false);
+      }
+    };
+
+    if (openTahunFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openTahunFilterDropdown]);
 
   // Fetch Summary data
   useEffect(() => {
@@ -1395,20 +1794,73 @@ export default function Tabel3A3({ auth, role }) {
           <label htmlFor="tahun" className="text-sm font-medium text-slate-700 whitespace-nowrap">
             Pilih Tahun Akademik (TS):
           </label>
-          <select
-            id="tahun"
-            value={selectedTahun || ""}
-            onChange={(e) => setSelectedTahun(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-            disabled={detailLoading || summaryLoading}
-          >
-            <option value="">Pilih Tahun</option>
-            {tahunList.map((tahun) => (
-              <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                {tahun.tahun || tahun.nama || tahun.id_tahun}
-              </option>
-            ))}
-          </select>
+          <div className="relative tahun-filter-dropdown-container" style={{ minWidth: '200px' }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!detailLoading && !summaryLoading) {
+                  setOpenTahunFilterDropdown(!openTahunFilterDropdown);
+                }
+              }}
+              disabled={detailLoading || summaryLoading}
+              className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                selectedTahun 
+                  ? 'border-[#0384d6] bg-white' 
+                  : 'border-slate-300 bg-white hover:border-gray-400'
+              } ${(detailLoading || summaryLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Pilih tahun"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                <span className={`truncate ${selectedTahun ? 'text-slate-700' : 'text-slate-500'}`}>
+                  {selectedTahun 
+                    ? (() => {
+                        const found = tahunList.find((y) => String(y.id_tahun) === String(selectedTahun));
+                        return found ? (found.tahun || found.nama) : selectedTahun;
+                      })()
+                    : "Pilih Tahun"}
+                </span>
+              </div>
+              <FiChevronDown 
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                  openTahunFilterDropdown ? 'rotate-180' : ''
+                }`} 
+                size={16} 
+              />
+            </button>
+            {openTahunFilterDropdown && !detailLoading && !summaryLoading && (
+              <div 
+                className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-filter-dropdown-menu mt-1 w-full"
+                style={{ minWidth: '200px' }}
+              >
+                {tahunList.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    Tidak ada data tahun
+                  </div>
+                ) : (
+                  tahunList.map((y) => (
+                    <button
+                      key={y.id_tahun}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTahun(y.id_tahun.toString());
+                        setOpenTahunFilterDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                        selectedTahun === y.id_tahun.toString()
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                      <span>{y.tahun || y.nama || y.id_tahun}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
           {selectedTahun && (
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200">
