@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus, FiSave } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus, FiSave, FiChevronDown, FiBriefcase } from 'react-icons/fi';
 
 const ENDPOINT = "/tabel-6-kesesuaian-visi-misi";
 const TABLE_KEY = "tabel_6_kesesuaian_visi_misi";
@@ -25,6 +25,9 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   });
 
   const [prodiList, setProdiList] = useState([]);
+
+  // Dropdown state
+  const [openProdiDropdown, setOpenProdiDropdown] = useState(false);
 
   // Fetch prodi list
   useEffect(() => {
@@ -69,7 +72,24 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         });
       }
     }
+    setOpenProdiDropdown(false);
   }, [initialData, isOpen, selectedProdi, isSuperAdmin]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openProdiDropdown && !event.target.closest('.prodi-dropdown-container') && !event.target.closest('.prodi-dropdown-menu')) {
+        setOpenProdiDropdown(false);
+      }
+    };
+
+    if (openProdiDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openProdiDropdown]);
 
   if (!isOpen) return null;
 
@@ -79,6 +99,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setOpenProdiDropdown(false);
     onSave(form);
   };
 
@@ -106,24 +127,75 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {/* Program Studi */}
           <div>
-            <label htmlFor="id_unit_prodi" className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="id_unit_prodi" className="block text-sm font-medium text-slate-700 mb-2">
               Program Studi <span className="text-red-500">*</span>
             </label>
-            <select
-              id="id_unit_prodi"
-              value={form.id_unit_prodi}
-              onChange={(e) => handleChange("id_unit_prodi", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] disabled:bg-gray-100 disabled:cursor-not-allowed"
-              required
-              disabled={!!initialData || (isSuperAdmin && !initialData)}
-            >
-              <option value="">-- Pilih Program Studi --</option>
-              {prodiList.map((p) => (
-                <option key={p.id_unit} value={p.id_unit}>
-                  {p.nama_unit || p.nama || p.id_unit}
-                </option>
-              ))}
-            </select>
+            <div className="relative prodi-dropdown-container">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!initialData && !(isSuperAdmin && !initialData)) {
+                    setOpenProdiDropdown(!openProdiDropdown);
+                  }
+                }}
+                disabled={!!initialData || (isSuperAdmin && !initialData)}
+                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  form.id_unit_prodi
+                    ? 'border-[#0384d6] bg-white' 
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                } ${(!!initialData || (isSuperAdmin && !initialData)) ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                aria-label="Pilih program studi"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                  <span className={`truncate ${form.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {form.id_unit_prodi 
+                      ? (() => {
+                          const found = prodiList.find((p) => String(p.id_unit) === String(form.id_unit_prodi));
+                          return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Pilih Program Studi --";
+                        })()
+                      : "-- Pilih Program Studi --"}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    openProdiDropdown ? 'rotate-180' : ''
+                  }`} 
+                  size={18} 
+                />
+              </button>
+              {openProdiDropdown && !initialData && !(isSuperAdmin && !initialData) && (
+                <div 
+                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-dropdown-menu mt-1 w-full"
+                >
+                  {prodiList.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Tidak ada data program studi
+                    </div>
+                  ) : (
+                    prodiList.map((p) => (
+                      <button
+                        key={p.id_unit}
+                        type="button"
+                        onClick={() => {
+                          handleChange("id_unit_prodi", p.id_unit.toString());
+                          setOpenProdiDropdown(false);
+                        }}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                          form.id_unit_prodi === p.id_unit.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                        <span className="truncate">{p.nama_unit || p.nama || p.id_unit}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             {initialData && (
               <p className="mt-1 text-xs text-slate-500">Program Studi tidak dapat diubah setelah data dibuat.</p>
             )}
@@ -230,7 +302,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setOpenProdiDropdown(false);
+                onClose();
+              }}
               className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               <span className="relative z-10">Batal</span>
@@ -273,6 +348,7 @@ export default function Tabel6({ auth, role: propRole }) {
   
   // State filter menyimpan id_unit_prodi
   const [selectedProdi, setSelectedProdi] = useState("");
+  const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
   
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
@@ -417,6 +493,27 @@ export default function Tabel6({ auth, role: propRole }) {
       }
     }
   }, [selectedProdi, rows, isKetuastikom]);
+
+  // Close prodi filter dropdown when selectedProdi changes
+  useEffect(() => {
+    setOpenProdiFilterDropdown(false);
+  }, [selectedProdi]);
+
+  // Close prodi filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openProdiFilterDropdown && !event.target.closest('.prodi-filter-dropdown-container') && !event.target.closest('.prodi-filter-dropdown-menu')) {
+        setOpenProdiFilterDropdown(false);
+      }
+    };
+
+    if (openProdiFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openProdiFilterDropdown]);
 
   // Handle save (create/update)
   const handleSave = async (formData) => {
@@ -597,16 +694,87 @@ export default function Tabel6({ auth, role: propRole }) {
 
             {/* Dropdown filter untuk superadmin dan ketuastikom */}
             {(isSuperAdmin || isKetuastikom) && (
-              <select
-                value={selectedProdi}
-                onChange={(e) => setSelectedProdi(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
-              >
-                {isSuperAdmin && <option value="">Semua Prodi</option>}
-                {prodiList.map(prodi => (
-                  <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
-                ))}
-              </select>
+              <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    selectedProdi 
+                      ? 'border-[#0384d6] bg-white text-black' 
+                      : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih program studi"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                    <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                      {selectedProdi 
+                        ? (() => {
+                            const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
+                            return found ? found.nama_unit : selectedProdi;
+                          })()
+                        : isSuperAdmin ? "Semua Prodi" : "-- Pilih Prodi --"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={16} 
+                  />
+                </button>
+                {openProdiFilterDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                    style={{ minWidth: '200px' }}
+                  >
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedProdi("");
+                          setOpenProdiFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                          !selectedProdi
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                        <span>Semua Prodi</span>
+                      </button>
+                    )}
+                    {prodiList.length > 0 ? (
+                      prodiList.map((prodi) => (
+                        <button
+                          key={prodi.id_unit}
+                          type="button"
+                          onClick={() => {
+                            setSelectedProdi(String(prodi.id_unit));
+                            setOpenProdiFilterDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                            selectedProdi === String(prodi.id_unit)
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                          <span>{prodi.nama_unit}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data program studi
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
            <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">

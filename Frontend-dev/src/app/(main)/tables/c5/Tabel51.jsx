@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus, FiChevronDown, FiBriefcase, FiGlobe } from 'react-icons/fi';
 
 const ENDPOINT = "/tabel-5-1-sistem-tata-kelola";
 const TABLE_KEY = "tabel_5_1_sistem_tata_kelola";
@@ -23,6 +23,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
   });
 
   const [unitList, setUnitList] = useState([]);
+
+  // Dropdown state
+  const [openAksesDropdown, setOpenAksesDropdown] = useState(false);
+  const [openUnitDropdown, setOpenUnitDropdown] = useState(false);
 
   // Fetch unit kerja list
   useEffect(() => {
@@ -60,7 +64,28 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
         });
       }
     }
+    setOpenAksesDropdown(false);
+    setOpenUnitDropdown(false);
   }, [initialData, isOpen]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openAksesDropdown && !event.target.closest('.akses-dropdown-container') && !event.target.closest('.akses-dropdown-menu')) {
+        setOpenAksesDropdown(false);
+      }
+      if (openUnitDropdown && !event.target.closest('.unit-dropdown-container') && !event.target.closest('.unit-dropdown-menu')) {
+        setOpenUnitDropdown(false);
+      }
+    };
+
+    if (openAksesDropdown || openUnitDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openAksesDropdown, openUnitDropdown]);
 
   if (!isOpen) return null;
 
@@ -70,6 +95,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setOpenAksesDropdown(false);
+    setOpenUnitDropdown(false);
     onSave(form);
   };
 
@@ -130,40 +157,160 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Akses */}
             <div>
-              <label htmlFor="akses" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="akses" className="block text-sm font-medium text-slate-700 mb-2">
                 Akses (Lokal/Internet)
               </label>
-              <select
-                id="akses"
-                value={form.akses}
-                onChange={(e) => handleChange("akses", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              >
-                <option value="">-- Pilih Akses --</option>
-                <option value="Lokal">Lokal</option>
-                <option value="Internet">Internet</option>
-              </select>
+              <div className="relative akses-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenAksesDropdown(!openAksesDropdown);
+                    setOpenUnitDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.akses
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih akses"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiGlobe className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.akses ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.akses || "-- Pilih Akses --"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openAksesDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openAksesDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto akses-dropdown-menu mt-1 w-full"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleChange("akses", "");
+                        setOpenAksesDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                        !form.akses
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
+                      <span>-- Pilih Akses --</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleChange("akses", "Lokal");
+                        setOpenAksesDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                        form.akses === "Lokal"
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
+                      <span>Lokal</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleChange("akses", "Internet");
+                        setOpenAksesDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                        form.akses === "Internet"
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
+                      <span>Internet</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Unit Kerja/SDM Pengelola */}
             <div>
-              <label htmlFor="id_unit_pengelola" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="id_unit_pengelola" className="block text-sm font-medium text-slate-700 mb-2">
                 Unit Kerja/SDM Pengelola <span className="text-red-500">*</span>
               </label>
-              <select
-                id="id_unit_pengelola"
-                value={form.id_unit_pengelola}
-                onChange={(e) => handleChange("id_unit_pengelola", e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-              >
-                <option value="">-- Pilih Unit Kerja --</option>
-                {unitList.map((u) => (
-                  <option key={u.id_unit} value={u.id_unit}>
-                    {u.nama_unit || u.nama || u.id_unit}
-                  </option>
-                ))}
-              </select>
+              <div className="relative unit-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenUnitDropdown(!openUnitDropdown);
+                    setOpenAksesDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    form.id_unit_pengelola
+                      ? 'border-[#0384d6] bg-white' 
+                      : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih unit kerja"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_unit_pengelola ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_unit_pengelola 
+                        ? (() => {
+                            const found = unitList.find((u) => String(u.id_unit) === String(form.id_unit_pengelola));
+                            return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Pilih Unit Kerja --";
+                          })()
+                        : "-- Pilih Unit Kerja --"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openUnitDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={18} 
+                  />
+                </button>
+                {openUnitDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-dropdown-menu mt-1 w-full"
+                  >
+                    {unitList.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data unit kerja
+                      </div>
+                    ) : (
+                      unitList.map((u) => (
+                        <button
+                          key={u.id_unit}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_unit_pengelola", u.id_unit.toString());
+                            setOpenUnitDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                            form.id_unit_pengelola === u.id_unit.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{u.nama_unit || u.nama || u.id_unit}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -185,7 +332,11 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setOpenAksesDropdown(false);
+                setOpenUnitDropdown(false);
+                onClose();
+              }}
               className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               <span className="relative z-10">Batal</span>
