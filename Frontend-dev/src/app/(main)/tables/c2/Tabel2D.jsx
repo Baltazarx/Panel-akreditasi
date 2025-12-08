@@ -7,6 +7,7 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role"; 
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from "sweetalert2";
+import { FiChevronDown, FiCalendar, FiBriefcase, FiShield } from 'react-icons/fi';
 
 export default function Tabel2D({ role }) {
     const { maps } = useMaps(true);
@@ -34,6 +35,11 @@ export default function Tabel2D({ role }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingDetail, setEditingDetail] = useState(null);
+    
+    // Dropdown states for filters and forms
+    const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
+    const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
+    const [openFormSumberDropdown, setOpenFormSumberDropdown] = useState(false);
 
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -53,8 +59,42 @@ export default function Tabel2D({ role }) {
           document.body.classList.remove('modal-open');
           window.scrollTo(0, scrollY);
         };
+      } else {
+        // Close form dropdowns when modal closes
+        setOpenFormSumberDropdown(false);
       }
     }, [showAddModal]);
+
+    // Close filter dropdowns when values change
+    useEffect(() => {
+      setOpenYearFilterDropdown(false);
+    }, [selectedYear]);
+
+    useEffect(() => {
+      setOpenProdiFilterDropdown(false);
+    }, [selectedProdi]);
+
+    // Close filter and form dropdowns on outside click
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
+          setOpenYearFilterDropdown(false);
+        }
+        if (openProdiFilterDropdown && !event.target.closest('.prodi-filter-dropdown-container') && !event.target.closest('.prodi-filter-dropdown-menu')) {
+          setOpenProdiFilterDropdown(false);
+        }
+        if (openFormSumberDropdown && !event.target.closest('.form-sumber-dropdown-container') && !event.target.closest('.form-sumber-dropdown-menu')) {
+          setOpenFormSumberDropdown(false);
+        }
+      };
+
+      if (openYearFilterDropdown || openProdiFilterDropdown || openFormSumberDropdown) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+      }
+    }, [openYearFilterDropdown, openProdiFilterDropdown, openFormSumberDropdown]);
     const [detailsToSubmit, setDetailsToSubmit] = useState([]); // Daftar rincian yang akan di-submit
 
     const isProdiUser = ['prodi'].includes(role?.toLowerCase());
@@ -347,7 +387,8 @@ export default function Tabel2D({ role }) {
 
     // Handler ketika tombol "+ Tambah ke Daftar" ditekan - menambahkan ke daftar
     const handleAddRekognisi = (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
+        setOpenFormSumberDropdown(false);
         
         const { id_sumber, jenis_pengakuan, jumlah_mahasiswa_rekognisi, link_bukti } = singleInput;
 
@@ -416,6 +457,7 @@ export default function Tabel2D({ role }) {
     // Handler untuk submit Data TS (Mengirim semua data di detailsToSubmit)
     const handleSubmitBulk = async (e) => {
         e.preventDefault();
+        setOpenFormSumberDropdown(false);
         
         if (!selectedYear || isAllYearsSelected || !canManageData) {
             Swal.fire("Error", "Pilih tahun akademik spesifik untuk menambah atau mengedit data", "error");
@@ -676,30 +718,150 @@ export default function Tabel2D({ role }) {
             <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
                 <div className="flex items-center gap-2 flex-wrap">
                     <label className="text-sm font-medium text-slate-700">Tahun (TS):</label>
-                    <select
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                    >
-                        <option value="all">Semua Tahun</option>
-                        {availableYears.map((y) => (
-                            <option key={y.id} value={y.id}>{y.text}</option>
-                        ))}
-                    </select>
+                    <div className="relative year-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setOpenYearFilterDropdown(!openYearFilterDropdown);
+                            }}
+                            className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                                selectedYear 
+                                    ? 'border-[#0384d6] bg-white text-black' 
+                                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                            }`}
+                            aria-label="Pilih tahun"
+                        >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span className={`truncate ${selectedYear ? 'text-black' : 'text-gray-500'}`}>
+                                    {selectedYear === "all" 
+                                        ? "Semua Tahun"
+                                        : selectedYear 
+                                            ? (() => {
+                                                const found = availableYears.find((y) => String(y.id) === String(selectedYear));
+                                                return found ? found.text : selectedYear;
+                                            })()
+                                            : "Pilih Tahun"}
+                                </span>
+                            </div>
+                            <FiChevronDown 
+                                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                    openYearFilterDropdown ? 'rotate-180' : ''
+                                }`} 
+                                size={16} 
+                            />
+                        </button>
+                        {openYearFilterDropdown && (
+                            <div 
+                                className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
+                                style={{ minWidth: '200px' }}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedYear("all");
+                                        setOpenYearFilterDropdown(false);
+                                    }}
+                                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                                        selectedYear === "all"
+                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                            : 'text-gray-700'
+                                    }`}
+                                >
+                                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                                    <span>Semua Tahun</span>
+                                </button>
+                                {availableYears.length > 0 ? (
+                                    availableYears.map((y) => (
+                                        <button
+                                            key={y.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedYear(String(y.id));
+                                                setOpenYearFilterDropdown(false);
+                                            }}
+                                            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                                                selectedYear === String(y.id)
+                                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                    : 'text-gray-700'
+                                            }`}
+                                        >
+                                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                                            <span>{y.text}</span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                        Tidak ada data tahun
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                     
                     {/* Filter Prodi khusus untuk superadmin */}
                     {isSuperAdmin && (
                         <>
                             <label className="text-sm font-medium text-slate-700 ml-2">Prodi:</label>
-                            <select
-                                value={selectedProdi}
-                                onChange={(e) => setSelectedProdi(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                            >
-                                {availableProdi.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.nama}</option>
-                                ))}
-                            </select>
+                            <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                                    }}
+                                    className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                                        selectedProdi 
+                                            ? 'border-[#0384d6] bg-white text-black' 
+                                            : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                                    }`}
+                                    aria-label="Pilih prodi"
+                                >
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                                        <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                                            {selectedProdi 
+                                                ? (() => {
+                                                    const found = availableProdi.find((p) => String(p.id) === String(selectedProdi));
+                                                    return found ? found.nama : selectedProdi;
+                                                })()
+                                                : "Pilih Prodi"}
+                                        </span>
+                                    </div>
+                                    <FiChevronDown 
+                                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                            openProdiFilterDropdown ? 'rotate-180' : ''
+                                        }`} 
+                                        size={16} 
+                                    />
+                                </button>
+                                {openProdiFilterDropdown && (
+                                    <div 
+                                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                                        style={{ minWidth: '200px' }}
+                                    >
+                                        {availableProdi.map((p) => (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedProdi(String(p.id));
+                                                    setOpenProdiFilterDropdown(false);
+                                                }}
+                                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                                                    selectedProdi === String(p.id)
+                                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                        : 'text-gray-700'
+                                                }`}
+                                            >
+                                                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                                                <span>{p.nama}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
                     
@@ -944,6 +1106,7 @@ export default function Tabel2D({ role }) {
                   style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
                   onClick={(e) => {
                     if (e.target === e.currentTarget) {
+                      setOpenFormSumberDropdown(false);
                       setShowAddModal(false);
                     }
                   }}
@@ -965,19 +1128,70 @@ export default function Tabel2D({ role }) {
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">Sumber Rekognisi <span className="text-red-500">*</span></label>
-                                            <select
-                                                name="id_sumber"
-                                                value={singleInput.id_sumber}
-                                                onChange={handleSingleInputChange}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                                                required
-                                            >
-                                                <option value="" disabled>Pilih Sumber...</option>
-                                                {masterSumber.map(s => (
-                                                    <option key={s.id_sumber} value={s.id_sumber}>{s.nama_sumber}</option>
-                                                ))}
-                                            </select>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Sumber Rekognisi <span className="text-red-500">*</span></label>
+                                            <div className="relative form-sumber-dropdown-container">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setOpenFormSumberDropdown(!openFormSumberDropdown);
+                                                    }}
+                                                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                                                        singleInput.id_sumber
+                                                            ? 'border-[#0384d6] bg-white' 
+                                                            : 'border-gray-300 bg-white hover:border-gray-400'
+                                                    }`}
+                                                    aria-label="Pilih sumber rekognisi"
+                                                >
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
+                                                        <span className={`truncate ${singleInput.id_sumber ? 'text-gray-900' : 'text-gray-500'}`}>
+                                                            {singleInput.id_sumber 
+                                                                ? (() => {
+                                                                    const found = masterSumber.find((s) => String(s.id_sumber) === String(singleInput.id_sumber));
+                                                                    return found ? found.nama_sumber : singleInput.id_sumber;
+                                                                })()
+                                                                : "-- Pilih Sumber --"}
+                                                        </span>
+                                                    </div>
+                                                    <FiChevronDown 
+                                                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                                            openFormSumberDropdown ? 'rotate-180' : ''
+                                                        }`} 
+                                                        size={18} 
+                                                    />
+                                                </button>
+                                                {openFormSumberDropdown && (
+                                                    <div 
+                                                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-sumber-dropdown-menu mt-1 w-full"
+                                                    >
+                                                        {masterSumber.length > 0 ? (
+                                                            masterSumber.map(s => (
+                                                                <button
+                                                                    key={s.id_sumber}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSingleInput(prev => ({ ...prev, id_sumber: String(s.id_sumber) }));
+                                                                        setOpenFormSumberDropdown(false);
+                                                                    }}
+                                                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                                                        singleInput.id_sumber === String(s.id_sumber)
+                                                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                                            : 'text-gray-700'
+                                                                    }`}
+                                                                >
+                                                                    <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
+                                                                    <span>{s.nama_sumber}</span>
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                                Tidak ada data sumber
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
@@ -1044,6 +1258,7 @@ export default function Tabel2D({ role }) {
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                setOpenFormSumberDropdown(false);
                                                 setEditingDetail(null);
                                                 setSingleInput({
                                                     id_sumber: masterSumber[0]?.id_sumber ? String(masterSumber[0].id_sumber) : "",
@@ -1060,19 +1275,70 @@ export default function Tabel2D({ role }) {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">Sumber Rekognisi <span className="text-red-500">*</span></label>
-                                <select
-                                    name="id_sumber"
-                                    value={singleInput.id_sumber}
-                                    onChange={handleSingleInputChange}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                                    required
-                                >
-                                    <option value="" disabled>Pilih Sumber...</option>
-                                    {masterSumber.map(s => (
-                                        <option key={s.id_sumber} value={s.id_sumber}>{s.nama_sumber}</option>
-                                    ))}
-                                </select>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Sumber Rekognisi <span className="text-red-500">*</span></label>
+                                            <div className="relative form-sumber-dropdown-container">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setOpenFormSumberDropdown(!openFormSumberDropdown);
+                                                    }}
+                                                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                                                        singleInput.id_sumber
+                                                            ? 'border-[#0384d6] bg-white' 
+                                                            : 'border-gray-300 bg-white hover:border-gray-400'
+                                                    }`}
+                                                    aria-label="Pilih sumber rekognisi"
+                                                >
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
+                                                        <span className={`truncate ${singleInput.id_sumber ? 'text-gray-900' : 'text-gray-500'}`}>
+                                                            {singleInput.id_sumber 
+                                                                ? (() => {
+                                                                    const found = masterSumber.find((s) => String(s.id_sumber) === String(singleInput.id_sumber));
+                                                                    return found ? found.nama_sumber : singleInput.id_sumber;
+                                                                })()
+                                                                : "-- Pilih Sumber --"}
+                                                        </span>
+                                                    </div>
+                                                    <FiChevronDown 
+                                                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                                            openFormSumberDropdown ? 'rotate-180' : ''
+                                                        }`} 
+                                                        size={18} 
+                                                    />
+                                                </button>
+                                                {openFormSumberDropdown && (
+                                                    <div 
+                                                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-sumber-dropdown-menu mt-1 w-full"
+                                                    >
+                                                        {masterSumber.length > 0 ? (
+                                                            masterSumber.map(s => (
+                                                                <button
+                                                                    key={s.id_sumber}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSingleInput(prev => ({ ...prev, id_sumber: String(s.id_sumber) }));
+                                                                        setOpenFormSumberDropdown(false);
+                                                                    }}
+                                                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                                                        singleInput.id_sumber === String(s.id_sumber)
+                                                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                                            : 'text-gray-700'
+                                                                    }`}
+                                                                >
+                                                                    <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
+                                                                    <span>{s.nama_sumber}</span>
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                                Tidak ada data sumber
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                             </div>
 
                                         <div className="space-y-2">
@@ -1190,6 +1456,7 @@ export default function Tabel2D({ role }) {
                                     <button 
                                         type="button" 
                                         onClick={() => {
+                                            setOpenFormSumberDropdown(false);
                                             setShowAddModal(false);
                                             setIsEditMode(false);
                                             setEditingDetail(null);

@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase } from 'react-icons/fi';
 
 // ============================================================
 // MATA KULIAH CRUD
@@ -30,6 +30,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   
   // === PERBAIKAN: State filter menyimpan id_unit_prodi ===
   const [selectedProdi, setSelectedProdi] = useState("");
+  
+  // Dropdown states for filters and forms
+  const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
+  const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
 
   // === PERBAIKAN: Ubah state 'cpmk' menjadi array of object ===
   const [formState, setFormState] = useState({
@@ -83,6 +87,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormUnitDropdown(false);
     setLoading(true);
     try {
       const url = editing ? `/mata-kuliah/${editing.id_mk}` : "/mata-kuliah";
@@ -222,8 +227,35 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   useEffect(() => {
     if (showModal) {
       setOpenDropdownId(null);
+    } else {
+      // Close form dropdowns when modal closes
+      setOpenFormUnitDropdown(false);
     }
   }, [showModal]);
+
+  // Close filter dropdown when value changes
+  useEffect(() => {
+    setOpenProdiFilterDropdown(false);
+  }, [selectedProdi]);
+
+  // Close filter and form dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openProdiFilterDropdown && !event.target.closest('.prodi-filter-dropdown-container') && !event.target.closest('.prodi-filter-dropdown-menu')) {
+        setOpenProdiFilterDropdown(false);
+      }
+      if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
+        setOpenFormUnitDropdown(false);
+      }
+    };
+
+    if (openProdiFilterDropdown || openFormUnitDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openProdiFilterDropdown, openFormUnitDropdown]);
 
   // Lock body scroll and add modal-open class when modal is open
   useEffect(() => {
@@ -298,16 +330,79 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           
           {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
           {isSuperAdmin && (
-            <select
-              value={selectedProdi}
-              onChange={(e) => setSelectedProdi(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
-            >
-              <option value="">Semua Prodi</option>
-              {prodiList.map(prodi => (
-                <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
-              ))}
-            </select>
+            <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                }}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  selectedProdi 
+                    ? 'border-[#0384d6] bg-white text-black' 
+                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                }`}
+                aria-label="Pilih prodi"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                  <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                    {selectedProdi 
+                      ? (() => {
+                          const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
+                          return found ? found.nama_unit : selectedProdi;
+                        })()
+                      : "Semua Prodi"}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    openProdiFilterDropdown ? 'rotate-180' : ''
+                  }`} 
+                  size={16} 
+                />
+              </button>
+              {openProdiFilterDropdown && (
+                <div 
+                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                  style={{ minWidth: '200px' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProdi("");
+                      setOpenProdiFilterDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                      selectedProdi === ""
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                    <span>Semua Prodi</span>
+                  </button>
+                  {prodiList.map(prodi => (
+                    <button
+                      key={prodi.id_unit}
+                      type="button"
+                      onClick={() => {
+                        setSelectedProdi(String(prodi.id_unit));
+                        setOpenProdiFilterDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                        selectedProdi === String(prodi.id_unit)
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                      <span>{prodi.nama_unit}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           
           {canCreate && (
@@ -460,6 +555,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           onClick={(e) => {
             // Close modal when clicking backdrop
             if (e.target === e.currentTarget) {
+              setOpenFormUnitDropdown(false);
               setShowModal(false);
               setEditing(null);
             }
@@ -490,19 +586,78 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Unit Prodi</label>
-                    <select
-                      value={formState.id_unit_prodi}
-                      onChange={(e) => setFormState({...formState, id_unit_prodi: e.target.value})}
-                      required
-                      disabled={!!editing || !isSuperAdmin}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Pilih Unit Prodi</option>
-                      {prodiList.map(prodi => (
-                        <option key={prodi.id_unit} value={prodi.id_unit}>{prodi.nama_unit}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Unit Prodi</label>
+                    <div className="relative form-unit-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!editing && isSuperAdmin) {
+                            setOpenFormUnitDropdown(!openFormUnitDropdown);
+                          }
+                        }}
+                        disabled={!!editing || !isSuperAdmin}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_unit_prodi
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        } ${(!!editing || !isSuperAdmin) ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                        aria-label="Pilih unit prodi"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_unit_prodi 
+                              ? (() => {
+                                  const found = prodiList.find((p) => String(p.id_unit) === String(formState.id_unit_prodi));
+                                  return found ? found.nama_unit : formState.id_unit_prodi;
+                                })()
+                              : '-- Pilih Unit Prodi --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormUnitDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormUnitDropdown && !editing && isSuperAdmin && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
+                        >
+                          {prodiList.length > 0 ? (
+                            prodiList.map(prodi => (
+                              <button
+                                key={prodi.id_unit}
+                                type="button"
+                                onClick={() => {
+                                  setFormState({...formState, id_unit_prodi: String(prodi.id_unit)});
+                                  setOpenFormUnitDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  formState.id_unit_prodi === String(prodi.id_unit)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span>{prodi.nama_unit}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data prodi
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {(!isSuperAdmin || editing) && (
+                        <p className="mt-1 text-xs text-slate-500">
+                          {!isSuperAdmin ? "Unit Prodi otomatis dari akun Anda." : editing ? "Unit Prodi tidak dapat diubah setelah data dibuat." : ""}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -593,7 +748,11 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
-                    onClick={() => { setShowModal(false); setEditing(null); }}
+                    onClick={() => {
+                      setOpenFormUnitDropdown(false);
+                      setShowModal(false);
+                      setEditing(null);
+                    }}
                     className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
                   >
                     Batal

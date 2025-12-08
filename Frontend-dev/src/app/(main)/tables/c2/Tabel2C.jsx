@@ -6,6 +6,7 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role";
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from "sweetalert2";
+import { FiChevronDown, FiCalendar, FiBriefcase } from 'react-icons/fi';
 
 export default function Tabel2C({ role }) {
   const { maps } = useMaps(true);
@@ -20,6 +21,11 @@ export default function Tabel2C({ role }) {
   const [showModal, setShowModal] = useState(false);
   const [editingYear, setEditingYear] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false); // Flag untuk membedakan mode tambah/edit
+  
+  // Dropdown states for filters and forms
+  const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
+  const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
+  const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -41,8 +47,41 @@ export default function Tabel2C({ role }) {
       };
     } else {
       document.body.classList.remove('modal-open');
+      // Close form dropdowns when modal closes
+      setOpenFormUnitDropdown(false);
     }
   }, [showModal]);
+
+  // Close filter dropdowns when values change
+  useEffect(() => {
+    setOpenYearFilterDropdown(false);
+  }, [selectedYear]);
+
+  useEffect(() => {
+    setOpenProdiFilterDropdown(false);
+  }, [selectedProdi]);
+
+  // Close filter and form dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
+        setOpenYearFilterDropdown(false);
+      }
+      if (openProdiFilterDropdown && !event.target.closest('.prodi-filter-dropdown-container') && !event.target.closest('.prodi-filter-dropdown-menu')) {
+        setOpenProdiFilterDropdown(false);
+      }
+      if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
+        setOpenFormUnitDropdown(false);
+      }
+    };
+
+    if (openYearFilterDropdown || openProdiFilterDropdown || openFormUnitDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openYearFilterDropdown, openProdiFilterDropdown, openFormUnitDropdown]);
   const [formState, setFormState] = useState({
     id_unit_prodi: "",
     jumlah_mahasiswa_aktif: "",
@@ -458,6 +497,7 @@ export default function Tabel2C({ role }) {
 
   // Handler untuk tutup modal
   const handleCloseModal = () => {
+    setOpenFormUnitDropdown(false);
     setShowModal(false);
     resetForm();
   };
@@ -465,6 +505,7 @@ export default function Tabel2C({ role }) {
   // Handler untuk submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormUnitDropdown(false);
     
     if (!editingYear) {
       Swal.fire("Error", "Tahun akademik tidak valid", "error");
@@ -768,30 +809,133 @@ export default function Tabel2C({ role }) {
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-slate-700">Tahun (TS):</label>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-          >
-            {availableYears.map((y) => (
-              <option key={y.id} value={y.id}>{y.text}</option>
-            ))}
-          </select>
+          <div className="relative year-filter-dropdown-container" style={{ minWidth: '200px' }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setOpenYearFilterDropdown(!openYearFilterDropdown);
+              }}
+              className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                selectedYear 
+                  ? 'border-[#0384d6] bg-white text-black' 
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+              }`}
+              aria-label="Pilih tahun"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                <span className={`truncate ${selectedYear ? 'text-black' : 'text-gray-500'}`}>
+                  {selectedYear 
+                    ? (() => {
+                        const found = availableYears.find((y) => String(y.id) === String(selectedYear));
+                        return found ? found.text : selectedYear;
+                      })()
+                    : "Pilih Tahun"}
+                </span>
+              </div>
+              <FiChevronDown 
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                  openYearFilterDropdown ? 'rotate-180' : ''
+                }`} 
+                size={16} 
+              />
+            </button>
+            {openYearFilterDropdown && (
+              <div 
+                className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
+                style={{ minWidth: '200px' }}
+              >
+                {availableYears.length > 0 ? (
+                  availableYears.map((y) => (
+                    <button
+                      key={y.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedYear(String(y.id));
+                        setOpenYearFilterDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                        selectedYear === String(y.id)
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                      <span>{y.text}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    Tidak ada data tahun
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           
           {/* Filter Prodi khusus untuk superadmin */}
           {isSuperAdmin && (
             <>
               <label className="text-sm font-medium text-slate-700 ml-2">Prodi:</label>
-              <select
-                value={selectedProdi}
-                onChange={(e) => setSelectedProdi(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                required
-              >
-                {availableProdi.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nama}</option>
-                ))}
-              </select>
+              <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                    selectedProdi 
+                      ? 'border-[#0384d6] bg-white text-black' 
+                      : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
+                  aria-label="Pilih prodi"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                    <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                      {selectedProdi 
+                        ? (() => {
+                            const found = availableProdi.find((p) => String(p.id) === String(selectedProdi));
+                            return found ? found.nama : selectedProdi;
+                          })()
+                        : "Pilih Prodi"}
+                    </span>
+                  </div>
+                  <FiChevronDown 
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                      openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`} 
+                    size={16} 
+                  />
+                </button>
+                {openProdiFilterDropdown && (
+                  <div 
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                    style={{ minWidth: '200px' }}
+                  >
+                    {availableProdi.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedProdi(String(p.id));
+                          setOpenProdiFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                          selectedProdi === String(p.id)
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                        <span>{p.nama}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
           
@@ -1011,6 +1155,7 @@ export default function Tabel2C({ role }) {
           onClick={(e) => {
             // Close modal when clicking backdrop
             if (e.target === e.currentTarget) {
+              setOpenFormUnitDropdown(false);
               handleCloseModal();
             }
           }}
@@ -1033,20 +1178,72 @@ export default function Tabel2C({ role }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {isSuperAdmin && (
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Unit Prodi <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={formState.id_unit_prodi}
-                        onChange={(e) => setFormState({...formState, id_unit_prodi: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                        required
-                      >
-                        <option value="">Pilih Unit Prodi...</option>
-                        {availableProdi.map((p) => (
-                          <option key={p.id} value={p.id}>{p.nama}</option>
-                        ))}
-                      </select>
+                      <div className="relative form-unit-dropdown-container">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setOpenFormUnitDropdown(!openFormUnitDropdown);
+                          }}
+                          className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                            formState.id_unit_prodi
+                              ? 'border-[#0384d6] bg-white' 
+                              : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
+                          aria-label="Pilih unit prodi"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                            <span className={`truncate ${formState.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
+                              {formState.id_unit_prodi 
+                                ? (() => {
+                                    const found = availableProdi.find((p) => String(p.id) === String(formState.id_unit_prodi));
+                                    return found ? found.nama : formState.id_unit_prodi;
+                                  })()
+                                : '-- Pilih Unit Prodi --'}
+                            </span>
+                          </div>
+                          <FiChevronDown 
+                            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                              openFormUnitDropdown ? 'rotate-180' : ''
+                            }`} 
+                            size={18} 
+                          />
+                        </button>
+                        {openFormUnitDropdown && (
+                          <div 
+                            className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
+                          >
+                            {availableProdi.length > 0 ? (
+                              availableProdi.map((p) => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormState({...formState, id_unit_prodi: String(p.id)});
+                                    setOpenFormUnitDropdown(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                    formState.id_unit_prodi === String(p.id)
+                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                                  <span>{p.nama}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                Tidak ada data prodi
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   

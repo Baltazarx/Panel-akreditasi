@@ -5,6 +5,7 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { useAuth } from "../../../../context/AuthContext";
 import { roleCan } from "../../../../lib/role";
 import Swal from 'sweetalert2';
+import { FiChevronDown, FiCalendar } from 'react-icons/fi';
 
 export default function Tabel2A2({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -27,6 +28,11 @@ export default function Tabel2A2({ role }) {
   const [daerahSearchTerm, setDaerahSearchTerm] = useState("");
   const [showDaerahDropdown, setShowDaerahDropdown] = useState(false);
   const daerahInputRef = useRef(null);
+  
+  // Dropdown states
+  const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
+  const [openEditDataDropdown, setOpenEditDataDropdown] = useState(false);
+  const [openTahunFormDropdown, setOpenTahunFormDropdown] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -290,15 +296,37 @@ export default function Tabel2A2({ role }) {
       if (daerahInputRef.current && !daerahInputRef.current.contains(event.target)) {
         setShowDaerahDropdown(false);
       }
+      if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
+        setOpenYearFilterDropdown(false);
+      }
+      if (openEditDataDropdown && !event.target.closest('.edit-data-dropdown-container') && !event.target.closest('.edit-data-dropdown-menu')) {
+        setOpenEditDataDropdown(false);
+      }
+      if (openTahunFormDropdown && !event.target.closest('.tahun-form-dropdown-container') && !event.target.closest('.tahun-form-dropdown-menu')) {
+        setOpenTahunFormDropdown(false);
+      }
     };
 
-    if (showDaerahDropdown) {
+    if (showDaerahDropdown || openYearFilterDropdown || openEditDataDropdown || openTahunFormDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [showDaerahDropdown]);
+  }, [showDaerahDropdown, openYearFilterDropdown, openEditDataDropdown, openTahunFormDropdown]);
+
+  // Close dropdowns when modal closes
+  useEffect(() => {
+    if (!showModal) {
+      setOpenEditDataDropdown(false);
+      setOpenTahunFormDropdown(false);
+    }
+  }, [showModal]);
+
+  // Close year filter dropdown when selectedTahun changes
+  useEffect(() => {
+    setOpenYearFilterDropdown(false);
+  }, [selectedTahun]);
 
   // Sinkronisasi daerahSearchTerm dengan form.nama_daerah_input ketika form berubah dari luar
   useEffect(() => {
@@ -417,6 +445,8 @@ export default function Tabel2A2({ role }) {
   };
 
   const handleCloseModal = () => {
+    setOpenEditDataDropdown(false);
+    setOpenTahunFormDropdown(false);
     setShowModal(false);
     setEditingRow(null);
     setIsEditTSMode(false);
@@ -453,6 +483,8 @@ export default function Tabel2A2({ role }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenEditDataDropdown(false);
+    setOpenTahunFormDropdown(false);
     console.log("📝 Tabel2A2 - Form submission started");
     console.log("📋 Form data:", form);
     console.log("👤 Auth user:", authUser ? { id: authUser.id, role: authUser.role } : null);
@@ -995,19 +1027,83 @@ export default function Tabel2A2({ role }) {
             {/* Year Selector */}
             {maps?.tahun && Object.keys(maps.tahun).length > 0 && (
               <div className="flex items-center gap-2">
-                <label htmlFor="filter-tahun" className="text-sm font-medium text-slate-700">Filter Tahun:</label>
-                <select
-                  id="filter-tahun"
-                  value={selectedTahun || ""}
-                  onChange={(e) => setSelectedTahun(Number(e.target.value))}
-                  className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
-                  disabled={loading}
-                >
-                  <option value="" disabled>Pilih Tahun</option>
-                  {Object.values(maps.tahun).map((t) => (
-                    <option key={t.id_tahun} value={t.id_tahun} className="text-slate-700">{t.tahun}</option>
-                  ))}
-                </select>
+                <label className="text-sm font-medium text-slate-700">Filter Tahun:</label>
+                <div className="relative year-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!loading) {
+                        setOpenYearFilterDropdown(!openYearFilterDropdown);
+                      }
+                    }}
+                    disabled={loading}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      selectedTahun 
+                        ? 'border-[#0384d6] bg-white text-black' 
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    aria-label="Pilih tahun"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                      <span className={`truncate ${selectedTahun ? 'text-black' : 'text-gray-500'}`}>
+                        {selectedTahun 
+                          ? (() => {
+                              const found = Object.values(maps.tahun).find((t) => Number(t.id_tahun) === Number(selectedTahun));
+                              return found ? found.tahun : selectedTahun;
+                            })()
+                          : "Pilih Tahun"}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openYearFilterDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={16} 
+                    />
+                  </button>
+                  {openYearFilterDropdown && !loading && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
+                      style={{ minWidth: '200px' }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTahun(null);
+                          setOpenYearFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                          !selectedTahun
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                        <span>Pilih Tahun</span>
+                      </button>
+                      {Object.values(maps.tahun).map((t) => (
+                        <button
+                          key={t.id_tahun}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTahun(Number(t.id_tahun));
+                            setOpenYearFilterDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                            selectedTahun === Number(t.id_tahun)
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                          <span>{t.tahun}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
@@ -1312,28 +1408,94 @@ export default function Tabel2A2({ role }) {
                 {/* Dropdown untuk memilih data yang ingin diedit - hanya muncul di mode Edit TS */}
                 {isEditTSMode && (
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Pilih Asal Mahasiswa yang Ingin Diedit {getTSData.hasActive && <span className="text-red-500">*</span>}
                     </label>
                     {getTSData.hasActive ? (
                       <>
-                        <select
-                          value={editingRow?.id || ""}
-                          onChange={(e) => handleSelectDataToEdit(e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                        >
-                          <option value="">-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --</option>
-                          {getTSData.active.map((item) => {
-                            const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab" 
-                              ? "Kota/Kab sama dengan PS"
-                              : item.kategori_geografis;
-                            return (
-                              <option key={item.id} value={item.id} className="text-slate-700">
-                                {kategoriLabel} - {item.nama_daerah_input} ({item.jumlah_mahasiswa} mahasiswa)
-                              </option>
-                            );
-                          })}
-                        </select>
+                        <div className="relative edit-data-dropdown-container">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setOpenEditDataDropdown(!openEditDataDropdown);
+                            }}
+                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                              editingRow?.id
+                                ? 'border-[#0384d6] bg-white' 
+                                : 'border-gray-300 bg-white hover:border-gray-400'
+                            }`}
+                            aria-label="Pilih data yang ingin diedit"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                              <span className={`truncate ${editingRow?.id ? 'text-gray-900' : 'text-gray-500'}`}>
+                                {editingRow?.id 
+                                  ? (() => {
+                                      const item = getTSData.active.find(i => Number(i.id) === Number(editingRow.id));
+                                      if (item) {
+                                        const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab" 
+                                          ? "Kota/Kab sama dengan PS"
+                                          : item.kategori_geografis;
+                                        return `${kategoriLabel} - ${item.nama_daerah_input} (${item.jumlah_mahasiswa} mahasiswa)`;
+                                      }
+                                      return "-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --";
+                                    })()
+                                  : "-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --"}
+                              </span>
+                            </div>
+                            <FiChevronDown 
+                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                                openEditDataDropdown ? 'rotate-180' : ''
+                              }`} 
+                              size={18} 
+                            />
+                          </button>
+                          {openEditDataDropdown && (
+                            <div 
+                              className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-data-dropdown-menu mt-1 w-full"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleSelectDataToEdit("");
+                                  setOpenEditDataDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  !editingRow?.id
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span>-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --</span>
+                              </button>
+                              {getTSData.active.map((item) => {
+                                const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab" 
+                                  ? "Kota/Kab sama dengan PS"
+                                  : item.kategori_geografis;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      handleSelectDataToEdit(String(item.id));
+                                      setOpenEditDataDropdown(false);
+                                    }}
+                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                      editingRow?.id === item.id
+                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                        : 'text-gray-700'
+                                    }`}
+                                  >
+                                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                                    <span>{kategoriLabel} - {item.nama_daerah_input} ({item.jumlah_mahasiswa} mahasiswa)</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">
                           Pilih data dari dropdown di atas untuk mengisi form secara otomatis, atau kosongkan untuk menambah data baru.
                         </p>
@@ -1350,20 +1512,70 @@ export default function Tabel2A2({ role }) {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Tahun Akademik <span className="text-red-500">*</span></label>
-                    <select
-                      value={form.id_tahun}
-                      onChange={(e) => setForm({...form, id_tahun: e.target.value})}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Tahun...</option>
-                      {maps?.tahun && Object.values(maps.tahun).map((t) => (
-                        <option key={t.id_tahun} value={t.id_tahun} className="text-slate-700">
-                          {t.tahun}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
+                    <div className="relative tahun-form-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenTahunFormDropdown(!openTahunFormDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          form.id_tahun
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih tahun akademik"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {form.id_tahun 
+                              ? (() => {
+                                  const found = maps?.tahun && Object.values(maps.tahun).find((t) => String(t.id_tahun) === String(form.id_tahun));
+                                  return found ? found.tahun : form.id_tahun;
+                                })()
+                              : "-- Pilih Tahun --"}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openTahunFormDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openTahunFormDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-form-dropdown-menu mt-1 w-full"
+                        >
+                          {maps?.tahun && Object.values(maps.tahun).length > 0 ? (
+                            Object.values(maps.tahun).map((t) => (
+                              <button
+                                key={t.id_tahun}
+                                type="button"
+                                onClick={() => {
+                                  setForm({...form, id_tahun: String(t.id_tahun)});
+                                  setOpenTahunFormDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  form.id_tahun === String(t.id_tahun)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span>{t.tahun}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data tahun
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">

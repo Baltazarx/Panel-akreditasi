@@ -4,6 +4,7 @@ import { apiFetch } from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
+import { FiChevronDown, FiCalendar } from 'react-icons/fi';
 
 // Helper functions for building table headers
 const seg = (n) => (n.key ? String(n.key) : String(n.label || "col")).replace(/\s+/g, "_");
@@ -124,6 +125,7 @@ export default function Tabel2A3() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [editingData, setEditingData] = useState(null);
+  const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -147,6 +149,27 @@ export default function Tabel2A3() {
       document.body.classList.remove('modal-open');
     }
   }, [isModalOpen]);
+
+  // Close year filter dropdown when selectedTahun changes
+  useEffect(() => {
+    setOpenYearFilterDropdown(false);
+  }, [selectedTahun]);
+
+  // Close year filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
+        setOpenYearFilterDropdown(false);
+      }
+    };
+
+    if (openYearFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openYearFilterDropdown]);
 
   const tahunList = useMemo(() => {
     return Object.values(maps.tahun || {}).sort((a, b) => a.id_tahun - b.id_tahun);
@@ -452,21 +475,74 @@ export default function Tabel2A3() {
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2">
-          <label htmlFor="select-tahun" className="text-sm font-medium text-slate-700">Filter Tahun:</label>
-          <select
-            id="select-tahun"
-            className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] w-48"
-            value={selectedTahun || ''}
-            onChange={(e) => setSelectedTahun(Number(e.target.value))}
-            disabled={loading}
-          >
-            <option value="" disabled>Pilih Tahun</option>
-            {tahunList.map((tahun) => (
-              <option key={tahun.id_tahun} value={tahun.id_tahun}>
-                {tahun.tahun || tahun.nama}
-              </option>
-            ))}
-          </select>
+          <label className="text-sm font-medium text-slate-700">Filter Tahun:</label>
+          <div className="relative year-filter-dropdown-container" style={{ minWidth: '200px' }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!loading) {
+                  setOpenYearFilterDropdown(!openYearFilterDropdown);
+                }
+              }}
+              disabled={loading}
+              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                selectedTahun 
+                  ? 'border-[#0384d6] bg-white text-black' 
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Pilih tahun"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                <span className={`truncate ${selectedTahun ? 'text-black' : 'text-gray-500'}`}>
+                  {selectedTahun 
+                    ? (() => {
+                        const found = tahunList.find((t) => Number(t.id_tahun) === Number(selectedTahun));
+                        return found ? (found.tahun || found.nama) : selectedTahun;
+                      })()
+                    : "Pilih Tahun"}
+                </span>
+              </div>
+              <FiChevronDown 
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                  openYearFilterDropdown ? 'rotate-180' : ''
+                }`} 
+                size={16} 
+              />
+            </button>
+            {openYearFilterDropdown && !loading && (
+              <div 
+                className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
+                style={{ minWidth: '200px' }}
+              >
+                {tahunList.length > 0 ? (
+                  tahunList.map((tahun) => (
+                    <button
+                      key={tahun.id_tahun}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTahun(Number(tahun.id_tahun));
+                        setOpenYearFilterDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                        selectedTahun === Number(tahun.id_tahun)
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
+                      <span>{tahun.tahun || tahun.nama}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    Tidak ada data tahun
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
         {currentYearLulusDoData ? (

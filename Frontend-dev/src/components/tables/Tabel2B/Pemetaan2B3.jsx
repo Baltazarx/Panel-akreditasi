@@ -5,6 +5,7 @@ import { apiFetch } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
+import { FiChevronDown, FiBriefcase } from 'react-icons/fi';
 
 // ============================================================
 // 2B.3 PETA PEMENUHAN CPL (LAPORAN)
@@ -24,6 +25,9 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
   
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
+  
+  // Dropdown state for filter
+  const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
   // Set selectedProdi untuk user prodi
   useEffect(() => {
@@ -35,6 +39,27 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
       setSelectedProdi("");
     }
   }, [isSuperAdmin, userProdiId, selectedProdi]);
+
+  // Close filter dropdown when value changes
+  useEffect(() => {
+    setOpenProdiFilterDropdown(false);
+  }, [selectedProdi]);
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openProdiFilterDropdown && !event.target.closest('.prodi-filter-dropdown-container') && !event.target.closest('.prodi-filter-dropdown-menu')) {
+        setOpenProdiFilterDropdown(false);
+      }
+    };
+
+    if (openProdiFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openProdiFilterDropdown]);
 
   const fetchData = async () => {
     if (!canRead) return;
@@ -122,15 +147,90 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
         <div className="flex items-center gap-3">
           {/* Tampilkan filter HANYA jika superadmin */}
           {isSuperAdmin && (
-            <select
-              value={selectedProdi}
-              onChange={(e) => setSelectedProdi(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white text-black"
-            >
-              <option value="">Semua Prodi</option>
-              <option value="4">Teknik Informatika (TI)</option>
-              <option value="5">Manajemen Informatika (MI)</option>
-            </select>
+            <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                }}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  selectedProdi 
+                    ? 'border-[#0384d6] bg-white text-black' 
+                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                }`}
+                aria-label="Pilih prodi"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                  <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                    {selectedProdi === "4" 
+                      ? "Teknik Informatika (TI)"
+                      : selectedProdi === "5"
+                      ? "Manajemen Informatika (MI)"
+                      : "Semua Prodi"}
+                  </span>
+                </div>
+                <FiChevronDown 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                    openProdiFilterDropdown ? 'rotate-180' : ''
+                  }`} 
+                  size={16} 
+                />
+              </button>
+              {openProdiFilterDropdown && (
+                <div 
+                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                  style={{ minWidth: '200px' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProdi("");
+                      setOpenProdiFilterDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                      selectedProdi === ""
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                    <span>Semua Prodi</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProdi("4");
+                      setOpenProdiFilterDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                      selectedProdi === "4"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                    <span>Teknik Informatika (TI)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProdi("5");
+                      setOpenProdiFilterDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
+                      selectedProdi === "5"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                    <span>Manajemen Informatika (MI)</span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <button
             onClick={handleExport}
