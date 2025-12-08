@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../hooks/useAuth";
 import { roleCan } from "../../lib/role";
+import { apiFetch } from "../../lib/api";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 // --- FUNGSI DAN IKON LOKAL ---
@@ -43,6 +44,10 @@ const FiClock = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="
 const FiRefreshCw = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>);
 const FiUpload = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>);
 const FiX = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
+const FiAward = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>);
+const FiShield = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>);
+const FiShieldCheck = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>);
+const FiClipboard = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -422,33 +427,175 @@ const QuickActions = () => {
     const [loading, setLoading] = useState(true);
     const shouldReduceMotion = useReducedMotion();
 
-    const tpmNewsData = [
-        {
-            id: 1,
-            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
-            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
-            date: "2025-10-02",
-            time: "2 Okt 2025",
-            color: "from-blue-500 to-cyan-500",
-            icon: FiNewspaper
-        },
-        {
-            id: 2,
-            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
-            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
-            date: "2025-09-28",
-            time: "28 Sep 2025",
-            color: "from-green-500 to-emerald-500",
-            icon: FiFileText
+    // Generate icon dan color otomatis berdasarkan judul dan prioritas
+    const generateIconAndColor = (judul, prioritas) => {
+        const judulLower = judul?.toLowerCase() || '';
+        
+        // Tentukan icon berdasarkan kata kunci di judul
+        let icon = FiFileText;
+        let color = 'from-blue-500 to-cyan-500';
+        
+        if (judulLower.includes('audit') || judulLower.includes('ami') || judulLower.includes('mutu')) {
+            icon = FiShield;
+            color = 'from-indigo-500 to-indigo-600';
+        } else if (judulLower.includes('akreditasi') || judulLower.includes('unggul') || judulLower.includes('prestasi')) {
+            icon = FiAward;
+            color = 'from-emerald-500 to-emerald-600';
+        } else if (judulLower.includes('sop') || judulLower.includes('prosedur') || judulLower.includes('dokumen')) {
+            icon = FiFileText;
+            color = 'from-amber-500 to-amber-600';
+        } else if (judulLower.includes('workshop') || judulLower.includes('pelatihan') || judulLower.includes('seminar')) {
+            icon = FiBookOpen;
+            color = 'from-blue-500 to-cyan-500';
+        } else if (judulLower.includes('penelitian') || judulLower.includes('pkm') || judulLower.includes('hibah')) {
+            icon = FiTrendingUp;
+            color = 'from-emerald-500 to-emerald-600';
+        } else if (judulLower.includes('mahasiswa') || judulLower.includes('kemahasiswaan')) {
+            icon = FiUsers;
+            color = 'from-blue-500 to-cyan-500';
+        } else if (judulLower.includes('pengumuman') || judulLower.includes('informasi')) {
+            icon = FiClipboard;
+            color = 'from-blue-500 to-cyan-500';
+        } else {
+            // Default berdasarkan prioritas
+            if (prioritas === 'high') {
+                icon = FiShield;
+                color = 'from-indigo-500 to-indigo-600';
+            } else if (prioritas === 'medium') {
+                icon = FiFileText;
+                color = 'from-blue-500 to-cyan-500';
+            } else {
+                icon = FiFileText;
+                color = 'from-blue-500 to-cyan-500';
+            }
         }
-    ];
+        
+        return { icon, color };
+    };
+
+    // Mapping data dari backend ke format frontend
+    const mapBackendToFrontend = (backendData) => {
+        return backendData.map(item => {
+            // Generate icon dan color otomatis
+            const { icon, color } = generateIconAndColor(item.judul, item.prioritas);
+            
+            // Format tanggal untuk time display dengan hari dan jam
+            const formatTime = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const dayName = days[date.getDay()];
+                const dateStr = date.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                return `${dayName}, ${dateStr} ${timeStr} WIB`;
+            };
+            
+            // Format tanggal untuk display
+            const formatDateDisplay = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+
+            // Format waktu untuk "Dibuat"
+            const formatCreatedAt = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const day = date.getDate();
+                const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day} ${month} ${year} pukul ${hours}.${minutes}`;
+            };
+
+            // Hitung reading time (estimasi sederhana: 200 kata per menit)
+            const calculateReadTime = (text) => {
+                if (!text) return '1 menit';
+                const wordCount = text.split(/\s+/).length;
+                const minutes = Math.max(1, Math.ceil(wordCount / 200));
+                return `${minutes} menit`;
+            };
+
+            return {
+                id: item.id_berita,
+                title: item.judul,
+                excerpt: item.ringkasan,
+                date: item.tanggal_publikasi,
+                dateDisplay: formatDateDisplay(item.tanggal_publikasi),
+                time: formatTime(item.tanggal_publikasi),
+                created_at: item.created_at,
+                created_at_display: formatCreatedAt(item.created_at),
+                readTime: calculateReadTime(item.ringkasan || item.isi || ''),
+                priority: item.prioritas || 'medium',
+                status: item.status || 'published',
+                author: item.penulis || item.author || 'Admin',
+                nama_user: item.nama_user || item.user?.nama || '',
+                color: color,
+                icon: icon
+            };
+        });
+    };
+
+    // Fetch data dari API
+    const fetchBerita = async () => {
+        setLoading(true);
+        try {
+            const data = await apiFetch('/berita');
+            
+            // Pastikan data adalah array
+            let dataArray = [];
+            if (Array.isArray(data)) {
+                dataArray = data;
+            } else if (data && typeof data === 'object') {
+                dataArray = data.data || data.items || data.results || Object.values(data);
+            }
+            
+            if (dataArray.length === 0) {
+                setBerita([]);
+                setLoading(false);
+                return;
+            }
+            
+            // Filter out deleted items
+            const activeData = dataArray.filter(item => !item.deleted_at);
+            
+            // Sort berdasarkan tanggal publikasi (terbaru di atas)
+            activeData.sort((a, b) => {
+                const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
+                const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
+                return dateB - dateA; // Descending (terbaru di atas)
+            });
+            
+            // Ambil 2 berita terbaru
+            const latestBerita = activeData.slice(0, 2);
+            
+            // Map data ke format frontend
+            const mappedData = mapBackendToFrontend(latestBerita);
+            setBerita(mappedData);
+        } catch (error) {
+            console.error('Error fetching berita:', error);
+            setBerita([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            // Ambil 2 berita terbaru
-            setBerita(tpmNewsData.slice(0, 2));
-            setLoading(false);
-        }, 500);
+        fetchBerita();
     }, []);
     
     return (
@@ -1266,32 +1413,175 @@ const AksesCepatBeritaDashboard = () => {
     const [loading, setLoading] = useState(true);
     const shouldReduceMotion = useReducedMotion();
 
-    const tpmNewsData = [
-        {
-            id: 1,
-            title: "Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12",
-            excerpt: "AMI Siklus ke-12 akan segera dilaksanakan untuk seluruh program studi dan unit kerja di lingkungan STIKOM.",
-            date: "2025-10-02",
-            time: "2 Okt 2025",
-            color: "from-blue-500 to-cyan-500",
-            icon: FiNewspaper
-        },
-        {
-            id: 2,
-            title: "Persiapan Akreditasi Program Studi Teknik Informatika",
-            excerpt: "Tim TPM mengajak seluruh civitas akademika untuk mempersiapkan dokumen akreditasi.",
-            date: "2025-09-28",
-            time: "28 Sep 2025",
-            color: "from-green-500 to-emerald-500",
-            icon: FiFileText
+    // Generate icon dan color otomatis berdasarkan judul dan prioritas
+    const generateIconAndColor = (judul, prioritas) => {
+        const judulLower = judul?.toLowerCase() || '';
+        
+        // Tentukan icon berdasarkan kata kunci di judul
+        let icon = FiFileText;
+        let color = 'from-blue-500 to-cyan-500';
+        
+        if (judulLower.includes('audit') || judulLower.includes('ami') || judulLower.includes('mutu')) {
+            icon = FiShield;
+            color = 'from-indigo-500 to-indigo-600';
+        } else if (judulLower.includes('akreditasi') || judulLower.includes('unggul') || judulLower.includes('prestasi')) {
+            icon = FiAward;
+            color = 'from-emerald-500 to-emerald-600';
+        } else if (judulLower.includes('sop') || judulLower.includes('prosedur') || judulLower.includes('dokumen')) {
+            icon = FiFileText;
+            color = 'from-amber-500 to-amber-600';
+        } else if (judulLower.includes('workshop') || judulLower.includes('pelatihan') || judulLower.includes('seminar')) {
+            icon = FiBookOpen;
+            color = 'from-blue-500 to-cyan-500';
+        } else if (judulLower.includes('penelitian') || judulLower.includes('pkm') || judulLower.includes('hibah')) {
+            icon = FiTrendingUp;
+            color = 'from-emerald-500 to-emerald-600';
+        } else if (judulLower.includes('mahasiswa') || judulLower.includes('kemahasiswaan')) {
+            icon = FiUsers;
+            color = 'from-blue-500 to-cyan-500';
+        } else if (judulLower.includes('pengumuman') || judulLower.includes('informasi')) {
+            icon = FiClipboard;
+            color = 'from-blue-500 to-cyan-500';
+        } else {
+            // Default berdasarkan prioritas
+            if (prioritas === 'high') {
+                icon = FiShield;
+                color = 'from-indigo-500 to-indigo-600';
+            } else if (prioritas === 'medium') {
+                icon = FiFileText;
+                color = 'from-blue-500 to-cyan-500';
+            } else {
+                icon = FiFileText;
+                color = 'from-blue-500 to-cyan-500';
+            }
         }
-    ];
+        
+        return { icon, color };
+    };
+
+    // Mapping data dari backend ke format frontend
+    const mapBackendToFrontend = (backendData) => {
+        return backendData.map(item => {
+            // Generate icon dan color otomatis
+            const { icon, color } = generateIconAndColor(item.judul, item.prioritas);
+            
+            // Format tanggal untuk time display dengan hari dan jam
+            const formatTime = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const dayName = days[date.getDay()];
+                const dateStr = date.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                return `${dayName}, ${dateStr} ${timeStr} WIB`;
+            };
+            
+            // Format tanggal untuk display
+            const formatDateDisplay = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+
+            // Format waktu untuk "Dibuat"
+            const formatCreatedAt = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const day = date.getDate();
+                const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                const month = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day} ${month} ${year} pukul ${hours}.${minutes}`;
+            };
+
+            // Hitung reading time (estimasi sederhana: 200 kata per menit)
+            const calculateReadTime = (text) => {
+                if (!text) return '1 menit';
+                const wordCount = text.split(/\s+/).length;
+                const minutes = Math.max(1, Math.ceil(wordCount / 200));
+                return `${minutes} menit`;
+            };
+
+            return {
+                id: item.id_berita,
+                title: item.judul,
+                excerpt: item.ringkasan,
+                date: item.tanggal_publikasi,
+                dateDisplay: formatDateDisplay(item.tanggal_publikasi),
+                time: formatTime(item.tanggal_publikasi),
+                created_at: item.created_at,
+                created_at_display: formatCreatedAt(item.created_at),
+                readTime: calculateReadTime(item.ringkasan || item.isi || ''),
+                priority: item.prioritas || 'medium',
+                status: item.status || 'published',
+                author: item.penulis || item.author || 'Admin',
+                nama_user: item.nama_user || item.user?.nama || '',
+                color: color,
+                icon: icon
+            };
+        });
+    };
+
+    // Fetch data dari API
+    const fetchBerita = async () => {
+        setLoading(true);
+        try {
+            const data = await apiFetch('/berita');
+            
+            // Pastikan data adalah array
+            let dataArray = [];
+            if (Array.isArray(data)) {
+                dataArray = data;
+            } else if (data && typeof data === 'object') {
+                dataArray = data.data || data.items || data.results || Object.values(data);
+            }
+            
+            if (dataArray.length === 0) {
+                setBerita([]);
+                setLoading(false);
+                return;
+            }
+            
+            // Filter out deleted items
+            const activeData = dataArray.filter(item => !item.deleted_at);
+            
+            // Sort berdasarkan tanggal publikasi (terbaru di atas)
+            activeData.sort((a, b) => {
+                const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
+                const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
+                return dateB - dateA; // Descending (terbaru di atas)
+            });
+            
+            // Ambil 2 berita terbaru
+            const latestBerita = activeData.slice(0, 2);
+            
+            // Map data ke format frontend
+            const mappedData = mapBackendToFrontend(latestBerita);
+            setBerita(mappedData);
+        } catch (error) {
+            console.error('Error fetching berita:', error);
+            setBerita([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            setBerita(tpmNewsData);
-            setLoading(false);
-        }, 500);
+        fetchBerita();
     }, []);
 
     return (
@@ -1326,7 +1616,7 @@ const AksesCepatBeritaDashboard = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {berita.map((item, index) => {
-                        const IconComponent = item.icon;
+                        const IconComponent = item.icon || FiFileText;
                         return (
                             <motion.div
                                 key={item.id}
@@ -1336,32 +1626,93 @@ const AksesCepatBeritaDashboard = () => {
                                 transition={{ delay: index * 0.1 }}
                                 whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
                                 onClick={() => router.push('/berita')}
-                                className="group relative bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100/50 backdrop-blur-sm"
+                                className="group relative bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out cursor-pointer overflow-hidden border border-gray-100"
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                                <div className="relative z-10 mb-6">
-                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                        <IconComponent className="w-8 h-8" />
+                                {/* Header dengan badge dan icon */}
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {item.priority === 'high' && (
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                                Prioritas Tinggi
+                                            </span>
+                                        )}
+                                        {item.priority === 'medium' && (
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                                <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                                                Prioritas Sedang
+                                            </span>
+                                        )}
+                                        {item.priority === 'low' && (
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                                                <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                                                Prioritas Rendah
+                                            </span>
+                                        )}
+                                        {item.status && (
+                                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                                                item.status === 'published' || item.status === 'diterbitkan'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : item.status === 'draft'
+                                                    ? 'bg-gray-100 text-gray-700'
+                                                    : 'bg-orange-100 text-orange-700'
+                                            }`}>
+                                                {item.status === 'published' || item.status === 'diterbitkan' ? 'Diterbitkan' : item.status === 'draft' ? 'Draft' : 'Diarsipkan'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className={`p-2 rounded-lg bg-gradient-to-r ${item.color} shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                                        <IconComponent className="h-5 w-5 text-white" />
                                     </div>
                                 </div>
-                                <div className="relative z-10">
-                                    <div className="mb-2 flex items-center gap-2">
-                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
-                                            {item.time}
+
+                                {/* Content */}
+                                <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300">
+                                    {item.title}
+                                </h3>
+
+                                <p className="text-gray-600 mb-4 leading-relaxed text-sm">
+                                    {item.excerpt}
+                                </p>
+
+                                {/* Author & Created Info */}
+                                <div className="mb-4 space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs text-gray-500">
+                                            Oleh: <span className="font-medium">{item.author}</span>
                                         </span>
-                                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                                            Update
-                                        </span>
+                                        {item.nama_user && (
+                                            <span className="text-xs text-gray-400">
+                                                ({item.nama_user})
+                                            </span>
+                                        )}
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3" style={{ color: '#043975' }}>
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                        {item.excerpt}
-                                    </p>
+                                    {item.created_at_display && (
+                                        <div className="text-xs text-gray-400">
+                                            Dibuat: {item.created_at_display}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                        {item.dateDisplay && (
+                                            <div className="flex items-center gap-1">
+                                                <FiCalendar className="w-3 h-3" />
+                                                <span>{item.dateDisplay}</span>
+                                            </div>
+                                        )}
+                                        {item.readTime && (
+                                            <div className="flex items-center gap-1">
+                                                <FiClock className="w-3 h-3" />
+                                                <span>{item.readTime}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex items-center text-sm font-medium" style={{ color: '#0384d6' }}>
-                                        <span>Baca Selengkapnya</span>
-                                        <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                                        <span>Baca</span>
+                                        <FiArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                                     </div>
                                 </div>
                             </motion.div>
@@ -2759,54 +3110,7 @@ export default function App() {
                                 <StatistikCards />
                               </motion.div>
 
-                              {/* Middle Row: Grafik Tabel (Wide) & Selamat Datang (Small) */}
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                                {/* Left: Grafik Tabel - Lebih Lebar */}
-                                <div className="lg:col-span-2">
-                                  {canSeeGrafikTabel ? (
-                                    <motion.div
-                                      initial="hidden"
-                                      animate="visible"
-                                      variants={slideUp}
-                                      className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
-                                    >
-                                      <GrafikTabel />
-                                    </motion.div>
-                                  ) : (
-                                    <motion.div
-                                      initial="hidden"
-                                      animate="visible"
-                                      variants={slideUp}
-                                      className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full flex items-center justify-center"
-                                    >
-                                      <div className="text-center">
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2">Grafik Data Tabel</h3>
-                                        <p className="text-sm text-gray-500">Grafik hanya tersedia untuk admin dan waket.</p>
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </div>
-
-                                {/* Right: Selamat Datang - Lebih Kecil */}
-                                <div className="lg:col-span-1">
-                                  <WelcomeSection authUser={authUser} />
-                                </div>
-                              </div>
-
-                              {/* Bottom Row: Akses Cepat (Small) & Unduh Dokumen (Wide) */}
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                                {/* Left: Akses Cepat - Lebih Kecil */}
-                                <div className="lg:col-span-1">
-                                  <AksesCepatMarket quickActions={quickActions} />
-                                </div>
-
-                                {/* Right: Unduh Dokumen - Lebih Lebar */}
-                                <div className="lg:col-span-2">
-                                  <UnduhDokumenSection />
-                                </div>
-                              </div>
-
-                              {/* Update Terkini - Full Width */}
+                              {/* Middle Row: Akses Cepat Berita (Full Width) */}
                               <motion.div 
                                 initial="hidden"
                                 animate="visible"
@@ -2816,15 +3120,18 @@ export default function App() {
                                 <AksesCepatBeritaDashboard />
                               </motion.div>
 
-                              {/* Aktivitas Website - Full Width */}
-                              <motion.div 
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeIn}
-                                className="mb-6"
-                              >
-                                <AktivitasWebsite />
-                              </motion.div>
+                              {/* Bottom Row: Akses Cepat (Small) & Selamat Datang (Wide) */}
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                                {/* Left: Akses Cepat - Lebih Kecil */}
+                                <div className="lg:col-span-1">
+                                  <AksesCepatMarket quickActions={quickActions} />
+                                </div>
+
+                                {/* Right: Selamat Datang - Lebih Lebar */}
+                                <div className="lg:col-span-2">
+                                  <WelcomeSection authUser={authUser} />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
