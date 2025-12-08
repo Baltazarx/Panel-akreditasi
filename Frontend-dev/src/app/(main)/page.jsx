@@ -41,6 +41,8 @@ const FiEdit = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2
 const FiTrash = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 const FiClock = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
 const FiRefreshCw = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>);
+const FiUpload = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>);
+const FiX = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
 
 // Varian animasi (tidak diubah)
 const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
@@ -640,78 +642,200 @@ const UnduhDokumenSection = () => {
     const router = useRouter();
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploadForm, setUploadForm] = useState({
+        name: '',
+        description: ''
+    });
+    const shouldReduceMotion = useReducedMotion();
+
+    // Fungsi untuk mengumpulkan dokumen dari semua tabel
+    const fetchDocumentsFromTables = async () => {
+        const BASE_URL = "http://localhost:3000/api";
+        const allDocuments = [];
+        
+        // Daftar endpoint dan field yang mengandung link dokumen
+        const tableConfigs = [
+            // C1
+            { endpoint: '/audit-mutu-internal', fields: ['laporan_audit_url', 'bukti_certified_url'], tableName: 'Tabel 1B - Audit Mutu Internal' },
+            // C2 - jika ada field link dokumen
+            // C3
+            { endpoint: '/tabel-3a1-sarpras-penelitian', fields: ['link_bukti'], tableName: 'Tabel 3A-1' },
+            { endpoint: '/tabel-3a2-penelitian', fields: ['link_bukti'], tableName: 'Tabel 3A-2' },
+            { endpoint: '/tabel-3a3-pengembangan-dtpr/detail', fields: ['link_bukti'], tableName: 'Tabel 3A-3' },
+            { endpoint: '/tabel-3c1-kerjasama', fields: ['link_bukti'], tableName: 'Tabel 3C-1' },
+            { endpoint: '/tabel-3c2-publikasi', fields: ['link_bukti'], tableName: 'Tabel 3C-2' },
+            { endpoint: '/tabel-3c3-hki', fields: ['link_bukti'], tableName: 'Tabel 3C-3' },
+            // C4
+            { endpoint: '/tabel-4a1-sarpras-pkm', fields: ['link_bukti'], tableName: 'Tabel 4A-1' },
+            { endpoint: '/tabel-4a2', fields: ['link_bukti'], tableName: 'Tabel 4A-2' },
+            { endpoint: '/tabel-4c1-kerjasama-pkm', fields: ['link_bukti'], tableName: 'Tabel 4C-1' },
+            { endpoint: '/tabel-4c2-diseminasi-pkm', fields: ['link_bukti'], tableName: 'Tabel 4C-2' },
+            { endpoint: '/tabel-4c3-hki-pkm', fields: ['link_bukti'], tableName: 'Tabel 4C-3' },
+            // C5
+            { endpoint: '/tabel-5-1-sistem-tata-kelola', fields: ['link_bukti'], tableName: 'Tabel 5.1' },
+            { endpoint: '/tabel-5-2-sarpras-pendidikan', fields: ['link_bukti'], tableName: 'Tabel 5.2' },
+            // C6
+            { endpoint: '/tabel-6-kesesuaian-visi-misi', fields: ['link_bukti'], tableName: 'Tabel 6' },
+        ];
+
+        try {
+            // Fetch data dari semua tabel secara paralel
+            const fetchPromises = tableConfigs.map(async (config) => {
+                try {
+                    const response = await fetch(`${BASE_URL}${config.endpoint}`, {
+                        credentials: "include",
+                        mode: "cors",
+                    });
+                    
+                    if (!response.ok) {
+                        return [];
+                    }
+                    
+                    const data = await response.json();
+                    const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
+                    
+                    // Ekstrak dokumen dari setiap item
+                    const docs = [];
+                    items.forEach((item, index) => {
+                        config.fields.forEach(field => {
+                            if (item[field] && item[field].trim()) {
+                                // Validasi bahwa ini adalah URL/link yang valid
+                                const link = item[field].trim();
+                                if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('www.')) {
+                                    docs.push({
+                                        id: `${config.endpoint}-${index}-${field}`,
+                                        code: `${config.tableName.substring(0, 8).toUpperCase()}-${String(index + 1).padStart(3, '0')}`,
+                                        name: `${config.tableName} - ${field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+                                        link: link,
+                                        date: item.updated_at || item.created_at || new Date().toISOString(),
+                                        tableName: config.tableName,
+                                        fieldName: field
+                                    });
+                                }
+                            }
+                        });
+                    });
+                    
+                    return docs;
+                } catch (error) {
+                    console.warn(`Failed to fetch from ${config.endpoint}:`, error);
+                    return [];
+                }
+            });
+
+            const results = await Promise.all(fetchPromises);
+            const flattenedDocs = results.flat();
+            
+            // Sort by date (newest first)
+            flattenedDocs.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+
+            // Format documents untuk display
+            const formattedDocs = flattenedDocs.map((doc, index) => ({
+                id: doc.id,
+                code: doc.code,
+                name: doc.name,
+                link: doc.link,
+                date: new Date(doc.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                tableName: doc.tableName,
+                status: "Available"
+            }));
+
+            setDocuments(formattedDocs);
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+            setDocuments([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            setDocuments([
-                {
-                    id: 1,
-                    code: "DOC-001",
-                    name: "Template Dokumen Akreditasi",
-                    date: "15 Des, 2024",
-                    size: "2.5 MB",
-                    status: "Available"
-                },
-                {
-                    id: 2,
-                    code: "DOC-002",
-                    name: "Panduan Pengisian Tabel",
-                    date: "10 Des, 2024",
-                    size: "1.8 MB",
-                    status: "Available"
-                },
-                {
-                    id: 3,
-                    code: "DOC-003",
-                    name: "Dokumen Standar C1",
-                    date: "5 Des, 2024",
-                    size: "5.2 MB",
-                    status: "Available"
-                },
-                {
-                    id: 4,
-                    code: "DOC-004",
-                    name: "Dokumen Standar C2",
-                    date: "1 Des, 2024",
-                    size: "4.7 MB",
-                    status: "Available"
-                },
-                {
-                    id: 5,
-                    code: "DOC-005",
-                    name: "Format Laporan AMI",
-                    date: "28 Nov, 2024",
-                    size: "850 KB",
-                    status: "Available"
-                },
-                {
-                    id: 6,
-                    code: "DOC-006",
-                    name: "Regulasi & SK",
-                    date: "25 Nov, 2024",
-                    size: "3.1 MB",
-                    status: "Available"
-                },
-                {
-                    id: 7,
-                    code: "DOC-007",
-                    name: "Checklist Dokumen",
-                    date: "20 Nov, 2024",
-                    size: "650 KB",
-                    status: "Available"
-                },
-                {
-                    id: 8,
-                    code: "DOC-008",
-                    name: "Arsip Dokumen Lama",
-                    date: "15 Nov, 2024",
-                    size: "12.5 MB",
-                    status: "Archived"
-                }
-            ]);
-            setLoading(false);
-        }, 500);
+        fetchDocumentsFromTables();
     }, []);
+
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            if (!uploadForm.name) {
+                setUploadForm(prev => ({
+                    ...prev,
+                    name: file.name.replace(/\.[^/.]+$/, "")
+                }));
+            }
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) {
+            alert('Pilih file terlebih dahulu');
+            return;
+        }
+        if (!uploadForm.name.trim()) {
+            alert('Masukkan nama dokumen');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('name', uploadForm.name);
+            formData.append('description', uploadForm.description || '');
+
+            // TODO: Ganti dengan endpoint API yang sesuai
+            const BASE_URL = "http://localhost:3000/api";
+            const response = await fetch(`${BASE_URL}/documents/upload`, {
+                method: 'POST',
+                credentials: "include",
+                mode: "cors",
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload gagal');
+            }
+
+            const result = await response.json();
+            
+            // Tambahkan dokumen baru ke list
+            const newDoc = {
+                id: documents.length + 1,
+                code: `DOC-${String(documents.length + 1).padStart(3, '0')}`,
+                name: uploadForm.name,
+                date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                size: formatFileSize(selectedFile.size),
+                status: "Available"
+            };
+
+            // Refresh dokumen dari tabel setelah upload
+            await fetchDocumentsFromTables();
+            setShowUploadModal(false);
+            setSelectedFile(null);
+            setUploadForm({ name: '', description: '' });
+            alert('Dokumen berhasil diupload!');
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Gagal mengupload dokumen. Silakan coba lagi.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const getStatusBadge = (status) => {
         const statusConfig = {
@@ -729,75 +853,242 @@ const UnduhDokumenSection = () => {
     };
 
     return (
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={slideUp}
-            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
-        >
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Unduh Dokumen</h3>
-                <button 
-                    onClick={() => router.push('/')}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
-                >
-                    Lihat Semua
-                    <FiArrowRight className="w-4 h-4" />
-                </button>
-            </div>
+        <>
+            <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={slideUp}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900">Link Dokumen</h3>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setLoading(true);
+                                fetchDocumentsFromTables();
+                            }}
+                            disabled={loading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Refresh dokumen"
+                        >
+                            <FiRefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                            <span>Refresh</span>
+                        </button>
+                        <button 
+                            onClick={() => router.push('/tables')}
+                            className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                        >
+                            Lihat Semua Tabel
+                            <FiArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
 
-            {loading ? (
-                <div className="space-y-3">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                        <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
-                    ))}
-                </div>
-            ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-gray-200">
-                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">No</th>
-                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
-                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Dokumen</th>
-                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ukuran</th>
-                                <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Unduhan</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {documents.map((doc) => (
-                                <tr 
-                                    key={doc.id} 
-                                    className="hover:bg-gray-50 transition-colors"
-                                >
-                                    <td className="py-3 px-2">
-                                        <div className="font-medium text-slate-900">{doc.code}</div>
-                                    </td>
-                                    <td className="py-3 px-2 text-gray-600">{doc.date}</td>
-                                    <td className="py-3 px-2">
-                                        <div className="font-medium text-slate-900">{doc.name}</div>
-                                    </td>
-                                    <td className="py-3 px-2 text-gray-600">{doc.size}</td>
-                                    <td className="py-3 px-2">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                console.log('Download:', doc.name);
-                                                // TODO: Implement download functionality
-                                            }}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#0384d6] hover:text-[#043975] hover:bg-blue-50 rounded-md transition-colors"
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                            <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        {documents.length === 0 ? (
+                            <div className="text-center py-12">
+                                <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-500 text-sm">Tidak ada dokumen yang tersedia</p>
+                                <p className="text-gray-400 text-xs mt-1">Dokumen akan muncul setelah diupload di tabel</p>
+                            </div>
+                        ) : (
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">No</th>
+                                        <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                        <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Dokumen</th>
+                                        <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tabel</th>
+                                        <th className="text-left py-3 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Link Dokumen</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {documents.map((doc, index) => (
+                                        <tr 
+                                            key={doc.id} 
+                                            className="hover:bg-gray-50 transition-colors"
                                         >
-                                            <FiDownload className="w-3.5 h-3.5" />
-                                            <span>Unduh</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </motion.div>
+                                            <td className="py-3 px-2">
+                                                <div className="font-medium text-slate-900">{index + 1}</div>
+                                            </td>
+                                            <td className="py-3 px-2 text-gray-600">{doc.date}</td>
+                                            <td className="py-3 px-2">
+                                                <div className="font-medium text-slate-900">{doc.name}</div>
+                                            </td>
+                                            <td className="py-3 px-2">
+                                                <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                                                    {doc.tableName || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-2">
+                                                {doc.link ? (
+                                                    <a
+                                                        href={doc.link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#0384d6] hover:text-[#043975] hover:bg-blue-50 rounded-md transition-colors"
+                                                    >
+                                                        <FiDownload className="w-3.5 h-3.5" />
+                                                        <span>Buka Link</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                )}
+            </motion.div>
+
+            {/* Upload Modal */}
+            <AnimatePresence>
+                {showUploadModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => !uploading && setShowUploadModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-slate-900">Upload Dokumen</h3>
+                                <button
+                                    onClick={() => !uploading && setShowUploadModal(false)}
+                                    disabled={uploading}
+                                    className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <FiX className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* File Input */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Pilih File
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            onChange={handleFileSelect}
+                                            disabled={uploading}
+                                            className="hidden"
+                                            id="file-upload"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                                        />
+                                        <label
+                                            htmlFor="file-upload"
+                                            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                                selectedFile
+                                                    ? 'border-[#0384d6] bg-blue-50'
+                                                    : 'border-gray-300 hover:border-[#0384d6] hover:bg-gray-50'
+                                            } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {selectedFile ? (
+                                                <div className="flex flex-col items-center">
+                                                    <FiFile className="w-8 h-8 text-[#0384d6] mb-2" />
+                                                    <p className="text-sm font-medium text-slate-900">{selectedFile.name}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{formatFileSize(selectedFile.size)}</p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center">
+                                                    <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
+                                                    <p className="text-sm text-gray-600">
+                                                        <span className="font-medium text-[#0384d6]">Klik untuk upload</span> atau drag & drop
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX</p>
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Nama Dokumen */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Nama Dokumen <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={uploadForm.name}
+                                        onChange={(e) => setUploadForm(prev => ({ ...prev, name: e.target.value }))}
+                                        disabled={uploading}
+                                        placeholder="Masukkan nama dokumen"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0384d6] focus:border-transparent outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+
+                                {/* Deskripsi (Optional) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Deskripsi <span className="text-gray-400 text-xs">(Opsional)</span>
+                                    </label>
+                                    <textarea
+                                        value={uploadForm.description}
+                                        onChange={(e) => setUploadForm(prev => ({ ...prev, description: e.target.value }))}
+                                        disabled={uploading}
+                                        placeholder="Masukkan deskripsi dokumen"
+                                        rows={3}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0384d6] focus:border-transparent outline-none transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-3 pt-4">
+                                    <button
+                                        onClick={() => {
+                                            setShowUploadModal(false);
+                                            setSelectedFile(null);
+                                            setUploadForm({ name: '', description: '' });
+                                        }}
+                                        disabled={uploading}
+                                        className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={handleUpload}
+                                        disabled={uploading || !selectedFile || !uploadForm.name.trim()}
+                                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[#0384d6] hover:bg-[#043975] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {uploading ? (
+                                            <>
+                                                <FiRefreshCw className="w-4 h-4 animate-spin" />
+                                                <span>Mengupload...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiUpload className="w-4 h-4" />
+                                                <span>Upload</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     );
 };
 

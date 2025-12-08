@@ -33,6 +33,9 @@ export const AccessMatrix = {
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
 
+    // === BERITA & PENGUMUMAN ===
+    'berita': { R: true }, // Hanya baca untuk prodi
+
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },
     'pegawai': { R: true },
@@ -69,6 +72,9 @@ export const AccessMatrix = {
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
+
+    // === BERITA & PENGUMUMAN ===
+    'berita': { R: true }, // Hanya baca untuk prodi_ti
 
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },
@@ -107,6 +113,9 @@ export const AccessMatrix = {
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
 
+    // === BERITA & PENGUMUMAN ===
+    'berita': { R: true }, // Hanya baca untuk prodi_mi
+
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true },
     'pegawai': { R: true },
@@ -132,6 +141,8 @@ export const AccessMatrix = {
     'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true },
     'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true },
   
+    // === BERITA & PENGUMUMAN ===
+    'berita': { R: true }, // Hanya baca untuk LPPM
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
     'sumber_pendanaan':         { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
@@ -169,6 +180,7 @@ export const AccessMatrix = {
     'ref_jabatan_fungsional': { R: true }, // Untuk dropdown jabatan fungsional
     'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
     'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
+    'berita': { R: true }, // Hanya baca untuk sarpras
   },
 
   // ========== SARPRAS ==========
@@ -200,6 +212,7 @@ export const AccessMatrix = {
     'tenaga_kependidikan': { R: true },
     'audit_mutu_internal': { R: true },
     'ref_kabupaten_kota': { R: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
+    'berita': { R: true }, // Hanya baca untuk kemahasiswaan
   },
 
   // ========== ALA ==========
@@ -216,6 +229,7 @@ export const AccessMatrix = {
     'ref_jabatan_struktural': { R: true },
     'tenaga_kependidikan': { R: true },
     'ref_jabatan_fungsional': { R: true },
+    'berita': { R: true }, // Hanya baca untuk ALA
   },
 
   // ========== PMB ==========
@@ -230,6 +244,7 @@ export const AccessMatrix = {
     'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
     'ref_jabatan_struktural': { R: true }, // Untuk dropdown jabatan struktural
     'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
+    'berita': { R: true }, // Hanya baca untuk PMB
   },
 
 // ========== KERJASAMA ==========
@@ -247,9 +262,12 @@ export const AccessMatrix = {
     'tenaga_kependidikan': { R: true },
     'audit_mutu_internal': { R: true },
     'dosen': { R: true },
-    'users': { R: true }
+    'users': { R: true },
+    'berita': { R: true } // Hanya baca untuk kerjasama
   }
 
   // Catatan: Akses untuk waket1/waket2/tpm ke tabel 1A1, 1A2, 1A3, 1A4, 1A5, 1B
   // sudah tercakup oleh wildcard '*' mereka.
+  // Catatan: Akses untuk berita - TPM memiliki full access melalui wildcard '*',
+  // role lain hanya memiliki akses read (R: true).
 };

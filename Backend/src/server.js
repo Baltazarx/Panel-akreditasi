@@ -70,7 +70,9 @@ import tabel52SarprasPendidikanRouter from './routes/tabel52SarprasPendidikan.ro
 
 // ===== C6 ROUTES =====
 import tabel6KesesuaianVisiMisiRouter from './routes/tabel6KesesuaianVisiMisi.route.js';
-// TODO: import route lain setelah dikonversi
+
+// ===== BERITA & PENGUMUMAN =====
+import beritaRouter from './routes/berita.route.js';
 
 const app = express();
 
@@ -191,6 +193,9 @@ app.use('/api/tabel-5-2-sarpras-pendidikan', tabel52SarprasPendidikanRouter);
 
 // ===== C6 =====
 app.use('/api/tabel-6-kesesuaian-visi-misi', tabel6KesesuaianVisiMisiRouter);
+
+// ===== BERITA & PENGUMUMAN =====
+app.use('/api/berita', beritaRouter);
 
 // ===== 404 FALLBACK =====
 app.use((_req, res) => {
