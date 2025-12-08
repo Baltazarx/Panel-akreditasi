@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiBook, FiBriefcase, FiAward } from 'react-icons/fi';
 
 export default function TabelPegawai({ role }) {
   const table = { key: "pegawai", label: "Manajemen Data Pegawai", path: "/pegawai" };
@@ -24,6 +24,11 @@ export default function TabelPegawai({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Form dropdown states
+  const [openFormPendidikanDropdown, setOpenFormPendidikanDropdown] = useState(false);
+  const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
+  const [openFormJabatanDropdown, setOpenFormJabatanDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -61,8 +66,35 @@ export default function TabelPegawai({ role }) {
   useEffect(() => {
     if (showModal) {
       setOpenDropdownId(null);
+    } else {
+      // Close form dropdowns when modal closes
+      setOpenFormPendidikanDropdown(false);
+      setOpenFormUnitDropdown(false);
+      setOpenFormJabatanDropdown(false);
     }
   }, [showModal]);
+
+  // Close form dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openFormPendidikanDropdown && !event.target.closest('.form-pendidikan-dropdown-container') && !event.target.closest('.form-pendidikan-dropdown-menu')) {
+        setOpenFormPendidikanDropdown(false);
+      }
+      if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
+        setOpenFormUnitDropdown(false);
+      }
+      if (openFormJabatanDropdown && !event.target.closest('.form-jabatan-dropdown-container') && !event.target.closest('.form-jabatan-dropdown-menu')) {
+        setOpenFormJabatanDropdown(false);
+      }
+    };
+
+    if (openFormPendidikanDropdown || openFormUnitDropdown || openFormJabatanDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openFormPendidikanDropdown, openFormUnitDropdown, openFormJabatanDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -154,6 +186,9 @@ export default function TabelPegawai({ role }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormPendidikanDropdown(false);
+    setOpenFormUnitDropdown(false);
+    setOpenFormJabatanDropdown(false);
     setLoading(true);
     try {
       const idField = getIdField(editing);
@@ -501,7 +536,18 @@ export default function TabelPegawai({ role }) {
       })()}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setOpenFormPendidikanDropdown(false);
+              setOpenFormUnitDropdown(false);
+              setOpenFormJabatanDropdown(false);
+              setShowModal(false);
+              setEditing(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h2 className="text-xl font-bold">{editing ? 'Edit Data Pegawai' : 'Tambah Data Pegawai'}</h2>
@@ -524,20 +570,58 @@ export default function TabelPegawai({ role }) {
                   
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Pendidikan Terakhir</label>
-                    <select
-                      value={formState.pendidikan_terakhir || ""}
-                      onChange={(e) => setFormState({...formState, pendidikan_terakhir: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Pendidikan Terakhir</option>
-                      <option value="SD">SD</option>
-                      <option value="SMP">SMP</option>
-                      <option value="SMA">SMA</option>
-                      <option value="D3">D3</option>
-                      <option value="S1">S1</option>
-                      <option value="S2">S2</option>
-                      <option value="S3">S3</option>
-                    </select>
+                    <div className="relative form-pendidikan-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormPendidikanDropdown(!openFormPendidikanDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.pendidikan_terakhir
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih pendidikan terakhir"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiBook className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.pendidikan_terakhir ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.pendidikan_terakhir || '-- Pilih Pendidikan Terakhir --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormPendidikanDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormPendidikanDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pendidikan-dropdown-menu mt-1 w-full"
+                        >
+                          {['SD', 'SMP', 'SMA', 'D3', 'S1', 'S2', 'S3'].map(pendidikan => (
+                            <button
+                              key={pendidikan}
+                              type="button"
+                              onClick={() => {
+                                setFormState({...formState, pendidikan_terakhir: pendidikan});
+                                setOpenFormPendidikanDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                formState.pendidikan_terakhir === pendidikan
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                              }`}
+                            >
+                              <FiBook className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span>{pendidikan}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -553,40 +637,148 @@ export default function TabelPegawai({ role }) {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Unit Kerja</label>
-                    <select
-                      value={formState.id_unit || ""}
-                      onChange={(e) => setFormState({...formState, id_unit: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Unit Kerja</option>
-                      {Object.values(maps.units || {}).map(u => (
-                        <option key={u.id_unit} value={u.id_unit}>
-                          {u.nama_unit || u.nama}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative form-unit-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormUnitDropdown(!openFormUnitDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_unit
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih unit kerja"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_unit 
+                              ? (() => {
+                                  const found = Object.values(maps.units || {}).find(u => String(u.id_unit) === String(formState.id_unit));
+                                  return found ? (found.nama_unit || found.nama) : formState.id_unit;
+                                })()
+                              : '-- Pilih Unit Kerja --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormUnitDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormUnitDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
+                        >
+                          {Object.values(maps.units || {}).length > 0 ? (
+                            Object.values(maps.units || {}).map(u => (
+                              <button
+                                key={u.id_unit}
+                                type="button"
+                                onClick={() => {
+                                  setFormState({...formState, id_unit: String(u.id_unit)});
+                                  setOpenFormUnitDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  formState.id_unit === String(u.id_unit)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span className="truncate">{u.nama_unit || u.nama}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data unit kerja
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jabatan Struktural</label>
-                    <select
-                      value={formState.id_jabatan || ""}
-                      onChange={(e) => setFormState({...formState, id_jabatan: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Jabatan Struktural</option>
-                      {Object.values(maps.ref_jabatan_struktural || {}).map(j => (
-                        <option key={j.id_jabatan} value={j.id_jabatan}>
-                          {j.nama_jabatan}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative form-jabatan-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormJabatanDropdown(!openFormJabatanDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_jabatan
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih jabatan struktural"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiAward className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_jabatan ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_jabatan 
+                              ? (() => {
+                                  const found = Object.values(maps.ref_jabatan_struktural || {}).find(j => String(j.id_jabatan) === String(formState.id_jabatan));
+                                  return found ? found.nama_jabatan : formState.id_jabatan;
+                                })()
+                              : '-- Pilih Jabatan Struktural --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormJabatanDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormJabatanDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-jabatan-dropdown-menu mt-1 w-full"
+                        >
+                          {Object.values(maps.ref_jabatan_struktural || {}).length > 0 ? (
+                            Object.values(maps.ref_jabatan_struktural || {}).map(j => (
+                              <button
+                                key={j.id_jabatan}
+                                type="button"
+                                onClick={() => {
+                                  setFormState({...formState, id_jabatan: String(j.id_jabatan)});
+                                  setOpenFormJabatanDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  formState.id_jabatan === String(j.id_jabatan)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiAward className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span className="truncate">{j.nama_jabatan}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data jabatan struktural
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                   <button 
                       type="button" 
-                      onClick={() => {setShowModal(false); setEditing(null);}} 
+                      onClick={() => {
+                        setOpenFormPendidikanDropdown(false);
+                        setOpenFormUnitDropdown(false);
+                        setOpenFormJabatanDropdown(false);
+                        setShowModal(false);
+                        setEditing(null);
+                      }} 
                       className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                       <span className="relative z-10">Batal</span>

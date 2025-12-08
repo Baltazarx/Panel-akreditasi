@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiBook, FiAward } from 'react-icons/fi';
 
 export default function TabelDosen({ role }) {
   const table = { key: "dosen", label: "Manajemen Data Dosen", path: "/dosen" };
@@ -28,6 +28,11 @@ export default function TabelDosen({ role }) {
   const [showPtInput, setShowPtInput] = useState(false);
   const [pegawaiSearch, setPegawaiSearch] = useState("");
   const [showPegawaiDropdown, setShowPegawaiDropdown] = useState(false);
+  
+  // Form dropdown states
+  const [openFormHomebaseDropdown, setOpenFormHomebaseDropdown] = useState(false);
+  const [openFormPtDropdown, setOpenFormPtDropdown] = useState(false);
+  const [openFormJabatanDropdown, setOpenFormJabatanDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -65,8 +70,35 @@ export default function TabelDosen({ role }) {
   useEffect(() => {
     if (showModal) {
       setOpenDropdownId(null);
+    } else {
+      // Close form dropdowns when modal closes
+      setOpenFormHomebaseDropdown(false);
+      setOpenFormPtDropdown(false);
+      setOpenFormJabatanDropdown(false);
     }
   }, [showModal]);
+
+  // Close form dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openFormHomebaseDropdown && !event.target.closest('.form-homebase-dropdown-container') && !event.target.closest('.form-homebase-dropdown-menu')) {
+        setOpenFormHomebaseDropdown(false);
+      }
+      if (openFormPtDropdown && !event.target.closest('.form-pt-dropdown-container') && !event.target.closest('.form-pt-dropdown-menu')) {
+        setOpenFormPtDropdown(false);
+      }
+      if (openFormJabatanDropdown && !event.target.closest('.form-jabatan-dropdown-container') && !event.target.closest('.form-jabatan-dropdown-menu')) {
+        setOpenFormJabatanDropdown(false);
+      }
+    };
+
+    if (openFormHomebaseDropdown || openFormPtDropdown || openFormJabatanDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openFormHomebaseDropdown, openFormPtDropdown, openFormJabatanDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -255,6 +287,9 @@ export default function TabelDosen({ role }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormHomebaseDropdown(false);
+    setOpenFormPtDropdown(false);
+    setOpenFormJabatanDropdown(false);
     
     // Validasi semua field wajib diisi
     if (!formState.id_pegawai || !formState.nidn || !formState.nuptk || !formState.homebase || 
@@ -641,7 +676,18 @@ export default function TabelDosen({ role }) {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setOpenFormHomebaseDropdown(false);
+              setOpenFormPtDropdown(false);
+              setOpenFormJabatanDropdown(false);
+              setShowModal(false);
+              setEditing(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <h2 className="text-xl font-bold">{editing ? 'Edit Data Dosen' : 'Tambah Data Dosen'}</h2>
@@ -734,73 +780,213 @@ export default function TabelDosen({ role }) {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Homebase <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.homebase || ""}
-                      onChange={(e) => setFormState({...formState, homebase: e.target.value})}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Homebase</option>
-                      <option value="Manajemen Informatika">Manajemen Informatika</option>
-                      <option value="Teknik Informatika">Teknik Informatika</option>
-                    </select>
+                    <div className="relative form-homebase-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormHomebaseDropdown(!openFormHomebaseDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.homebase
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih homebase"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiHome className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.homebase ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.homebase || '-- Pilih Homebase --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormHomebaseDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormHomebaseDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-homebase-dropdown-menu mt-1 w-full"
+                        >
+                          {['Manajemen Informatika', 'Teknik Informatika'].map(homebase => (
+                            <button
+                              key={homebase}
+                              type="button"
+                              onClick={() => {
+                                setFormState({...formState, homebase});
+                                setOpenFormHomebaseDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                formState.homebase === homebase
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                              }`}
+                            >
+                              <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span>{homebase}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">PT (Perguruan Tinggi) <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.pt === "STIKOM PGRI Banyuwangi" ? "STIKOM PGRI Banyuwangi" : showPtInput ? "Lainnya" : ""}
-                      onChange={(e) => {
-                        if (e.target.value === "STIKOM PGRI Banyuwangi") {
-                          setFormState({...formState, pt: "STIKOM PGRI Banyuwangi"});
-                          setPtCustom("");
-                          setShowPtInput(false);
-                        } else if (e.target.value === "Lainnya") {
-                          setShowPtInput(true);
-                          setFormState({...formState, pt: ptCustom || ""});
-                        } else {
-                          setFormState({...formState, pt: ""});
-                          setPtCustom("");
-                          setShowPtInput(false);
-                        }
-                      }}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Perguruan Tinggi</option>
-                      <option value="STIKOM PGRI Banyuwangi">STIKOM PGRI Banyuwangi</option>
-                      <option value="Lainnya">Lainnya</option>
-                    </select>
-                    {showPtInput && (
-                      <input
-                        type="text"
-                        value={ptCustom}
-                        onChange={(e) => {
-                          setPtCustom(e.target.value);
-                          setFormState({...formState, pt: e.target.value});
+                    <div className="relative form-pt-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormPtDropdown(!openFormPtDropdown);
                         }}
-                        required={showPtInput}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white mt-2"
-                        placeholder="Masukkan nama perguruan tinggi"
-                      />
-                    )}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.pt
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih perguruan tinggi"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiBook className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.pt ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.pt === "STIKOM PGRI Banyuwangi" 
+                              ? "STIKOM PGRI Banyuwangi"
+                              : formState.pt 
+                                ? formState.pt 
+                                : '-- Pilih Perguruan Tinggi --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormPtDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormPtDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pt-dropdown-menu mt-1 w-full"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormState({...formState, pt: "STIKOM PGRI Banyuwangi"});
+                              setPtCustom("");
+                              setShowPtInput(false);
+                              setOpenFormPtDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              formState.pt === "STIKOM PGRI Banyuwangi"
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiBook className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span>STIKOM PGRI Banyuwangi</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPtInput(true);
+                              setFormState({...formState, pt: ptCustom || ""});
+                              setOpenFormPtDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              showPtInput && formState.pt !== "STIKOM PGRI Banyuwangi"
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiBook className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span>Lainnya</span>
+                          </button>
+                        </div>
+                      )}
+                      {showPtInput && (
+                        <input
+                          type="text"
+                          value={ptCustom}
+                          onChange={(e) => {
+                            setPtCustom(e.target.value);
+                            setFormState({...formState, pt: e.target.value});
+                          }}
+                          required={showPtInput}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white mt-2"
+                          placeholder="Masukkan nama perguruan tinggi"
+                        />
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jabatan Fungsional <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.id_jafung || ""}
-                      onChange={(e) => setFormState({...formState, id_jafung: e.target.value})}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                    >
-                      <option value="">Pilih Jabatan Fungsional</option>
-                      {maps?.ref_jabatan_fungsional && Object.values(maps.ref_jabatan_fungsional).map((jf) => (
-                        <option key={jf.id_jafung} value={jf.id_jafung}>
-                          {jf.nama_jafung}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative form-jabatan-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormJabatanDropdown(!openFormJabatanDropdown);
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_jafung
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih jabatan fungsional"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiAward className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_jafung ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_jafung 
+                              ? (() => {
+                                  const found = maps?.ref_jabatan_fungsional ? Object.values(maps.ref_jabatan_fungsional).find(jf => String(jf.id_jafung) === String(formState.id_jafung)) : null;
+                                  return found ? found.nama_jafung : formState.id_jafung;
+                                })()
+                              : '-- Pilih Jabatan Fungsional --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormJabatanDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormJabatanDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-jabatan-dropdown-menu mt-1 w-full"
+                        >
+                          {maps?.ref_jabatan_fungsional && Object.values(maps.ref_jabatan_fungsional).length > 0 ? (
+                            Object.values(maps.ref_jabatan_fungsional).map(jf => (
+                              <button
+                                key={jf.id_jafung}
+                                type="button"
+                                onClick={() => {
+                                  setFormState({...formState, id_jafung: String(jf.id_jafung)});
+                                  setOpenFormJabatanDropdown(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                  formState.id_jafung === String(jf.id_jafung)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                <FiAward className="text-[#0384d6] flex-shrink-0" size={16} />
+                                <span className="truncate">{jf.nama_jafung}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data jabatan fungsional
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -821,6 +1007,9 @@ export default function TabelDosen({ role }) {
                   <button 
                       type="button" 
                       onClick={() => {
+                        setOpenFormHomebaseDropdown(false);
+                        setOpenFormPtDropdown(false);
+                        setOpenFormJabatanDropdown(false);
                         setShowModal(false); 
                         setEditing(null);
                         setPtCustom("");

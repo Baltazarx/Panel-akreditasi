@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser } from 'react-icons/fi';
 
 export default function TabelTendik({ role }) {
   const table = { key: "tenaga_kependidikan", label: "Manajemen Data Tenaga Kependidikan", path: "/tendik" };
@@ -24,6 +24,9 @@ export default function TabelTendik({ role }) {
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // Form dropdown state
+  const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -61,8 +64,27 @@ export default function TabelTendik({ role }) {
   useEffect(() => {
     if (showModal) {
       setOpenDropdownId(null);
+    } else {
+      // Close form dropdowns when modal closes
+      setOpenFormPegawaiDropdown(false);
     }
   }, [showModal]);
+
+  // Close form dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openFormPegawaiDropdown && !event.target.closest('.form-pegawai-dropdown-container') && !event.target.closest('.form-pegawai-dropdown-menu')) {
+        setOpenFormPegawaiDropdown(false);
+      }
+    };
+
+    if (openFormPegawaiDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openFormPegawaiDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -165,6 +187,7 @@ export default function TabelTendik({ role }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormPegawaiDropdown(false);
     setLoading(true);
     try {
       const idField = getIdField(editing);
@@ -575,6 +598,7 @@ export default function TabelTendik({ role }) {
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
+              setOpenFormPegawaiDropdown(false);
               setShowModal(false);
               setEditing(null);
             }
@@ -594,23 +618,83 @@ export default function TabelTendik({ role }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Pegawai <span className="text-red-500">*</span></label>
-                    <select
-                      value={formState.id_pegawai || ""}
-                      onChange={(e) => setFormState({...formState, id_pegawai: e.target.value})}
-                      required
-                      disabled={editing !== null}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Pilih Pegawai</option>
-                      {maps && maps.pegawai && Object.values(maps.pegawai).map(p => (
-                        <option key={p.id_pegawai} value={p.id_pegawai}>
-                          {p.nama_lengkap || p.nama} {p.id_unit && maps.units ? `(${maps.units[p.id_unit]?.nama_unit || maps.units[p.id_unit]?.nama || ''})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    {editing && (
-                      <p className="text-xs text-gray-500">Pegawai tidak dapat diubah saat edit</p>
-                    )}
+                    <div className="relative form-pegawai-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!editing) {
+                            setOpenFormPegawaiDropdown(!openFormPegawaiDropdown);
+                          }
+                        }}
+                        disabled={editing !== null}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_pegawai
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        } ${editing !== null ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                        aria-label="Pilih pegawai"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_pegawai ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_pegawai 
+                              ? (() => {
+                                  const selectedPegawai = maps && maps.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
+                                  if (selectedPegawai) {
+                                    const unitName = selectedPegawai.id_unit && maps.units ? `(${maps.units[selectedPegawai.id_unit]?.nama_unit || maps.units[selectedPegawai.id_unit]?.nama || ''})` : '';
+                                    return `${selectedPegawai.nama_lengkap || selectedPegawai.nama} ${unitName}`;
+                                  }
+                                  return formState.id_pegawai;
+                                })()
+                              : '-- Pilih Pegawai --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormPegawaiDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormPegawaiDropdown && !editing && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pegawai-dropdown-menu mt-1 w-full"
+                        >
+                          {maps && maps.pegawai && Object.values(maps.pegawai).length > 0 ? (
+                            Object.values(maps.pegawai).map(p => {
+                              const unitName = p.id_unit && maps.units ? `(${maps.units[p.id_unit]?.nama_unit || maps.units[p.id_unit]?.nama || ''})` : '';
+                              const displayName = `${p.nama_lengkap || p.nama} ${unitName}`;
+                              return (
+                                <button
+                                  key={p.id_pegawai}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormState({...formState, id_pegawai: String(p.id_pegawai)});
+                                    setOpenFormPegawaiDropdown(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                    formState.id_pegawai === String(p.id_pegawai)
+                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                                  <span className="truncate">{displayName}</span>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data pegawai
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {editing && (
+                        <p className="mt-1 text-xs text-gray-500">Pegawai tidak dapat diubah saat edit</p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -628,7 +712,11 @@ export default function TabelTendik({ role }) {
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                   <button 
                       type="button" 
-                      onClick={() => {setShowModal(false); setEditing(null);}} 
+                      onClick={() => {
+                        setOpenFormPegawaiDropdown(false);
+                        setShowModal(false);
+                        setEditing(null);
+                      }} 
                       className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                       <span className="relative z-10">Batal</span>
