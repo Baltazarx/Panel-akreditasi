@@ -33,65 +33,58 @@ export default function PanduanPage() {
     {
       icon: FiHome,
       title: "Dashboard",
-      desc: "Halaman utama setelah login menampilkan ringkasan data, berita terbaru, statistik, dan akses cepat ke semua fitur.",
-      features: ["Berita terbaru (2 item)", "Statistik cards (Total Tabel, Data Terisi, dll)", "Akses cepat ke tabel C1-C6", "Unduh dokumen & template"],
+      desc: "Halaman utama setelah login menampilkan ringkasan data, berita terbaru, statistik, dan akses cepat ke semua fitur. Layout terbaru dengan card berita yang menampilkan 2 berita terbaru.",
+      features: ["Akses Cepat Berita (2 item terbaru)", "Statistik cards (Total Tabel, Data Terisi, dll)", "Akses cepat ke tabel C1-C6, Data Dosen, Pegawai", "Selamat Datang section dengan info user"],
       color: "from-blue-500 to-blue-600"
     },
     {
       icon: FiGrid,
       title: "Akses Tabel Data",
-      desc: "Akses semua tabel penjaminan mutu (C1, C2, C3, C4, C5, C6) melalui sidebar. Setiap tabel memiliki fitur CRUD lengkap.",
-      features: ["Navigasi sidebar", "Tabel C1-C6", "Data Dosen & Pegawai", "Filter berdasarkan tahun & unit"],
+      desc: "Akses semua tabel penjaminan mutu (C1, C2, C3, C4, C5, C6) melalui menu navigasi. Setiap tabel memiliki fitur CRUD lengkap dengan custom dropdown design.",
+      features: ["Navigasi menu (Home, Tables, Berita, Panduan)", "Tabel C1-C6 lengkap", "Data Dosen & Pegawai", "Custom dropdown dengan icon", "Filter berdasarkan tahun & unit"],
       color: "from-purple-500 to-purple-600"
     },
     {
-      icon: FiBarChart,
-      title: "Report & Grafik",
-      desc: "Halaman report menampilkan grafik progress bar untuk semua tabel. Hanya tersedia untuk role Super Admin, Waket 1&2, dan TPM.",
-      features: ["Grafik progress bar", "Ringkasan data tabel", "Filter berdasarkan kategori", "Export ke PDF"],
-      color: "from-indigo-500 to-indigo-600"
+      icon: FiFileText,
+      title: "Berita & Pengumuman",
+      desc: "Akses berita terbaru dan pengumuman penting. Tersedia di dashboard dan halaman berita terpisah dengan fitur modal popup untuk membaca isi lengkap.",
+      features: ["Berita terbaru di dashboard (2 item)", "Halaman berita lengkap dengan CRUD", "Modal popup untuk membaca isi lengkap", "Prioritas tinggi/sedang/rendah", "Status diterbitkan/draft", "Upload dan edit berita"],
+      color: "from-cyan-500 to-cyan-600"
     },
     {
       icon: FiBookOpen,
       title: "Pengisian Data",
-      desc: "Gunakan tombol Tambah/Ubah/Hapus di setiap tabel sesuai hak akses Anda. Form akan terkunci scroll background saat modal terbuka.",
-      features: ["Form input data", "Validasi otomatis", "Soft delete & restore", "Konfirmasi aksi"],
+      desc: "Gunakan tombol Tambah/Ubah/Hapus di setiap tabel sesuai hak akses Anda. Form menggunakan custom dropdown design dengan icon dan validasi otomatis.",
+      features: ["Form input data dengan custom dropdown", "Dropdown dengan icon (Calendar, Briefcase, Shield, dll)", "Validasi otomatis", "Soft delete & restore", "Konfirmasi aksi", "Modal dengan backdrop blur"],
       color: "from-green-500 to-green-600"
     },
     {
       icon: FiUser,
       title: "Management Akun",
-      desc: "Kelola pengguna dan akses sistem. Tersedia di menu Akses Cepat atau melalui halaman /users.",
-      features: ["User management", "Role-based access", "Permission control", "Akses cepat dari dashboard"],
+      desc: "Kelola pengguna dan akses sistem. Role otomatis terisi berdasarkan unit kerja yang dipilih. Tersedia di menu Akses Cepat atau melalui halaman /users.",
+      features: ["User management lengkap", "Role otomatis dari unit kerja", "Role-based access control", "Permission control", "Akses cepat dari dashboard", "Reset password untuk superadmin"],
       color: "from-orange-500 to-orange-600"
-    },
-    {
-      icon: FiFileText,
-      title: "Berita & Pengumuman",
-      desc: "Akses berita terbaru dan pengumuman penting. Tersedia di dashboard dan halaman berita terpisah.",
-      features: ["Berita terbaru", "Pengumuman penting", "Akses dari dashboard", "Halaman berita lengkap"],
-      color: "from-cyan-500 to-cyan-600"
-    },
-    {
-      icon: FiDownload,
-      title: "Unduh Dokumen",
-      desc: "Download dokumen, template, dan panduan yang diperlukan untuk penjaminan mutu. Tersedia di dashboard dan halaman terpisah.",
-      features: ["Template dokumen", "Panduan pengisian", "Dokumen standar C1-C2", "Format laporan AMI"],
-      color: "from-teal-500 to-teal-600"
     },
     {
       icon: FiSearch,
       title: "Pencarian & Filter",
-      desc: "Gunakan kolom pencarian dan filter untuk menemukan data dengan cepat. Filter berdasarkan tahun, unit, dan status.",
-      features: ["Search functionality", "Filter tahun & unit", "Show deleted data", "Quick results"],
+      desc: "Gunakan kolom pencarian dan filter untuk menemukan data dengan cepat. Filter menggunakan custom dropdown design dengan icon yang intuitif.",
+      features: ["Search functionality", "Custom dropdown filter", "Filter tahun & unit", "Filter berdasarkan prodi", "Show deleted data", "Quick results"],
       color: "from-pink-500 to-pink-600"
     },
     {
       icon: FiShield,
       title: "Keamanan & Akses",
-      desc: "Setiap fitur memiliki kontrol akses berdasarkan role. Selalu keluar (logout) setelah selesai dan jangan bagikan kredensial.",
-      features: ["Role-based access", "Secure login", "Session management", "Data protection"],
+      desc: "Setiap fitur memiliki kontrol akses berdasarkan role. Sistem menggunakan role-based access control (RBAC) untuk mengatur hak akses pengguna.",
+      features: ["Role-based access control (RBAC)", "Secure login dengan session", "Permission matrix", "Data protection", "Logout otomatis", "Jangan bagikan kredensial"],
       color: "from-red-500 to-red-600"
+    },
+    {
+      icon: FiSettings,
+      title: "Navigasi & Menu",
+      desc: "Menu navigasi utama terdiri dari Home, Tables, Berita, Panduan, dan Design System. Header sticky di semua halaman kecuali halaman tabel.",
+      features: ["Menu: Home, Tables, Berita, Panduan, Design System", "Header sticky dengan backdrop blur", "Mobile responsive dengan drawer menu", "Profile menu dengan logout", "Active page indicator"],
+      color: "from-indigo-500 to-indigo-600"
     },
   ];
 

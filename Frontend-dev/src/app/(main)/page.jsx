@@ -1530,6 +1530,7 @@ const AksesCepatBeritaDashboard = () => {
                 status: item.status || 'published',
                 author: item.penulis || item.author || 'Admin',
                 nama_user: item.nama_user || item.user?.nama || '',
+                is_pinned: item.is_pinned || item.pinned || false,
                 color: color,
                 icon: icon
             };
@@ -1559,15 +1560,40 @@ const AksesCepatBeritaDashboard = () => {
             // Filter out deleted items
             const activeData = dataArray.filter(item => !item.deleted_at);
             
-            // Sort berdasarkan tanggal publikasi (terbaru di atas)
+            // Sort: Pinned berita di atas, lalu berdasarkan tanggal publikasi (terbaru di atas)
             activeData.sort((a, b) => {
+                const aPinned = a.is_pinned || a.pinned || false;
+                const bPinned = b.is_pinned || b.pinned || false;
+                
+                // Pinned berita selalu di atas
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                
+                // Jika keduanya pinned atau tidak pinned, sort berdasarkan tanggal
                 const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
                 const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
                 return dateB - dateA; // Descending (terbaru di atas)
             });
             
-            // Ambil 2 berita terbaru
-            const latestBerita = activeData.slice(0, 2);
+            // Ambil berita dengan prioritas: pinned berita dulu, lalu yang terbaru
+            // Jika ada pinned berita, ambil pinned berita terlebih dahulu (maks 2)
+            // Jika tidak ada atau kurang dari 2, tambahkan berita terbaru yang tidak di-pin
+            const pinnedBerita = activeData.filter(item => item.is_pinned || item.pinned);
+            const unpinnedBerita = activeData.filter(item => !(item.is_pinned || item.pinned));
+            
+            let latestBerita = [];
+            if (pinnedBerita.length > 0) {
+                // Ambil pinned berita (maks 2)
+                latestBerita = pinnedBerita.slice(0, 2);
+                // Jika kurang dari 2, tambahkan berita terbaru yang tidak di-pin
+                if (latestBerita.length < 2 && unpinnedBerita.length > 0) {
+                    const remaining = 2 - latestBerita.length;
+                    latestBerita = [...latestBerita, ...unpinnedBerita.slice(0, remaining)];
+                }
+            } else {
+                // Jika tidak ada pinned berita, ambil 2 berita terbaru
+                latestBerita = activeData.slice(0, 2);
+            }
             
             // Map data ke format frontend
             const mappedData = mapBackendToFrontend(latestBerita);
