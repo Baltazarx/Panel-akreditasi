@@ -472,8 +472,22 @@ export default function TpmNewsPage() {
       console.log('Active data length (after filter):', activeData.length);
       console.log('Active data:', activeData);
       
-      // Sort berdasarkan tanggal publikasi (terbaru di atas) dan created_at
+      // Sort: Pinned berita di atas, lalu berdasarkan updated_at (terbaru di atas), lalu created_at
       activeData.sort((a, b) => {
+        // Pinned berita selalu di atas
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        
+        // Jika keduanya pinned atau tidak pinned, sort berdasarkan updated_at terlebih dahulu
+        const updatedA = new Date(a.updated_at || a.created_at || 0);
+        const updatedB = new Date(b.updated_at || b.created_at || 0);
+        
+        // Jika updated_at berbeda, sort berdasarkan updated_at (terbaru di atas)
+        if (updatedA.getTime() !== updatedB.getTime()) {
+          return updatedB - updatedA; // Descending (terbaru di atas)
+        }
+        
+        // Jika updated_at sama, sort berdasarkan created_at atau tanggal publikasi
         const dateA = new Date(a.date || a.created_at || 0);
         const dateB = new Date(b.date || b.created_at || 0);
         return dateB - dateA; // Descending (terbaru di atas)
@@ -743,7 +757,7 @@ export default function TpmNewsPage() {
         tags: ''
       });
 
-      // Refresh data setelah update berhasil
+      // Refresh data setelah update berhasil (berita yang di-update akan muncul di posisi pertama)
       console.log('Refreshing data after update...');
       setTimeout(async () => {
         try {

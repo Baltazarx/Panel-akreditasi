@@ -1560,7 +1560,7 @@ const AksesCepatBeritaDashboard = () => {
             // Filter out deleted items
             const activeData = dataArray.filter(item => !item.deleted_at);
             
-            // Sort: Pinned berita di atas, lalu berdasarkan tanggal publikasi (terbaru di atas)
+            // Sort: Pinned berita di atas, lalu berdasarkan updated_at (terbaru di atas), lalu created_at
             activeData.sort((a, b) => {
                 const aPinned = a.is_pinned || a.pinned || false;
                 const bPinned = b.is_pinned || b.pinned || false;
@@ -1569,7 +1569,16 @@ const AksesCepatBeritaDashboard = () => {
                 if (aPinned && !bPinned) return -1;
                 if (!aPinned && bPinned) return 1;
                 
-                // Jika keduanya pinned atau tidak pinned, sort berdasarkan tanggal
+                // Jika keduanya pinned atau tidak pinned, sort berdasarkan updated_at terlebih dahulu
+                const updatedA = new Date(a.updated_at || a.created_at || a.tanggal_publikasi || 0);
+                const updatedB = new Date(b.updated_at || b.created_at || b.tanggal_publikasi || 0);
+                
+                // Jika updated_at berbeda, sort berdasarkan updated_at (terbaru di atas)
+                if (updatedA.getTime() !== updatedB.getTime()) {
+                    return updatedB - updatedA; // Descending (terbaru di atas)
+                }
+                
+                // Jika updated_at sama, sort berdasarkan tanggal publikasi atau created_at
                 const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
                 const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
                 return dateB - dateA; // Descending (terbaru di atas)
