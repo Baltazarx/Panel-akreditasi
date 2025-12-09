@@ -1,4 +1,3 @@
-// src/auth/login.route.js
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -18,32 +17,67 @@ loginRouter.post('/login', async (req, res) => {
   }
 
   try {
-    // Query sudah benar (SELECT * mengambil semua kolom)
-    const [rows] = await pool.query(
-      'SELECT * FROM users WHERE username = ? AND is_active = 1 AND deleted_at IS NULL LIMIT 1',
-      [username]
-    );
+    // [QUERY BARU]
+    // Mengambil data user, pegawai, unit, dan role
+    const sql = `
+      SELECT 
+        u.id_user,
+        u.username,
+        u.password,
+        u.is_active,
+        p.id_pegawai,
+        p.nama_lengkap,
+        p.id_jabatan,
+        p.id_unit,
+        uk.nama_unit,
+        uk.kode_role
+      FROM users u
+      LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      WHERE u.username = ? AND u.deleted_at IS NULL
+      LIMIT 1
+    `;
+
+    const [rows] = await pool.query(sql, [username]);
 
     if (rows.length === 0) {
-      return res.status(401).json({ error: 'Username tidak ditemukan atau akun nonaktif' });
+      return res.status(401).json({ error: 'Username tidak ditemukan' });
     }
 
     const user = rows[0];
+
+    // Cek Aktif
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Akun dinonaktifkan' });
+    }
+
+    // Cek Password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Password salah' });
     }
 
-    // ==========================================================
-    // PERBAIKAN PAYLOAD:
-    // Gunakan id_unit yang ada di database
-    // Untuk superadmin, id_unit bisa digunakan sebagai akses global
-    // ==========================================================
+    // [VALIDASI KETUA UNIT]
+    // Hanya ketua unit yang diizinkan login
+    if (user.id_jabatan !== 1) {
+       return res.status(403).json({ error: 'Akses Ditolak. Hanya Ketua Unit yang diizinkan login.' });
+    }
+
+    // [VALIDASI ROLE]
+    if (!user.kode_role) {
+       return res.status(403).json({ error: `Unit Kerja '${user.nama_unit}' belum memiliki hak akses (kode_role). Hubungi Admin.` });
+    }
+
+    // Payload Token
     const payload = {
       id_user: user.id_user,
+      id_pegawai: user.id_pegawai,
       username: user.username,
-      id_unit: user.id_unit, // <-- AMBIL id_unit DARI DATABASE
-      role: user.role
+      
+      // Data Dinamis dari Pegawai/Unit
+      id_unit: user.id_unit,
+      role: user.kode_role,
+      nama_lengkap: user.nama_lengkap
     };
 
     const token = jwt.sign(payload, config.jwt.secret, {
@@ -51,11 +85,13 @@ loginRouter.post('/login', async (req, res) => {
     });
 
     res.cookie('token', token, { httpOnly: true });
-    // Kirim payload yang sama ke frontend
+    
     res.json({
+      message: 'Login berhasil',
       token,
       user: payload
     });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -64,10 +100,8 @@ loginRouter.post('/login', async (req, res) => {
 
 /**
  * GET /api/me
- * Ambil informasi user dari token
  */
 loginRouter.get('/me', (req, res) => {
-  // Ambil token dari cookie atau header
   const headerAuth = req.headers.authorization || '';
   const token =
     req.cookies?.token ||
@@ -80,14 +114,12 @@ loginRouter.get('/me', (req, res) => {
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
 
-    // ==========================================================
-    // PERBAIKAN /me:
-    // Sesuaikan dengan payload token yang baru
-    // ==========================================================
     res.json({
       id_user: decoded.id_user,
+      id_pegawai: decoded.id_pegawai,
       username: decoded.username,
-      id_unit: decoded.id_unit, // <-- Kirim id_unit
+      nama_lengkap: decoded.nama_lengkap,
+      id_unit: decoded.id_unit,
       role: decoded.role
     });
   } catch (err) {

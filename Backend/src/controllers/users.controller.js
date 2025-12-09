@@ -8,34 +8,51 @@ export const listUsers = async (req, res) => {
     const { where, params } = await buildWhere(req, 'users', 'u');
     const orderBy = buildOrderBy(req.query?.order_by, 'id_user', 'u');
 
-    // Abaikan filter soft-delete dari buildWhere: hapus kondisi terkait deleted_at jika ada
-    let whereNoDeleted = (where || []).filter(w => !/deleted_at/i.test(w));
-
-    // Filter berdasarkan status (active/inactive/all)
+    // [MODIFIKASI FILTER]
+    // Secara default, buildWhere mungkin menyembunyikan soft-deleted records.
+    // Jika kita ingin admin bisa melihat user nonaktif/terhapus, kita sesuaikan filter di sini.
+    
+    // Kita filter manual kondisi deleted_at agar lebih fleksibel
+    let finalWhere = where.filter(w => !w.includes('deleted_at')); 
+    
     const statusFilter = req.query?.status;
     if (statusFilter === 'active') {
-      // Akun Aktif: is_active = 1 DAN deleted_at IS NULL
-      whereNoDeleted.push('u.is_active = 1');
-      whereNoDeleted.push('u.deleted_at IS NULL');
+      finalWhere.push('u.is_active = 1 AND u.deleted_at IS NULL');
     } else if (statusFilter === 'inactive') {
-      // Akun Nonaktif: is_active = 0 ATAU deleted_at IS NOT NULL
-      whereNoDeleted.push('(u.is_active = 0 OR u.deleted_at IS NOT NULL)');
-    } else if (statusFilter === 'all') {
-      // Tampilkan semua termasuk yang sudah di-soft delete
-      // Tidak perlu filter tambahan
+      finalWhere.push('(u.is_active = 0 OR u.deleted_at IS NOT NULL)');
     } else {
-      // Default: hanya tampilkan akun yang aktif (tidak di-soft delete)
-      whereNoDeleted.push('u.deleted_at IS NULL');
+      // Default: Tampilkan semua yang belum di-hard delete (soft delete tetap muncul di list admin biasanya)
+      // Atau jika Anda ingin defaultnya hanya aktif:
+      // finalWhere.push('u.deleted_at IS NULL'); 
     }
 
+    // [UPDATE QUERY]
+    // 1. Hapus u.role (kolom lama)
+    // 2. Ambil uk.kode_role sebagai 'role' sistem
+    // 3. Join lengkap ke pegawai & unit
     const sql = `
-      SELECT u.id_user, u.username, u.role, u.is_active, u.deleted_at,
-             u.id_unit, uk.nama_unit AS unit_name,
-             u.id_pegawai, p.nama_lengkap AS pegawai_name
+      SELECT 
+        u.id_user, 
+        u.username, 
+        u.is_active, 
+        u.created_at, 
+        u.updated_at, 
+        u.deleted_at,
+        
+        -- Info Pegawai
+        u.id_pegawai, 
+        p.nama_lengkap AS pegawai_name,
+        
+        -- Info Unit & Role (Dari Pegawai -> Unit)
+        p.id_unit, 
+        uk.nama_unit AS unit_name,
+        uk.kode_role AS role  -- Role diambil dari Unit Kerja
+        
       FROM users u
-      LEFT JOIN unit_kerja uk ON uk.id_unit = u.id_unit
-      LEFT JOIN pegawai p ON p.id_pegawai = u.id_pegawai
-      ${whereNoDeleted.length ? `WHERE ${whereNoDeleted.join(' AND ')}` : ''}
+      LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      
+      ${finalWhere.length ? `WHERE ${finalWhere.join(' AND ')}` : ''}
       ORDER BY ${orderBy}
     `;
 
@@ -43,70 +60,113 @@ export const listUsers = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error("Error listUsers:", err);
-    res.status(500).json({ error: 'List failed' });
+    res.status(500).json({ error: 'List failed', details: err.message });
   }
 };
 
 // ===== GET BY ID =====
 export const getUserById = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT * FROM users WHERE id_user=?`,
-      [req.params.id]
-    );
+    const sql = `
+      SELECT 
+        u.id_user, 
+        u.username, 
+        u.is_active, 
+        u.created_at, 
+        u.updated_at, 
+        u.deleted_at,
+        u.id_pegawai, 
+        p.nama_lengkap AS pegawai_name,
+        p.id_unit, 
+        uk.nama_unit AS unit_name,
+        uk.kode_role AS role
+      FROM users u
+      LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      WHERE u.id_user = ?
+    `;
+
+    const [rows] = await pool.query(sql, [req.params.id]);
+    
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
     console.error("Error getUserById:", err);
-    res.status(500).json({ error: 'Get failed' });
+    res.status(500).json({ error: 'Get failed', details: err.message });
   }
 };
 
 // ===== CREATE =====
 export const createUser = async (req, res) => {
   try {
+    // [UPDATE] Input menjadi lebih ringkas
+    // Tidak perlu input id_unit atau role manual.
+    // Cukup username, password, id_pegawai.
+    const { username, password, id_pegawai, is_active } = req.body;
+
+    if (!username || !password || !id_pegawai) {
+        return res.status(400).json({ error: 'Username, Password, dan Pegawai wajib diisi.' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const data = {
-      username: req.body.username,
-      password: req.body.password ? await bcrypt.hash(req.body.password, 10) : null,
-      id_unit: req.body.id_unit,
-      id_pegawai: req.body.id_pegawai,
-      role: req.body.role,
-      is_active: req.body.is_active ?? 1,
+      username,
+      password: hashedPassword,
+      id_pegawai,
+      is_active: is_active !== undefined ? is_active : 1,
     };
+
     if (await hasColumn('users', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
     }
 
     const [r] = await pool.query(`INSERT INTO users SET ?`, [data]);
+    
+    // Return data lengkap (termasuk role yang didapat otomatis)
     const [row] = await pool.query(
-      `SELECT * FROM users WHERE id_user=?`,
+      `SELECT 
+         u.id_user, u.username, u.is_active,
+         p.nama_lengkap AS pegawai_name,
+         uk.nama_unit AS unit_name,
+         uk.kode_role AS role
+       FROM users u
+       LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       WHERE u.id_user=?`,
       [r.insertId]
     );
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createUser:", err);
-    res.status(500).json({ error: 'Create failed' });
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Username atau Pegawai sudah terdaftar.' });
+    res.status(500).json({ error: 'Create failed', details: err.message });
   }
 };
 
 // ===== UPDATE =====
 export const updateUser = async (req, res) => {
   try {
+    const { username, password, id_pegawai, is_active } = req.body;
+
     const data = {
-      username: req.body.username,
-      id_unit: req.body.id_unit,
-      id_pegawai: req.body.id_pegawai,
-      role: req.body.role,
-      // kalau undefined/null → default 1 (aktif)
-      is_active: req.body.is_active !== undefined ? req.body.is_active : 1,
+      username,
+      id_pegawai, // Jika ingin ganti pemilik akun
+      is_active
     };
 
-    if (req.body.password) {
-      data.password = await bcrypt.hash(req.body.password, 10);
+    // Hanya update password jika dikirim (tidak kosong)
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
     }
+
     if (await hasColumn('users', 'updated_by') && req.user?.id_user) {
       data.updated_by = req.user.id_user;
     }
+
+    // Filter undefined values agar tidak menimpa data lama dengan NULL/undefined
+    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     await pool.query(
       `UPDATE users SET ? WHERE id_user=?`,
@@ -114,52 +174,37 @@ export const updateUser = async (req, res) => {
     );
 
     const [row] = await pool.query(
-      `SELECT * FROM users WHERE id_user=?`,
+      `SELECT 
+         u.id_user, u.username, u.is_active,
+         p.nama_lengkap AS pegawai_name,
+         uk.nama_unit AS unit_name,
+         uk.kode_role AS role
+       FROM users u
+       LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       WHERE u.id_user=?`,
       [req.params.id]
     );
+
     if (!row[0]) return res.status(404).json({ error: 'Not found' });
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateUser:", err);
-    res.status(500).json({ error: 'Update failed' });
+    res.status(500).json({ error: 'Update failed', details: err.message });
   }
 };
 
-
-// ===== SOFT DELETE (NONAKTIFKAN) =====
+// ... (Fungsi SoftDelete, Restore, HardDelete tetap sama, logika ID tidak berubah)
 export const softDeleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
+    const [existing] = await pool.query(`SELECT id_user FROM users WHERE id_user = ?`, [userId]);
+    if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
     
-    // Cek apakah user ada
-    const [existing] = await pool.query(
-      `SELECT id_user FROM users WHERE id_user = ?`,
-      [userId]
-    );
+    const payload = { deleted_at: new Date(), is_active: 0 };
+    if (await hasColumn('users', 'deleted_by')) payload.deleted_by = req.user?.id_user || null;
     
-    if (existing.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Nonaktifkan = set is_active = 0 dan deleted_at (mencegah login)
-    const payload = { 
-      deleted_at: new Date(),
-      is_active: 0  // Nonaktifkan untuk mencegah login
-    };
-    if (await hasColumn('users', 'deleted_by')) {
-      payload.deleted_by = req.user?.id_user || null;
-    }
-    
-    const [result] = await pool.query(
-      `UPDATE users SET ? WHERE id_user = ?`,
-      [payload, userId]
-    );
-    
-    // Verifikasi update berhasil
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'User not found or already deleted' });
-    }
-    
+    await pool.query(`UPDATE users SET ? WHERE id_user = ?`, [payload, userId]);
     res.json({ ok: true, softDeleted: true, message: 'User deleted successfully' });
   } catch (err) {
     console.error("Error softDeleteUser:", err);
@@ -167,45 +212,32 @@ export const softDeleteUser = async (req, res) => {
   }
 };
 
-// ===== RESTORE (AKTIFKAN KEMBALI) =====
 export const restoreUser = async (req, res) => {
   try {
-    // Aktifkan kembali = set is_active = 1 dan hapus deleted_at (izin login)
-    await pool.query(
-      `UPDATE users 
-       SET deleted_at=NULL, deleted_by=NULL, is_active=1 
-       WHERE id_user=?`,
-      [req.params.id]
-    );
+    await pool.query(`UPDATE users SET deleted_at=NULL, is_active=1 WHERE id_user=?`, [req.params.id]);
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreUser:", err);
-    res.status(500).json({ error: 'Restore failed' });
+    res.status(500).json({ error: 'Restore failed', details: err.message });
   }
 };
 
-// ===== HARD DELETE =====
 export const hardDeleteUser = async (req, res) => {
   try {
-    await pool.query(
-      `DELETE FROM users WHERE id_user=?`,
-      [req.params.id]
-    );
+    await pool.query(`DELETE FROM users WHERE id_user=?`, [req.params.id]);
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
     console.error("Error hardDeleteUser:", err);
-    res.status(500).json({ error: 'Hard delete failed' });
+    res.status(500).json({ error: 'Hard delete failed', details: err.message });
   }
 };
 
-// ===== EXTRA: LIST UNIT =====
+// ===== EXTRA: SEARCH & LIST UNIT =====
+// (List unit tetap sama karena ambil dari tabel unit_kerja)
 export const listUnits = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id_unit, nama_unit 
-       FROM unit_kerja 
-       WHERE deleted_at IS NULL 
-       ORDER BY nama_unit ASC`
+      `SELECT id_unit, nama_unit, kode_role FROM unit_kerja WHERE deleted_at IS NULL ORDER BY nama_unit ASC`
     );
     res.json(rows);
   } catch (err) {
@@ -214,17 +246,11 @@ export const listUnits = async (req, res) => {
   }
 };
 
-// ===== EXTRA: SEARCH PEGAWAI =====
 export const searchPegawai = async (req, res) => {
   try {
     const q = req.query.search || "";
     const [rows] = await pool.query(
-      `SELECT id_pegawai, nama_lengkap 
-       FROM pegawai 
-       WHERE deleted_at IS NULL 
-         AND nama_lengkap LIKE ? 
-       ORDER BY nama_lengkap ASC 
-       LIMIT 20`,
+      `SELECT id_pegawai, nama_lengkap FROM pegawai WHERE deleted_at IS NULL AND nama_lengkap LIKE ? ORDER BY nama_lengkap ASC LIMIT 20`,
       [`%${q}%`]
     );
     res.json(rows);
