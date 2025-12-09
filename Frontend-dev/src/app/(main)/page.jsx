@@ -36,6 +36,7 @@ const FiDownload = (props) => (<svg stroke="currentColor" fill="none" strokeWidt
 const FiFile = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>);
 const FiFolder = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>);
 const FiActivity = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>);
+const FiAlertTriangle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>);
 const FiCheckCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>);
 const FiPlusCircle = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>);
 const FiEdit = (props) => (<svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>);
@@ -1281,7 +1282,7 @@ const WelcomeSection = ({ authUser }) => {
             initial="hidden"
             animate="visible"
             variants={slideUp}
-            className="bg-gradient-to-br from-[#043975] via-[#0384d6] to-[#043975] rounded-2xl shadow-xl p-6 h-full text-white relative overflow-hidden"
+            className="bg-gradient-to-br from-[#043975] via-[#0384d6] to-[#043975] rounded-2xl shadow-xl p-4 h-full text-white relative overflow-hidden"
         >
             {/* Background Grid Pattern - White Lines */}
             <div className="absolute inset-0 opacity-30">
@@ -1290,14 +1291,14 @@ const WelcomeSection = ({ authUser }) => {
                         linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
                         linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)
                     `,
-                    backgroundSize: '35px 35px',
+                    backgroundSize: '30px 30px',
                     backgroundPosition: '0 0'
                 }}></div>
             </div>
 
             {/* Decorative Circle */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-[#ffbf1b]/10 rounded-full blur-2xl"></div>
+            <div className="absolute -top-16 -right-16 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-[#ffbf1b]/10 rounded-full blur-2xl"></div>
 
             <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
@@ -1306,10 +1307,10 @@ const WelcomeSection = ({ authUser }) => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm mb-4"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm mb-3"
                     >
-                        <div className="w-2 h-2 bg-[#ffbf1b] rounded-full animate-pulse"></div>
-                        <span className="text-xs font-semibold text-white/90">{greeting}</span>
+                        <div className="w-1.5 h-1.5 bg-[#ffbf1b] rounded-full animate-pulse"></div>
+                        <span className="text-[10px] font-semibold text-white/90">{greeting}</span>
                     </motion.div>
 
                     {/* Welcome Message */}
@@ -1318,14 +1319,14 @@ const WelcomeSection = ({ authUser }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
                     >
-                        <h2 className="text-2xl md:text-3xl font-bold mb-2 leading-tight">
+                        <h2 className="text-lg md:text-xl font-bold mb-1 leading-tight">
                             Selamat Datang,
                         </h2>
-                        <h3 className="text-xl md:text-2xl font-bold mb-3 text-[#ffbf1b]">
+                        <h3 className="text-base md:text-lg font-bold mb-2 text-[#ffbf1b] truncate">
                             {userName}
                         </h3>
-                        <p className="text-sm text-white/80 mb-4 leading-relaxed">
-                            Anda login sebagai <span className="font-semibold text-white">{userRole}</span>
+                        <p className="text-xs text-white/80 mb-3 leading-relaxed">
+                            Login sebagai <span className="font-semibold text-white">{userRole}</span>
                         </p>
                     </motion.div>
                 </div>
@@ -1335,18 +1336,18 @@ const WelcomeSection = ({ authUser }) => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="mt-6 pt-6 border-t border-white/20"
+                    className="mt-4 pt-4 border-t border-white/20"
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-white/60 mb-1">Waktu Saat Ini</p>
-                            <p className="text-lg font-bold text-white">{currentTime}</p>
+                            <p className="text-[10px] text-white/60 mb-0.5">Waktu</p>
+                            <p className="text-sm font-bold text-white">{currentTime}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-white/60 mb-1">Status</p>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <p className="text-sm font-semibold text-white">Online</p>
+                            <p className="text-[10px] text-white/60 mb-0.5">Status</p>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                                <p className="text-xs font-semibold text-white">Online</p>
                             </div>
                         </div>
                     </div>
@@ -1766,78 +1767,31 @@ const AktivitasWebsite = () => {
     const [loading, setLoading] = useState(true);
     const shouldReduceMotion = useReducedMotion();
 
+    // Dummy log dengan status & icon ala notifikasi
     const activityData = [
         {
             id: 1,
-            type: 'table_update',
-            activity: 'Tabel 3A-1 telah diupdate',
-            detail: 'Data sarana prasarana penelitian telah diperbarui',
-            user: 'Admin TPM',
-            date: "2025-10-02",
-            time: "2 Okt 2025",
-            color: "from-blue-500 to-cyan-500",
-            icon: FiEdit,
-            tag: 'Update Tabel'
+            status: 'success',
+            activity: "Pengguna 'Budi' berhasil menambah data",
+            detail: 'Tabel 3A-1: sarpras penelitian',
+            user: 'Budi',
+            timestamp: '2025-12-09T15:21:00Z'
         },
         {
             id: 2,
-            type: 'berita_update',
-            activity: 'Berita baru ditambahkan',
-            detail: 'Pelaksanaan Audit Mutu Internal (AMI) Siklus Ke-12 telah dipublikasikan',
-            user: 'Admin TPM',
-            date: "2025-09-28",
-            time: "28 Sep 2025",
-            color: "from-green-500 to-emerald-500",
-            icon: FiNewspaper,
-            tag: 'Update Berita'
+            status: 'info',
+            activity: 'Otomatis: Data transaksi 30 hari yang lalu',
+            detail: 'Sinkronisasi data transaksi bulanan',
+            user: 'Sistem',
+            timestamp: '2025-12-09T12:05:00Z'
         },
         {
             id: 3,
-            type: 'profile_update',
-            activity: 'Profile user diupdate',
-            detail: 'Profile Dr. Ahmad Hidayat telah diperbarui',
-            user: 'Admin TPM',
-            date: "2025-09-27",
-            time: "27 Sep 2025",
-            color: "from-purple-500 to-pink-500",
-            icon: FiUsers,
-            tag: 'Update Profile'
-        },
-        {
-            id: 4,
-            type: 'table_create',
-            activity: 'Data baru ditambahkan',
-            detail: 'Data baru telah ditambahkan ke Tabel 2A-1',
-            user: 'Admin TPM',
-            date: "2025-09-26",
-            time: "26 Sep 2025",
-            color: "from-orange-500 to-red-500",
-            icon: FiPlusCircle,
-            tag: 'Tambah Data'
-        },
-        {
-            id: 5,
-            type: 'table_delete',
-            activity: 'Data dihapus',
-            detail: 'Data dari Tabel 1A-1 telah dihapus',
-            user: 'Admin TPM',
-            date: "2025-09-25",
-            time: "25 Sep 2025",
-            color: "from-red-500 to-rose-500",
-            icon: FiTrash,
-            tag: 'Hapus Data'
-        },
-        {
-            id: 6,
-            type: 'login',
-            activity: 'User login',
-            detail: 'User berhasil login ke sistem',
-            user: 'Admin TPM',
-            date: "2025-09-24",
-            time: "24 Sep 2025",
-            color: "from-teal-500 to-cyan-500",
-            icon: FiActivity,
-            tag: 'Login'
+            status: 'warning',
+            activity: "Pengguna 'Admin' menghapus data",
+            detail: 'Laporan: Penjualan Q1 2023',
+            user: 'Admin',
+            timestamp: '2025-12-09T10:11:00Z'
         }
     ];
 
@@ -1853,13 +1807,16 @@ const AktivitasWebsite = () => {
             initial="hidden"
             animate="visible"
             variants={slideUp}
-            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 overflow-hidden"
+            className="relative p-2 overflow-hidden"
         >
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-900">Aktivitas Website</h3>
+            <div className="flex items-center justify-between mb-4">
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900">Aktivitas Terbaru</h3>
+                    <p className="text-sm text-gray-500">Log dummy aktivitas terkini</p>
+                </div>
                 <button 
                     onClick={() => router.push('/activity')}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                    className="text-sm font-semibold text-[#043975] hover:text-[#022d5c] transition-colors flex items-center gap-1.5"
                 >
                     Lihat Semua
                     <FiArrowRight className="w-4 h-4" />
@@ -1867,67 +1824,126 @@ const AktivitasWebsite = () => {
             </div>
 
             {loading ? (
-                <div className="space-y-2 overflow-x-hidden">
+                <div className="space-y-3 overflow-x-hidden">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="bg-gray-50 rounded-lg p-3 animate-pulse">
-                            <div className="flex gap-3">
-                                <div className="h-8 w-8 bg-gray-200 rounded-lg flex-shrink-0"></div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-1"></div>
-                                    <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
-                                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
+                            <div className="flex gap-4">
+                                <div className="h-10 w-10 bg-gray-200 rounded-xl flex-shrink-0"></div>
+                                <div className="flex-1 min-w-0 space-y-2">
+                                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="space-y-2 max-h-[600px] overflow-y-auto overflow-x-hidden">
-                    {activities.map((item, index) => {
-                        const IconComponent = item.icon;
-                        return (
-                            <motion.div
-                                key={item.id}
-                                variants={slideUp}
-                                initial="hidden"
-                                animate="visible"
-                                transition={{ delay: index * 0.05 }}
-                                whileHover={shouldReduceMotion ? undefined : {}}
-                                onClick={() => router.push('/activity')}
-                                className="group relative bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out cursor-pointer border border-gray-100 hover:border-gray-200 overflow-hidden"
-                            >
-                                <div className="flex gap-3">
-                                    {/* Icon Section - Left */}
-                                    <div className="flex-shrink-0">
-                                        <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br ${item.color} text-white shadow-sm transition-opacity duration-300`}>
-                                            <IconComponent className="w-4 h-4" />
-                                        </div>
+                <div className="relative">
+                    {/* Timeline line */}
+                    <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent pointer-events-none"></div>
+
+                    <div className="space-y-2 max-h-[520px] overflow-y-auto overflow-x-hidden pr-1">
+                        {activities.map((item, index) => {
+                            // Status styling map
+                            const statusMap = {
+                                success: {
+                                    label: 'Berhasil',
+                                    icon: FiCheckCircle,
+                                    dot: 'bg-emerald-500',
+                                    badgeBg: 'bg-emerald-50',
+                                    badgeText: 'text-emerald-700',
+                                    badgeBorder: 'border border-emerald-100'
+                                },
+                                info: {
+                                    label: 'Informasi',
+                                    icon: FiClipboard,
+                                    dot: 'bg-blue-500',
+                                    badgeBg: 'bg-blue-50',
+                                    badgeText: 'text-blue-700',
+                                    badgeBorder: 'border border-blue-100'
+                                },
+                                warning: {
+                                    label: 'Peringatan',
+                                    icon: FiAlertTriangle,
+                                    dot: 'bg-amber-500',
+                                    badgeBg: 'bg-amber-50',
+                                    badgeText: 'text-amber-700',
+                                    badgeBorder: 'border border-amber-100'
+                                },
+                                default: {
+                                    label: 'Aktivitas',
+                                    icon: FiActivity,
+                                    dot: 'bg-slate-400',
+                                    badgeBg: 'bg-slate-50',
+                                    badgeText: 'text-slate-700',
+                                    badgeBorder: 'border border-slate-100'
+                                }
+                            };
+
+                            const status = statusMap[item.status] || statusMap.default;
+                            const StatusIcon = status.icon;
+
+                            // Format timestamp
+                            const ts = item.timestamp ? new Date(item.timestamp) : null;
+                            const formattedDate = ts
+                                ? ts.toLocaleString('id-ID', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : item.time;
+
+                            return (
+                                <motion.div
+                                    key={item.id}
+                                    variants={slideUp}
+                                    initial="hidden"
+                                    animate="visible"
+                                    transition={{ delay: index * 0.04 }}
+                                    whileHover={undefined}
+                                    className="group relative flex gap-3 pl-9 pr-2 py-3 rounded-lg"
+                                >
+                                    {/* Timeline dot */}
+                                    <div className={`absolute left-4 top-4 w-2.5 h-2.5 rounded-full ${status.dot} shadow-sm`}></div>
+
+                                    {/* Icon */}
+                                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${status.badgeBg} ${status.badgeBorder} text-slate-700`}>
+                                        <StatusIcon className="w-4 h-4" />
                                     </div>
 
-                                    {/* Content Section - Right */}
-                                    <div className="flex-1 min-w-0 overflow-hidden">
-                                        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                            <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-                                                {item.tag}
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded ${status.badgeBg} ${status.badgeText} ${status.badgeBorder}`}>
+                                                <StatusIcon className="w-3.5 h-3.5" />
+                                                {status.label.toUpperCase()}
                                             </span>
-                                            <span className="text-[10px] text-gray-500 whitespace-nowrap">
-                                                {item.time}
-                                            </span>
+                                            {formattedDate && (
+                                                <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                                    <FiClock className="w-3 h-3" />
+                                                    {formattedDate}
+                                                </span>
+                                            )}
                                         </div>
-                                        <h4 className="text-sm font-bold mb-0.5 leading-tight truncate" style={{ color: '#043975' }}>
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-0.5 line-clamp-1 group-hover:text-[#043975] transition-colors">
                                             {item.activity}
                                         </h4>
-                                        <p className="text-xs text-gray-600 leading-relaxed mb-0.5 line-clamp-1">
-                                            {item.detail}
-                                        </p>
-                                        <p className="text-[10px] text-gray-500 truncate">
+                                        {item.detail && (
+                                            <p className="text-xs text-gray-600 mb-0.5 line-clamp-2">
+                                                {item.detail}
+                                            </p>
+                                        )}
+                                        <p className="text-[11px] text-gray-400">
                                             oleh {item.user}
                                         </p>
                                     </div>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </motion.div>
@@ -2156,11 +2172,21 @@ const UpdateStatusTerkini_OLD = () => {
     );
 };
 
-// Komponen Akses Cepat - Style seperti Market (list dengan filter)
+// Komponen Akses Cepat - Redesigned dengan Grid Card Layout
 const AksesCepatMarket = ({ quickActions }) => {
     const router = useRouter();
-    const [selectedFilter, setSelectedFilter] = useState('24h');
-    const [selectedCategory, setSelectedCategory] = useState('Top gainers');
+    const shouldReduceMotion = useReducedMotion();
+
+    // Kategorisasi quick actions
+    const categorizedActions = useMemo(() => {
+        if (!quickActions || quickActions.length === 0) return { tables: [], admin: [] };
+        
+        const adminLabels = ['Data Dosen', 'Tabel Pegawai', 'Tenaga Kependidikan', 'Management Akun', 'Panel Admin'];
+        const tables = quickActions.filter(item => item.label.startsWith('Tabel C'));
+        const admin = quickActions.filter(item => adminLabels.includes(item.label));
+        
+        return { tables, admin };
+    }, [quickActions]);
 
     return (
         <motion.div
@@ -2169,63 +2195,108 @@ const AksesCepatMarket = ({ quickActions }) => {
             variants={fadeIn}
             className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
         >
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-slate-900">Akses Cepat</h3>
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">Akses Cepat Tabel</h3>
+                    <p className="text-sm text-gray-500">Navigasi cepat ke tabel data</p>
+                </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 mb-4">
-                <button
-                    onClick={() => setSelectedFilter('24h')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                        selectedFilter === '24h'
-                            ? 'bg-gray-100 text-slate-900'
-                            : 'text-gray-500 hover:bg-gray-50'
-                    }`}
-                >
-                    24h
-                </button>
-                <button
-                    onClick={() => setSelectedCategory('Top gainers')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                        selectedCategory === 'Top gainers'
-                            ? 'bg-gray-100 text-slate-900'
-                            : 'text-gray-500 hover:bg-gray-50'
-                    }`}
-                >
-                    Top gainers
-                </button>
-            </div>
+            {quickActions && quickActions.length > 0 ? (
+                <div className="space-y-6">
+                    {/* Tabel Data Section */}
+                    {categorizedActions.tables.length > 0 && (
+                        <div>
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Tabel Data</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {categorizedActions.tables.map((item, i) => {
+                                    const IconComponent = item.icon;
+                                    return (
+                                        <motion.button
+                                            key={i}
+                                            variants={slideUp}
+                                            initial="hidden"
+                                            animate="visible"
+                                            transition={{ delay: i * 0.05 }}
+                                            whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
+                                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                                            onClick={() => router.push(item.path)}
+                                            className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
+                                        >
+                                            {/* Background Gradient on Hover */}
+                                            <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                                            
+                                            {/* Content */}
+                                            <div className="relative z-10 flex items-center gap-3">
+                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                                                    <IconComponent className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
+                                                        {item.label}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">Klik untuk buka</div>
+                                                </div>
+                                                <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+                                            </div>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
-            {/* Quick Actions List */}
-            <div className="max-h-[400px] overflow-y-auto pr-2 space-y-3">
-                {quickActions && quickActions.length > 0 ? (
-                    quickActions.map((item, i) => {
-                        const IconComponent = item.icon;
-                        return (
-                            <motion.button
-                                key={i}
-                                whileHover={{ x: 4 }}
-                                onClick={() => router.push(item.path)}
-                                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors text-left group"
-                            >
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className={`p-2.5 rounded-lg bg-gradient-to-br ${item.color} text-white flex-shrink-0`}>
-                                        <IconComponent className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-slate-900 text-base truncate">{item.label}</div>
-                                        <div className="text-xs text-gray-500">Akses cepat</div>
-                                    </div>
-                                </div>
-                                <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 group-hover:translate-x-1" />
-                            </motion.button>
-                        );
-                    })
-                ) : (
-                    <div className="text-center py-4 text-gray-500 text-sm">Tidak ada akses cepat tersedia</div>
-                )}
-            </div>
+                    {/* Panel Admin Section */}
+                    {categorizedActions.admin.length > 0 && (
+                        <div>
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Panel Admin</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {categorizedActions.admin.map((item, i) => {
+                                    const IconComponent = item.icon;
+                                    return (
+                                        <motion.button
+                                            key={i}
+                                            variants={slideUp}
+                                            initial="hidden"
+                                            animate="visible"
+                                            transition={{ delay: (categorizedActions.tables.length + i) * 0.05 }}
+                                            whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
+                                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                                            onClick={() => router.push(item.path)}
+                                            className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
+                                        >
+                                            {/* Background Gradient on Hover */}
+                                            <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                                            
+                                            {/* Content */}
+                                            <div className="relative z-10 flex items-center gap-3">
+                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                                                    <IconComponent className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
+                                                        {item.label}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">Klik untuk buka</div>
+                                                </div>
+                                                <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+                                            </div>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                        <FiGrid className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-sm font-medium">Tidak ada akses cepat tersedia</p>
+                    <p className="text-gray-400 text-xs mt-1">Hubungi administrator untuk mendapatkan akses</p>
+                </div>
+            )}
         </motion.div>
     );
 };
@@ -2996,6 +3067,9 @@ export default function App() {
   // Akses Data Pegawai
   const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
 
+  // Akses Data Tenaga Kependidikan
+  const hasTendikAccess = useMemo(() => roleCan(role, "tenaga_kependidikan", "r"), [role]);
+
   // Akses Management Akun (kecuali untuk role ALA, kemahasiswaan, LPPM, dan KEPEGAWAIAN)
   const hasUsersAccess = useMemo(() => {
     const roleLower = (role || '').toLowerCase();
@@ -3023,10 +3097,11 @@ export default function App() {
       { label: 'Tabel C6', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
       { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess },
       { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess },
+      { label: 'Tenaga Kependidikan', path: '/tables?table=TabelTendik', icon: FiUsers, color: 'from-violet-500 to-purple-500', hasAccess: hasTendikAccess },
       { label: 'Management Akun', path: '/users', icon: FiSettings, color: 'from-pink-500 to-rose-500', hasAccess: hasUsersAccess }
     ];
     return allQuickActions.filter(item => item.hasAccess);
-  }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasUsersAccess]);
+  }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasTendikAccess, hasUsersAccess]);
   
   useEffect(() => {
     setMounted(true);
@@ -3155,18 +3230,28 @@ export default function App() {
                                 <AksesCepatBeritaDashboard />
                               </motion.div>
 
-                              {/* Bottom Row: Akses Cepat (Small) & Selamat Datang (Wide) */}
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                                {/* Left: Akses Cepat - Lebih Kecil */}
-                                <div className="lg:col-span-1">
+                              {/* Bottom Row: Akses Cepat (Wide) & Selamat Datang (Small) */}
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+                                {/* Left: Akses Cepat - Lebih Panjang */}
+                                <div className="lg:col-span-8">
                                   <AksesCepatMarket quickActions={quickActions} />
                                 </div>
 
-                                {/* Right: Selamat Datang - Lebih Lebar */}
-                                <div className="lg:col-span-2">
+                                {/* Right: Selamat Datang - Lebih Kecil */}
+                                <div className="lg:col-span-4">
                                   <WelcomeSection authUser={authUser} />
                                 </div>
                               </div>
+
+                              {/* Log Aktivitas (Dummy) */}
+                              <motion.div 
+                                initial="hidden"
+                                animate="visible"
+                                variants={fadeIn}
+                                className="mb-6"
+                              >
+                                <AktivitasWebsite />
+                              </motion.div>
                             </div>
                           </div>
                         </motion.div>
