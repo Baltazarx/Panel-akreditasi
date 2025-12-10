@@ -74,7 +74,26 @@ export default function UserManagementPage() {
     try {
       setLoading(true);
       const data = await api.get("/users");
-      setUsers(Array.isArray(data) ? data : []);
+      const usersArray = Array.isArray(data) ? data : [];
+      
+      // Urutkan berdasarkan username secara alfabetis (case-insensitive)
+      // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
+      const sortedUsers = [...usersArray].sort((a, b) => {
+        const usernameA = (a.username || '').trim().toLowerCase();
+        const usernameB = (b.username || '').trim().toLowerCase();
+        
+        // Jika username sama, urutkan berdasarkan id_user sebagai secondary sort
+        if (usernameA === usernameB) {
+          return (a.id_user || 0) - (b.id_user || 0);
+        }
+        
+        return usernameA.localeCompare(usernameB, 'id', { 
+          sensitivity: 'base',
+          numeric: true 
+        });
+      });
+      
+      setUsers(sortedUsers);
     } catch (err) {
       console.error("Gagal ambil users:", err);
       const errorMessage = err?.response?.data?.error || err?.message || 'Gagal memuat data pengguna.';
@@ -383,7 +402,6 @@ export default function UserManagementPage() {
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
                 <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">ID</th>
                 <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Username</th>
                 <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Role</th>
                 <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit</th>
@@ -394,7 +412,7 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-slate-200">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
                     Tidak ada data pengguna.
                   </td>
                 </tr>
@@ -407,7 +425,6 @@ export default function UserManagementPage() {
                 } hover:bg-[#eaf4ff]`}
               >
                 <td className="px-6 py-4 border border-slate-200 text-center font-semibold text-slate-800">{idx + 1}.</td>
-                <td className="px-6 py-4 border border-slate-200 text-center font-semibold text-slate-700">{u.id_user}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.username}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.role}</td>
                 <td className="px-6 py-4 border border-slate-200 text-center text-slate-700">{u.unit_name || "-"}</td>

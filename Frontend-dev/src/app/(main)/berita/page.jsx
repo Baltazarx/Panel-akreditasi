@@ -337,8 +337,7 @@ export default function TpmNewsPage() {
     excerpt: '',
     content: '',
     author: '',
-    priority: 'medium',
-    tags: ''
+    priority: 'medium'
   });
 
   // Dropdown state untuk prioritas
@@ -636,8 +635,7 @@ export default function TpmNewsPage() {
         excerpt: '',
         content: '',
         author: '',
-        priority: 'medium',
-        tags: ''
+        priority: 'medium'
       });
 
       // Refresh data setelah upload berhasil dengan force refresh
@@ -679,8 +677,7 @@ export default function TpmNewsPage() {
       excerpt: post.excerpt || '',
       content: post.content || '',
       author: post.author || '',
-      priority: post.priority || 'medium',
-      tags: post.tags?.join(', ') || ''
+      priority: post.priority || 'medium'
     });
     setShowEditModal(true);
   };
@@ -753,8 +750,7 @@ export default function TpmNewsPage() {
         excerpt: '',
         content: '',
         author: '',
-        priority: 'medium',
-        tags: ''
+        priority: 'medium'
       });
 
       // Refresh data setelah update berhasil (berita yang di-update akan muncul di posisi pertama)
@@ -1093,22 +1089,6 @@ export default function TpmNewsPage() {
                           )}
                         </div>
                       </div>
-
-                      {/* Tags */}
-                      <div className="space-y-2 md:col-span-2">
-                        <label htmlFor="tags" className="block text-sm font-semibold text-gray-700">
-                          Tags <span className="text-gray-400 text-xs font-normal">(pisahkan dengan koma)</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="tags"
-                          value={uploadForm.tags}
-                          onChange={(e) => setUploadForm(prev => ({ ...prev, tags: e.target.value }))}
-                          disabled={uploading}
-                          placeholder="contoh: audit, mutu, internal"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
                     </div>
 
                     {/* Action Buttons */}
@@ -1125,8 +1105,7 @@ export default function TpmNewsPage() {
                               excerpt: '',
                               content: '',
                               author: '',
-                              priority: 'medium',
-                              tags: ''
+                              priority: 'medium'
                             });
                           }
                         }}
@@ -1350,8 +1329,7 @@ export default function TpmNewsPage() {
                             excerpt: '',
                             content: '',
                             author: '',
-                            priority: 'medium',
-                            tags: ''
+                            priority: 'medium'
                           });
                         }}
                         disabled={uploading}

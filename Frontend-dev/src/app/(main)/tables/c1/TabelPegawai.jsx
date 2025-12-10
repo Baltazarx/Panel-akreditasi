@@ -146,7 +146,28 @@ export default function TabelPegawai({ role }) {
     try {
       const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
       const result = await apiFetch(url);
-      setRows(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      
+      // Urutkan berdasarkan nama_lengkap secara alfabetis (case-insensitive)
+      // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
+      const sortedRows = [...rowsArray].sort((a, b) => {
+        const namaA = (a.nama_lengkap || '').trim().toLowerCase();
+        const namaB = (b.nama_lengkap || '').trim().toLowerCase();
+        
+        // Jika nama sama, urutkan berdasarkan id_pegawai sebagai secondary sort
+        if (namaA === namaB) {
+          const idA = a.id_pegawai || 0;
+          const idB = b.id_pegawai || 0;
+          return idA - idB;
+        }
+        
+        return namaA.localeCompare(namaB, 'id', { 
+          sensitivity: 'base',
+          numeric: true 
+        });
+      });
+      
+      setRows(sortedRows);
     } catch (err) {
       setError(err.message);
     } finally {
