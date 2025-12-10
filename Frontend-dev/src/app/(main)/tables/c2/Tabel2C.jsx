@@ -162,6 +162,34 @@ export default function Tabel2C({ role }) {
     return [ts4, ts3, ts2, ts1, ts]; // urut: TS-4, TS-3, TS-2, TS-1, TS (dari kiri ke kanan)
   }, [availableYears, selectedYear]);
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = useCallback((rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idA = a.id_bentuk || a.id || 0;
+      const idB = b.id_bentuk || b.id || 0;
+      return idB - idA;
+    });
+  }, []);
+
   // Fetch master bentuk + data per tahun
   useEffect(() => {
     if (!selectedYear || yearOrder.length === 0) {
@@ -201,8 +229,9 @@ export default function Tabel2C({ role }) {
         const dataTahunan = resAll.dataTahunan || [];
         const dataDetails = resAll.dataDetails || [];
         
-        // Set master bentuk
-        setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
+        // Set master bentuk dengan sorting
+        const sortedBentuk = sortRowsByLatest(Array.isArray(masterBentuk) ? masterBentuk : []);
+        setBentukList(sortedBentuk);
 
         // Mapping data per tahun dengan filter berdasarkan showDeleted
         const map = mapDataByYear(dataTahunan, dataDetails, yearOrder, showDeleted);
@@ -214,7 +243,7 @@ export default function Tabel2C({ role }) {
         setLoading(false);
       }
     })();
-  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted]);
+  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted, sortRowsByLatest]);
 
   // Helper function untuk mapping data tahun dengan filter berdasarkan showDeleted
   const mapDataByYear = useCallback((dataTahunan, dataDetails, yearOrder, showDeletedFlag) => {
@@ -320,7 +349,8 @@ export default function Tabel2C({ role }) {
         const queryParams = params.join('&');
         const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         const masterBentuk = resAll.masterBentuk || [];
-        setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
+        const sortedBentuk = sortRowsByLatest(Array.isArray(masterBentuk) ? masterBentuk : []);
+        setBentukList(sortedBentuk);
       }
     } catch (e) {
       console.error("Error updating bentuk pembelajaran:", e);
@@ -390,7 +420,8 @@ export default function Tabel2C({ role }) {
           const queryParams = params.join('&');
           const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
-          setBentukList(Array.isArray(masterBentuk) ? masterBentuk : []);
+          const sortedBentuk = sortRowsByLatest(Array.isArray(masterBentuk) ? masterBentuk : []);
+          setBentukList(sortedBentuk);
         }
       } catch (e) {
         console.error("Error deleting bentuk pembelajaran:", e);

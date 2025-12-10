@@ -194,6 +194,34 @@ export default function Tabel2B6({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = useCallback((rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  }, []);
+
   const fetchData = useCallback(async () => {
     // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
     // Untuk role lain, jangan fetch jika selectedTahun atau selectedUnit belum di-set
@@ -238,7 +266,8 @@ export default function Tabel2B6({ role }) {
         rows = [result.data];
       }
       
-      setData(rows);
+      const sortedRows = sortRowsByLatest(rows);
+      setData(sortedRows);
       setStatistik(result?.statistik || null);
     } catch (error) {
       console.error("Tabel2B6 - Error fetching data:", {
@@ -261,7 +290,7 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
+  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan, sortRowsByLatest]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {

@@ -45,6 +45,32 @@ export default function CplCRUD({ role, maps, onDataChange }) {
   const canUpdate = roleCan(role, "cpl", "U");
   const canDelete = roleCan(role, "cpl", "D");
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      return (b.id_cpl || 0) - (a.id_cpl || 0);
+    });
+  };
+  
   // Set selectedProdi untuk user prodi
   useEffect(() => {
     if (!isSuperAdmin && userProdiId && !selectedProdi) {
@@ -73,7 +99,9 @@ export default function CplCRUD({ role, maps, onDataChange }) {
       }
       
       const result = await apiFetch(url);
-      setRows(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      const sortedRows = sortRowsByLatest(rowsArray);
+      setRows(sortedRows);
     } catch (err) {
       console.error("Error fetching CPL:", err);
       Swal.fire('Error', 'Gagal memuat data CPL', 'error');

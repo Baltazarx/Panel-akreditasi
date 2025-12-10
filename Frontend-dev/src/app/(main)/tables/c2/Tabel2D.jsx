@@ -220,6 +220,34 @@ export default function Tabel2D({ role }) {
         }
     }, [isSuperAdmin, availableProdi, selectedProdi]);
     
+    // Helper function untuk sorting data berdasarkan terbaru
+    const sortRowsByLatest = useCallback((rowsArray) => {
+        return [...rowsArray].sort((a, b) => {
+            // Jika ada created_at, urutkan berdasarkan created_at terbaru
+            if (a.created_at && b.created_at) {
+                const dateA = new Date(a.created_at);
+                const dateB = new Date(b.created_at);
+                if (dateA.getTime() !== dateB.getTime()) {
+                    return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+                }
+            }
+            
+            // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+            if (a.updated_at && b.updated_at) {
+                const dateA = new Date(a.updated_at);
+                const dateB = new Date(b.updated_at);
+                if (dateA.getTime() !== dateB.getTime()) {
+                    return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+                }
+            }
+            
+            // Fallback ke ID terbesar jika tidak ada timestamp
+            const idA = a.id_sumber || a.id || 0;
+            const idB = b.id_sumber || b.id || 0;
+            return idB - idA;
+        });
+    }, []);
+
     // --- Fetch Data Utama ---
     const fetchData = useCallback(async () => {
         if (yearOrder.length === 0) {
@@ -253,7 +281,9 @@ export default function Tabel2D({ role }) {
             const dataTahunan = resAll.dataTahunan || [];
             const dataDetails = resAll.dataDetails || [];
             
-            setMasterSumber(Array.isArray(masterSumber) ? masterSumber : []);
+            // Set master sumber dengan sorting
+            const sortedSumber = sortRowsByLatest(Array.isArray(masterSumber) ? masterSumber : []);
+            setMasterSumber(sortedSumber);
             
             // Set default sumber jika belum ada
             if (!singleInput.id_sumber && masterSumber.length > 0) {
@@ -287,8 +317,29 @@ export default function Tabel2D({ role }) {
                                 id_sumber: d.id_sumber,
                                 jenis_pengakuan: d.jenis_pengakuan,
                                 link_bukti: d.link_bukti,
-                                jumlah_mahasiswa_rekognisi: d.jumlah_mahasiswa_rekognisi || 0
-                            }));
+                                jumlah_mahasiswa_rekognisi: d.jumlah_mahasiswa_rekognisi || 0,
+                                created_at: d.created_at,
+                                updated_at: d.updated_at,
+                                id: d.id
+                            }))
+                            .sort((a, b) => {
+                                // Sort details berdasarkan terbaru
+                                if (a.updated_at && b.updated_at) {
+                                    const dateA = new Date(a.updated_at);
+                                    const dateB = new Date(b.updated_at);
+                                    if (dateA.getTime() !== dateB.getTime()) {
+                                        return dateB.getTime() - dateA.getTime();
+                                    }
+                                }
+                                if (a.created_at && b.created_at) {
+                                    const dateA = new Date(a.created_at);
+                                    const dateB = new Date(b.created_at);
+                                    if (dateA.getTime() !== dateB.getTime()) {
+                                        return dateB.getTime() - dateA.getTime();
+                                    }
+                                }
+                                return (b.id || 0) - (a.id || 0);
+                            });
                         
                         map[y] = { id_tahunan, lulusan_ts, details, hasData: true, deleted_at };
                     } else {
@@ -303,7 +354,7 @@ export default function Tabel2D({ role }) {
         } finally {
             setLoading(false);
         }
-    }, [yearOrder, selectedYear, singleInput.id_sumber, showDeleted, selectedProdi, isSuperAdmin, isProdiUser, authUser?.id_unit_prodi]);
+    }, [yearOrder, selectedYear, singleInput.id_sumber, showDeleted, selectedProdi, isSuperAdmin, isProdiUser, authUser?.id_unit_prodi, sortRowsByLatest]);
 
     useEffect(() => {
         fetchData();

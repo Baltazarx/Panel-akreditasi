@@ -259,3 +259,68 @@ export const searchPegawai = async (req, res) => {
     res.status(500).json({ error: 'Search pegawai failed' });
   }
 };
+
+// ===== CHANGE PASSWORD (Untuk User Sendiri) =====
+export const changePassword = async (req, res) => {
+  try {
+    // Ambil id_user dari JWT token (user yang sedang login)
+    const userId = req.user?.id_user;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Validasi input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Kata sandi saat ini dan kata sandi baru wajib diisi.' });
+    }
+
+    // Validasi panjang password baru
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Kata sandi baru minimal 6 karakter.' });
+    }
+
+    // Ambil password saat ini dari database
+    const [userRows] = await pool.query(
+      `SELECT password FROM users WHERE id_user = ? AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    const user = userRows[0];
+
+    // Validasi password saat ini
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Kata sandi saat ini salah.' });
+    }
+
+    // Hash password baru
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    const updateData = { password: hashedPassword };
+    
+    if (await hasColumn('users', 'updated_by') && req.user?.id_user) {
+      updateData.updated_by = req.user.id_user;
+    }
+
+    await pool.query(
+      `UPDATE users SET ? WHERE id_user = ?`,
+      [updateData, userId]
+    );
+
+    res.json({ 
+      ok: true, 
+      message: 'Kata sandi berhasil diubah.' 
+    });
+  } catch (err) {
+    console.error("Error changePassword:", err);
+    res.status(500).json({ error: 'Gagal mengubah kata sandi', details: err.message });
+  }
+};
