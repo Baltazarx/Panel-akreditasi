@@ -27,7 +27,6 @@ export default function UserManagementPage() {
   
   // Form dropdown states
   const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
-  const [openFormRoleDropdown, setOpenFormRoleDropdown] = useState(false);
   
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -108,7 +107,6 @@ export default function UserManagementPage() {
   useEffect(() => {
     if (!showForm) {
       setOpenFormUnitDropdown(false);
-      setOpenFormRoleDropdown(false);
     }
   }, [showForm]);
 
@@ -118,25 +116,21 @@ export default function UserManagementPage() {
       if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
         setOpenFormUnitDropdown(false);
       }
-      if (openFormRoleDropdown && !event.target.closest('.form-role-dropdown-container') && !event.target.closest('.form-role-dropdown-menu')) {
-        setOpenFormRoleDropdown(false);
-      }
     };
 
-    if (openFormUnitDropdown || openFormRoleDropdown) {
+    if (openFormUnitDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openFormUnitDropdown, openFormRoleDropdown]);
+  }, [openFormUnitDropdown]);
 
   // Submit tambah/edit user
   const handleSubmit = async (e) => {
     if (isReadOnlyRole) return;
     e.preventDefault();
     setOpenFormUnitDropdown(false);
-    setOpenFormRoleDropdown(false);
     
     // Validasi form
     if (!formData.username || !formData.username.trim()) {
@@ -526,7 +520,6 @@ export default function UserManagementPage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setOpenFormUnitDropdown(false);
-              setOpenFormRoleDropdown(false);
               setShowForm(false);
               setEditMode(false);
               resetForm();
@@ -608,7 +601,18 @@ export default function UserManagementPage() {
                             key={u.id_unit}
                             type="button"
                             onClick={() => {
-                              setFormData({ ...formData, id_unit: String(u.id_unit) });
+                              // Auto-fill role berdasarkan kode_role dari unit kerja
+                              const newFormData = {
+                                ...formData,
+                                id_unit: String(u.id_unit)
+                              };
+                              
+                              // Jika unit memiliki kode_role, gunakan untuk auto-fill role
+                              if (u.kode_role) {
+                                newFormData.role = u.kode_role;
+                              }
+                              
+                              setFormData(newFormData);
                               setOpenFormUnitDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
@@ -677,59 +681,28 @@ export default function UserManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Role
+                  Role <span className="text-xs text-gray-500 font-normal">(Otomatis dari Unit Kerja)</span>
                 </label>
                 <div className="relative form-role-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenFormRoleDropdown(!openFormRoleDropdown);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                  <div
+                    className={`w-full px-4 py-3 border rounded-lg shadow-sm flex items-center justify-between transition-all duration-200 ${
                       formData.role
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih role"
+                        ? 'border-[#0384d6] bg-gray-50' 
+                        : 'border-gray-300 bg-gray-50'
+                    } cursor-not-allowed opacity-75`}
+                    aria-label="Role (otomatis dari unit kerja)"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${formData.role ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {formData.role || '-- Pilih Role --'}
+                      <FiShield className="text-gray-400 flex-shrink-0" size={18} />
+                      <span className={`truncate ${formData.role ? 'text-gray-700' : 'text-gray-400'}`}>
+                        {formData.role || 'Pilih Unit Kerja terlebih dahulu'}
                       </span>
                     </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openFormRoleDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openFormRoleDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-role-dropdown-menu mt-1 w-full"
-                    >
-                      {['PRODI', 'LPPM', 'ALA', 'PMB', 'KEMAHASISWAAN', 'KEPEGAWAIAN', 'KERJASAMA', 'SARPRAS', 'KETUASTIKOM', 'WAKET-1', 'WAKET-2', 'TPM', 'ADMIN'].map(role => (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, role });
-                            setOpenFormRoleDropdown(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            formData.role === role
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
-                          <span>{role}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    <FiShield className="text-gray-400 flex-shrink-0" size={18} />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Role akan otomatis terisi sesuai dengan unit kerja yang dipilih
+                  </p>
                 </div>
               </div>
 
@@ -738,7 +711,6 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={() => {
                     setOpenFormUnitDropdown(false);
-                    setOpenFormRoleDropdown(false);
                     setShowForm(false);
                     setEditMode(false);
                     resetForm();

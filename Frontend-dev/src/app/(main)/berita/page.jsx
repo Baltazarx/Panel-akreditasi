@@ -86,7 +86,7 @@ const tpmNewsData = [
 ];
 
 // Komponen Kartu Berita dengan Error Boundary
-const NewsCard = ({ post, onEdit, onDelete }) => {
+const NewsCard = ({ post, onEdit, onDelete, onReadMore }) => {
   const categoryStyles = {
     blue: "from-blue-500 to-blue-600",
     emerald: "from-emerald-500 to-emerald-600",
@@ -112,9 +112,10 @@ const NewsCard = ({ post, onEdit, onDelete }) => {
   // Handle click untuk membuka detail berita
   const handleReadMore = (e) => {
     e.preventDefault();
-    // Simulasi navigasi ke halaman detail
-    console.log(`Membuka detail berita: ${post.title}`);
-    // Di implementasi nyata, ini akan menggunakan router.push atau modal
+    e.stopPropagation();
+    if (onReadMore) {
+      onReadMore(post);
+    }
   };
   
   return (
@@ -327,6 +328,8 @@ export default function TpmNewsPage() {
   const [newsData, setNewsData] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedNews, setSelectedNews] = useState(null);
   const [editingNews, setEditingNews] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
@@ -469,8 +472,22 @@ export default function TpmNewsPage() {
       console.log('Active data length (after filter):', activeData.length);
       console.log('Active data:', activeData);
       
-      // Sort berdasarkan tanggal publikasi (terbaru di atas) dan created_at
+      // Sort: Pinned berita di atas, lalu berdasarkan updated_at (terbaru di atas), lalu created_at
       activeData.sort((a, b) => {
+        // Pinned berita selalu di atas
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        
+        // Jika keduanya pinned atau tidak pinned, sort berdasarkan updated_at terlebih dahulu
+        const updatedA = new Date(a.updated_at || a.created_at || 0);
+        const updatedB = new Date(b.updated_at || b.created_at || 0);
+        
+        // Jika updated_at berbeda, sort berdasarkan updated_at (terbaru di atas)
+        if (updatedA.getTime() !== updatedB.getTime()) {
+          return updatedB - updatedA; // Descending (terbaru di atas)
+        }
+        
+        // Jika updated_at sama, sort berdasarkan created_at atau tanggal publikasi
         const dateA = new Date(a.date || a.created_at || 0);
         const dateB = new Date(b.date || b.created_at || 0);
         return dateB - dateA; // Descending (terbaru di atas)
@@ -513,7 +530,7 @@ export default function TpmNewsPage() {
 
   // Lock body scroll when modal is open
   useEffect(() => {
-    if (showUploadModal || showEditModal) {
+    if (showUploadModal || showEditModal || showDetailModal) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -530,7 +547,7 @@ export default function TpmNewsPage() {
         window.scrollTo(0, scrollY);
       };
     }
-  }, [showUploadModal, showEditModal]);
+  }, [showUploadModal, showEditModal, showDetailModal]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -740,7 +757,7 @@ export default function TpmNewsPage() {
         tags: ''
       });
 
-      // Refresh data setelah update berhasil
+      // Refresh data setelah update berhasil (berita yang di-update akan muncul di posisi pertama)
       console.log('Refreshing data after update...');
       setTimeout(async () => {
         try {
@@ -768,6 +785,12 @@ export default function TpmNewsPage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Handle Read More - Buka modal detail
+  const handleReadMore = (post) => {
+    setSelectedNews(post);
+    setShowDetailModal(true);
   };
 
   // Handle Delete Berita (Hard Delete)
@@ -882,6 +905,7 @@ export default function TpmNewsPage() {
                       post={post}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onReadMore={handleReadMore}
                     />
                   );
                 })}
@@ -1359,6 +1383,190 @@ export default function TpmNewsPage() {
               </motion.div>
             </div>
           )}
+        </AnimatePresence>
+
+        {/* Detail Berita Modal */}
+        <AnimatePresence>
+          {showDetailModal && selectedNews && (() => {
+            const categoryStyles = {
+              blue: "from-blue-500 to-blue-600",
+              emerald: "from-emerald-500 to-emerald-600",
+              amber: "from-amber-500 to-amber-600",
+              indigo: "from-indigo-500 to-indigo-600",
+            };
+            const IconComponent = selectedNews.icon || FileText;
+            const color = selectedNews.color || 'blue';
+            
+            return (
+            <div 
+              className="fixed inset-0 bg-black/50 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+              style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowDetailModal(false);
+                  setSelectedNews(null);
+                }
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden relative z-[10000] pointer-events-auto flex flex-col"
+                style={{ zIndex: 10000 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryStyles[color]} shadow-md`}>
+                        <IconComponent className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {selectedNews.priority === 'high' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                            Prioritas Tinggi
+                          </span>
+                        )}
+                        {selectedNews.priority === 'medium' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                            <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                            Prioritas Sedang
+                          </span>
+                        )}
+                        {selectedNews.priority === 'low' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                            Prioritas Rendah
+                          </span>
+                        )}
+                        {selectedNews.status && (
+                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                            selectedNews.status === 'published' || selectedNews.status === 'diterbitkan'
+                              ? 'bg-green-100 text-green-700'
+                              : selectedNews.status === 'draft'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {selectedNews.status === 'published' || selectedNews.status === 'diterbitkan' ? 'Diterbitkan' : selectedNews.status === 'draft' ? 'Draft' : 'Diarsipkan'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <h2 className="text-2xl font-bold">{selectedNews.title}</h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedNews(null);
+                    }}
+                    className="ml-4 p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    aria-label="Tutup modal"
+                  >
+                    <X className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="px-8 py-6 overflow-y-auto flex-1">
+                  {/* Meta Info */}
+                  <div className="mb-6 pb-6 border-b border-gray-200">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                      {selectedNews.date && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            {new Date(selectedNews.date).toLocaleDateString('id-ID', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      {selectedNews.readTime && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          <span>{selectedNews.readTime}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-gray-500">
+                          Oleh: <span className="font-medium text-gray-700">{selectedNews.author}</span>
+                        </span>
+                        {selectedNews.nama_user && (
+                          <span className="text-sm text-gray-400">
+                            ({selectedNews.nama_user})
+                          </span>
+                        )}
+                      </div>
+                      {selectedNews.created_at && (() => {
+                        const date = new Date(selectedNews.created_at);
+                        const day = date.getDate();
+                        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                        const month = monthNames[date.getMonth()];
+                        const year = date.getFullYear();
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return (
+                          <div className="text-sm text-gray-400">
+                            Dibuat: {day} {month} {year} pukul {hours}.{minutes}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Excerpt */}
+                  {selectedNews.excerpt && (
+                    <div className="mb-6">
+                      <p className="text-lg text-gray-700 leading-relaxed font-medium italic border-l-4 border-[#0384d6] pl-4">
+                        {selectedNews.excerpt}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="prose prose-lg max-w-none">
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedNews.content || selectedNews.excerpt || 'Konten tidak tersedia.'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      {selectedNews.tags && selectedNews.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedNews.tags.slice(0, 5).map((tag, index) => (
+                            <span key={index} className="inline-block px-3 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        setSelectedNews(null);
+                      }}
+                      className="px-6 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+            );
+          })()}
         </AnimatePresence>
       </main>
     </ErrorBoundary>

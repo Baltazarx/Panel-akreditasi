@@ -1,12 +1,12 @@
 import { pool } from '../db.js';
-import { hasColumn } from '../utils/queryHelper.js';
+import { buildWhere, buildOrderBy, hasColumn } from '../utils/queryHelper.js';
 
 // ===== LIST dengan scope unit =====
 export const listDosen = async (req, res) => {
   try {
     const { role, id_unit, id_unit_prodi } = req.user || {};
     const { include_deleted } = req.query;
-    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom']); // Fixed: no hyphen in role names
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom', 'admin']); // Ditambah admin jaga-jaga
 
     let sql = `
       SELECT 
@@ -18,61 +18,72 @@ export const listDosen = async (req, res) => {
         d.pt,
         p.nama_lengkap,
         d.id_pegawai,
+        
+        -- Jabatan Fungsional (Lektor, AA, dll)
         rjf.nama_jafung AS jabatan_fungsional,
         d.id_jafung,
-        u.id_unit,
+        
+        -- [FIX] Unit Kerja diambil dari Pegawai (p.id_unit), BUKAN Users
+        p.id_unit,
         uk.nama_unit,
+        
+        -- [FIX] Jabatan Struktural diambil dari Pegawai
         rjs.nama_jabatan AS jabatan_struktural,
         rjs.sks_beban AS sks_manajemen_auto,
+        
         d.deleted_at
       FROM dosen d
       JOIN pegawai p ON d.id_pegawai = p.id_pegawai
-      LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
-      LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
+      
+      -- [FIX] Join Unit via Pegawai
+      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      
+      -- Join Jabatan Fungsional
       LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
-      LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
-        AND pup.deleted_at IS NULL
-        AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
+      
+      -- [FIX] Join Jabatan Struktural via Pegawai
       LEFT JOIN ref_jabatan_struktural rjs ON p.id_jabatan = rjs.id_jabatan
+      
+      -- (Opsional) Join Pimpinan jika logika SKS butuh cek periode aktif
+      -- LEFT JOIN pimpinan_upps_ps pup ON pup.id_pegawai = p.id_pegawai 
+      --   AND pup.deleted_at IS NULL
+      --   AND (pup.periode_selesai IS NULL OR pup.periode_selesai >= CURDATE())
+      
       WHERE 1=1
     `;
 
     const params = [];
 
-    // Filter deleted records unless include_deleted is true (check for '1', 'true', or truthy)
+    // Filter deleted records
     const shouldIncludeDeleted = include_deleted === '1' || include_deleted === 'true' || include_deleted === true;
     if (!shouldIncludeDeleted) {
       sql += ` AND d.deleted_at IS NULL`;
     }
 
-    // check role case-insensitive
-    // Khusus role lppm: bisa melihat semua dosen tanpa filter unit (untuk keperluan form penelitian)
-    if (!superRoles.has(role?.toLowerCase()) && role?.toLowerCase() !== 'lppm') {
-      // Gunakan id_unit_prodi jika ada, fallback ke id_unit
+    // [FIX] Filter by Unit (Logika Hak Akses)
+    // Cek p.id_unit bukan u.id_unit
+    if (role && !superRoles.has(role.toLowerCase()) && role.toLowerCase() !== 'lppm') {
       const userUnit = id_unit_prodi || id_unit;
       if (userUnit) {
-        sql += ` AND u.id_unit = ?`;
+        sql += ` AND p.id_unit = ?`;
         params.push(userUnit);
       }
     }
-    // Role lppm akan melihat semua dosen tanpa filter unit (tidak ada filter tambahan)
+    // Role lppm melihat semua
 
     sql += ` ORDER BY d.id_dosen ASC`;
 
-    console.log('Executing SQL:', sql);
-    console.log('With params:', params);
+    // Debugging (Bisa dihapus nanti)
+    // console.log('Executing SQL:', sql);
+    // console.log('With params:', params);
     
     const [rows] = await pool.query(sql, params);
-    console.log(`Successfully fetched ${rows.length} dosen records`);
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
-    console.error("Full error:", JSON.stringify(err, null, 2));
     res.status(500).json({ 
       error: 'List failed', 
-      details: err.sqlMessage || err.message,
-      sql: err.sql || 'N/A'
+      details: err.sqlMessage || err.message
     });
   }
 };
@@ -81,12 +92,15 @@ export const listDosen = async (req, res) => {
 export const getDosenById = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT d.*, p.nama_lengkap, rjf.nama_jafung AS jabatan_fungsional,
-              u.id_unit, uk.nama_unit
+      `SELECT d.*, 
+              p.nama_lengkap, 
+              rjf.nama_jafung AS jabatan_fungsional,
+              p.id_unit, 
+              uk.nama_unit
        FROM dosen d
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
-       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
-       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
+       -- [FIX] Join ke Unit via Pegawai
+       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [req.params.id]
@@ -95,7 +109,6 @@ export const getDosenById = async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error("Error getDosenById:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
     res.status(500).json({ 
       error: 'Get failed', 
       details: err.sqlMessage || err.message 
@@ -122,12 +135,15 @@ export const createDosen = async (req, res) => {
     const [r] = await pool.query(`INSERT INTO dosen SET ?`, [data]);
 
     const [row] = await pool.query(
-      `SELECT d.*, p.nama_lengkap, rjf.nama_jafung AS jabatan_fungsional,
-              u.id_unit, uk.nama_unit
+      `SELECT d.*, 
+              p.nama_lengkap, 
+              rjf.nama_jafung AS jabatan_fungsional,
+              p.id_unit, 
+              uk.nama_unit
        FROM dosen d
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
-       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
-       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
+       -- [FIX] Join Unit via Pegawai
+       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [r.insertId]
@@ -136,7 +152,6 @@ export const createDosen = async (req, res) => {
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createDosen:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
     res.status(500).json({ 
       error: 'Create failed', 
       details: err.sqlMessage || err.message 
@@ -160,7 +175,7 @@ export const updateDosen = async (req, res) => {
       data.updated_by = req.user.id_user;
     }
 
-    // Hapus properti undefined agar tidak menimpa dengan NULL
+    // Hapus properti undefined
     Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     if (Object.keys(data).length === 0) {
@@ -173,22 +188,24 @@ export const updateDosen = async (req, res) => {
     );
 
     const [row] = await pool.query(
-      `SELECT d.*, p.nama_lengkap, rjf.nama_jafung AS jabatan_fungsional,
-              u.id_unit, uk.nama_unit
+      `SELECT d.*, 
+              p.nama_lengkap, 
+              rjf.nama_jafung AS jabatan_fungsional,
+              p.id_unit, 
+              uk.nama_unit
        FROM dosen d
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
-       LEFT JOIN users u ON u.id_pegawai = p.id_pegawai
-       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
+       -- [FIX] Join Unit via Pegawai
+       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [req.params.id]
     );
 
-    if (!row[0]) return res.status(404).json({ error: 'Not found after update' }); // Sedikit modifikasi pesan error
+    if (!row[0]) return res.status(404).json({ error: 'Not found after update' });
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateDosen:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
     res.status(500).json({ 
       error: 'Update failed', 
       details: err.sqlMessage || err.message 
@@ -196,7 +213,7 @@ export const updateDosen = async (req, res) => {
   }
 };
 
-// ===== DELETE (soft/hard) =====
+// ===== DELETE (Soft) =====
 export const softDeleteDosen = async (req, res) => {
   try {
     const payload = { deleted_at: new Date() };
@@ -210,7 +227,6 @@ export const softDeleteDosen = async (req, res) => {
     res.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error("Error softDeleteDosen:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
     res.status(500).json({ 
       error: 'Delete failed', 
       details: err.sqlMessage || err.message 
@@ -218,16 +234,16 @@ export const softDeleteDosen = async (req, res) => {
   }
 };
 
+// ===== RESTORE =====
 export const restoreDosen = async (req, res) => {
   try {
     await pool.query(
-      `UPDATE dosen SET deleted_at=NULL, deleted_by=NULL WHERE id_dosen=?`,
+      `UPDATE dosen SET deleted_at=NULL WHERE id_dosen=?`,
       [req.params.id]
     );
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreDosen:", err);
-    console.error("SQL Error Details:", err.sqlMessage || err.message);
     res.status(500).json({ 
       error: 'Restore failed', 
       details: err.sqlMessage || err.message 
@@ -235,9 +251,9 @@ export const restoreDosen = async (req, res) => {
   }
 };
 
+// ===== HARD DELETE =====
 export const hardDeleteDosen = async (req, res) => {
   try {
-    // Tambahkan logika transaksi jika perlu menghapus data terkait di tabel lain
     await pool.query(
       `DELETE FROM dosen WHERE id_dosen=?`,
       [req.params.id]

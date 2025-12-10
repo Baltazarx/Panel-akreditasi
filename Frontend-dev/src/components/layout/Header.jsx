@@ -5,25 +5,17 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, BarChart3, Palette } from 'lucide-react';
+import { Home, Table, Book, User, LogOut, X, Menu, Newspaper, Palette } from 'lucide-react';
 import Image from 'next/image'; // Import komponen Image dari Next.js
 
 // Konstanta item navigasi (hindari re-create tiap render)
 const ALL_NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/tables", label: "Tabel", icon: Table },
-  { href: "/report", label: "Report", icon: BarChart3 },
-  { href: "/panduan", label: "Panduan", icon: Book },
   { href: "/berita", label: "Berita", icon: Newspaper },
+  { href: "/panduan", label: "Panduan", icon: Book },
   { href: "/design-system/buttons", label: "Design System", icon: Palette },
 ];
-
-// Helper function untuk cek apakah role boleh melihat Report
-const canViewReport = (role) => {
-  if (!role) return false;
-  const roleLower = role.toLowerCase();
-  return ['superadmin', 'super admin', 'waket1', 'waket-1', 'waket2', 'waket-2', 'tpm'].includes(roleLower);
-};
 
 export default function Header() {
   const { authUser, logout } = useAuth();
@@ -32,13 +24,7 @@ export default function Header() {
   
   // Filter NAV_ITEMS berdasarkan role user
   const NAV_ITEMS = useMemo(() => {
-    if (!authUser) return ALL_NAV_ITEMS.filter(item => item.href !== "/report");
-    return ALL_NAV_ITEMS.filter(item => {
-      if (item.href === "/report") {
-        return canViewReport(authUser.role);
-      }
-      return true;
-    });
+    return ALL_NAV_ITEMS;
   }, [authUser]);
 
   const [menuOpen, setMenuOpen] = useState(false);
