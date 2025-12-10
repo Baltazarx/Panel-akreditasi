@@ -260,6 +260,53 @@ export const searchPegawai = async (req, res) => {
   }
 };
 
+// ===== VERIFY PASSWORD (Untuk Verifikasi Password User Sendiri) =====
+export const verifyPassword = async (req, res) => {
+  try {
+    // Ambil id_user dari JWT token (user yang sedang login)
+    const userId = req.user?.id_user;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
+    }
+
+    const { password } = req.body;
+
+    // Validasi input
+    if (!password) {
+      return res.status(400).json({ error: 'Password wajib diisi.' });
+    }
+
+    // Ambil password dari database
+    const [userRows] = await pool.query(
+      `SELECT password FROM users WHERE id_user = ? AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    const user = userRows[0];
+
+    // Validasi password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Password salah.' });
+    }
+
+    // Password benar, return success
+    res.json({ 
+      ok: true, 
+      message: 'Password berhasil diverifikasi.',
+      verified: true
+    });
+  } catch (err) {
+    console.error("Error verifyPassword:", err);
+    res.status(500).json({ error: 'Gagal memverifikasi password', details: err.message });
+  }
+};
+
 // ===== CHANGE PASSWORD (Untuk User Sendiri) =====
 export const changePassword = async (req, res) => {
   try {

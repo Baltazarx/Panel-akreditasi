@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
-import { FiCamera, FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiCamera, FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiUnlock } from "react-icons/fi";
 import { apiFetch } from "../../../lib/api";
 import Swal from "sweetalert2";
 
@@ -31,6 +31,14 @@ export default function ProfilePage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // State for show password card
+  const [verifyPassword, setVerifyPassword] = useState("");
+  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(null);
+  const [showVerifiedPassword, setShowVerifiedPassword] = useState(false);
 
   // Logic for redirection and setting initial profile picture (no change)
   useEffect(() => {
@@ -55,6 +63,75 @@ export default function ProfilePage() {
       setProfilePic(url);
       toast.success("Profile picture updated!");
       // TODO: Send to backend (API for photo upload)
+    }
+  };
+
+  // Handler untuk verifikasi password (untuk show password card)
+  const handleVerifyPassword = async () => {
+    if (!verifyPassword) {
+      toast.error("Masukkan password untuk verifikasi!");
+      return;
+    }
+
+    setIsVerifying(true);
+    
+    try {
+      // Verifikasi password dengan mencoba login atau endpoint khusus
+      // Kita bisa menggunakan endpoint change-password dengan password yang sama untuk verifikasi
+      // Atau membuat endpoint khusus untuk verifikasi
+      
+      // Untuk sementara, kita akan menggunakan pendekatan: coba change password dengan password yang sama
+      // Tapi lebih baik buat endpoint khusus untuk verifikasi
+      // Saya akan menggunakan endpoint yang sudah ada dengan cara yang aman
+      
+      // Verifikasi dengan mencoba login (tapi tidak perlu login ulang)
+      // Atau kita bisa buat endpoint khusus /users/verify-password
+      
+      // Untuk sekarang, saya akan menggunakan endpoint change-password dengan validasi
+      // Tapi lebih baik buat endpoint khusus
+      
+      // Sementara kita akan verifikasi dengan cara memanggil API yang memvalidasi password
+      // Karena tidak ada endpoint khusus, kita akan menggunakan pendekatan yang berbeda
+      // Kita akan membuat request ke endpoint yang memvalidasi password
+      
+      // Alternatif: Buat endpoint baru di backend untuk verify password
+      // Atau gunakan endpoint yang sudah ada dengan cara yang berbeda
+      
+      // Untuk sekarang, saya akan membuat request ke endpoint yang memvalidasi
+      // Kita bisa menggunakan endpoint /users/change-password dengan password yang sama
+      // Tapi itu tidak ideal, lebih baik buat endpoint khusus
+      
+      // Saya akan membuat endpoint khusus di backend untuk verify password
+      // Tapi untuk sekarang, saya akan menggunakan pendekatan yang lebih sederhana:
+      // Coba change password dengan password yang sama, jika berhasil berarti password benar
+      // Tapi itu tidak ideal karena akan mengubah password
+      
+      // Lebih baik: Buat endpoint khusus /users/verify-password di backend
+      // Tapi karena user minta fitur ini sekarang, saya akan membuat endpoint di backend dulu
+      
+      // Untuk sementara, saya akan membuat handler yang memanggil endpoint verify
+      // Kita akan buat endpoint baru di backend
+      
+      // Verifikasi password dengan endpoint khusus
+      await apiFetch('/users/verify-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          password: verifyPassword
+        })
+      });
+
+      setIsPasswordVerified(true);
+      setPasswordVerified(verifyPassword);
+      setVerifyPassword("");
+      toast.success("Password berhasil diverifikasi!");
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      const errorMessage = error?.response?.error || error?.message || "Password salah atau gagal verifikasi.";
+      toast.error(errorMessage);
+      setIsPasswordVerified(false);
+      setPasswordVerified(null);
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -234,6 +311,141 @@ export default function ProfilePage() {
                     className="hidden"
                   />
                 </label>
+              </div>
+            </div>
+
+            {/* -- Show Password Card (Di bawah Profile Card) -- */}
+            <div className="mt-6 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+              {/* Card Header */}
+              <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-4 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <FiUnlock size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Tampilkan Password</h3>
+                    <p className="text-white/80 text-xs mt-0.5">Verifikasi password untuk melihat informasi akun</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {!isPasswordVerified ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <FiLock className="text-[#0384d6]" size={16} />
+                        Masukkan Password untuk Verifikasi
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showVerifyPassword ? "text" : "password"}
+                          value={verifyPassword}
+                          onChange={(e) => setVerifyPassword(e.target.value)}
+                          className="w-full border-2 border-slate-200 rounded-xl p-3.5 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-all"
+                          placeholder="Masukkan password Anda"
+                          disabled={isVerifying}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowVerifyPassword(!showVerifyPassword)}
+                          disabled={isVerifying}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label={showVerifyPassword ? "Sembunyikan password" : "Tampilkan password"}
+                        >
+                          {showVerifyPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleVerifyPassword}
+                      disabled={isVerifying || !verifyPassword}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-[#0384d6] to-[#043975] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0384d6] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      {isVerifying ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Memverifikasi...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiUnlock size={16} />
+                          <span>Verifikasi Password</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-500 rounded-lg">
+                          <FiCheck className="text-white" size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-green-800">Password Berhasil Diverifikasi</p>
+                          <p className="text-xs text-green-600 mt-1">Password Anda telah diverifikasi dengan benar.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600">Username:</span>
+                          <span className="text-sm font-semibold text-slate-800">{authUser.username || authUser.name || "-"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600">Password:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-800 font-mono">
+                              {showVerifiedPassword && passwordVerified 
+                                ? passwordVerified 
+                                : passwordVerified 
+                                  ? "•".repeat(passwordVerified.length) 
+                                  : "-"}
+                            </span>
+                            {passwordVerified && (
+                              <button
+                                type="button"
+                                onClick={() => setShowVerifiedPassword(!showVerifiedPassword)}
+                                className="text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1"
+                                aria-label={showVerifiedPassword ? "Sembunyikan password" : "Tampilkan password"}
+                              >
+                                {showVerifiedPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600">Role:</span>
+                          <span className="text-sm font-semibold text-slate-800 capitalize">{authUser.role || "-"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600">Status Akun:</span>
+                          <span className="px-3 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                            Aktif
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPasswordVerified(false);
+                        setPasswordVerified(null);
+                        setVerifyPassword("");
+                        setShowVerifyPassword(false);
+                        setShowVerifiedPassword(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 border border-slate-200"
+                    >
+                      Verifikasi Ulang
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
