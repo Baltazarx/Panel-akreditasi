@@ -98,13 +98,13 @@ function KondisiMahasiswaForm({ initialData, onSubmit, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+          className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           Batal
         </button>
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white"
+          className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
         >
           Simpan
         </button>

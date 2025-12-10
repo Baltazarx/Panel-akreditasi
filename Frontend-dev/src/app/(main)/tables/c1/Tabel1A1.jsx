@@ -641,7 +641,7 @@ export default function Tabel1A1({ role }) {
           </div>
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
               <button 
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
+                  className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:bg-red-300 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                   type="button" 
                   onClick={()=> {
                       if (isEdit) {
@@ -653,16 +653,14 @@ export default function Tabel1A1({ role }) {
                       }
                   }}
               >
-                  <span className="relative z-10">Batal</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  Batal
               </button>
               <button 
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
+                  className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium shadow-sm hover:bg-blue-200 hover:shadow-md active:bg-blue-300 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-100 disabled:hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" 
                   disabled={loading} 
                   type="submit"
               >
-                  <span className="relative z-10">{loading ? 'Menyimpan...' : 'Simpan'}</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  {loading ? 'Menyimpan...' : 'Simpan'}
               </button>
           </div>
       </form>
