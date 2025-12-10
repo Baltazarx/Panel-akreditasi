@@ -225,6 +225,11 @@ export const ACCESS_MATRIX = {
      'audit_mutu_internal': { r: true },
      'ref_kabupaten_kota': { r: true }, // Untuk dropdown Nama Daerah di Tabel 2A2
   },
+  'kerjasama' : {
+    'tabel_3c1_kerjasama_penelitian': { c: true, r: true, u: true, d: true },
+    'tabel_4c1_kerjasama_pkm': { c: true, r: true, u: true, d: true },
+    'tahun_akademik': { r: true },
+  }
 };
 
 /**
