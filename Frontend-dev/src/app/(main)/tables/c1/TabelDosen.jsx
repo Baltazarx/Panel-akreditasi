@@ -185,8 +185,29 @@ export default function TabelDosen({ role }) {
         });
       }) : [];
       
-      console.log('Processed unique rows:', uniqueRows.length);
-      setRows(uniqueRows);
+      // Urutkan berdasarkan nama_lengkap secara alfabetis (case-insensitive)
+      // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
+      const sortedRows = [...uniqueRows].sort((a, b) => {
+        const namaA = (a.nama_lengkap || '').trim().toLowerCase();
+        const namaB = (b.nama_lengkap || '').trim().toLowerCase();
+        
+        // Jika nama sama, urutkan berdasarkan id_dosen sebagai secondary sort
+        if (namaA === namaB) {
+          const idFieldA = getIdField(a);
+          const idFieldB = getIdField(b);
+          const idA = idFieldA && a[idFieldA] !== undefined && a[idFieldA] !== null ? a[idFieldA] : 0;
+          const idB = idFieldB && b[idFieldB] !== undefined && b[idFieldB] !== null ? b[idFieldB] : 0;
+          return idA - idB;
+        }
+        
+        return namaA.localeCompare(namaB, 'id', { 
+          sensitivity: 'base',
+          numeric: true 
+        });
+      });
+      
+      console.log('Processed unique rows:', sortedRows.length);
+      setRows(sortedRows);
     } catch (err) {
       // Serialize error untuk logging yang lebih baik
       const errorDetails = {

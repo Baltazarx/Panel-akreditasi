@@ -137,7 +137,30 @@ export default function TabelTendik({ role }) {
       setError("");
       const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
       const result = await apiFetch(url);
-      setRows(Array.isArray(result) ? result : []);
+      const rowsArray = Array.isArray(result) ? result : [];
+      
+      // Urutkan berdasarkan nama_lengkap secara alfabetis (case-insensitive)
+      // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
+      const sortedRows = [...rowsArray].sort((a, b) => {
+        const namaA = (a.nama_lengkap || '').trim().toLowerCase();
+        const namaB = (b.nama_lengkap || '').trim().toLowerCase();
+        
+        // Jika nama sama, urutkan berdasarkan id_tendik sebagai secondary sort
+        if (namaA === namaB) {
+          const idFieldA = getIdField(a);
+          const idFieldB = getIdField(b);
+          const idA = idFieldA && a[idFieldA] !== undefined && a[idFieldA] !== null ? a[idFieldA] : 0;
+          const idB = idFieldB && b[idFieldB] !== undefined && b[idFieldB] !== null ? b[idFieldB] : 0;
+          return idA - idB;
+        }
+        
+        return namaA.localeCompare(namaB, 'id', { 
+          sensitivity: 'base',
+          numeric: true 
+        });
+      });
+      
+      setRows(sortedRows);
     } catch (err) {
       console.error('Error fetching tendik data:', err);
       let errorMessage = err.message || 'Gagal memuat data';
