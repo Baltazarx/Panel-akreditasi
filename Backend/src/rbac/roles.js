@@ -98,7 +98,7 @@ export const AccessMatrix = {
     'tahun_akademik': { R: true }, // Untuk dropdown tahun akademik
     'ref_jabatan_struktural': { R: true }, // Untuk dropdown jabatan struktural
     'ref_jabatan_fungsional': { R: true }, // Untuk dropdown jabatan fungsional
-    'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
+    'tenaga_kependidikan': { C: true, R: true, U: true, D: true }, // Tabel Tenaga Kependidikan (CRUD penuh)
     'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
     'berita': { R: true }, // Hanya baca untuk sarpras
   },

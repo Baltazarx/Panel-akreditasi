@@ -89,7 +89,7 @@ export const ACCESS_MATRIX = {
     'tahun_akademik': { r: true }, // Untuk dropdown tahun akademik
     'ref_jabatan_struktural': { r: true }, // Untuk dropdown jabatan struktural
     'ref_jabatan_fungsional': { r: true }, // Untuk dropdown jabatan fungsional
-    'tenaga_kependidikan': { r: true }, // Untuk dropdown tendik
+    'tenaga_kependidikan': { c: true, r: true, u: true, d: true }, // Tabel Tenaga Kependidikan (CRUD penuh)
     'audit_mutu_internal': { r: true }, // Untuk data audit mutu internal
   },
 

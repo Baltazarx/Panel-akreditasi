@@ -72,9 +72,11 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
 
               const idField = getIdField(r);
               const rowId = idField && r[idField] ? r[idField] : i;
+              // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
+              const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
 
               return (
-                <tr key={`${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
                   <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
                   <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
@@ -90,22 +92,24 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
                           const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                          if (openDropdownId !== rowId) {
+                          const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+                          if (openDropdownId !== uniqueRowId) {
                             const rect = e.currentTarget.getBoundingClientRect();
                             const dropdownWidth = 192;
                             setDropdownPosition({
                               top: rect.bottom + 4,
                               left: Math.max(8, rect.right - dropdownWidth)
                             });
-                            setOpenDropdownId(rowId);
+                            setOpenDropdownId(uniqueRowId);
                           } else {
                             setOpenDropdownId(null);
                           }
                         }}
                         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                         aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                        aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -263,6 +267,9 @@ export default function Tabel1A4({ role }) {
 
   const [editIdTahun, setEditIdTahun] = useState("");
   const [editIdDosen, setEditIdDosen] = useState("");
+  
+  // State untuk data dosen (untuk dropdown)
+  const [dosenList, setDosenList] = useState([]);
   const [editPengajaranPsSendiri, setEditPengajaranPsSendiri] = useState("");
   const [editPengajaranPsLainPtSendiri, setEditPengajaranPsLainPtSendiri] = useState("");
   const [editPengajaranPtLain, setEditPengajaranPtLain] = useState("");
@@ -331,6 +338,34 @@ export default function Tabel1A4({ role }) {
       setInitialLoading(false);
     }
   }
+
+  // Fetch data dosen untuk dropdown
+  useEffect(() => {
+    const fetchDosen = async () => {
+      try {
+        const data = await apiFetch("/dosen");
+        const list = Array.isArray(data) ? data : [];
+        // Filter dan map data dosen
+        const dosenMap = new Map();
+        list.forEach((d) => {
+          if (d.id_dosen && !dosenMap.has(d.id_dosen)) {
+            dosenMap.set(d.id_dosen, {
+              id_dosen: d.id_dosen,
+              id_pegawai: d.id_pegawai,
+              nama_lengkap: d.nama_lengkap || d.nama || `Dosen ${d.id_dosen}`
+            });
+          }
+        });
+        setDosenList(Array.from(dosenMap.values()).sort((a, b) => 
+          (a.nama_lengkap || '').localeCompare(b.nama_lengkap || '')
+        ));
+      } catch (err) {
+        console.error("Error fetching dosen:", err);
+        setDosenList([]);
+      }
+    };
+    fetchDosen();
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -861,7 +896,8 @@ export default function Tabel1A4({ role }) {
         const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
         const currentRow = filteredRows.find((r, idx) => {
           const rowId = getIdField(r) ? r[getIdField(r)] : idx;
-          return rowId === openDropdownId;
+          const uniqueRowId = `${rowId}-${idx}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+          return uniqueRowId === openDropdownId;
         });
         if (!currentRow) return null;
         
@@ -968,7 +1004,14 @@ export default function Tabel1A4({ role }) {
                   setLoading(true);
                   setOpenNewTahunDropdown(false);
                   setOpenNewDosenDropdown(false);
-                  const body = { id_tahun: parseInt(newIdTahun), id_dosen: parseInt(newIdDosen), sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), sks_penelitian: n(newPenelitian), sks_pkm: n(newPkm), sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain), created_by: role?.user?.name || role?.user?.username || "Unknown User", created_at: new Date().toISOString() };
+                  const body = { 
+                    id_tahun: parseInt(newIdTahun), 
+                    id_dosen: parseInt(newIdDosen), 
+                    sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), 
+                    sks_penelitian: n(newPenelitian), 
+                    sks_pkm: n(newPkm), 
+                    sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain)
+                  };
                   await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
                   setShowCreateModal(false);
                   setNewIdTahun(""); setNewIdDosen(""); setNewPengajaranPsSendiri(""); setNewPengajaranPsLainPtSendiri(""); setNewPengajaranPtLain(""); setNewPenelitian(""); setNewPkm(""); setNewManajemenPtSendiri(""); setNewManajemenPtLain("");
@@ -1068,8 +1111,8 @@ export default function Tabel1A4({ role }) {
                       <span className={`truncate ${newIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
                         {newIdDosen 
                           ? (() => {
-                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(newIdDosen));
-                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                              const found = dosenList.find((d) => String(d.id_dosen) === String(newIdDosen));
+                              return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
                           : "Pilih dosen..."}
                       </span>
@@ -1085,27 +1128,27 @@ export default function Tabel1A4({ role }) {
                     <div 
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-dosen-dropdown-menu mt-1 w-full"
                     >
-                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                      {dosenList.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 text-center">
                           Tidak ada data dosen
                         </div>
                       ) : (
-                        Object.values(maps.pegawai || {}).map((p) => (
+                        dosenList.map((d) => (
                           <button
-                            key={p.id_pegawai}
+                            key={d.id_dosen}
                             type="button"
                             onClick={() => {
-                              setNewIdDosen(p.id_pegawai.toString());
+                              setNewIdDosen(d.id_dosen.toString());
                               setOpenNewDosenDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              newIdDosen === p.id_pegawai.toString()
+                              newIdDosen === d.id_dosen.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                            <span className="truncate">{d.nama_lengkap}</span>
                           </button>
                         ))
                       )}
@@ -1223,7 +1266,14 @@ export default function Tabel1A4({ role }) {
                   setOpenEditTahunDropdown(false);
                   setOpenEditDosenDropdown(false);
                   const idField = getIdField(editing);
-                  const body = { id_tahun: parseInt(editIdTahun), id_dosen: parseInt(editIdDosen), sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), sks_penelitian: n(editPenelitian), sks_pkm: n(editPkm), sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain), updated_by: role?.user?.name || role?.user?.username || "Unknown User", updated_at: new Date().toISOString() };
+                  const body = { 
+                    id_tahun: parseInt(editIdTahun), 
+                    id_dosen: parseInt(editIdDosen), 
+                    sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), 
+                    sks_penelitian: n(editPenelitian), 
+                    sks_pkm: n(editPkm), 
+                    sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain)
+                  };
                   await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
                   setShowEditModal(false);
                   setEditing(null);
@@ -1323,8 +1373,8 @@ export default function Tabel1A4({ role }) {
                       <span className={`truncate ${editIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
                         {editIdDosen 
                           ? (() => {
-                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(editIdDosen));
-                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                              const found = dosenList.find((d) => String(d.id_dosen) === String(editIdDosen));
+                              return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
                           : "Pilih dosen..."}
                       </span>
@@ -1340,27 +1390,27 @@ export default function Tabel1A4({ role }) {
                     <div 
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-dosen-dropdown-menu mt-1 w-full"
                     >
-                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                      {dosenList.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 text-center">
                           Tidak ada data dosen
                         </div>
                       ) : (
-                        Object.values(maps.pegawai || {}).map((p) => (
+                        dosenList.map((d) => (
                           <button
-                            key={p.id_pegawai}
+                            key={d.id_dosen}
                             type="button"
                             onClick={() => {
-                              setEditIdDosen(p.id_pegawai.toString());
+                              setEditIdDosen(d.id_dosen.toString());
                               setOpenEditDosenDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              editIdDosen === p.id_pegawai.toString()
+                              editIdDosen === d.id_dosen.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                            <span className="truncate">{d.nama_lengkap}</span>
                           </button>
                         ))
                       )}

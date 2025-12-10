@@ -313,16 +313,16 @@ export default function UserManagementPage() {
   const handleResetPassword = (user) => {
     if (isReadOnlyRole) return;
     
-    // Cek apakah user adalah superadmin (waket1, waket2, tpm)
+    // Cek apakah user yang sedang login adalah superadmin (waket1, waket2, tpm, superadmin)
     const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
-    const userRole = user.role?.toLowerCase();
-    const isSuperAdmin = superAdminRoles.includes(userRole);
+    const currentUserRole = authUser?.role?.toLowerCase();
+    const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
     
-    if (!isSuperAdmin) {
+    if (!isCurrentUserSuperAdmin) {
       Swal.fire({
         icon: 'warning',
         title: 'Akses Ditolak',
-        text: 'Reset password hanya tersedia untuk role superadmin (WAKET-1, WAKET-2, TPM).'
+        text: 'Hanya superadmin (WAKET-1, WAKET-2, TPM) yang dapat mereset password.'
       });
       return;
     }
@@ -342,7 +342,7 @@ export default function UserManagementPage() {
           await api.put(`/users/${user.id_user}`, {
             password: "123"
           });
-          fetchUsers();
+          await fetchUsers();
           Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
@@ -352,7 +352,8 @@ export default function UserManagementPage() {
           });
         } catch (err) {
           console.error("Gagal reset password:", err);
-          Swal.fire('Gagal!', `Gagal mereset password: ${err.message}`, 'error');
+          const errorMessage = err?.response?.data?.error || err?.message || 'Gagal mereset password.';
+          Swal.fire('Gagal!', errorMessage, 'error');
         }
       }
     });
@@ -492,12 +493,13 @@ export default function UserManagementPage() {
               <span>Edit</span>
             </button>
             {(() => {
-              // Cek apakah user adalah superadmin (waket1, waket2, tpm, superadmin)
+              // Cek apakah user yang sedang login adalah superadmin (waket1, waket2, tpm, superadmin)
               const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
-              const userRole = currentUser.role?.toLowerCase();
-              const isSuperAdmin = superAdminRoles.includes(userRole);
+              const currentUserRole = authUser?.role?.toLowerCase();
+              const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
               
-              if (isSuperAdmin) {
+              // Super admin bisa reset password untuk semua user
+              if (isCurrentUserSuperAdmin) {
                 return (
                   <button
                     onClick={(e) => {

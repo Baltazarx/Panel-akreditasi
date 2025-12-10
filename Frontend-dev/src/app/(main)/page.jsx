@@ -3088,6 +3088,9 @@ export default function App() {
 
   // Filter quick actions berdasarkan akses role
   const quickActions = useMemo(() => {
+    const roleLower = (role || '').toLowerCase();
+    const isKepegawaian = roleLower === 'kepegawaian';
+    
     const allQuickActions = [
       { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
       { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
@@ -3095,13 +3098,14 @@ export default function App() {
       { label: 'Tabel C4', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
       { label: 'Tabel C5', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
       { label: 'Tabel C6', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
-      { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess },
-      { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess },
+      // Role kepegawaian hanya melihat Tenaga Kependidikan, bukan Data Dosen dan Tabel Pegawai
+      { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess && !isKepegawaian },
+      { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess && !isKepegawaian },
       { label: 'Tenaga Kependidikan', path: '/tables?table=TabelTendik', icon: FiUsers, color: 'from-violet-500 to-purple-500', hasAccess: hasTendikAccess },
       { label: 'Management Akun', path: '/users', icon: FiSettings, color: 'from-pink-500 to-rose-500', hasAccess: hasUsersAccess }
     ];
     return allQuickActions.filter(item => item.hasAccess);
-  }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasTendikAccess, hasUsersAccess]);
+  }, [role, hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasTendikAccess, hasUsersAccess]);
   
   useEffect(() => {
     setMounted(true);

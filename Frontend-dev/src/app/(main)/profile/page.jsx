@@ -6,21 +6,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
-import { FiCamera, FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiUnlock } from "react-icons/fi";
+import { FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiUnlock } from "react-icons/fi";
 import { apiFetch } from "../../../lib/api";
 import Swal from "sweetalert2";
-
-// An icon for the upload button for a better UX
-const CameraIcon = () => (
-  <FiCamera className="mr-2" size={18} />
-);
 
 export default function ProfilePage() {
   const { authUser, isLoading } = useAuth();
   const router = useRouter();
 
-  // State for photo update (no change)
-  const [profilePic, setProfilePic] = useState(null);
   // State for password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -40,31 +33,12 @@ export default function ProfilePage() {
   const [passwordVerified, setPasswordVerified] = useState(null);
   const [showVerifiedPassword, setShowVerifiedPassword] = useState(false);
 
-  // Logic for redirection and setting initial profile picture (no change)
+  // Logic for redirection
   useEffect(() => {
     if (!isLoading && !authUser) {
       router.push("/login");
     }
-    if (authUser?.avatar) {
-      setProfilePic(authUser.avatar);
-    }
   }, [authUser, isLoading, router]);
-
-  // Avatar berbasis role (default otomatis jika belum ada foto)
-  const roleAvatarUrl = authUser?.role
-    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.role)}&background=0384d6&color=fff&bold=true&rounded=true&size=128`
-    : null;
-
-  // Photo upload handler (no change)
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setProfilePic(url);
-      toast.success("Profile picture updated!");
-      // TODO: Send to backend (API for photo upload)
-    }
-  };
 
   // Handler untuk verifikasi password (untuk show password card)
   const handleVerifyPassword = async () => {
@@ -123,11 +97,76 @@ export default function ProfilePage() {
       setIsPasswordVerified(true);
       setPasswordVerified(verifyPassword);
       setVerifyPassword("");
-      toast.success("Password berhasil diverifikasi!");
+      toast.success("Password berhasil diverifikasi!", {
+        duration: 3000,
+        position: 'top-center',
+        style: {
+          background: '#d1fae5',
+          color: '#065f46',
+          border: '1px solid #a7f3d0',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        iconTheme: {
+          primary: '#10b981',
+          secondary: '#fff',
+        },
+      });
     } catch (error) {
       console.error("Error verifying password:", error);
-      const errorMessage = error?.response?.error || error?.message || "Password salah atau gagal verifikasi.";
-      toast.error(errorMessage);
+      
+      // Extract error message dengan lebih baik
+      let errorMessage = "Password salah atau gagal verifikasi.";
+      if (error?.response) {
+        if (typeof error.response === 'string') {
+          try {
+            const parsed = JSON.parse(error.response);
+            errorMessage = parsed.error || parsed.message || errorMessage;
+          } catch {
+            errorMessage = error.response;
+          }
+        } else if (error.response.error) {
+          errorMessage = error.response.error;
+        } else if (error.response.message) {
+          errorMessage = error.response.message;
+        }
+      } else if (error?.message) {
+        // Jika error.message adalah JSON string, parse dulu
+        if (typeof error.message === 'string' && error.message.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(error.message);
+            errorMessage = parsed.error || parsed.message || errorMessage;
+          } catch {
+            errorMessage = error.message;
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Tampilkan error dengan toast notification yang lebih baik
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#fee2e2',
+          color: '#991b1b',
+          border: '1px solid #fecaca',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        iconTheme: {
+          primary: '#dc2626',
+          secondary: '#fff',
+        },
+      });
+      
       setIsPasswordVerified(false);
       setPasswordVerified(null);
     } finally {
@@ -215,17 +254,54 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error changing password:", error);
       
-      // Tampilkan error message yang lebih informatif
-      const errorMessage = error?.response?.error || error?.message || "Gagal mengubah kata sandi. Silakan coba lagi.";
+      // Extract error message dengan lebih baik
+      let errorMessage = "Gagal mengubah kata sandi. Silakan coba lagi.";
+      if (error?.response) {
+        if (typeof error.response === 'string') {
+          try {
+            const parsed = JSON.parse(error.response);
+            errorMessage = parsed.error || parsed.message || errorMessage;
+          } catch {
+            errorMessage = error.response;
+          }
+        } else if (error.response.error) {
+          errorMessage = error.response.error;
+        } else if (error.response.message) {
+          errorMessage = error.response.message;
+        }
+      } else if (error?.message) {
+        // Jika error.message adalah JSON string, parse dulu
+        if (typeof error.message === 'string' && error.message.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(error.message);
+            errorMessage = parsed.error || parsed.message || errorMessage;
+          } catch {
+            errorMessage = error.message;
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
       
-      await Swal.fire({
-        icon: 'error',
-        title: 'Gagal Mengubah Kata Sandi',
-        text: errorMessage,
-        confirmButtonColor: '#0384d6'
+      // Tampilkan error dengan toast notification yang lebih baik
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#fee2e2',
+          color: '#991b1b',
+          border: '1px solid #fecaca',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        iconTheme: {
+          primary: '#dc2626',
+          secondary: '#fff',
+        },
       });
-      
-      toast.error(errorMessage);
     } finally {
       setIsChangingPassword(false);
     }
@@ -261,24 +337,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* -- Left Column: User Info & Photo Card -- */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col">
               {/* Gradient Header */}
               <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-6 text-white">
                 <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-4 group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0384d6] to-[#043975] rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                    <img
-                      src={profilePic || roleAvatarUrl || "https://via.placeholder.com/150"}
-                      alt={authUser?.role ? `Avatar ${authUser.role}` : "Profile"}
-                      className="relative w-32 h-32 rounded-full object-cover ring-4 ring-white/50 shadow-xl"
-                    />
-                    <div className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg">
-                      <FiCamera className="text-[#0384d6]" size={16} />
-                    </div>
-                  </div>
                   <h2 className="text-2xl font-bold mb-1">
                     {authUser.name}
                   </h2>
@@ -290,7 +355,7 @@ export default function ProfilePage() {
               </div>
 
               {/* User Details */}
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 flex-1">
                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                   <div className="p-2 bg-gradient-to-br from-[#0384d6] to-[#043975] rounded-lg">
                     <FiShield className="text-white" size={18} />
@@ -300,22 +365,11 @@ export default function ProfilePage() {
                     <p className="text-sm font-semibold text-slate-800 capitalize">{authUser.role}</p>
                   </div>
                 </div>
-
-                <label className="cursor-pointer w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#0384d6] to-[#043975] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]">
-                  <CameraIcon />
-                  <span>Ubah Foto Profil</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
               </div>
             </div>
 
             {/* -- Show Password Card (Di bawah Profile Card) -- */}
-            <div className="mt-6 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col flex-1">
               {/* Card Header */}
               <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-4 text-white">
                 <div className="flex items-center gap-3">
@@ -329,9 +383,9 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="p-6 flex-1 flex flex-col">
                 {!isPasswordVerified ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1 flex flex-col justify-between">
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <FiLock className="text-[#0384d6]" size={16} />
@@ -398,35 +452,13 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-slate-600">Password:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-800 font-mono">
-                              {showVerifiedPassword && passwordVerified 
-                                ? passwordVerified 
-                                : passwordVerified 
-                                  ? "•".repeat(passwordVerified.length) 
-                                  : "-"}
-                            </span>
-                            {passwordVerified && (
-                              <button
-                                type="button"
-                                onClick={() => setShowVerifiedPassword(!showVerifiedPassword)}
-                                className="text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1"
-                                aria-label={showVerifiedPassword ? "Sembunyikan password" : "Tampilkan password"}
-                              >
-                                {showVerifiedPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                              </button>
-                            )}
-                          </div>
+                          <span className="text-sm font-semibold text-slate-800 font-mono">
+                            {passwordVerified || "-"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-slate-600">Role:</span>
                           <span className="text-sm font-semibold text-slate-800 capitalize">{authUser.role || "-"}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-600">Status Akun:</span>
-                          <span className="px-3 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                            Aktif
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -451,8 +483,8 @@ export default function ProfilePage() {
           </div>
 
           {/* -- Right Column: Change Password Form -- */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+          <div className="lg:col-span-2 flex">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col w-full">
               {/* Form Header */}
               <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-6 text-white">
                 <div className="flex items-center gap-3">
@@ -466,8 +498,8 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <form onSubmit={handlePasswordChange}>
-                <div className="p-6 space-y-6">
+              <form onSubmit={handlePasswordChange} className="flex flex-col flex-1">
+                <div className="p-6 space-y-6 flex-1">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                       <FiKey className="text-[#0384d6]" size={16} />
