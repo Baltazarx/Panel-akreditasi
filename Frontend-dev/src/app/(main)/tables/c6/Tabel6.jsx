@@ -356,6 +356,34 @@ export default function Tabel6({ auth, role: propRole }) {
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+  
   // Lock body scroll and add modal-open class when modal is open
   useEffect(() => {
     if (showForm) {
@@ -431,30 +459,31 @@ export default function Tabel6({ auth, role: propRole }) {
       
       const data = await apiFetch(url);
       const dataArray = Array.isArray(data) ? data : (data.items || []);
-      setRows(dataArray);
+      const sortedDataArray = sortRowsByLatest(dataArray);
+      setRows(sortedDataArray);
       
       // Set current data berdasarkan filter
-      if (dataArray.length > 0) {
+      if (sortedDataArray.length > 0) {
         if (isKetuastikom) {
           // Role ketuastikom: jika ada selectedProdi, tampilkan data prodi yang dipilih, jika tidak tampilkan semua
           if (selectedProdi) {
-            const filteredData = dataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
-            setCurrentData(filteredData || dataArray.find(r => !r.deleted_at) || dataArray[0]);
+            const filteredData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
+            setCurrentData(filteredData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
           } else {
             // Tampilkan semua data (tampilkan data pertama yang aktif)
-            setCurrentData(dataArray.find(r => !r.deleted_at) || dataArray[0]);
+            setCurrentData(sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
           }
         } else if (selectedProdi) {
           // Jika ada filter prodi, tampilkan data prodi yang dipilih
-          const filteredData = dataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
-          setCurrentData(filteredData || dataArray.find(r => !r.deleted_at) || dataArray[0]);
+          const filteredData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
+          setCurrentData(filteredData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
         } else if (!isSuperAdmin && userProdiId) {
           // User prodi: tampilkan data prodi mereka
-          const userData = dataArray.find(r => String(r.id_unit_prodi) === String(userProdiId) && !r.deleted_at);
-          setCurrentData(userData || dataArray.find(r => !r.deleted_at) || dataArray[0]);
+          const userData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(userProdiId) && !r.deleted_at);
+          setCurrentData(userData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
         } else {
           // Fallback: tampilkan data pertama
-          setCurrentData(dataArray.find(r => !r.deleted_at) || dataArray[0]);
+          setCurrentData(sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
         }
       } else {
         setCurrentData(null);

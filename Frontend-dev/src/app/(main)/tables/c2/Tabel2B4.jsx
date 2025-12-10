@@ -83,6 +83,34 @@ export default function Tabel2B4({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  };
+
   // Filter prodi yang tersedia (hanya TI dan MI)
   const availableUnits = useMemo(() => {
     return [
@@ -117,7 +145,9 @@ export default function Tabel2B4({ role }) {
       console.log('Fetching Tabel2B4 data with params:', params);
       const result = await apiFetch(`/tabel2b4-masa-tunggu${params}`);
       console.log('Tabel2B4 data received:', result);
-      setData(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setData(sortedData);
     } catch (error) {
       console.error("Error fetching data:", error);
       Swal.fire("Error", "Gagal mengambil data", "error");

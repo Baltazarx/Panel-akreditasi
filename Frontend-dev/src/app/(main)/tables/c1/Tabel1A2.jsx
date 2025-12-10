@@ -749,6 +749,34 @@ export default function Tabel1A2({ auth, role }) {
   };
 
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id_sumber || 0;
+      const idB = b.id_sumber || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  };
+
   // Fetch data per tahun dan summary sesuai filter
   const fetchData = async (isToggle = false) => {
     try {
@@ -778,7 +806,9 @@ export default function Tabel1A2({ auth, role }) {
           dataLength: Array.isArray(data) ? data.length : 0,
           data: data
         });
-        setRows(Array.isArray(data) ? data : data?.items || []);
+        const rowsArray = Array.isArray(data) ? data : data?.items || [];
+        const sortedRows = sortRowsByLatest(rowsArray);
+        setRows(sortedRows);
       } catch (apiErr) {
         console.error("API Error for /sumber-pendanaan:", apiErr);
         console.error("Full error details:", {
@@ -851,7 +881,9 @@ export default function Tabel1A2({ auth, role }) {
 
       // Refresh data semua tahun
       const dataAll = await apiFetch(`/sumber-pendanaan`);
-      setRows(Array.isArray(dataAll) ? dataAll : dataAll?.items || []);
+      const rowsArrayAll = Array.isArray(dataAll) ? dataAll : dataAll?.items || [];
+      const sortedRowsAll = sortRowsByLatest(rowsArrayAll);
+      setRows(sortedRowsAll);
 
       // Refresh ringkasan (karena activeYear sudah di-set ke "", gunakan fetchSummaryAll)
       await fetchSummaryAll();
@@ -894,7 +926,8 @@ export default function Tabel1A2({ auth, role }) {
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
-          setRows(Array.isArray(data) ? data : data?.items || []);
+          const rowsArray = Array.isArray(data) ? data : data?.items || [];
+          setRows(sortRowsByLatest(rowsArray));
 
           // Refresh ringkasan sesuai filter (tahun tertentu atau semua tahun)
           if (activeYear) {
@@ -932,7 +965,8 @@ export default function Tabel1A2({ auth, role }) {
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
-          setRows(Array.isArray(data) ? data : data?.items || []);
+          const rowsArray = Array.isArray(data) ? data : data?.items || [];
+          setRows(sortRowsByLatest(rowsArray));
 
           // Refresh ringkasan
           if (activeYear) {
@@ -970,7 +1004,8 @@ export default function Tabel1A2({ auth, role }) {
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
-          setRows(Array.isArray(data) ? data : data?.items || []);
+          const rowsArray = Array.isArray(data) ? data : data?.items || [];
+          setRows(sortRowsByLatest(rowsArray));
 
           // Refresh ringkasan
           if (activeYear) {
@@ -1017,7 +1052,8 @@ export default function Tabel1A2({ auth, role }) {
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
           const data = await apiFetch(`/sumber-pendanaan${qsWithDeleted}`);
-          setRows(Array.isArray(data) ? data : data?.items || []);
+          const rowsArray = Array.isArray(data) ? data : data?.items || [];
+          setRows(sortRowsByLatest(rowsArray));
 
           // Refresh ringkasan
           if (activeYear) {

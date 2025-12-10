@@ -327,7 +327,41 @@ export default function Tabel1A1({ role }) {
         params.append("include_deleted", "1");
       }
       const data = await apiFetch(`${table.path}?${params.toString()}`);
-      setRows(Array.isArray(data) ? data : data?.items || []);
+      const rowsArray = Array.isArray(data) ? data : data?.items || [];
+      
+      // Urutkan berdasarkan data terbaru (yang baru ditambahkan di posisi pertama)
+      // Prioritas: created_at terbaru > updated_at terbaru > id terbesar
+      const sortedRows = [...rowsArray].sort((a, b) => {
+        // Jika ada created_at, urutkan berdasarkan created_at terbaru
+        if (a.created_at && b.created_at) {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          if (dateA.getTime() !== dateB.getTime()) {
+            return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+          }
+        }
+        
+        // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+        if (a.updated_at && b.updated_at) {
+          const dateA = new Date(a.updated_at);
+          const dateB = new Date(b.updated_at);
+          if (dateA.getTime() !== dateB.getTime()) {
+            return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+          }
+        }
+        
+        // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+        const idField = getIdField(a) || getIdField(b);
+        if (idField) {
+          const idA = a[idField] || 0;
+          const idB = b[idField] || 0;
+          return idB - idA; // ID terbesar di atas
+        }
+        
+        return 0;
+      });
+      
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
     } finally {
@@ -491,11 +525,12 @@ export default function Tabel1A1({ role }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                   <label htmlFor="id_pegawai" className="block text-sm font-semibold text-gray-700">Nama Pegawai <span className="text-red-500">*</span></label>
-                  <div className="relative pegawai-dropdown-container">
+                  <div className={`relative ${isEdit ? 'edit-pegawai-dropdown-container' : 'pegawai-dropdown-container'}`}>
                       <button
                           type="button"
                           onClick={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
                               const rect = e.currentTarget.getBoundingClientRect();
                               if (isEdit) {
                                   setEditPegawaiDropdownPosition({
@@ -539,7 +574,7 @@ export default function Tabel1A1({ role }) {
                       </button>
                       {(isEdit ? openEditPegawaiDropdown : openPegawaiDropdown) && (
                           <div 
-                              className="fixed z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto pegawai-dropdown-menu"
+                              className={`fixed z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto ${isEdit ? 'edit-pegawai-dropdown-menu' : 'pegawai-dropdown-menu'}`}
                               style={{
                                   top: `${(isEdit ? editPegawaiDropdownPosition : pegawaiDropdownPosition).top}px`,
                                   left: `${(isEdit ? editPegawaiDropdownPosition : pegawaiDropdownPosition).left}px`,
@@ -556,7 +591,9 @@ export default function Tabel1A1({ role }) {
                                       <button
                                           key={p.id_pegawai}
                                           type="button"
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
                                               if (isEdit) {
                                                   setEditIdPegawai(p.id_pegawai.toString());
                                                   setOpenEditPegawaiDropdown(false);
@@ -564,6 +601,9 @@ export default function Tabel1A1({ role }) {
                                                   setNewIdPegawai(p.id_pegawai.toString());
                                                   setOpenPegawaiDropdown(false);
                                               }
+                                          }}
+                                          onMouseDown={(e) => {
+                                              e.preventDefault(); // Prevent blur event from closing dropdown
                                           }}
                                           className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
                                               (isEdit ? editIdPegawai : newIdPegawai) === p.id_pegawai.toString()

@@ -829,6 +829,34 @@ export default function Tabel3C2({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   // Tahun options
   const tahunList = useMemo(() => {
     if (!maps || !maps.tahun) {
@@ -920,7 +948,9 @@ export default function Tabel3C2({ auth, role }) {
           console.log('Tabel3C2 - Fetched data:', response.data.length, 'rows');
           console.log('Tabel3C2 - showDeleted:', showDeleted);
           console.log('Tabel3C2 - Sample row:', response.data[0]);
-          setRows(response.data);
+          const rowsArray = Array.isArray(response.data) ? response.data : [];
+          const sortedRows = sortRowsByLatest(rowsArray);
+          setRows(sortedRows);
           setTahunLaporan(response.tahun_laporan);
         } else {
           console.log('Tabel3C2 - No data in response:', response);
@@ -978,7 +1008,9 @@ export default function Tabel3C2({ auth, role }) {
         }
         const response = await apiFetch(url);
         if (response && response.data) {
-          setRows(response.data);
+          const rowsArray = Array.isArray(response.data) ? response.data : [];
+          const sortedRows = sortRowsByLatest(rowsArray);
+          setRows(sortedRows);
           setTahunLaporan(response.tahun_laporan);
         }
       }

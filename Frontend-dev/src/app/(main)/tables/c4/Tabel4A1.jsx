@@ -768,6 +768,34 @@ export default function Tabel4A1({ auth, role: propRole }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   // Fetch data
   useEffect(() => {
     const fetchData = async () => {
@@ -778,7 +806,9 @@ export default function Tabel4A1({ auth, role: propRole }) {
           url += "?include_deleted=1";
         }
         const data = await apiFetch(url);
-        setRows(Array.isArray(data) ? data : data?.items || []);
+        const rowsArray = Array.isArray(data) ? data : data?.items || [];
+        const sortedRows = sortRowsByLatest(rowsArray);
+        setRows(sortedRows);
       } catch (err) {
         console.error("Error fetching data:", err);
         Swal.fire({

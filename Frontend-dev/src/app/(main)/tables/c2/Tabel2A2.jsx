@@ -84,6 +84,34 @@ export default function Tabel2A2({ role }) {
     }
   ];
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  };
+
   const refresh = async () => {
     try {
       setLoading(true);
@@ -107,7 +135,9 @@ export default function Tabel2A2({ role }) {
         ? result.filter((row) => row.deleted_at !== null)
         : result.filter((row) => row.deleted_at === null);
       
-      setData(Array.isArray(filteredData) ? filteredData : []);
+      const rowsArray = Array.isArray(filteredData) ? filteredData : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setData(sortedData);
       
       // Set default selected year from data or maps
       if (!selectedTahun) {

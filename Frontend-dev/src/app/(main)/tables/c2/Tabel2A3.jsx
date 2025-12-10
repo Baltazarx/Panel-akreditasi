@@ -175,6 +175,34 @@ export default function Tabel2A3() {
     return Object.values(maps.tahun || {}).sort((a, b) => a.id_tahun - b.id_tahun);
   }, [maps.tahun]);
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  };
+
   const refresh = async () => {
     setLoading(true);
     setError(null);
@@ -187,7 +215,9 @@ export default function Tabel2A3() {
       console.log("📊 Is array:", Array.isArray(mc));
       console.log("📊 Length:", Array.isArray(mc) ? mc.length : 'N/A');
       
-      setMahasiswaConditions(Array.isArray(mc) ? mc : []);
+      const rowsArray = Array.isArray(mc) ? mc : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setMahasiswaConditions(sortedData);
       
       const years = [...(Array.isArray(mc) ? mc : [])].map((x) => Number(x?.id_tahun)).filter((n) => Number.isFinite(n));
       console.log("📅 Available years:", years);

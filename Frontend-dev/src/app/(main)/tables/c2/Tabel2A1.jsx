@@ -238,6 +238,33 @@ export default function Tabel2A1({ role }) {
     }
   }, [role]);
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = useCallback((rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  }, []);
 
   const fetchPend = useCallback(async (isToggle = false) => {
     try {
@@ -283,14 +310,8 @@ export default function Tabel2A1({ role }) {
       const data = await apiFetch(`${tablePend.path}?${params}`);
       
       // Backend sudah melakukan filtering, jadi langsung gunakan data
-      const sortedData = Array.isArray(data) ? data : (data?.items || []);
-      sortedData.sort((a, b) => {
-        // Sort by tahun (descending) lalu by id (descending)
-        if (a.id_tahun !== b.id_tahun) {
-          return b.id_tahun - a.id_tahun;
-        }
-        return b.id - a.id;
-      });
+      const rowsArray = Array.isArray(data) ? data : (data?.items || []);
+      const sortedData = sortRowsByLatest(rowsArray);
       
       setRowsPend(sortedData);
     } catch (e) {
@@ -302,7 +323,7 @@ export default function Tabel2A1({ role }) {
         setInitialLoadingPend(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun, sortRowsByLatest]);
   
   const fetchMaba = useCallback(async (isToggle = false) => {
     try {
@@ -348,14 +369,8 @@ export default function Tabel2A1({ role }) {
       const data = await apiFetch(`${tableMaba.path}?${params}`);
       
       // Backend sudah melakukan filtering, jadi langsung gunakan data
-      const sortedData = Array.isArray(data) ? data : (data?.items || []);
-      sortedData.sort((a, b) => {
-        // Sort by tahun (descending) lalu by id (descending)
-        if (a.id_tahun !== b.id_tahun) {
-          return b.id_tahun - a.id_tahun;
-        }
-        return b.id - a.id;
-      });
+      const rowsArray = Array.isArray(data) ? data : (data?.items || []);
+      const sortedData = sortRowsByLatest(rowsArray);
       
       setRowsMaba(sortedData);
     } catch (e) {
@@ -367,7 +382,7 @@ export default function Tabel2A1({ role }) {
         setInitialLoadingMaba(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun, sortRowsByLatest]);
 
   const combineRows = (pendaftaran, mabaAktif) => {
     return pendaftaran.map((p) => {

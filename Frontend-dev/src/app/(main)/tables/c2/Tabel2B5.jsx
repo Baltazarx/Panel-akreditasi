@@ -181,6 +181,34 @@ export default function Tabel2B5({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -191,7 +219,9 @@ export default function Tabel2B5({ role }) {
       }
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
       const result = await apiFetch(`/tabel2b5-kesesuaian-kerja${params}`);
-      setData(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setData(sortedData);
     } catch (error) {
       Swal.fire("Error", "Gagal mengambil data", "error");
     } finally {

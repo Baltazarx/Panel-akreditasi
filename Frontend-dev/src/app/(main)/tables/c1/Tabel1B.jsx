@@ -382,6 +382,39 @@ export default function Tabel1B({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idField = getIdField(a) || getIdField(b);
+      if (idField) {
+        const idA = a[idField] || 0;
+        const idB = b[idField] || 0;
+        return idB - idA; // ID terbesar di atas
+      }
+      
+      return 0;
+    });
+  };
+
   async function fetchRows(isToggle = false) {
     try {
       // Only show loading skeleton on initial load, not when toggling
@@ -398,7 +431,9 @@ export default function Tabel1B({ role }) {
         params.append("include_deleted", "1");
       }
       const data = await apiFetch(`${ENDPOINT}?${params.toString()}`);
-      setRows(Array.isArray(data) ? data : data?.items || []);
+      const rowsArray = Array.isArray(data) ? data : data?.items || [];
+      const sortedRows = sortRowsByLatest(rowsArray);
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
     } finally {
