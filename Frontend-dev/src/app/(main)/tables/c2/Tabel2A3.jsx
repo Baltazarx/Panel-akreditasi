@@ -4,7 +4,7 @@ import { apiFetch } from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiCalendar } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiDownload } from 'react-icons/fi';
 
 // Helper functions for building table headers
 const seg = (n) => (n.key ? String(n.key) : String(n.label || "col")).replace(/\s+/g, "_");
@@ -472,6 +472,142 @@ export default function Tabel2A3() {
     );
   };
 
+  // Fungsi export Excel untuk Tabel Kondisi Mahasiswa
+  const exportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      if (!selectedTahun) {
+        throw new Error('Pilih tahun akademik terlebih dahulu untuk mengekspor data.');
+      }
+
+      if (displayRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan data dari displayRows
+      displayRows.forEach((row) => {
+        exportData.push({
+          'Kategori': row.kategori || '',
+          'TS': row.ts || 0,
+          'TS-1': row.ts_minus_1 || 0,
+          'TS-2': row.ts_minus_2 || 0,
+          'TS-3': row.ts_minus_3 || 0,
+          'TS-4': row.ts_minus_4 || 0,
+          'Jumlah': row.jumlah || 0
+        });
+      });
+      
+      // Tambahkan baris Jumlah
+      const totals = {};
+      leaves.forEach(leaf => {
+        if (leaf.key !== "kategori") {
+          totals[leaf.key] = displayRows.reduce((acc, r) => acc + (Number(r?.[leaf.key]) || 0), 0);
+        }
+      });
+      
+      exportData.push({
+        'Kategori': 'Jumlah',
+        'TS': totals.ts || 0,
+        'TS-1': totals.ts_minus_1 || 0,
+        'TS-2': totals.ts_minus_2 || 0,
+        'TS-3': totals.ts_minus_3 || 0,
+        'TS-4': totals.ts_minus_4 || 0,
+        'Jumlah': totals.jumlah || 0
+      });
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A3_Kondisi_Mahasiswa_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 35 },  // Kategori
+        { wch: 12 },  // TS
+        { wch: 12 },  // TS-1
+        { wch: 12 },  // TS-2
+        { wch: 12 },  // TS-3
+        { wch: 12 },  // TS-4
+        { wch: 12 }   // Jumlah
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Kondisi Mahasiswa');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A3_Kondisi_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return (
     <div className="p-8 text-center">
       <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
@@ -575,32 +711,43 @@ export default function Tabel2A3() {
           </div>
         </div>
         
-        {currentYearLulusDoData ? (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportToExcel}
+            disabled={loading || !selectedTahun || displayRows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
+          {currentYearLulusDoData ? (
+            <>
+              <button
+                onClick={handleOpenEditModal}
+                disabled={loading}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Edit Data
+              </button>
+              <button
+                onClick={handleHapus}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Hapus Data
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleOpenEditModal}
+              onClick={handleOpenAddModal}
               disabled={loading}
               className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Edit Data
+              + Tambah Data
             </button>
-            <button
-              onClick={handleHapus}
-              disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Hapus Data
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleOpenAddModal}
-            disabled={loading}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            + Tambah Data
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">

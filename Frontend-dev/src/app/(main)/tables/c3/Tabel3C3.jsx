@@ -7,6 +7,7 @@ import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiUser, FiShield } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3c3-hki";
 const TABLE_KEY = "tabel_3c3_hki";
@@ -1131,46 +1132,180 @@ export default function Tabel3C3({ auth, role }) {
   };
 
   const handleExport = async () => {
-    if (!selectedTahun) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Pilih Tahun',
-        text: 'Harap pilih tahun terlebih dahulu'
-      });
-      return;
-    }
-
     try {
-      const response = await fetch(`http://localhost:3000/api${ENDPOINT}/export?ts_id=${selectedTahun}`, {
-        credentials: "include",
-        mode: "cors",
+      const currentData = rows.filter(r => {
+        const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+        return showDeleted ? hasDeletedAt : !hasDeletedAt;
       });
-
-      if (!response.ok) {
-        throw new Error('Gagal mengekspor data');
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Tabel_3C3_HKI.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = [
+        'No',
+        'Judul',
+        'Jenis HKI',
+        'Nama DTPR',
+        'Tahun Perolehan (Beri Tanda √)',
+        '',
+        '',
+        '',
+        '',
+        'Link Bukti'
+      ];
+      exportData.push(headerRow1);
+      
+      const headerRow2 = [
+        '',
+        '',
+        '',
+        '',
+        tahunLaporan?.nama_ts4 || 'TS-4',
+        tahunLaporan?.nama_ts3 || 'TS-3',
+        tahunLaporan?.nama_ts2 || 'TS-2',
+        tahunLaporan?.nama_ts1 || 'TS-1',
+        tahunLaporan?.nama_ts || 'TS',
+        ''
+      ];
+      exportData.push(headerRow2);
+      
+      // Format checkmark untuk tahun perolehan
+      const formatTahunPerolehan = (row) => {
+        const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+        const ts3 = row.tahun_ts3 === '√' ? '√' : '';
+        const ts2 = row.tahun_ts2 === '√' ? '√' : '';
+        const ts1 = row.tahun_ts1 === '√' ? '√' : '';
+        const ts = row.tahun_ts === '√' ? '√' : '';
+        return { ts4, ts3, ts2, ts1, ts };
+      };
+      
+      // Tambahkan data rows
+      currentData.forEach((row, index) => {
+        const tahunPerolehan = formatTahunPerolehan(row);
+        exportData.push([
+          index + 1,
+          row.judul_hki || "-",
+          row.jenis_hki || "-",
+          row.nama_dtpr || "-",
+          tahunPerolehan.ts4,
+          tahunPerolehan.ts3,
+          tahunPerolehan.ts2,
+          tahunPerolehan.ts1,
+          tahunPerolehan.ts,
+          row.link_bukti || "-"
+        ]);
+      });
+      
+      // Tambahkan summary row
+      if (currentData.length > 0) {
+        exportData.push([
+          'Jumlah HKI',
+          '',
+          '',
+          '',
+          currentData.filter(r => r.tahun_ts4 === '√').length,
+          currentData.filter(r => r.tahun_ts3 === '√').length,
+          currentData.filter(r => r.tahun_ts2 === '√').length,
+          currentData.filter(r => r.tahun_ts1 === '√').length,
+          currentData.filter(r => r.tahun_ts === '√').length,
+          ''
+        ]);
+      }
 
+      // Buat worksheet
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 40 },  // Judul
+        { wch: 25 },  // Jenis HKI
+        { wch: 25 },  // Nama DTPR
+        { wch: 12 },  // TS-4
+        { wch: 12 },  // TS-3
+        { wch: 12 },  // TS-2
+        { wch: 12 },  // TS-1
+        { wch: 12 },  // TS
+        { wch: 30 }   // Link Bukti
+      ];
+      
+      // Buat workbook dan tambahkan worksheet
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Perolehan HKI');
+      
+      // Export ke file
+      XLSX.writeFile(wb, `Tabel_3C3_HKI_${selectedTahun || 'Data'}.xlsx`);
+      
       Swal.fire({
         icon: 'success',
-        title: 'Berhasil',
-        text: 'Data berhasil diekspor'
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor.',
+        timer: 1500,
+        showConfirmButton: false
       });
     } catch (err) {
-      console.error("Error exporting data:", err);
+      console.error("Export error:", err);
+      
+      // Fallback ke CSV jika XLSX gagal
+      try {
+        const currentData = rows.filter(r => {
+          const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+          return showDeleted ? hasDeletedAt : !hasDeletedAt;
+        });
+        if (currentData && currentData.length > 0) {
+          const csvContent = [
+            ['No', 'Judul', 'Jenis HKI', 'Nama DTPR', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'],
+            ...currentData.map((row, index) => {
+              const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+              const ts3 = row.tahun_ts3 === '√' ? '√' : '';
+              const ts2 = row.tahun_ts2 === '√' ? '√' : '';
+              const ts1 = row.tahun_ts1 === '√' ? '√' : '';
+              const ts = row.tahun_ts === '√' ? '√' : '';
+              return [
+                index + 1,
+                row.judul_hki || "-",
+                row.jenis_hki || "-",
+                row.nama_dtpr || "-",
+                ts4,
+                ts3,
+                ts2,
+                ts1,
+                ts,
+                row.link_bukti || "-"
+              ];
+            })
+          ].map(row => row.join(',')).join('\n');
+          
+          const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Tabel_3C3_HKI_${selectedTahun || 'Data'}.csv`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          
+          Swal.fire({
+            icon: 'info',
+            title: 'Diekspor sebagai CSV',
+            text: 'Data diekspor sebagai CSV karena library Excel tidak tersedia.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
+        }
+      } catch (csvErr) {
+        console.error("CSV export error:", csvErr);
+      }
+      
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: err.message || 'Gagal mengekspor data'
+        title: 'Gagal mengekspor',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
       });
     }
   };

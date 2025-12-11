@@ -6,7 +6,8 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role";
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from "sweetalert2";
-import { FiChevronDown, FiCalendar, FiBriefcase } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiBriefcase, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2C({ role }) {
   const { maps } = useMaps(true);
@@ -820,6 +821,163 @@ export default function Tabel2C({ role }) {
     return availableYears.find(y => String(y.id) === String(id))?.text || id;
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      if (!selectedYear || yearOrder.length === 0 || bentukList.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headerRow = ['Tahun Akademik', ...yearOrder.map((y, idx) => {
+        if (y == null) return '';
+        const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+        return label;
+      }), 'Link Bukti'];
+      exportData.push(headerRow);
+      
+      // Tambahkan baris Jumlah Mahasiswa Aktif
+      const aktifRow = ['Jumlah Mahasiswa Aktif', ...yearOrder.map(y => {
+        if (y == null) return 0;
+        return dataByYear[y]?.aktif ?? 0;
+      }), dataByYear[yearOrder[yearOrder.length - 1]]?.link || ''];
+      exportData.push(aktifRow);
+      
+      // Tambahkan baris separator untuk Bentuk Pembelajaran
+      exportData.push(['Bentuk Pembelajaran — Jumlah mahasiswa untuk setiap bentuk pembelajaran', '', '', '', '', '', '']);
+      
+      // Tambahkan baris untuk setiap bentuk pembelajaran
+      bentukList.forEach((b) => {
+        const bentukRow = [
+          b.nama_bentuk || '',
+          ...yearOrder.map(y => {
+            if (y == null) return 0;
+            return dataByYear[y]?.counts?.[b.id_bentuk] ?? 0;
+          }),
+          ''
+        ];
+        exportData.push(bentukRow);
+      });
+      
+      // Tambahkan baris Jumlah
+      const jumlahRow = ['Jumlah', ...yearOrder.map(y => {
+        if (y == null) return 0;
+        return totalsByYear[y] ?? 0;
+      }), ''];
+      exportData.push(jumlahRow);
+      
+      // Tambahkan baris Persentase
+      const persenRow = ['Persentase', ...yearOrder.map(y => {
+        if (y == null) return '0.00%';
+        return `${(percentByYear[y] ?? 0).toFixed(2)}%`;
+      }), ''];
+      exportData.push(persenRow);
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 50 },  // Tahun Akademik / Bentuk Pembelajaran
+        ...yearOrder.map(() => ({ wch: 15 })), // Kolom tahun
+        { wch: 40 }   // Link Bukti
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Fleksibilitas';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_2C_Fleksibilitas_Pembelajaran_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const headerRow = ['Tahun Akademik', ...yearOrder.map((y, idx) => {
+          if (y == null) return '';
+          const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+          return label;
+        }), 'Link Bukti'];
+        
+        const csvRows = [
+          headerRow,
+          ['Jumlah Mahasiswa Aktif', ...yearOrder.map(y => {
+            if (y == null) return 0;
+            return dataByYear[y]?.aktif ?? 0;
+          }), dataByYear[yearOrder[yearOrder.length - 1]]?.link || ''],
+          ['Bentuk Pembelajaran — Jumlah mahasiswa untuk setiap bentuk pembelajaran', '', '', '', '', '', ''],
+          ...bentukList.map(b => [
+            b.nama_bentuk || '',
+            ...yearOrder.map(y => {
+              if (y == null) return 0;
+              return dataByYear[y]?.counts?.[b.id_bentuk] ?? 0;
+            }),
+            ''
+          ]),
+          ['Jumlah', ...yearOrder.map(y => {
+            if (y == null) return 0;
+            return totalsByYear[y] ?? 0;
+          }), ''],
+          ['Persentase', ...yearOrder.map(y => {
+            if (y == null) return '0.00%';
+            return `${(percentByYear[y] ?? 0).toFixed(2)}%`;
+          }), '']
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2C_Fleksibilitas_Pembelajaran_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-6">
       {/* Header */}
@@ -1003,6 +1161,15 @@ export default function Tabel2C({ role }) {
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
             {loading ? "Memuat..." : `${bentukList.length} bentuk`}
           </span>
+          <button
+            onClick={handleExport}
+            disabled={loading || !selectedYear || yearOrder.length === 0 || bentukList.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
           {canCreate && canManageData && !showDeleted && (
             <button
               onClick={() => handleOpenModal()}

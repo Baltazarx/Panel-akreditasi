@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiUser, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiUser, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT_BASE = "/tabel-3a3-pengembangan-dtpr";
 const ENDPOINT_SUMMARY = "/tabel-3a3-pengembangan-dtpr/summary";
@@ -1797,6 +1798,184 @@ export default function Tabel3A3({ auth, role }) {
     }
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Export Summary Table
+      if (summaryData) {
+        const summaryDataExport = [];
+        
+        // Header
+        const summaryHeader = ['Tahun Akademik', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'];
+        summaryDataExport.push(summaryHeader);
+        
+        // Data
+        const summaryRow = [
+          'Jumlah Dosen DTPR',
+          summaryData.jumlah_ts_4 || 0,
+          summaryData.jumlah_ts_3 || 0,
+          summaryData.jumlah_ts_2 || 0,
+          summaryData.jumlah_ts_1 || 0,
+          summaryData.jumlah_ts || 0,
+          summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 || ''
+        ];
+        summaryDataExport.push(summaryRow);
+        
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryDataExport);
+        wsSummary['!cols'] = [
+          { wch: 25 },  // Tahun Akademik
+          { wch: 12 },  // TS-4
+          { wch: 12 },  // TS-3
+          { wch: 12 },  // TS-2
+          { wch: 12 },  // TS-1
+          { wch: 12 },  // TS
+          { wch: 40 }   // Link Bukti
+        ];
+        XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      }
+      
+      // Export Detail Table
+      if (filteredDetailRows && filteredDetailRows.length > 0) {
+        const detailDataExport = [];
+        
+        // Header
+        const detailHeader = [
+          'Jenis Pengembangan DTPR',
+          'Nama DTPR',
+          'TS-4',
+          'TS-3',
+          'TS-2',
+          'TS-1',
+          'TS',
+          'Link Bukti'
+        ];
+        detailDataExport.push(detailHeader);
+        
+        // Data rows
+        filteredDetailRows.forEach((row) => {
+          const detailRow = [
+            row.jenis_pengembangan || '',
+            row.nama_dtpr || '',
+            row.jumlah_ts_4 || 0,
+            row.jumlah_ts_3 || 0,
+            row.jumlah_ts_2 || 0,
+            row.jumlah_ts_1 || 0,
+            row.jumlah_ts || 0,
+            row.link_bukti || row.link_bukti_ts || row.link_bukti_ts_1 || row.link_bukti_ts_2 || row.link_bukti_ts_3 || row.link_bukti_ts_4 || ''
+          ];
+          detailDataExport.push(detailRow);
+        });
+        
+        const wsDetail = XLSX.utils.aoa_to_sheet(detailDataExport);
+        wsDetail['!cols'] = [
+          { wch: 30 },  // Jenis Pengembangan DTPR
+          { wch: 30 },  // Nama DTPR
+          { wch: 12 },  // TS-4
+          { wch: 12 },  // TS-3
+          { wch: 12 },  // TS-2
+          { wch: 12 },  // TS-1
+          { wch: 12 },  // TS
+          { wch: 40 }   // Link Bukti
+        ];
+        const detailSheetName = showDeleted ? 'Detail Terhapus' : 'Detail';
+        XLSX.utils.book_append_sheet(wb, wsDetail, detailSheetName);
+      }
+      
+      // Jika tidak ada data sama sekali
+      if (!summaryData && (!filteredDetailRows || filteredDetailRows.length === 0)) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+      
+      // Generate file dan download
+      const fileName = `Tabel_3A3_Pengembangan_DTPR_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        let csvContent = '\ufeff';
+        
+        // Export Summary
+        if (summaryData) {
+          csvContent += '=== SUMMARY ===\n';
+          csvContent += ['Tahun Akademik', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'].map(escapeCsv).join(',') + '\n';
+          csvContent += [
+            'Jumlah Dosen DTPR',
+            summaryData.jumlah_ts_4 || 0,
+            summaryData.jumlah_ts_3 || 0,
+            summaryData.jumlah_ts_2 || 0,
+            summaryData.jumlah_ts_1 || 0,
+            summaryData.jumlah_ts || 0,
+            summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 || ''
+          ].map(escapeCsv).join(',') + '\n\n';
+        }
+        
+        // Export Detail
+        if (filteredDetailRows && filteredDetailRows.length > 0) {
+          csvContent += '=== DETAIL ===\n';
+          csvContent += ['Jenis Pengembangan DTPR', 'Nama DTPR', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'].map(escapeCsv).join(',') + '\n';
+          filteredDetailRows.forEach((row) => {
+            csvContent += [
+              row.jenis_pengembangan || '',
+              row.nama_dtpr || '',
+              row.jumlah_ts_4 || 0,
+              row.jumlah_ts_3 || 0,
+              row.jumlah_ts_2 || 0,
+              row.jumlah_ts_1 || 0,
+              row.jumlah_ts || 0,
+              row.link_bukti || row.link_bukti_ts || row.link_bukti_ts_1 || row.link_bukti_ts_2 || row.link_bukti_ts_3 || row.link_bukti_ts_4 || ''
+            ].map(escapeCsv).join(',') + '\n';
+          });
+        }
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_3A3_Pengembangan_DTPR_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -1913,6 +2092,17 @@ export default function Tabel3A3({ auth, role }) {
               </div>
             </div>
           )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={detailLoading || summaryLoading || (!summaryData && (!filteredDetailRows || filteredDetailRows.length === 0))}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
         </div>
       </div>
 

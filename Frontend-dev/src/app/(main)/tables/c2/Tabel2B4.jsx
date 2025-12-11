@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2B4({ role }) {
   const { authUser } = useAuth();
@@ -544,6 +545,121 @@ export default function Tabel2B4({ role }) {
     }
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headers = [
+        'Tahun Lulus',
+        'Jumlah Lulusan',
+        'Jumlah Lulusan yang Terlacak',
+        'Rata-rata Waktu Tunggu (Bulan)'
+      ];
+      exportData.push(headers);
+      
+      // Tambahkan data rows
+      currentData.forEach((row) => {
+        const rowData = [
+          row.tahun_lulus || '',
+          row.jumlah_lulusan !== "" ? row.jumlah_lulusan : '-',
+          row.jumlah_terlacak !== "" ? row.jumlah_terlacak : '-',
+          row.rata_rata_waktu_tunggu_bulan !== "" ? row.rata_rata_waktu_tunggu_bulan : '-'
+        ];
+        exportData.push(rowData);
+      });
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 20 },  // Tahun Lulus
+        { wch: 20 },  // Jumlah Lulusan
+        { wch: 30 },  // Jumlah Lulusan yang Terlacak
+        { wch: 35 }   // Rata-rata Waktu Tunggu (Bulan)
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Masa Tunggu';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_2B4_Masa_Tunggu_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['Tahun Lulus', 'Jumlah Lulusan', 'Jumlah Lulusan yang Terlacak', 'Rata-rata Waktu Tunggu (Bulan)'],
+          ...currentData.map(row => [
+            row.tahun_lulus || '',
+            row.jumlah_lulusan !== "" ? row.jumlah_lulusan : '-',
+            row.jumlah_terlacak !== "" ? row.jumlah_terlacak : '-',
+            row.rata_rata_waktu_tunggu_bulan !== "" ? row.rata_rata_waktu_tunggu_bulan : '-'
+          ])
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2B4_Masa_Tunggu_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   // Render table function - unified untuk active dan deleted
   const renderTable = useMemo(() => {
     const currentData = showDeleted ? tableDataDeleted : tableDataActive;
@@ -882,15 +998,27 @@ export default function Tabel2B4({ role }) {
           )}
         </div>
         
-        {canCreate && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleAddClick}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
+            onClick={handleExport}
+            disabled={loading || (showDeleted ? !tableDataDeleted || tableDataDeleted.length === 0 : !tableDataActive || tableDataActive.length === 0)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            + Tambah Data
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
-        )}
+          
+          {canCreate && (
+            <button
+              onClick={handleAddClick}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              + Tambah Data
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}

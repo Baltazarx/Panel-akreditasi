@@ -4,7 +4,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3a1-sarpras-penelitian";
 const TABLE_KEY = "tabel_3a1_sarpras_penelitian";
@@ -1017,6 +1018,134 @@ export default function Tabel3A1({ auth, role }) {
     }
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      if (!filteredRows || filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headerRow = [
+        'No',
+        'Nama Prasarana',
+        'Daya Tampung',
+        'Luas Ruang (m²)',
+        'Milik sendiri (M)/Sewa (W)',
+        'Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)',
+        'Perangkat',
+        'Link Bukti'
+      ];
+      exportData.push(headerRow);
+      
+      // Tambahkan data rows
+      filteredRows.forEach((row, idx) => {
+        const rowData = [
+          idx + 1,
+          row.nama_sarpras || '',
+          row.daya_tampung || '',
+          row.luas_ruang_m2 || '',
+          row.kepemilikan === "M" ? "Milik sendiri (M)" : row.kepemilikan === "W" ? "Sewa (W)" : '',
+          row.lisensi === "L" ? "Berlisensi (L)" : row.lisensi === "P" ? "Public Domain (P)" : row.lisensi === "T" ? "Tidak Berlisensi (T)" : '',
+          row.perangkat_detail || '',
+          row.link_bukti || ''
+        ];
+        exportData.push(rowData);
+      });
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // No
+        { wch: 30 },  // Nama Prasarana
+        { wch: 15 },  // Daya Tampung
+        { wch: 18 },  // Luas Ruang (m²)
+        { wch: 30 },  // Kepemilikan
+        { wch: 50 },  // Lisensi
+        { wch: 50 },  // Perangkat
+        { wch: 40 }   // Link Bukti
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Sarana Prasarana';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_3A1_Sarana_Prasarana_Penelitian_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['No', 'Nama Prasarana', 'Daya Tampung', 'Luas Ruang (m²)', 'Milik sendiri (M)/Sewa (W)', 'Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)', 'Perangkat', 'Link Bukti'],
+          ...filteredRows.map((row, idx) => [
+            idx + 1,
+            row.nama_sarpras || '',
+            row.daya_tampung || '',
+            row.luas_ruang_m2 || '',
+            row.kepemilikan === "M" ? "Milik sendiri (M)" : row.kepemilikan === "W" ? "Sewa (W)" : '',
+            row.lisensi === "L" ? "Berlisensi (L)" : row.lisensi === "P" ? "Public Domain (P)" : row.lisensi === "T" ? "Tidak Berlisensi (T)" : '',
+            row.perangkat_detail || '',
+            row.link_bukti || ''
+          ])
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_3A1_Sarana_Prasarana_Penelitian_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -1078,6 +1207,15 @@ export default function Tabel3A1({ auth, role }) {
           )}
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={handleExport}
+            disabled={loading || !filteredRows || filteredRows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
           {canCreate && (
             <button
               onClick={() => { setModalOpen(true); setEditingRow(null); }}

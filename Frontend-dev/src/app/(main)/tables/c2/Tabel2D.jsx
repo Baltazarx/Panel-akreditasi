@@ -7,7 +7,8 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role"; 
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from "sweetalert2";
-import { FiChevronDown, FiCalendar, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2D({ role }) {
     const { maps } = useMaps(true);
@@ -428,6 +429,170 @@ export default function Tabel2D({ role }) {
             return dataByYear[yearId];
         }
         return null;
+    };
+
+    // Fungsi export Excel
+    const handleExport = async () => {
+        try {
+            if (!selectedYear || yearOrder.length === 0 || masterSumber.length === 0) {
+                throw new Error('Tidak ada data untuk diekspor.');
+            }
+
+            // Prepare data untuk export sesuai struktur tabel
+            const exportData = [];
+            
+            // Tambahkan header (merged header)
+            const headerRow1 = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y, idx) => {
+                if (isAllYearsSelected) {
+                    return getTahunName(y);
+                }
+                return yearLabelMap[y] || getTahunName(y);
+            }), 'LINK BUKTI'];
+            exportData.push(headerRow1);
+            
+            // Tambahkan baris untuk setiap sumber
+            masterSumber.forEach((sumber) => {
+                // Ambil detail untuk setiap tahun
+                const detailsByYear = yearOrder.map(y => {
+                    const yearData = getYearData(y);
+                    return yearData?.details.find(d => d.id_sumber === sumber.id_sumber) || null;
+                });
+                
+                // Ambil jenis pengakuan dari tahun TS (tahun yang dipilih, index terakhir)
+                const jenisPengakuan = detailsByYear[detailsByYear.length - 1]?.jenis_pengakuan || '-';
+                const linkBukti = detailsByYear[detailsByYear.length - 1]?.link_bukti || '';
+                
+                const sumberRow = [
+                    sumber.nama_sumber || '',
+                    jenisPengakuan,
+                    ...detailsByYear.map(detail => detail?.jumlah_mahasiswa_rekognisi || 0),
+                    linkBukti
+                ];
+                exportData.push(sumberRow);
+            });
+            
+            // Tambahkan baris Jumlah Rekognisi
+            exportData.push([
+                'Jumlah Rekognisi',
+                '',
+                ...yearOrder.map(y => totalsByYear[y] ?? 0),
+                ''
+            ]);
+            
+            // Tambahkan baris Jumlah Lulusan
+            exportData.push([
+                'Jumlah Lulusan',
+                '',
+                ...yearOrder.map(y => getYearData(y)?.lulusan_ts ?? 0),
+                ''
+            ]);
+            
+            // Tambahkan baris Persentase
+            exportData.push([
+                'Persentase',
+                '',
+                ...yearOrder.map(y => `${(percentByYear[y] ?? 0).toFixed(2)}%`),
+                ''
+            ]);
+
+            // Buat workbook baru
+            const wb = XLSX.utils.book_new();
+            
+            // Buat worksheet dari array data
+            const ws = XLSX.utils.aoa_to_sheet(exportData);
+            
+            // Set column widths
+            const colWidths = [
+                { wch: 30 },  // SUMBER REKOGNISI
+                { wch: 40 },  // JENIS PENGAKUAN LULUSAN (REKOGNISI)
+                ...yearOrder.map(() => ({ wch: 15 })), // Kolom tahun
+                { wch: 40 }   // LINK BUKTI
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Tambahkan worksheet ke workbook
+            const sheetName = showDeleted ? 'Data Terhapus' : 'Data Rekognisi';
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            
+            // Generate file dan download
+            const fileName = `Tabel_2D_Rekognisi_Lulusan_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Data berhasil diekspor ke Excel.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (err) {
+            console.error("Error exporting data:", err);
+            
+            // Fallback ke CSV jika xlsx gagal
+            try {
+                const escapeCsv = (str) => {
+                    if (str === null || str === undefined) return '';
+                    const strValue = String(str);
+                    if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                        return `"${strValue.replace(/"/g, '""')}"`;
+                    }
+                    return strValue;
+                };
+                
+                const headerRow = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y, idx) => {
+                    if (isAllYearsSelected) {
+                        return getTahunName(y);
+                    }
+                    return yearLabelMap[y] || getTahunName(y);
+                }), 'LINK BUKTI'];
+                
+                const csvRows = [
+                    headerRow,
+                    ...masterSumber.map(sumber => {
+                        const detailsByYear = yearOrder.map(y => {
+                            const yearData = getYearData(y);
+                            return yearData?.details.find(d => d.id_sumber === sumber.id_sumber) || null;
+                        });
+                        const jenisPengakuan = detailsByYear[detailsByYear.length - 1]?.jenis_pengakuan || '-';
+                        const linkBukti = detailsByYear[detailsByYear.length - 1]?.link_bukti || '';
+                        return [
+                            sumber.nama_sumber || '',
+                            jenisPengakuan,
+                            ...detailsByYear.map(detail => detail?.jumlah_mahasiswa_rekognisi || 0),
+                            linkBukti
+                        ];
+                    }),
+                    ['Jumlah Rekognisi', '', ...yearOrder.map(y => totalsByYear[y] ?? 0), ''],
+                    ['Jumlah Lulusan', '', ...yearOrder.map(y => getYearData(y)?.lulusan_ts ?? 0), ''],
+                    ['Persentase', '', ...yearOrder.map(y => `${(percentByYear[y] ?? 0).toFixed(2)}%`), '']
+                ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+                
+                const csvContent = '\ufeff' + csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Tabel_2D_Rekognisi_Lulusan_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (csvErr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mengekspor data',
+                    text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+                });
+            }
+        }
     };
     
     // Handler untuk mengubah input tunggal
@@ -976,10 +1141,13 @@ export default function Tabel2D({ role }) {
                         </button>
                     )}
                     <button 
-                        onClick={() => window.open(`/api/tabel2d-rekognisi-lulusan/export`, '_blank')}
-                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors"
+                        onClick={handleExport}
+                        disabled={loading || !selectedYear || yearOrder.length === 0 || masterSumber.length === 0}
+                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        title="Export ke Excel"
                     >
-                        Export Excel
+                        <FiDownload size={18} />
+                        <span>Export Excel</span>
                     </button>
                     {canManageData && !isAllYearsSelected && dataByYear[selectedYear]?.hasData && (
                         <>

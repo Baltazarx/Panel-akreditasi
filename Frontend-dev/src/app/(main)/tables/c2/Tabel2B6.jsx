@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2B6({ role }) {
   const { authUser } = useAuth();
@@ -623,6 +624,180 @@ export default function Tabel2B6({ role }) {
     }
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+      const currentJumlah = showDeleted ? jumlahDataDeleted : jumlahDataActive;
+      const currentStatData = statData;
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = ['No', 'Jenis Kemampuan', 'Tingkat Kepuasan Pengguna (%)', '', '', '', 'Rencana Tindak Lanjut oleh UPPS/PS'];
+      exportData.push(headerRow1);
+      const headerRow2 = ['', '', 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', ''];
+      exportData.push(headerRow2);
+      
+      // Tambahkan data rows
+      currentData.forEach((row, idx) => {
+        const rowData = [
+          idx + 1,
+          row.jenis_kemampuan || '',
+          row.sangat_baik ?? '',
+          row.baik ?? '',
+          row.cukup ?? '',
+          row.kurang ?? '',
+          row.data?.rencana_tindak_lanjut || ''
+        ];
+        exportData.push(rowData);
+      });
+      
+      // Tambahkan baris Jumlah
+      exportData.push([
+        '',
+        'Jumlah',
+        currentJumlah.sangat_baik || '',
+        currentJumlah.baik || '',
+        currentJumlah.cukup || '',
+        currentJumlah.kurang || '',
+        ''
+      ]);
+      
+      // Tambahkan baris statistik
+      exportData.push([
+        '',
+        'Jumlah alumni/lulusan dalam 3 tahun terakhir',
+        currentStatData?.jumlah_alumni_3_tahun ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        'Jumlah pengguna lulusan sebagai responden',
+        currentStatData?.jumlah_responden ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        'Jumlah mahasiswa aktif pada tahun TS',
+        currentStatData?.jumlah_mahasiswa_aktif_ts ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Merge cells untuk header
+      ws['!merges'] = [
+        { s: { r: 0, c: 2 }, e: { r: 0, c: 5 } } // Merge "Tingkat Kepuasan Pengguna (%)" header
+      ];
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // No
+        { wch: 35 },  // Jenis Kemampuan
+        { wch: 15 },  // Sangat Baik
+        { wch: 12 },  // Baik
+        { wch: 12 },  // Cukup
+        { wch: 12 },  // Kurang
+        { wch: 50 }   // Rencana Tindak Lanjut
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Kepuasan Pengguna';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_2B6_Kepuasan_Pengguna_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+        const currentJumlah = showDeleted ? jumlahDataDeleted : jumlahDataActive;
+        const currentStatData = statData;
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['No', 'Jenis Kemampuan', 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Rencana Tindak Lanjut'],
+          ...currentData.map((row, idx) => [
+            idx + 1,
+            row.jenis_kemampuan || '',
+            row.sangat_baik ?? '',
+            row.baik ?? '',
+            row.cukup ?? '',
+            row.kurang ?? '',
+            row.data?.rencana_tindak_lanjut || ''
+          ]),
+          ['', 'Jumlah', currentJumlah.sangat_baik || '', currentJumlah.baik || '', currentJumlah.cukup || '', currentJumlah.kurang || '', ''],
+          ['', 'Jumlah alumni/lulusan dalam 3 tahun terakhir', currentStatData?.jumlah_alumni_3_tahun ?? '', '', '', '', ''],
+          ['', 'Jumlah pengguna lulusan sebagai responden', currentStatData?.jumlah_responden ?? '', '', '', '', ''],
+          ['', 'Jumlah mahasiswa aktif pada tahun TS', currentStatData?.jumlah_mahasiswa_aktif_ts ?? '', '', '', '', '']
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2B6_Kepuasan_Pengguna_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   // Render table function untuk data aktif
   const renderTableActive = () => {
     const currentData = tableDataActive;
@@ -1035,15 +1210,27 @@ export default function Tabel2B6({ role }) {
             </div>
           )}
         </div>
-        {canCreate && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleAddClick}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
+            onClick={handleExport}
+            disabled={loading || (showDeleted ? !tableDataDeleted || tableDataDeleted.length === 0 : !tableDataActive || tableDataActive.length === 0)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            + Tambah Data
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
-        )}
+          
+          {canCreate && (
+            <button
+              onClick={handleAddClick}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              + Tambah Data
+            </button>
+          )}
+        </div>
       </div>
       {showDeleted ? renderTableDeleted() : renderTableActive()}
 

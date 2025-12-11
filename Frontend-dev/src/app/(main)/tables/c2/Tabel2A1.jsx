@@ -606,7 +606,45 @@ export default function Tabel2A1({ role }) {
       try {
         XLSX = await import('xlsx');
       } catch (importErr) {
-        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Pendaftaran_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
       }
 
       // Buat workbook baru
@@ -777,7 +815,45 @@ export default function Tabel2A1({ role }) {
       try {
         XLSX = await import('xlsx');
       } catch (importErr) {
-        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Mahasiswa_Baru_Aktif_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
       }
 
       // Buat workbook baru
@@ -873,7 +949,45 @@ export default function Tabel2A1({ role }) {
       try {
         XLSX = await import('xlsx');
       } catch (importErr) {
-        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Data_Mahasiswa_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
       }
 
       // Buat workbook baru

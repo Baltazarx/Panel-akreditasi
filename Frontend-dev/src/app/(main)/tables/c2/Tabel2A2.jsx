@@ -5,7 +5,7 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { useAuth } from "../../../../context/AuthContext";
 import { roleCan } from "../../../../lib/role";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiCalendar } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiDownload } from 'react-icons/fi';
 
 export default function Tabel2A2({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -266,6 +266,167 @@ export default function Tabel2A2({ role }) {
 
   // Get organized data
   const organizedData = organizeDataByCategories();
+
+  // Fungsi export Excel untuk Tabel Keragaman Asal
+  const exportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Filter data berdasarkan showDeleted
+      const dataToExport = showDeleted 
+        ? filteredData.filter(r => r.deleted_at) 
+        : filteredData.filter(r => !r.deleted_at);
+      
+      if (dataToExport.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      exportData.push({
+        'Asal Mahasiswa': 'Asal Mahasiswa',
+        'TS-4': 'TS-4',
+        'TS-3': 'TS-3',
+        'TS-2': 'TS-2',
+        'TS-1': 'TS-1',
+        'TS': 'TS',
+        'Link Bukti': 'Link Bukti'
+      });
+      
+      // Tambahkan data dari organizedData
+      organizedData.forEach((category) => {
+        // Tambahkan baris kategori
+        exportData.push({
+          'Asal Mahasiswa': category.name,
+          'TS-4': category.totalTS4 || '',
+          'TS-3': category.totalTS3 || '',
+          'TS-2': category.totalTS2 || '',
+          'TS-1': category.totalTS1 || '',
+          'TS': category.totalTS || '',
+          'Link Bukti': category.linkBukti || ''
+        });
+        
+        // Tambahkan baris subkategori
+        category.subcategories.forEach((subcategory) => {
+          exportData.push({
+            'Asal Mahasiswa': `  ${subcategory.name}`, // Indent untuk menunjukkan subkategori
+            'TS-4': subcategory.totalTS4 || '',
+            'TS-3': subcategory.totalTS3 || '',
+            'TS-2': subcategory.totalTS2 || '',
+            'TS-1': subcategory.totalTS1 || '',
+            'TS': subcategory.totalTS || '',
+            'Link Bukti': subcategory.linkBukti || ''
+          });
+        });
+      });
+      
+      // Tambahkan baris Jumlah
+      const totalTS4 = organizedData.reduce((sum, cat) => sum + cat.totalTS4, 0);
+      const totalTS3 = organizedData.reduce((sum, cat) => sum + cat.totalTS3, 0);
+      const totalTS2 = organizedData.reduce((sum, cat) => sum + cat.totalTS2, 0);
+      const totalTS1 = organizedData.reduce((sum, cat) => sum + cat.totalTS1, 0);
+      const totalTS = organizedData.reduce((sum, cat) => sum + cat.totalTS, 0);
+      
+      exportData.push({
+        'Asal Mahasiswa': 'Jumlah',
+        'TS-4': totalTS4,
+        'TS-3': totalTS3,
+        'TS-2': totalTS2,
+        'TS-1': totalTS1,
+        'TS': totalTS,
+        'Link Bukti': ''
+      });
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A2_Keragaman_Asal_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 40 },  // Asal Mahasiswa
+        { wch: 12 },  // TS-4
+        { wch: 12 },  // TS-3
+        { wch: 12 },  // TS-2
+        { wch: 12 },  // TS-1
+        { wch: 12 },  // TS
+        { wch: 50 }   // Link Bukti
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Keragaman Asal');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A2_Keragaman_Asal_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Permission checks
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
@@ -1181,6 +1342,15 @@ export default function Tabel2A2({ role }) {
           
           {/* Action Buttons */}
           <div className="inline-flex items-center gap-2">
+            <button
+              onClick={exportToExcel}
+              disabled={loading || filteredData.length === 0}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
+            >
+              <FiDownload size={18} />
+              <span>Export Excel</span>
+            </button>
             {canCreate && canManageData && !showDeleted && (
               <button
                 onClick={handleAddClick}
