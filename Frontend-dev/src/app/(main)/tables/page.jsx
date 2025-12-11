@@ -48,12 +48,12 @@ const useMediaQuery = (query) => {
 
 // Map menu ke komponen dengan icon yang bervariasi
 const menuMap = {
-  C1: { name: "C1", Component: C1Page, icon: FaUserTie, description: "Data Dosen dan Pegawai" },
-  C2: { name: "C2", Component: C2Page, icon: FaGraduationCap, description: "Data Mahasiswa" },
-  C3: { name: "C3", Component: C3Page, icon: FaFlask, description: "Penelitian dan Pengabdian" },
-  C4: { name: "C4", Component: C4Page, icon: FaBook, description: "Pendidikan" },
-  C5: { name: "C5", Component: C5Page, icon: FaUserGroup, description: "Kerjasama" },
-  C6: { name: "C6", Component: C6Page, icon: FaChartLine, description: "Luaran dan Capaian" },
+  C1: { name: "Budaya Mutu", Component: C1Page, icon: FaUserTie, description: "Data Dosen dan Pegawai" },
+  C2: { name: "Relevansi Pendidikan", Component: C2Page, icon: FaGraduationCap, description: "Data Mahasiswa" },
+  C3: { name: "Relevansi Penelitian", Component: C3Page, icon: FaFlask, description: "Penelitian dan Pengabdian" },
+  C4: { name: "Relevansi PkM", Component: C4Page, icon: FaBook, description: "Pendidikan" },
+  C5: { name: "Akuntabilitas", Component: C5Page, icon: FaUserGroup, description: "Kerjasama" },
+  C6: { name: "Diferensiasi Misi", Component: C6Page, icon: FaChartLine, description: "Luaran dan Capaian" },
   ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaShield, description: "Kelola Pengguna Sistem" },
   TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaChalkboard, description: "Data Dosen" },
   TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserTie, description: "Data Pegawai" },

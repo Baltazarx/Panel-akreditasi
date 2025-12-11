@@ -225,6 +225,49 @@ export default function TabelPegawai({ role }) {
         nikp: formState.nikp || null,
       };
       
+      // Validasi: Cek apakah unit kerja adalah "Ketua STIKOM" dan jabatan adalah "Ketua"
+      if (payload.id_unit && payload.id_jabatan) {
+        const selectedUnit = maps.units?.[payload.id_unit];
+        const selectedJabatan = maps.ref_jabatan_struktural?.[payload.id_jabatan];
+        
+        // Cek apakah unit kerja mengandung "Ketua" (case-insensitive)
+        const isUnitKetua = selectedUnit?.nama_unit?.toLowerCase().includes('ketua') || 
+                           selectedUnit?.kode_role?.toLowerCase() === 'ketua' ||
+                           payload.id_unit === 1; // id_unit = 1 adalah "Ketua STIKOM"
+        
+        // Cek apakah jabatan adalah "Ketua"
+        const isJabatanKetua = selectedJabatan?.nama_jabatan?.toLowerCase() === 'ketua' ||
+                               payload.id_jabatan === 1; // id_jabatan = 1 adalah "Ketua"
+        
+        // Jika kedua kondisi terpenuhi, validasi duplikasi
+        if (isUnitKetua && isJabatanKetua) {
+          // Cek apakah sudah ada data dengan kombinasi id_unit dan id_jabatan yang sama (aktif, tidak deleted)
+          const existingKetua = rows.find(row => {
+            // Skip data yang sedang diedit
+            if (editing && row[idField] === editing[idField]) {
+              return false;
+            }
+            // Cek apakah data aktif (tidak deleted)
+            if (row.deleted_at) {
+              return false;
+            }
+            // Cek kombinasi id_unit dan id_jabatan
+            return row.id_unit === payload.id_unit && row.id_jabatan === payload.id_jabatan;
+          });
+          
+          if (existingKetua) {
+            setLoading(false);
+            Swal.fire({
+              icon: 'error',
+              title: 'Data Ganda Tidak Diizinkan',
+              text: 'Sudah ada data Ketua untuk unit kerja ini. Hanya boleh ada satu Ketua per unit kerja.',
+              confirmButtonColor: '#3085d6'
+            });
+            return;
+          }
+        }
+      }
+      
       console.log('Edit pegawai data:', {
         url,
         method,

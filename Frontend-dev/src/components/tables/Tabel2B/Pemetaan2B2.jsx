@@ -216,8 +216,15 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
       
+      // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-) untuk header export
+      const displayColumns = data.columns.map(col => 
+        col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+          ? col.replace(/^PL-/, 'PL-TI-')
+          : col
+      );
+      
       // Tambahkan header
-      const headers = ['CPL', ...data.columns];
+      const headers = ['CPL', ...displayColumns];
       exportData.push(headers);
       
       // Tambahkan data rows
@@ -457,11 +464,18 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPL</th>
-                {data.columns.map((col) => (
-                  <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
-                    {col}
-                  </th>
-                ))}
+                {data.columns.map((col) => {
+                  // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-)
+                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+                    ? col.replace(/^PL-/, 'PL-TI-')
+                    : col;
+                  
+                  return (
+                    <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
+                      {displayCol}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">

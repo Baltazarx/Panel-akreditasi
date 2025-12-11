@@ -449,13 +449,17 @@ export default function Tabel2B6({ role }) {
   };
 
   const handleAddClick = () => {
+    if (!selectedTahun) {
+      Swal.fire("Pilih Tahun", "Silakan pilih Tahun pada filter sebelum menambah data.", "info");
+      return;
+    }
     if (!selectedUnit) {
       Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter sebelum menambah data.", "info");
       return;
     }
     setFormState({
       id_unit_prodi: selectedUnit,
-      id_tahun: selectedTahun || "",
+      id_tahun: selectedTahun, // Selalu gunakan selectedTahun dari filter
       jenis_kemampuan: "",
       persen_sangat_baik: "",
       persen_baik: "",
@@ -569,6 +573,18 @@ export default function Tabel2B6({ role }) {
     setOpenFormTahunDropdown(false);
     setOpenFormJenisDropdown(false);
     
+    // Validasi tahun harus dipilih di filter
+    if (!selectedTahun) {
+      Swal.fire("Error", "Silakan pilih Tahun pada filter terlebih dahulu", "error");
+      return;
+    }
+    
+    // Validasi jenis kemampuan harus diisi
+    if (!formState.jenis_kemampuan || formState.jenis_kemampuan.trim() === "") {
+      Swal.fire("Error", "Jenis Kemampuan harus diisi", "error");
+      return;
+    }
+    
     // Validasi total persentase tidak lebih dari 100%
     const totalPersen = parseFloat((parseFloat(formState.persen_sangat_baik || 0) + 
                             parseFloat(formState.persen_baik || 0) + 
@@ -582,16 +598,23 @@ export default function Tabel2B6({ role }) {
 
     try {
       setSaving(true);
+      if (!selectedTahun) {
+        Swal.fire("Pilih Tahun", "Silakan pilih Tahun pada filter terlebih dahulu.", "error");
+        setSaving(false);
+        return;
+      }
       if (!selectedUnit) {
         Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter terlebih dahulu.", "error");
         setSaving(false);
         return;
       }
 
+      // Pastikan id_tahun selalu menggunakan selectedTahun dari filter
       const submitData = {
         ...formState,
         id_unit_prodi: parseInt(selectedUnit),
-        id_tahun: parseInt(formState.id_tahun),
+        id_tahun: parseInt(selectedTahun), // Selalu gunakan selectedTahun dari filter
+        jenis_kemampuan: formState.jenis_kemampuan.trim(),
         persen_sangat_baik: parseFloat(formState.persen_sangat_baik) || 0,
         persen_baik: parseFloat(formState.persen_baik) || 0,
         persen_cukup: parseFloat(formState.persen_cukup) || 0,
@@ -1332,8 +1355,17 @@ export default function Tabel2B6({ role }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0">
-              <h3 className="text-xl font-bold">{editing ? "Edit Data Kepuasan Pengguna" : "Tambah Data Kepuasan Pengguna"}</h3>
-              <p className="text-white/80 mt-1 text-sm">Lengkapi data kepuasan pengguna terhadap kemampuan lulusan</p>
+              <h3 className="text-xl font-bold">{editing ? "Edit Data Tingkat Kepuasan" : "Tambah Data Tingkat Kepuasan"}</h3>
+              <p className="text-white/80 mt-1 text-sm">
+                {editing 
+                  ? "Edit data tingkat kepuasan pengguna untuk jenis kemampuan yang dipilih"
+                  : `Pilih jenis kemampuan dan isi data tingkat kepuasan untuk tahun ${selectedTahun 
+                      ? (() => {
+                          const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                          return found ? found.tahun : selectedTahun;
+                        })()
+                      : 'yang dipilih'}`}
+              </p>
             </div>
             <div className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -1349,72 +1381,31 @@ export default function Tabel2B6({ role }) {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
-                    <div className="relative form-tahun-dropdown-container">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenFormTahunDropdown(!openFormTahunDropdown);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_tahun
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
-                        aria-label="Pilih tahun akademik"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
-                          <span className={`truncate ${formState.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_tahun 
-                              ? (() => {
-                                  const found = availableYears.find((y) => String(y.id) === String(formState.id_tahun));
-                                  return found ? found.tahun : formState.id_tahun;
-                                })()
-                              : "-- Pilih Tahun --"}
-                          </span>
-                        </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormTahunDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
-                        />
-                      </button>
-                      {openFormTahunDropdown && (
-                        <div 
-                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-tahun-dropdown-menu mt-1 w-full"
-                        >
-                          {availableYears.length > 0 ? (
-                            availableYears.map(year => (
-                              <button
-                                key={year.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormState({...formState, id_tahun: String(year.id)});
-                                  setOpenFormTahunDropdown(false);
-                                }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.id_tahun === String(year.id)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
-                              >
-                                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                                <span>{year.tahun}</span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                              Tidak ada data tahun
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <input
+                      type="text"
+                      value={selectedTahun 
+                        ? (() => {
+                            const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                            return found ? found.tahun : selectedTahun;
+                          })()
+                        : "(Pilih tahun di filter atas)"}
+                      readOnly
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg text-slate-700 bg-slate-50"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Tahun mengikuti filter yang dipilih di atas</p>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Kemampuan <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Pilih Jenis Kemampuan <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-slate-500 mb-2">
+                      Pilih jenis kemampuan untuk menambah data tingkat kepuasan di tahun {selectedTahun 
+                        ? (() => {
+                            const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                            return found ? found.tahun : selectedTahun;
+                          })()
+                        : 'yang dipilih'}
+                    </p>
                     <div className="relative form-jenis-dropdown-container">
                       <button
                         type="button"
@@ -1450,24 +1441,41 @@ export default function Tabel2B6({ role }) {
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-jenis-dropdown-menu mt-1 w-full"
                         >
                           {jenisKemampuanList.length > 0 ? (
-                            jenisKemampuanList.map(jenis => (
-                              <button
-                                key={jenis}
-                                type="button"
-                                onClick={() => {
-                                  setFormState({...formState, jenis_kemampuan: jenis});
-                                  setOpenFormJenisDropdown(false);
-                                }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.jenis_kemampuan === jenis
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
-                              >
-                                <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
-                                <span>{jenis}</span>
-                              </button>
-                            ))
+                            jenisKemampuanList.map(jenis => {
+                              // Cek apakah sudah ada data untuk jenis kemampuan ini di tahun yang dipilih
+                              const existingData = data.find(d => 
+                                !d.deleted_at &&
+                                String(d.jenis_kemampuan).toLowerCase() === jenis.toLowerCase() &&
+                                parseInt(d.id_tahun) === parseInt(selectedTahun) &&
+                                parseInt(d.id_unit_prodi) === parseInt(selectedUnit)
+                              );
+                              
+                              return (
+                                <button
+                                  key={jenis}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormState({...formState, jenis_kemampuan: jenis});
+                                    setOpenFormJenisDropdown(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-[#eaf4ff] transition-colors ${
+                                    formState.jenis_kemampuan === jenis
+                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
+                                    <span className="truncate">{jenis}</span>
+                                  </div>
+                                  {existingData && (
+                                    <span className="text-xs text-slate-500 ml-2 flex-shrink-0">
+                                      (Sudah ada data)
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500 text-center">
                               Tidak ada data jenis kemampuan

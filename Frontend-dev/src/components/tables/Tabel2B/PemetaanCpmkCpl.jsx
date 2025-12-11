@@ -209,8 +209,15 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
       
+      // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-) untuk header export
+      const displayColumns = data.columns.map(col => 
+        col.startsWith('CPL-') && !col.startsWith('CPL-MI-') 
+          ? col.replace(/^CPL-/, 'CPL-TI-')
+          : col
+      );
+      
       // Tambahkan header
-      const headers = ['CPMK', ...data.columns];
+      const headers = ['CPMK', ...displayColumns];
       exportData.push(headers);
       
       // Tambahkan data rows
@@ -441,11 +448,18 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPMK</th>
-                {data.columns.map((col) => (
-                  <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
-                    {col}
-                  </th>
-                ))}
+                {data.columns.map((col) => {
+                  // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-)
+                  const displayCol = col.startsWith('CPL-') && !col.startsWith('CPL-MI-') 
+                    ? col.replace(/^CPL-/, 'CPL-TI-')
+                    : col;
+                  
+                  return (
+                    <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
+                      {displayCol}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">

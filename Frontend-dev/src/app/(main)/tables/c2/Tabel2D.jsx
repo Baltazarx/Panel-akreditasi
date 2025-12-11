@@ -147,14 +147,14 @@ export default function Tabel2D({ role }) {
     }, [maps.units]);
 
     const yearOrder = useMemo(() => {
-        if (!selectedYear) return [];
+        if (availableYears.length === 0) return [];
         
-        // Jika "Semua Tahun" dipilih, kembalikan semua tahun yang tersedia
-        if (selectedYear === "all") {
-            return availableYears.map(y => y.id).filter(y => y != null);
-        }
+        // Gunakan selectedYear jika ada, jika tidak gunakan tahun terakhir sebagai default
+        const tahunReferensi = selectedYear || (availableYears.length > 0 ? String(availableYears[availableYears.length - 1].id) : null);
         
-        const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
+        if (!tahunReferensi) return [];
+        
+        const idx = availableYears.findIndex((y) => String(y.id) === String(tahunReferensi));
         if (idx === -1) return [];
         
         // PENTING: Tahun yang dipilih (selectedYear) SELALU menjadi TS di kolom paling kanan
@@ -167,8 +167,9 @@ export default function Tabel2D({ role }) {
         
         // Urutan array dari kiri ke kanan: [TS-4, TS-3, TS-2, TS-1, TS]
         // ts (tahun yang dipilih/selectedYear) SELALU ada di index terakhir, sesuai dengan label 'TS' di index terakhir
-        // Contoh: Pilih 2021/2022 → ts = 2021/2022 (TS), ts1 = 2020/2021 (TS-1), dst.
-        return [ts4, ts3, ts2, ts1, ts].filter(y => y != null);
+        // Contoh: Pilih 2020/2021 → ts = 2020/2021 (TS), ts1 = tahun sebelumnya (TS-1), dst.
+        // Jika tidak ada tahun sebelumnya, akan ada null di array, tapi kita tetap tampilkan 5 kolom
+        return [ts4, ts3, ts2, ts1, ts];
     }, [availableYears, selectedYear]);
 
     // State untuk menandai apakah "Semua Tahun" dipilih
@@ -176,9 +177,13 @@ export default function Tabel2D({ role }) {
 
     // Mapping tahun ke label untuk memastikan label selalu sesuai dengan posisi relatif terhadap tahun yang dipilih
     const yearLabelMap = useMemo(() => {
-        if (!selectedYear || selectedYear === "all" || isAllYearsSelected) return {};
+        if (!selectedYear && availableYears.length === 0) return {};
         
-        const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
+        // Gunakan selectedYear atau tahun terakhir sebagai referensi
+        const tahunReferensi = selectedYear || (availableYears.length > 0 ? String(availableYears[availableYears.length - 1].id) : null);
+        if (!tahunReferensi) return {};
+        
+        const idx = availableYears.findIndex((y) => String(y.id) === String(tahunReferensi));
         if (idx === -1) return {};
         
         const map = {};
@@ -194,22 +199,14 @@ export default function Tabel2D({ role }) {
         if (idx > 3) map[availableYears[idx - 4]?.id] = 'TS-4';
         
         return map;
-    }, [availableYears, selectedYear, isAllYearsSelected]);
+    }, [availableYears, selectedYear]);
 
     useEffect(() => {
         if (!selectedYear && availableYears.length) {
-            // Default ke tahun 2020/2021 (tahun pertama setelah filter)
-            // Cari tahun yang id-nya 2020 atau text mengandung "2020/2021"
-            const defaultYear = availableYears.find(y => {
-                const yearId = Number(y.id);
-                const yearText = String(y.text || "").toLowerCase();
-                return yearId === 2020 || yearText.includes("2020/2021") || yearText.includes("2020");
-            });
-            
-            // Jika tidak ditemukan, gunakan tahun pertama yang tersedia
-            const yearToSelect = defaultYear || availableYears[0];
-            if (yearToSelect?.id) {
-                setSelectedYear(String(yearToSelect.id));
+            // Default ke tahun terakhir (seperti Tabel2A2.jsx)
+            const latestYear = availableYears[availableYears.length - 1];
+            if (latestYear?.id) {
+                setSelectedYear(String(latestYear.id));
             }
         }
     }, [availableYears, selectedYear]);
@@ -251,7 +248,9 @@ export default function Tabel2D({ role }) {
 
     // --- Fetch Data Utama ---
     const fetchData = useCallback(async () => {
-        if (yearOrder.length === 0) {
+        // Filter tahun yang valid (bukan null) untuk fetch data
+        const validYears = yearOrder.filter(y => y != null);
+        if (validYears.length === 0) {
             setMasterSumber([]);
             setDataByYear({});
             return;
@@ -261,7 +260,6 @@ export default function Tabel2D({ role }) {
             setLoading(true);
             setError("");
             
-            const validYears = yearOrder.filter(y => y != null);
             const yearParams = `id_tahun_in=${validYears.join(',')}`;
             const deletedParam = showDeleted ? '&include_deleted=1' : '';
             
@@ -379,7 +377,7 @@ export default function Tabel2D({ role }) {
             })));
             setModalJustOpened(false);
         }
-    }, [selectedYear, dataByYear, showAddModal, modalJustOpened]);
+    }, [selectedYear, yearOrder, dataByYear, showAddModal, modalJustOpened]);
     
     // Reset flag saat modal ditutup
     useEffect(() => {
@@ -442,10 +440,7 @@ export default function Tabel2D({ role }) {
             const exportData = [];
             
             // Tambahkan header (merged header)
-            const headerRow1 = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y, idx) => {
-                if (isAllYearsSelected) {
-                    return getTahunName(y);
-                }
+            const headerRow1 = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y) => {
                 return yearLabelMap[y] || getTahunName(y);
             }), 'LINK BUKTI'];
             exportData.push(headerRow1);
@@ -539,10 +534,7 @@ export default function Tabel2D({ role }) {
                     return strValue;
                 };
                 
-                const headerRow = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y, idx) => {
-                    if (isAllYearsSelected) {
-                        return getTahunName(y);
-                    }
+                const headerRow = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y) => {
                     return yearLabelMap[y] || getTahunName(y);
                 }), 'LINK BUKTI'];
                 
@@ -675,8 +667,11 @@ export default function Tabel2D({ role }) {
         e.preventDefault();
         setOpenFormSumberDropdown(false);
         
-        if (!selectedYear || isAllYearsSelected || !canManageData) {
-            Swal.fire("Error", "Pilih tahun akademik spesifik untuk menambah atau mengedit data", "error");
+        // Gunakan tahun TS (tahun terakhir dari yearOrder) jika selectedYear belum dipilih
+        const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+        
+        if (!tahunTS || isAllYearsSelected || !canManageData) {
+            Swal.fire("Error", "Tidak dapat menambah atau mengedit data", "error");
             return;
         }
 
@@ -692,8 +687,11 @@ export default function Tabel2D({ role }) {
                     jumlah_mahasiswa_rekognisi: Number(d.jumlah_mahasiswa_rekognisi) || 0
                 }));
 
+            // Gunakan tahun TS (tahun terakhir dari yearOrder) jika selectedYear belum dipilih
+            const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+            
             // Jika daftar rincian kosong, dan ada data historis, tawarkan hapus
-            if (payloadDetails.length === 0 && dataByYear[selectedYear]?.hasData) {
+            if (payloadDetails.length === 0 && tahunTS && dataByYear[tahunTS]?.hasData) {
                  const confirmed = await Swal.fire({
                     title: "Hapus Semua Rincian?",
                     text: "Daftar rincian kosong. Apakah Anda ingin menghapus semua data rekognisi untuk tahun TS ini?",
@@ -1134,7 +1132,7 @@ export default function Tabel2D({ role }) {
                                 setShowAddModal(true);
                             }}
                             className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={loading || !selectedYear || isAllYearsSelected}
+                            disabled={loading || yearOrder.length === 0 || isAllYearsSelected}
                             title={isAllYearsSelected ? "Pilih tahun spesifik untuk menambah data" : ""}
                         >
                             + Tambah Data
@@ -1142,14 +1140,17 @@ export default function Tabel2D({ role }) {
                     )}
                     <button 
                         onClick={handleExport}
-                        disabled={loading || !selectedYear || yearOrder.length === 0 || masterSumber.length === 0}
+                        disabled={loading || yearOrder.length === 0 || masterSumber.length === 0}
                         className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         title="Export ke Excel"
                     >
                         <FiDownload size={18} />
                         <span>Export Excel</span>
                     </button>
-                    {canManageData && !isAllYearsSelected && dataByYear[selectedYear]?.hasData && (
+                    {canManageData && !isAllYearsSelected && (() => {
+                        const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+                        return tahunTS && dataByYear[tahunTS]?.hasData;
+                    })() && (
                         <>
                             {showDeleted ? (
                                 <>
@@ -1213,26 +1214,33 @@ export default function Tabel2D({ role }) {
                                 <tr>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">SUMBER REKOGNISI</th>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">JENIS PENGAKUAN LULUSAN (REKOGNISI)</th>
-                                    <th colSpan={yearOrder.length} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TAHUN AKADEMIK</th>
+                                    <th colSpan={5} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TAHUN AKADEMIK</th>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">LINK BUKTI</th>
                                 </tr>
                                 <tr>
-                                    {yearOrder.map((y, idx) => {
-                                        // Jika "Semua Tahun" dipilih, tampilkan nama tahun
-                                        // Jika tidak, gunakan mapping label berdasarkan posisi relatif terhadap tahun yang dipilih
-                                        let label;
-                                        if (isAllYearsSelected) {
-                                            label = getTahunName(y);
-                                        } else {
-                                            // Gunakan mapping label untuk memastikan tahun yang dipilih selalu mendapat label 'TS'
-                                            label = yearLabelMap[y] || getTahunName(y);
-                                        }
-                                        return (
-                                            <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
-                                                {label}
-                                            </th>
-                                        );
-                                    })}
+                                    {yearOrder.length > 0 ? (
+                                        yearOrder.map((y, idx) => {
+                                            // Selalu tampilkan 5 kolom TS meskipun ada null
+                                            // Label berdasarkan posisi: TS-4, TS-3, TS-2, TS-1, TS
+                                            const label = y != null 
+                                                ? (yearLabelMap[y] || getTahunName(y))
+                                                : (idx === 0 ? 'TS-4' : idx === 1 ? 'TS-3' : idx === 2 ? 'TS-2' : idx === 3 ? 'TS-1' : 'TS');
+                                            return (
+                                                <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
+                                                    {label}
+                                                </th>
+                                            );
+                                        })
+                                    ) : (
+                                        // Fallback: tampilkan 5 kolom TS jika yearOrder kosong
+                                        <>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-4</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-3</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-2</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-1</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS</th>
+                                        </>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
@@ -1266,6 +1274,14 @@ export default function Tabel2D({ role }) {
                                             </td>
                                             <td className="px-4 py-3 text-slate-800 border border-slate-200 text-left">{jenisPengakuan}</td>
                                             {yearOrder.map((y, yearIdx) => {
+                                                // Selalu tampilkan 5 kolom TS meskipun ada null
+                                                if (y == null) {
+                                                    return (
+                                                        <td key={`null-${yearIdx}`} className="px-4 py-3 text-slate-800 border border-slate-200 text-center">
+                                                            -
+                                                        </td>
+                                                    );
+                                                }
                                                 const detail = detailsByYear[yearIdx];
                                                 const yearData = getYearData(y);
                                                 const isDeleted = yearData?.deleted_at;
@@ -1290,7 +1306,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Jumlah Rekognisi</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`total-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {totalsByYear[y] ?? 0}
+                                            {y != null ? (totalsByYear[y] ?? 0) : '-'}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3 border border-slate-200"></td>
@@ -1299,7 +1315,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Jumlah Lulusan</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`lulusan-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {getYearData(y)?.lulusan_ts ?? 0}
+                                            {y != null ? (getYearData(y)?.lulusan_ts ?? 0) : '-'}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3 border border-slate-200" rowSpan={2}></td>
@@ -1308,7 +1324,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Persentase</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`persen-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {`${(percentByYear[y] ?? 0).toFixed(2)}%`}
+                                            {y != null ? `${(percentByYear[y] ?? 0).toFixed(2)}%` : '-'}
                                         </td>
                                     ))}
                                 </tr>

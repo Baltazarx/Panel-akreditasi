@@ -112,7 +112,7 @@ export default function Tabel2A2({ role }) {
     });
   };
 
-  const refresh = async () => {
+  const refresh = async (yearsToFetch = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -123,11 +123,25 @@ export default function Tabel2A2({ role }) {
       if (showDeleted && userRole?.toLowerCase() !== 'kemahasiswaan') {
         params.append("include_deleted", "1");
       }
-      if (selectedTahun) params.append("id_tahun", selectedTahun);
+      
+      // Fetch data untuk semua tahun di yearOrder (jika tersedia) atau selectedTahun saja
+      if (yearsToFetch && yearsToFetch.length > 0) {
+        // Filter tahun yang valid (bukan null)
+        const validYears = yearsToFetch.filter(y => y != null);
+        if (validYears.length > 0) {
+          params.append("id_tahun_in", validYears.join(','));
+          console.log("📊 Fetching data for years:", validYears);
+        }
+      } else if (selectedTahun) {
+        params.append("id_tahun", selectedTahun);
+        console.log("📊 Fetching data for single year:", selectedTahun);
+      }
       
       const apiUrl = `/tabel2a2-keragaman-asal?${params}`;
+      console.log("🔗 API URL:", apiUrl);
       
       const result = await apiFetch(apiUrl);
+      console.log("📦 Fetched data count:", result?.length || 0, "items");
       
       // Apply filtering
       // Role kemahasiswaan tidak bisa melihat data yang dihapus
@@ -148,12 +162,16 @@ export default function Tabel2A2({ role }) {
           const latest = Math.max(...years);
           setSelectedTahun(latest);
         } else if (maps?.tahun && Object.keys(maps.tahun).length > 0) {
-          // Use latest year from maps
-          const mapYears = Object.keys(maps.tahun).map(Number).filter(Number.isFinite);
-          const latest = Math.max(...mapYears);
-          setSelectedTahun(latest);
-        } else {
-          // No years available, show all data without year filter
+          // Use latest year from maps (similar to Tabel2C.jsx)
+          const availableYearsList = Object.values(maps.tahun)
+            .map((t) => ({ id: t.id_tahun ?? t.id }))
+            .filter((t) => t.id)
+            .sort((a, b) => Number(a.id) - Number(b.id));
+          
+          if (availableYearsList.length > 0) {
+            // Use latest year (last in sorted array)
+            setSelectedTahun(availableYearsList[availableYearsList.length - 1].id);
+          }
         }
       }
       
@@ -164,6 +182,35 @@ export default function Tabel2A2({ role }) {
     }
   };
 
+  // Get available years from maps, sorted ascending
+  const availableYears = useMemo(() => {
+    const years = Object.values(maps?.tahun || {})
+      .map((t) => ({ id: t.id_tahun ?? t.id, text: t.tahun ?? t.nama ?? String(t.id_tahun ?? t.id) }))
+      .filter((t) => t.id)
+      .sort((a, b) => Number(a.id) - Number(b.id));
+    return years;
+  }, [maps?.tahun]);
+
+  // Calculate yearOrder based on selectedTahun index (like Tabel2C.jsx)
+  const yearOrder = useMemo(() => {
+    if (!selectedTahun || availableYears.length === 0) {
+      return [];
+    }
+    
+    const idx = availableYears.findIndex((y) => String(y.id) === String(selectedTahun));
+    if (idx === -1) {
+      return [];
+    }
+    
+    const ts = availableYears[idx]?.id;
+    const ts1 = idx > 0 ? availableYears[idx - 1]?.id : null;
+    const ts2 = idx > 1 ? availableYears[idx - 2]?.id : null;
+    const ts3 = idx > 2 ? availableYears[idx - 3]?.id : null;
+    const ts4 = idx > 3 ? availableYears[idx - 4]?.id : null;
+    // Return in order: TS-4, TS-3, TS-2, TS-1, TS (from left to right)
+    return [ts4, ts3, ts2, ts1, ts];
+  }, [availableYears, selectedTahun]);
+
   // Pastikan showDeleted selalu false untuk role kemahasiswaan
   useEffect(() => {
     if (userRole?.toLowerCase() === 'kemahasiswaan' && showDeleted) {
@@ -173,9 +220,16 @@ export default function Tabel2A2({ role }) {
 
   useEffect(() => {
     if (!mapsLoading) {
-      refresh();
+      // Fetch data untuk semua tahun di yearOrder jika tersedia, atau selectedTahun saja
+      if (yearOrder.length > 0) {
+        refresh(yearOrder);
+      } else if (selectedTahun) {
+        refresh([selectedTahun]);
+      } else {
+        refresh();
+      }
     }
-  }, [mapsLoading, showDeleted, selectedTahun]);
+  }, [mapsLoading, showDeleted, selectedTahun, yearOrder.join(",")]);
 
   // Fetch data kabupaten/kota dari ref_kabupaten_kota
   useEffect(() => {
@@ -196,30 +250,27 @@ export default function Tabel2A2({ role }) {
     fetchKabupatenKota();
   }, []);
 
-  const yearWindow = useMemo(() => {
-    const window = selectedTahun ? Array.from({ length: 5 }, (_, i) => Number(selectedTahun) - i) : [];
-    return window;
-  }, [selectedTahun]);
-
   const filteredData = useMemo(() => {
-    if (!selectedTahun) {
-      return data; // Show all data if no year selected
-    }
-    
-    const filtered = data.filter(item => yearWindow.includes(Number(item.id_tahun)));
-    return filtered;
-  }, [data, selectedTahun, yearWindow]);
+    // Always return all data - we'll filter by yearOrder in organizedData
+    // This ensures data is available for all TS positions
+    return data;
+  }, [data]);
 
-  // Helper function to organize data by categories and subcategories
-  const organizeDataByCategories = () => {
-    const organizedData = geographicalCategories.map(category => {
+  // Helper function to organize data by categories and subcategories (memoized)
+  const organizedData = useMemo(() => {
+    const organizedDataResult = geographicalCategories.map(category => {
       // Map database categories to frontend categories
       let dbCategory = category.name;
       if (category.name === "Kota/Kab sama dengan PS") {
         dbCategory = "Sama Kota/Kab";
       }
       
-      const categoryData = filteredData.filter(item => item.kategori_geografis === dbCategory);
+      // Filter by category and showDeleted status
+      const categoryData = filteredData.filter(item => {
+        const matchesCategory = item.kategori_geografis === dbCategory;
+        const matchesDeleted = showDeleted ? item.deleted_at : !item.deleted_at;
+        return matchesCategory && matchesDeleted;
+      });
       
       // Group by nama_daerah_input to create subcategories
       const subcategories = {};
@@ -229,43 +280,56 @@ export default function Tabel2A2({ role }) {
           subcategories[daerah] = {
             name: daerah,
             data: [],
-            totalTS4: 0,
-            totalTS3: 0,
-            totalTS2: 0,
-            totalTS1: 0,
-            totalTS: 0,
+            totals: {}, // Dynamic totals by year ID
             linkBukti: item.link_bukti
           };
+          // Initialize totals for all years in yearOrder (even if no data exists)
+          if (yearOrder.length > 0) {
+            yearOrder.forEach((y) => {
+              if (y != null) {
+                subcategories[daerah].totals[y] = 0;
+              }
+            });
+          }
         }
         subcategories[daerah].data.push(item);
         
-        // Calculate totals for each TS
+        // Calculate totals for each year dynamically
         const year = Number(item.id_tahun);
-        const currentYear = selectedTahun || new Date().getFullYear();
-        if (year === currentYear - 4) subcategories[daerah].totalTS4 += Number(item.jumlah_mahasiswa) || 0;
-        if (year === currentYear - 3) subcategories[daerah].totalTS3 += Number(item.jumlah_mahasiswa) || 0;
-        if (year === currentYear - 2) subcategories[daerah].totalTS2 += Number(item.jumlah_mahasiswa) || 0;
-        if (year === currentYear - 1) subcategories[daerah].totalTS1 += Number(item.jumlah_mahasiswa) || 0;
-        if (year === currentYear) subcategories[daerah].totalTS += Number(item.jumlah_mahasiswa) || 0;
+        if (!subcategories[daerah].totals[year]) {
+          subcategories[daerah].totals[year] = 0;
+        }
+        subcategories[daerah].totals[year] += Number(item.jumlah_mahasiswa) || 0;
       });
+      
+      // Calculate category totals from subcategories
+      // Always calculate for all years in yearOrder (even if null, to maintain column structure)
+      const categoryTotals = {};
+      if (yearOrder.length > 0) {
+        yearOrder.forEach((y) => {
+          if (y != null) {
+            categoryTotals[y] = Object.values(subcategories).reduce((sum, sub) => {
+              return sum + (sub.totals[y] || 0);
+            }, 0);
+          }
+        });
+      } else if (selectedTahun) {
+        // Fallback: if yearOrder is empty, use selectedTahun
+        categoryTotals[Number(selectedTahun)] = Object.values(subcategories).reduce((sum, sub) => {
+          return sum + (sub.totals[Number(selectedTahun)] || 0);
+        }, 0);
+      }
       
       return {
         ...category,
         subcategories: Object.values(subcategories),
-        totalTS4: Object.values(subcategories).reduce((sum, sub) => sum + sub.totalTS4, 0),
-        totalTS3: Object.values(subcategories).reduce((sum, sub) => sum + sub.totalTS3, 0),
-        totalTS2: Object.values(subcategories).reduce((sum, sub) => sum + sub.totalTS2, 0),
-        totalTS1: Object.values(subcategories).reduce((sum, sub) => sum + sub.totalTS1, 0),
-        totalTS: Object.values(subcategories).reduce((sum, sub) => sum + sub.totalTS, 0),
+        totals: categoryTotals,
         linkBukti: categoryData.length > 0 ? categoryData[0].link_bukti : null
       };
     });
     
-    return organizedData;
-  };
-
-  // Get organized data
-  const organizedData = organizeDataByCategories();
+    return organizedDataResult;
+  }, [filteredData, yearOrder, selectedTahun, showDeleted]);
 
   // Fungsi export Excel untuk Tabel Keragaman Asal
   const exportToExcel = async () => {
@@ -284,60 +348,54 @@ export default function Tabel2A2({ role }) {
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
       
-      // Tambahkan header
-      exportData.push({
-        'Asal Mahasiswa': 'Asal Mahasiswa',
-        'TS-4': 'TS-4',
-        'TS-3': 'TS-3',
-        'TS-2': 'TS-2',
-        'TS-1': 'TS-1',
-        'TS': 'TS',
-        'Link Bukti': 'Link Bukti'
+      // Build header dynamically based on yearOrder
+      const headerRow = { 'Asal Mahasiswa': 'Asal Mahasiswa' };
+      yearOrder.forEach((y, idx) => {
+        if (y != null) {
+          const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+          headerRow[label] = label;
+        }
       });
+      headerRow['Link Bukti'] = 'Link Bukti';
+      exportData.push(headerRow);
       
       // Tambahkan data dari organizedData
       organizedData.forEach((category) => {
         // Tambahkan baris kategori
-        exportData.push({
-          'Asal Mahasiswa': category.name,
-          'TS-4': category.totalTS4 || '',
-          'TS-3': category.totalTS3 || '',
-          'TS-2': category.totalTS2 || '',
-          'TS-1': category.totalTS1 || '',
-          'TS': category.totalTS || '',
-          'Link Bukti': category.linkBukti || ''
+        const categoryRow = { 'Asal Mahasiswa': category.name };
+        yearOrder.forEach((y, idx) => {
+          if (y != null) {
+            const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+            categoryRow[label] = category.totals[y] || '';
+          }
         });
+        categoryRow['Link Bukti'] = category.linkBukti || '';
+        exportData.push(categoryRow);
         
         // Tambahkan baris subkategori
         category.subcategories.forEach((subcategory) => {
-          exportData.push({
-            'Asal Mahasiswa': `  ${subcategory.name}`, // Indent untuk menunjukkan subkategori
-            'TS-4': subcategory.totalTS4 || '',
-            'TS-3': subcategory.totalTS3 || '',
-            'TS-2': subcategory.totalTS2 || '',
-            'TS-1': subcategory.totalTS1 || '',
-            'TS': subcategory.totalTS || '',
-            'Link Bukti': subcategory.linkBukti || ''
+          const subcategoryRow = { 'Asal Mahasiswa': `  ${subcategory.name}` }; // Indent untuk menunjukkan subkategori
+          yearOrder.forEach((y, idx) => {
+            if (y != null) {
+              const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+              subcategoryRow[label] = subcategory.totals[y] || '';
+            }
           });
+          subcategoryRow['Link Bukti'] = subcategory.linkBukti || '';
+          exportData.push(subcategoryRow);
         });
       });
       
       // Tambahkan baris Jumlah
-      const totalTS4 = organizedData.reduce((sum, cat) => sum + cat.totalTS4, 0);
-      const totalTS3 = organizedData.reduce((sum, cat) => sum + cat.totalTS3, 0);
-      const totalTS2 = organizedData.reduce((sum, cat) => sum + cat.totalTS2, 0);
-      const totalTS1 = organizedData.reduce((sum, cat) => sum + cat.totalTS1, 0);
-      const totalTS = organizedData.reduce((sum, cat) => sum + cat.totalTS, 0);
-      
-      exportData.push({
-        'Asal Mahasiswa': 'Jumlah',
-        'TS-4': totalTS4,
-        'TS-3': totalTS3,
-        'TS-2': totalTS2,
-        'TS-1': totalTS1,
-        'TS': totalTS,
-        'Link Bukti': ''
+      const totalRow = { 'Asal Mahasiswa': 'Jumlah' };
+      yearOrder.forEach((y, idx) => {
+        if (y != null) {
+          const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+          totalRow[label] = organizedData.reduce((sum, cat) => sum + (cat.totals[y] || 0), 0);
+        }
       });
+      totalRow['Link Bukti'] = '';
+      exportData.push(totalRow);
 
       // Import xlsx library
       let XLSX;
@@ -452,9 +510,9 @@ export default function Tabel2A2({ role }) {
 
   // Helper untuk mendapatkan nama tahun
   const getTahunName = (tahunId) => {
-    if (!tahunId || !maps?.tahun) return tahunId;
-    const tahun = Object.values(maps.tahun).find(t => Number(t.id_tahun) === Number(tahunId));
-    return tahun?.tahun || tahunId;
+    if (!tahunId) return "";
+    const found = availableYears.find(y => String(y.id) === String(tahunId));
+    return found ? found.text : tahunId;
   };
 
   // Get unique list of daerah names from ref_kabupaten_kota
@@ -1426,24 +1484,32 @@ export default function Tabel2A2({ role }) {
                   </th>
                 )}
                 <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Asal Mahasiswa</th>
-                <th colSpan="5" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
+                <th colSpan={yearOrder.length || 5} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
                 <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
               </tr>
               <tr className="sticky top-0">
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+                {yearOrder.length > 0 ? (
+                  yearOrder.map((y, idx) => {
+                    const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+                    return (
+                      <th key={y ?? `null-${idx}`} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                        {y != null ? label : '-'}
+                      </th>
+                    );
+                  })
+                ) : (
+                  <>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
+                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
               {(() => {
-                console.log("📊 Tabel2A2 - Rendering organized data:", {
-                  organizedDataLength: organizedData.length,
-                  sampleCategory: organizedData[0] || null
-                });
-                
                 const rows = [];
                 
                 organizedData.forEach((category, categoryIndex) => {
@@ -1458,21 +1524,21 @@ export default function Tabel2A2({ role }) {
                       <td className="px-6 py-4 text-slate-700 font-semibold border border-slate-200">
                         {category.name}
                       </td>
-                      <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                        {category.totalTS4 || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                        {category.totalTS3 || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                        {category.totalTS2 || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                        {category.totalTS1 || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                        {category.totalTS || '-'}
-                      </td>
+                      {yearOrder.length > 0 ? (
+                        yearOrder.map((y, idx) => (
+                          <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
+                            {y != null ? (category.totals[y] || 0) : '-'}
+                          </td>
+                        ))
+                      ) : selectedTahun ? (
+                        // Fallback: show only selectedTahun column if yearOrder is empty
+                        <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
+                          {category.totals[Number(selectedTahun)] || 0}
+                        </td>
+                      ) : (
+                        // No year selected, show empty
+                        <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">-</td>
+                      )}
                       <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
                         {category.linkBukti ? (
                           <a href={category.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
@@ -1500,21 +1566,21 @@ export default function Tabel2A2({ role }) {
                         <td className="px-6 py-4 text-slate-700 pl-12 border border-slate-200">
                           {subcategory.name}
                         </td>
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.totalTS4 || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.totalTS3 || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.totalTS2 || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.totalTS1 || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.totalTS || '-'}
-                        </td>
+                        {yearOrder.length > 0 ? (
+                          yearOrder.map((y, idx) => (
+                            <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                              {y != null ? (subcategory.totals[y] || 0) : '-'}
+                            </td>
+                          ))
+                        ) : selectedTahun ? (
+                          // Fallback: show only selectedTahun column if yearOrder is empty
+                          <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                            {subcategory.totals[Number(selectedTahun)] || 0}
+                          </td>
+                        ) : (
+                          // No year selected, show empty
+                          <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">-</td>
+                        )}
                         <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
                           {subcategory.linkBukti ? (
                             <a href={subcategory.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
@@ -1534,27 +1600,27 @@ export default function Tabel2A2({ role }) {
               <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold">
                 {showDeleted && <td className="px-6 py-4 text-center border border-white/20"></td>}
                 <td className="px-6 py-4 font-bold border border-white/20">Jumlah</td>
-                <td className="px-6 py-4 text-center font-bold border border-white/20">
-                  {organizedData.reduce((sum, cat) => sum + cat.totalTS4, 0)}
-                </td>
-                <td className="px-6 py-4 text-center font-bold border border-white/20">
-                  {organizedData.reduce((sum, cat) => sum + cat.totalTS3, 0)}
-                </td>
-                <td className="px-6 py-4 text-center font-bold border border-white/20">
-                  {organizedData.reduce((sum, cat) => sum + cat.totalTS2, 0)}
-                </td>
-                <td className="px-6 py-4 text-center font-bold border border-white/20">
-                  {organizedData.reduce((sum, cat) => sum + cat.totalTS1, 0)}
-                </td>
-                <td className="px-6 py-4 text-center font-bold border border-white/20">
-                  {organizedData.reduce((sum, cat) => sum + cat.totalTS, 0)}
-                </td>
+                {yearOrder.length > 0 ? (
+                  yearOrder.map((y, idx) => (
+                    <td key={y ?? `null-${idx}`} className="px-6 py-4 text-center font-bold border border-white/20">
+                      {y != null ? organizedData.reduce((sum, cat) => sum + (cat.totals[y] || 0), 0) : '-'}
+                    </td>
+                  ))
+                ) : selectedTahun ? (
+                  // Fallback: show only selectedTahun column if yearOrder is empty
+                  <td className="px-6 py-4 text-center font-bold border border-white/20">
+                    {organizedData.reduce((sum, cat) => sum + (cat.totals[Number(selectedTahun)] || 0), 0)}
+                  </td>
+                ) : (
+                  // No year selected, show empty
+                  <td className="px-6 py-4 text-center font-bold border border-white/20">-</td>
+                )}
                 <td className="px-6 py-4 text-center border border-white/20">-</td>
               </tr>
               
-              {filteredData.length === 0 && (
+              {organizedData.every(cat => cat.subcategories.length === 0) && (
                 <tr>
-                  <td colSpan={showDeleted ? 7 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <td colSpan={showDeleted ? (yearOrder.length > 0 ? yearOrder.length + 2 : 7) : (yearOrder.length > 0 ? yearOrder.length + 1 : 6)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                     <p className="font-medium">Data tidak ditemukan</p>
                     <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                   </td>

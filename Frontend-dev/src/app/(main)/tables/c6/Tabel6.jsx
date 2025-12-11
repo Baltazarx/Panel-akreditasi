@@ -20,14 +20,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     visi_upps: "",
     visi_keilmuan_ps: "",
     misi_pt: "",
-    misi_upps: "",
-    link_bukti: ""
+    misi_upps: ""
   });
 
   const [prodiList, setProdiList] = useState([]);
-
-  // Dropdown state
-  const [openProdiDropdown, setOpenProdiDropdown] = useState(false);
 
   // Fetch prodi list
   useEffect(() => {
@@ -56,8 +52,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           visi_upps: initialData.visi_upps || "",
           visi_keilmuan_ps: initialData.visi_keilmuan_ps || "",
           misi_pt: initialData.misi_pt || "",
-          misi_upps: initialData.misi_upps || "",
-          link_bukti: initialData.link_bukti || ""
+          misi_upps: initialData.misi_upps || ""
         });
       } else {
         // Tambah data baru: untuk superadmin, set dari selectedProdi
@@ -67,29 +62,11 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           visi_upps: "",
           visi_keilmuan_ps: "",
           misi_pt: "",
-          misi_upps: "",
-          link_bukti: ""
+          misi_upps: ""
         });
       }
     }
-    setOpenProdiDropdown(false);
   }, [initialData, isOpen, selectedProdi, isSuperAdmin]);
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openProdiDropdown && !event.target.closest('.prodi-dropdown-container') && !event.target.closest('.prodi-dropdown-menu')) {
-        setOpenProdiDropdown(false);
-      }
-    };
-
-    if (openProdiDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [openProdiDropdown]);
 
   if (!isOpen) return null;
 
@@ -99,7 +76,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setOpenProdiDropdown(false);
     onSave(form);
   };
 
@@ -130,71 +106,18 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
             <label htmlFor="id_unit_prodi" className="block text-sm font-medium text-slate-700 mb-2">
               Program Studi <span className="text-red-500">*</span>
             </label>
-            <div className="relative prodi-dropdown-container">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!initialData && !(isSuperAdmin && !initialData)) {
-                    setOpenProdiDropdown(!openProdiDropdown);
-                  }
-                }}
-                disabled={!!initialData || (isSuperAdmin && !initialData)}
-                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  form.id_unit_prodi
-                    ? 'border-[#0384d6] bg-white' 
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                } ${(!!initialData || (isSuperAdmin && !initialData)) ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
-                aria-label="Pilih program studi"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                  <span className={`truncate ${form.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {form.id_unit_prodi 
-                      ? (() => {
-                          const found = prodiList.find((p) => String(p.id_unit) === String(form.id_unit_prodi));
-                          return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Pilih Program Studi --";
-                        })()
-                      : "-- Pilih Program Studi --"}
-                  </span>
-                </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={18} 
-                />
-              </button>
-              {openProdiDropdown && !initialData && !(isSuperAdmin && !initialData) && (
-                <div 
-                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-dropdown-menu mt-1 w-full"
-                >
-                  {prodiList.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Tidak ada data program studi
-                    </div>
-                  ) : (
-                    prodiList.map((p) => (
-                      <button
-                        key={p.id_unit}
-                        type="button"
-                        onClick={() => {
-                          handleChange("id_unit_prodi", p.id_unit.toString());
-                          setOpenProdiDropdown(false);
-                        }}
-                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                          form.id_unit_prodi === p.id_unit.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                        <span className="truncate">{p.nama_unit || p.nama || p.id_unit}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
+            <div className="relative">
+              <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-3 cursor-not-allowed">
+                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
+                <span className="truncate">
+                  {form.id_unit_prodi 
+                    ? (() => {
+                        const found = prodiList.find((p) => String(p.id_unit) === String(form.id_unit_prodi));
+                        return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Program Studi --";
+                      })()
+                    : "-- Program Studi --"}
+                </span>
+              </div>
             </div>
             {initialData && (
               <p className="mt-1 text-xs text-slate-500">Program Studi tidak dapat diubah setelah data dibuat.</p>
@@ -284,26 +207,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
             </div>
           </div>
 
-          {/* Link Bukti */}
-          <div>
-            <label htmlFor="link_bukti" className="block text-sm font-medium text-slate-700 mb-1">
-              Link Bukti
-            </label>
-            <input
-              type="url"
-              id="link_bukti"
-              value={form.link_bukti}
-              onChange={(e) => handleChange("link_bukti", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              placeholder="https://..."
-            />
-          </div>
-
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={() => {
-                setOpenProdiDropdown(false);
                 onClose();
               }}
               className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -852,83 +759,78 @@ export default function Tabel6({ auth, role: propRole }) {
       )}
 
       {/* Table - Struktur Khusus sesuai Gambar */}
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left border-collapse">
-          <tbody className="divide-y divide-slate-200">
-            {/* Row 1: Header Visi */}
-            <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
-            </tr>
-            
-            {/* Row 2: Data Visi */}
-            {loading ? (
-              <tr>
-                <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                  <p className="mt-4">Memuat data...</p>
-                </td>
+      <div className="space-y-6">
+        {/* Tabel Visi */}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <tbody>
+              {/* Row 1: Header Visi */}
+              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
               </tr>
-            ) : currentData ? (
-              <tr className="transition-colors bg-white hover:bg-[#eaf4ff]">
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_pt || "-"}</td>
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_upps || "-"}</td>
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_keilmuan_ps || "-"}</td>
-              </tr>
-            ) : (
-              <tr className="bg-white">
-                <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
-                </td>
-              </tr>
-            )}
+              
+              {/* Row 2: Data Visi */}
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                    <p className="mt-4">Memuat data...</p>
+                  </td>
+                </tr>
+              ) : currentData ? (
+                <tr className="transition-colors bg-white hover:bg-[#eaf4ff]">
+                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_pt || "-"}</td>
+                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_upps || "-"}</td>
+                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_keilmuan_ps || "-"}</td>
+                </tr>
+              ) : (
+                <tr className="bg-white">
+                  <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            {/* Row 3: Header Misi */}
-            <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi UPPS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white"></th>
-            </tr>
-            
-            {/* Row 4: Data Misi */}
-            {loading ? (
-              <tr>
-                <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-slate-50">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                  <p className="mt-4">Memuat data...</p>
-                </td>
+        {/* Tabel Misi */}
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <tbody>
+              {/* Row 1: Header Misi */}
+              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white border-r-0">Misi UPPS</th>
               </tr>
-            ) : currentData ? (
-              <tr className="transition-colors bg-slate-50 hover:bg-[#eaf4ff]">
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.misi_pt || "-"}</td>
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.misi_upps || "-"}</td>
-                <td className="px-6 py-4 border border-slate-200 text-slate-700">
-                  {currentData.link_bukti ? (
-                    <a 
-                      href={currentData.link_bukti} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-[#0384d6] underline hover:text-[#043975]"
-                    >
-                      Lihat Bukti
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">-</span>
-                  )}
-                </td>
-              </tr>
-            ) : (
-              <tr className="bg-slate-50">
-                <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              
+              {/* Row 2: Data Misi */}
+              {loading ? (
+                <tr>
+                  <td colSpan="2" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-slate-50">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                    <p className="mt-4">Memuat data...</p>
+                  </td>
+                </tr>
+              ) : currentData ? (
+                <tr className="transition-colors bg-slate-50 hover:bg-[#eaf4ff]">
+                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.misi_pt || "-"}</td>
+                  <td className="px-6 py-4 border border-slate-200 border-r-0 text-slate-700">{currentData.misi_upps || "-"}</td>
+                </tr>
+              ) : (
+                <tr className="bg-slate-50">
+                  <td colSpan="2" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Form */}

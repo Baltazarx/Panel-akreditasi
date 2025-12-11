@@ -1191,19 +1191,19 @@ export default function Tabel4C1({ auth, role: propRole }) {
                 {filteredRows.length > 0 && !loading && !showDeleted && (
                   <>
                     {/* Jumlah Dana */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="5" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Dana
                       </td>
                       {tahunLaporan && (
                         <>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
                             {(summary.totalDanaTS2 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
                             {(summary.totalDanaTS1 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
                             {(summary.totalDanaTS / 1000000).toFixed(2)}
                           </td>
                         </>
@@ -1212,11 +1212,11 @@ export default function Tabel4C1({ auth, role: propRole }) {
                     </tr>
                     
                     {/* Jumlah Kerjasama */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Kerjasama
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
                         {summary.jumlahKerjasama}
                       </td>
                       <td colSpan={tahunLaporan ? 6 : 3} className="px-6 py-4 border border-slate-200"></td>

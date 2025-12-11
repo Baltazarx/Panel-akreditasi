@@ -168,8 +168,15 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
       
+      // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-) untuk header export
+      const displayColumns = data.columns.map(col => 
+        col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+          ? col.replace(/^PL-/, 'PL-TI-')
+          : col
+      );
+      
       // Tambahkan header
-      const headers = ['Kode MK', 'Nama MK', 'SKS', 'Semester', ...data.columns];
+      const headers = ['Kode MK', 'Nama MK', 'SKS', 'Semester', ...displayColumns];
       exportData.push(headers);
       
       // Tambahkan data rows
@@ -480,15 +487,18 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
               <tr>
 
-                {data.columns.map((col) => (
-
-                  <th key={col} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
-
-                    {col}
-
-                  </th>
-
-                ))}
+                {data.columns.map((col) => {
+                  // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-)
+                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+                    ? col.replace(/^PL-/, 'PL-TI-')
+                    : col;
+                  
+                  return (
+                    <th key={col} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
+                      {displayCol}
+                    </th>
+                  );
+                })}
 
               </tr>
 

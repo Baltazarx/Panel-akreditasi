@@ -284,9 +284,9 @@ export default function Tabel2B4({ role }) {
       }
     });
     
-    // Format untuk tabel
+    // Format untuk tabel - TS di urutan paling awal
     const rows = [];
-    for (let i = 4; i >= 0; i--) {
+    for (let i = 0; i <= 4; i++) {
       const tsLabel = i === 0 ? "TS" : `TS-${i}`;
       const item = tsData[i];
       
@@ -348,9 +348,9 @@ export default function Tabel2B4({ role }) {
       }
     });
     
-    // Format untuk tabel
+    // Format untuk tabel - TS di urutan paling awal
     const rows = [];
-    for (let i = 4; i >= 0; i--) {
+    for (let i = 0; i <= 4; i++) {
       const tsLabel = i === 0 ? "TS" : `TS-${i}`;
       const item = tsData[i];
       
