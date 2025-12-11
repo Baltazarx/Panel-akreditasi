@@ -3,7 +3,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield, FiDownload } from 'react-icons/fi';
 
 export default function Tabel2A1({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -527,6 +527,406 @@ export default function Tabel2A1({ role }) {
     });
 
     return [...result, jumlah];
+  };
+
+  // Fungsi export Excel untuk Tabel Pendaftaran
+  const exportPendaftaranToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Filter data berdasarkan showDeleted
+      const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
+      
+      if (filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      if (selectedYear && maps?.tahun) {
+        // Format TS jika ada filter tahun
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYear);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          for (let i = 0; i <= 4; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex < 0 || yearIndex >= tahunList.length) {
+              exportData.push({
+                'TS': i === 0 ? 'TS' : `TS-${i}`,
+                'Tahun': '',
+                'Daya Tampung': '',
+                'Pendaftar': '',
+                'Pendaftar Afirmasi': '',
+                'Pendaftar Kebutuhan Khusus': ''
+              });
+              continue;
+            }
+
+            const year = tahunList[yearIndex];
+            const pendData = filteredRows.find(p => 
+              p.id_tahun === year.id_tahun && 
+              (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId))
+            );
+
+            exportData.push({
+              'TS': i === 0 ? 'TS' : `TS-${i}`,
+              'Tahun': year.tahun || '',
+              'Daya Tampung': pendData?.daya_tampung || '',
+              'Pendaftar': pendData?.pendaftar || '',
+              'Pendaftar Afirmasi': pendData?.pendaftar_afirmasi || '',
+              'Pendaftar Kebutuhan Khusus': pendData?.pendaftar_kebutuhan_khusus || ''
+            });
+          }
+        }
+      } else {
+        // Format normal jika tidak ada filter tahun
+        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+        const filteredByProdi = filteredRows.filter(row => 
+          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
+        );
+
+        exportData.push(...filteredByProdi.map((row, index) => ({
+          'No': index + 1,
+          'Tahun': getTahunName(row.id_tahun),
+          'Unit Prodi': getUnitName(row.id_unit_prodi),
+          'Daya Tampung': row.daya_tampung || '',
+          'Pendaftar': row.pendaftar || '',
+          'Pendaftar Afirmasi': row.pendaftar_afirmasi || '',
+          'Pendaftar Kebutuhan Khusus': row.pendaftar_kebutuhan_khusus || ''
+        })));
+      }
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS/No
+        { wch: 20 },   // Tahun
+        { wch: 25 },   // Unit Prodi (jika ada)
+        { wch: 15 },   // Daya Tampung
+        { wch: 15 },   // Pendaftar
+        { wch: 20 },   // Pendaftar Afirmasi
+        { wch: 25 }    // Pendaftar Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Pendaftaran');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Pendaftaran_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi export Excel untuk Tabel Mahasiswa Baru & Aktif
+  const exportMabaToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Filter data berdasarkan showDeleted
+      const filteredRows = rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at);
+      
+      if (filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      if (selectedYear && maps?.tahun) {
+        // Format TS jika ada filter tahun
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYear);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          for (let i = 0; i <= 4; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex < 0 || yearIndex >= tahunList.length) {
+              exportData.push({
+                'TS': i === 0 ? 'TS' : `TS-${i}`,
+                'Tahun': '',
+                'Baru Reguler - Diterima': '',
+                'Baru Reguler - Afirmasi': '',
+                'Baru Reguler - Kebutuhan Khusus': '',
+                'Baru RPL - Diterima': '',
+                'Baru RPL - Afirmasi': '',
+                'Baru RPL - Kebutuhan Khusus': '',
+                'Aktif Reguler - Diterima': '',
+                'Aktif Reguler - Afirmasi': '',
+                'Aktif Reguler - Kebutuhan Khusus': '',
+                'Aktif RPL - Diterima': '',
+                'Aktif RPL - Afirmasi': '',
+                'Aktif RPL - Kebutuhan Khusus': ''
+              });
+              continue;
+            }
+
+            const year = tahunList[yearIndex];
+            const mabaData = filteredRows.filter(m => 
+              m.id_tahun === year.id_tahun && 
+              (m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId))
+            );
+
+            const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+            const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+            const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+            const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+
+            exportData.push({
+              'TS': i === 0 ? 'TS' : `TS-${i}`,
+              'Tahun': year.tahun || '',
+              'Baru Reguler - Diterima': baruReguler?.jumlah_total || '',
+              'Baru Reguler - Afirmasi': baruReguler?.jumlah_afirmasi || '',
+              'Baru Reguler - Kebutuhan Khusus': baruReguler?.jumlah_kebutuhan_khusus || '',
+              'Baru RPL - Diterima': baruRPL?.jumlah_total || '',
+              'Baru RPL - Afirmasi': baruRPL?.jumlah_afirmasi || '',
+              'Baru RPL - Kebutuhan Khusus': baruRPL?.jumlah_kebutuhan_khusus || '',
+              'Aktif Reguler - Diterima': aktifReguler?.jumlah_total || '',
+              'Aktif Reguler - Afirmasi': aktifReguler?.jumlah_afirmasi || '',
+              'Aktif Reguler - Kebutuhan Khusus': aktifReguler?.jumlah_kebutuhan_khusus || '',
+              'Aktif RPL - Diterima': aktifRPL?.jumlah_total || '',
+              'Aktif RPL - Afirmasi': aktifRPL?.jumlah_afirmasi || '',
+              'Aktif RPL - Kebutuhan Khusus': aktifRPL?.jumlah_kebutuhan_khusus || ''
+            });
+          }
+        }
+      } else {
+        // Format normal jika tidak ada filter tahun
+        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+        const filteredByProdi = filteredRows.filter(row => 
+          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
+        );
+
+        // Group by tahun
+        const groupedByYear = {};
+        filteredByProdi.forEach(row => {
+          const yearId = row.id_tahun;
+          if (!groupedByYear[yearId]) {
+            groupedByYear[yearId] = [];
+          }
+          groupedByYear[yearId].push(row);
+        });
+
+        Object.keys(groupedByYear).forEach(yearId => {
+          const tahunName = getTahunName(parseInt(yearId));
+          const mabaData = groupedByYear[yearId];
+          
+          const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+          const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+          const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+          const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+
+          exportData.push({
+            'Tahun': tahunName,
+            'Unit Prodi': getUnitName(unitProdiId),
+            'Baru Reguler - Diterima': baruReguler?.jumlah_total || '',
+            'Baru Reguler - Afirmasi': baruReguler?.jumlah_afirmasi || '',
+            'Baru Reguler - Kebutuhan Khusus': baruReguler?.jumlah_kebutuhan_khusus || '',
+            'Baru RPL - Diterima': baruRPL?.jumlah_total || '',
+            'Baru RPL - Afirmasi': baruRPL?.jumlah_afirmasi || '',
+            'Baru RPL - Kebutuhan Khusus': baruRPL?.jumlah_kebutuhan_khusus || '',
+            'Aktif Reguler - Diterima': aktifReguler?.jumlah_total || '',
+            'Aktif Reguler - Afirmasi': aktifReguler?.jumlah_afirmasi || '',
+            'Aktif Reguler - Kebutuhan Khusus': aktifReguler?.jumlah_kebutuhan_khusus || '',
+            'Aktif RPL - Diterima': aktifRPL?.jumlah_total || '',
+            'Aktif RPL - Afirmasi': aktifRPL?.jumlah_afirmasi || '',
+            'Aktif RPL - Kebutuhan Khusus': aktifRPL?.jumlah_kebutuhan_khusus || ''
+          });
+        });
+      }
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS
+        { wch: 20 },  // Tahun
+        { wch: 25 },  // Unit Prodi (jika ada)
+        { wch: 20 },  // Baru Reguler - Diterima
+        { wch: 20 },  // Baru Reguler - Afirmasi
+        { wch: 25 },  // Baru Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Baru RPL - Diterima
+        { wch: 18 },  // Baru RPL - Afirmasi
+        { wch: 23 },  // Baru RPL - Kebutuhan Khusus
+        { wch: 20 },  // Aktif Reguler - Diterima
+        { wch: 20 },  // Aktif Reguler - Afirmasi
+        { wch: 25 },  // Aktif Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Aktif RPL - Diterima
+        { wch: 18 },  // Aktif RPL - Afirmasi
+        { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Mahasiswa Baru & Aktif');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Mahasiswa_Baru_Aktif_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi export Excel untuk Tabel Data Mahasiswa (Gabungan)
+  const exportGabunganToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      if (!selectedYear || !maps?.tahun) {
+        throw new Error('Pilih tahun TS terlebih dahulu untuk mengekspor data.');
+      }
+
+      const unitProdiId = parseInt(selectedUnitProdi) || 4;
+      const tableData = processDataForTable(unitProdiId);
+      
+      if (tableData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel gabungan
+      const exportData = tableData.map((row) => ({
+        'TS': row.ts || '',
+        'Daya Tampung': row.dayaTampung || '',
+        'Pendaftar': row.pendaftar || '',
+        'Pendaftar Afirmasi': row.pendaftarAfirmasi || '',
+        'Pendaftar Kebutuhan Khusus': row.pendaftarKebutuhanKhusus || '',
+        'Baru Reguler - Diterima': row.baruRegulerDiterima || '',
+        'Baru Reguler - Afirmasi': row.baruRegulerAfirmasi || '',
+        'Baru Reguler - Kebutuhan Khusus': row.baruRegulerKebutuhanKhusus || '',
+        'Baru RPL - Diterima': row.baruRPLDiterima || '',
+        'Baru RPL - Afirmasi': row.baruRPLAfirmasi || '',
+        'Baru RPL - Kebutuhan Khusus': row.baruRPLKebutuhanKhusus || '',
+        'Aktif Reguler - Diterima': row.aktifRegulerDiterima || '',
+        'Aktif Reguler - Afirmasi': row.aktifRegulerAfirmasi || '',
+        'Aktif Reguler - Kebutuhan Khusus': row.aktifRegulerKebutuhanKhusus || '',
+        'Aktif RPL - Diterima': row.aktifRPLDiterima || '',
+        'Aktif RPL - Afirmasi': row.aktifRPLAfirmasi || '',
+        'Aktif RPL - Kebutuhan Khusus': row.aktifRPLKebutuhanKhusus || ''
+      }));
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        throw new Error('Library Excel tidak tersedia. Silakan install xlsx.');
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS
+        { wch: 15 },  // Daya Tampung
+        { wch: 15 },  // Pendaftar
+        { wch: 20 },  // Pendaftar Afirmasi
+        { wch: 25 },  // Pendaftar Kebutuhan Khusus
+        { wch: 20 },  // Baru Reguler - Diterima
+        { wch: 20 },  // Baru Reguler - Afirmasi
+        { wch: 25 },  // Baru Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Baru RPL - Diterima
+        { wch: 18 },  // Baru RPL - Afirmasi
+        { wch: 23 },  // Baru RPL - Kebutuhan Khusus
+        { wch: 20 },  // Aktif Reguler - Diterima
+        { wch: 20 },  // Aktif Reguler - Afirmasi
+        { wch: 25 },  // Aktif Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Aktif RPL - Diterima
+        { wch: 18 },  // Aktif RPL - Afirmasi
+        { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Mahasiswa');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Data_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Set default tahun saat pertama kali maps dimuat berdasarkan tahun sistem
@@ -1318,9 +1718,11 @@ export default function Tabel2A1({ role }) {
               <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 JUMLAH CALON MAHASISWA
               </th>
+              {role?.toLowerCase() !== "ala" && (
               <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 AKSI
               </th>
+              )}
             </tr>
             {/* Row 2: Sub-header */}
             <tr className="sticky top-0">
@@ -1383,6 +1785,7 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftarKebutuhanKhusus || '-'}
                   </td>
+                  {role?.toLowerCase() !== "ala" && (
                   <td className="px-6 py-4 border border-slate-200">
                     {row.rowData && !row.rowData.deleted_at && (
                       <div className="flex items-center justify-center dropdown-container">
@@ -1414,12 +1817,13 @@ export default function Tabel2A1({ role }) {
                       <div className="text-center italic text-red-600">Dihapus</div>
                     )}
                   </td>
+                  )}
                 </tr>
               );
             })}
             {displayRows.length === 0 && (
               <tr>
-                <td colSpan={showDeleted ? 8 : 7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={showDeleted ? (role?.toLowerCase() === "ala" ? 7 : 8) : (role?.toLowerCase() === "ala" ? 6 : 7)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
@@ -2126,23 +2530,34 @@ export default function Tabel2A1({ role }) {
             
           </div>
           
-          {canCPend && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowModalPend(true)}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              onClick={exportPendaftaranToExcel}
+              disabled={loading || rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at).length === 0}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              + Tambah Data
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
-          )}
+            {canCPend && role?.toLowerCase() !== "ala" && (
+              <button
+                onClick={() => setShowModalPend(true)}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                + Tambah Data
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="relative transition-opacity duration-300 ease-in-out">
           {renderTablePendaftaran()}
         </div>
 
-        {/* Dropdown Menu Pendaftaran - Fixed Position */}
-        {openDropdownIdPend !== null && (() => {
+        {/* Dropdown Menu Pendaftaran - Fixed Position - Hidden for role ala */}
+        {openDropdownIdPend !== null && role?.toLowerCase() !== "ala" && (() => {
           const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
           const currentRow = filteredRows.find((r, idx) => {
             const rowId = getIdField(r) ? r[getIdField(r)] : idx;
@@ -2221,7 +2636,8 @@ export default function Tabel2A1({ role }) {
         })()}
       </section>
 
-      {/* Mahasiswa Baru & Aktif */}
+      {/* Mahasiswa Baru & Aktif - Hidden for role pmb */}
+      {role?.toLowerCase() !== "pmb" && (
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
           <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
@@ -2279,15 +2695,26 @@ export default function Tabel2A1({ role }) {
             
           </div>
           
-          {canCMaba && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowModalMaba(true)}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              onClick={exportMabaToExcel}
+              disabled={loading || rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at).length === 0}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              + Tambah Data
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
-          )}
+            {canCMaba && role?.toLowerCase() !== "pmb" && (
+              <button
+                onClick={() => setShowModalMaba(true)}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                + Tambah Data
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="relative transition-opacity duration-300 ease-in-out">
@@ -2383,6 +2810,7 @@ export default function Tabel2A1({ role }) {
           );
         })()}
       </section>
+      )}
 
       {/* Tabel Data Mahasiswa - Struktur Kompleks */}
       <section>
@@ -2425,6 +2853,19 @@ export default function Tabel2A1({ role }) {
               containerClass="gabungan-unit-dropdown-container"
               menuClass="gabungan-unit-dropdown-menu"
             />
+            <button
+              onClick={exportGabunganToExcel}
+              disabled={loading || !selectedYear || (() => {
+                const unitProdiId = parseInt(selectedUnitProdi) || 4;
+                const tableData = processDataForTable(unitProdiId);
+                return tableData.length === 0;
+              })()}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
+            >
+              <FiDownload size={18} />
+              <span>Export Excel</span>
+            </button>
           </div>
         </div>
 
@@ -2605,8 +3046,8 @@ export default function Tabel2A1({ role }) {
         })()}
       </section>
 
-      {/* Modal Form Pendaftaran */}
-      {showModalPend && (
+      {/* Modal Form Pendaftaran - Hidden for role ala */}
+      {showModalPend && role?.toLowerCase() !== "ala" && (
         <div 
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
@@ -2811,8 +3252,8 @@ export default function Tabel2A1({ role }) {
         </div>
       )}
 
-      {/* Modal Form Maba */}
-      {showModalMaba && (
+      {/* Modal Form Maba - Hidden for role pmb */}
+      {showModalMaba && role?.toLowerCase() !== "pmb" && (
         <div 
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}

@@ -26,8 +26,6 @@ export default function TabelDosen({ role }) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [ptCustom, setPtCustom] = useState("");
   const [showPtInput, setShowPtInput] = useState(false);
-  const [pegawaiSearch, setPegawaiSearch] = useState("");
-  const [showPegawaiDropdown, setShowPegawaiDropdown] = useState(false);
   
   // Form dropdown states
   const [openFormHomebaseDropdown, setOpenFormHomebaseDropdown] = useState(false);
@@ -126,24 +124,6 @@ export default function TabelDosen({ role }) {
   const canUpdate = roleCan(role, table.key, "U");
   const canDelete = roleCan(role, table.key, "D");
 
-  // Filter pegawai berdasarkan pencarian (bisa di mana saja dalam nama)
-  const filteredPegawai = maps?.pegawai ? Object.values(maps.pegawai).filter(pegawai => 
-    pegawai.nama_lengkap.toLowerCase().includes(pegawaiSearch.toLowerCase())
-  ).sort((a, b) => {
-    // Urutkan berdasarkan relevansi: yang dimulai dengan pencarian di atas
-    const aStartsWith = a.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
-    const bStartsWith = b.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
-    
-    if (aStartsWith && !bStartsWith) return -1;
-    if (!aStartsWith && bStartsWith) return 1;
-    
-    // Jika sama-sama dimulai atau tidak dimulai, urutkan alfabetis
-    return a.nama_lengkap.localeCompare(b.nama_lengkap);
-  }) : [];
-
-  // Mendapatkan nama pegawai yang dipilih
-  const selectedPegawai = maps?.pegawai && formState.id_pegawai ? 
-    maps.pegawai[formState.id_pegawai] : null;
   const canRestore = roleCan(role, table.key, "H");
   
   // Debug permissions
@@ -282,13 +262,6 @@ export default function TabelDosen({ role }) {
         setPtCustom("");
         setShowPtInput(false);
       }
-      
-      // Set pegawaiSearch untuk combobox
-      if (editing.id_pegawai && maps?.pegawai && maps.pegawai[editing.id_pegawai]) {
-        setPegawaiSearch(maps.pegawai[editing.id_pegawai].nama_lengkap);
-      } else {
-        setPegawaiSearch("");
-      }
     } else {
       setFormState({
         id_pegawai: "",
@@ -301,8 +274,6 @@ export default function TabelDosen({ role }) {
       });
       setPtCustom("");
       setShowPtInput(false);
-      setPegawaiSearch("");
-      setShowPegawaiDropdown(false);
     }
   }, [editing]);
 
@@ -313,7 +284,7 @@ export default function TabelDosen({ role }) {
     setOpenFormJabatanDropdown(false);
     
     // Validasi semua field wajib diisi
-    if (!formState.id_pegawai || !formState.nidn || !formState.nuptk || !formState.homebase || 
+    if (!formState.nidn || !formState.nuptk || !formState.homebase || 
         !formState.id_jafung || formState.beban_sks === "" || formState.beban_sks === null || formState.beban_sks === undefined) {
       Swal.fire({
         icon: 'warning',
@@ -367,8 +338,6 @@ export default function TabelDosen({ role }) {
       setEditing(null);
       setPtCustom("");
       setShowPtInput(false);
-      setPegawaiSearch("");
-      setShowPegawaiDropdown(false);
       fetchRows();
       
       Swal.fire({
@@ -718,64 +687,6 @@ export default function TabelDosen({ role }) {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">ID Pegawai <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={pegawaiSearch}
-                        onChange={(e) => {
-                          setPegawaiSearch(e.target.value);
-                          setShowPegawaiDropdown(true);
-                          if (!e.target.value) {
-                            setFormState({...formState, id_pegawai: ""});
-                          }
-                        }}
-                        onFocus={() => setShowPegawaiDropdown(true)}
-                        onBlur={() => {
-                          // Delay untuk memungkinkan click pada dropdown
-                          setTimeout(() => {
-                            setShowPegawaiDropdown(false);
-                            // Jika user mengetik tapi tidak memilih dari dropdown, reset id_pegawai
-                            if (pegawaiSearch && !selectedPegawai) {
-                              setFormState({...formState, id_pegawai: ""});
-                            }
-                          }, 200);
-                        }}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                        placeholder="Cari atau pilih pegawai..."
-                      />
-                      {showPegawaiDropdown && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {filteredPegawai.length > 0 ? (
-                            filteredPegawai.map((pegawai) => (
-                              <div
-                                key={pegawai.id_pegawai}
-                                className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                onMouseDown={(e) => {
-                                  e.preventDefault(); // Mencegah onBlur dari input
-                                }}
-                                onClick={() => {
-                                  setFormState({...formState, id_pegawai: pegawai.id_pegawai});
-                                  setPegawaiSearch(pegawai.nama_lengkap);
-                                  setShowPegawaiDropdown(false);
-                                }}
-                              >
-                                <div className="font-medium text-gray-900">{pegawai.nama_lengkap}</div>
-                                <div className="text-sm text-gray-500">ID: {pegawai.id_pegawai}</div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="px-4 py-3 text-gray-500 text-center">
-                              {pegawaiSearch ? "Pegawai tidak ditemukan" : "Tidak ada data pegawai"}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">NIDN <span className="text-red-500">*</span></label>
                     <input
                       type="text"
@@ -1035,8 +946,6 @@ export default function TabelDosen({ role }) {
                         setEditing(null);
                         setPtCustom("");
                         setShowPtInput(false);
-                        setPegawaiSearch("");
-                        setShowPegawaiDropdown(false);
                       }} 
                       className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >

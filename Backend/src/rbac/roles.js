@@ -138,7 +138,7 @@ export const AccessMatrix = {
   // ========== ALA ==========
   'ala': {
     // ---- Tabel 2A1 ----
-    'tabel_2a1_pendaftaran': { C: true, R: true, U: true, D: true },
+    'tabel_2a1_pendaftaran': { R: true },
     'tabel_2a1_mahasiswa_baru_aktif': { C: true, R: true, U: true, D: true },
     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
     'unit_kerja': { R: true },
