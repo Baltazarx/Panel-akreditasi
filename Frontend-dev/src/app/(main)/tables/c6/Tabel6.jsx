@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
@@ -11,6 +11,108 @@ import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, F
 const ENDPOINT = "/tabel-6-kesesuaian-visi-misi";
 const TABLE_KEY = "tabel_6_kesesuaian_visi_misi";
 const LABEL = "Tabel 6. Kesesuaian Visi Misi";
+
+/* ---------- Action Dropdown Component ---------- */
+function ActionDropdown({ row, canUpdate, canDelete, canHardDelete, onEdit, onDelete, onRestore, onHardDelete, openDropdownId, setOpenDropdownId }) {
+  const dropdownRef = useRef(null);
+  const isDeleted = row?.deleted_at;
+  const rowId = row?.id;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId === rowId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openDropdownId, rowId, setOpenDropdownId]);
+
+  if (!row) return null;
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenDropdownId(openDropdownId === rowId ? null : rowId);
+        }}
+        className="p-2 text-slate-600 hover:text-[#0384d6] hover:bg-[#eaf4ff] rounded-lg transition-colors"
+        aria-label="Menu aksi"
+      >
+        <FiMoreVertical size={18} />
+      </button>
+
+      {openDropdownId === rowId && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+          {!isDeleted && canUpdate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+              aria-label="Edit data"
+            >
+              <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+              <span>Edit</span>
+            </button>
+          )}
+          {!isDeleted && canDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(row);
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+              aria-label="Hapus data"
+            >
+              <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+              <span>Hapus</span>
+            </button>
+          )}
+          {isDeleted && canUpdate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRestore(row);
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+              aria-label="Pulihkan data"
+            >
+              <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+              <span>Pulihkan</span>
+            </button>
+          )}
+          {isDeleted && canHardDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onHardDelete(row);
+                setOpenDropdownId(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+              aria-label="Hapus permanen data"
+            >
+              <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+              <span>Hapus Permanen</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ---------- Modal Form Tambah/Edit ---------- */
 function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selectedProdi, isSuperAdmin }) {
@@ -24,6 +126,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   });
 
   const [prodiList, setProdiList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Fetch prodi list
   useEffect(() => {
@@ -47,7 +150,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     if (isOpen) {
       if (initialData) {
         setForm({
-          id_unit_prodi: initialData.id_unit_prodi || "",
+          id_unit_prodi: initialData.id_unit_prodi ? String(initialData.id_unit_prodi) : "",
           visi_pt: initialData.visi_pt || "",
           visi_upps: initialData.visi_upps || "",
           visi_keilmuan_ps: initialData.visi_keilmuan_ps || "",
@@ -56,8 +159,13 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         });
       } else {
         // Tambah data baru: untuk superadmin, set dari selectedProdi
+        // Untuk user prodi, ambil dari authUser
+        const defaultProdiId = isSuperAdmin 
+          ? (selectedProdi ? String(selectedProdi) : "")
+          : (authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit ? String(authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit) : "");
+        
         setForm({
-          id_unit_prodi: (isSuperAdmin && selectedProdi) ? String(selectedProdi) : "",
+          id_unit_prodi: defaultProdiId,
           visi_pt: "",
           visi_upps: "",
           visi_keilmuan_ps: "",
@@ -65,8 +173,18 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           misi_upps: ""
         });
       }
+    } else {
+      // Reset form saat modal ditutup
+      setForm({
+        id_unit_prodi: "",
+        visi_pt: "",
+        visi_upps: "",
+        visi_keilmuan_ps: "",
+        misi_pt: "",
+        misi_upps: ""
+      });
     }
-  }, [initialData, isOpen, selectedProdi, isSuperAdmin]);
+  }, [initialData, isOpen, selectedProdi, isSuperAdmin, authUser]);
 
   if (!isOpen) return null;
 
@@ -74,9 +192,28 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(form);
+    
+    // Validasi id_unit_prodi wajib diisi
+    if (!form.id_unit_prodi) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Validasi Gagal',
+        text: 'Program Studi wajib dipilih.',
+        confirmButtonColor: '#0384d6'
+      });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await onSave(form);
+    } catch (error) {
+      // Error sudah di-handle di onSave, tidak perlu action tambahan
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -219,9 +356,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
             </button>
             <button
               type="submit"
+              disabled={loading}
               className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              Simpan
+              {loading ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
         </form>
@@ -242,6 +380,7 @@ export default function Tabel6({ auth, role: propRole }) {
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
   
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
@@ -367,28 +506,38 @@ export default function Tabel6({ auth, role: propRole }) {
       const sortedDataArray = sortRowsByLatest(dataArray);
       setRows(sortedDataArray);
       
-      // Set current data berdasarkan filter
+      // Set current data berdasarkan filter (hanya untuk display info, bukan untuk tabel)
+      // Tabel akan menampilkan semua data dari filteredRows
       if (sortedDataArray.length > 0) {
         if (isKetuastikom) {
-          // Role ketuastikom: jika ada selectedProdi, tampilkan data prodi yang dipilih, jika tidak tampilkan semua
+          // Role ketuastikom: jika ada selectedProdi, tampilkan data prodi yang dipilih
           if (selectedProdi) {
-            const filteredData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
-            setCurrentData(filteredData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
+            const filteredData = sortedDataArray.find(r => 
+              String(r.id_unit_prodi) === String(selectedProdi) && 
+              (showDeleted ? r.deleted_at : !r.deleted_at)
+            );
+            setCurrentData(filteredData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
           } else {
-            // Tampilkan semua data (tampilkan data pertama yang aktif)
-            setCurrentData(sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
+            // Tampilkan data pertama sesuai filter deleted
+            setCurrentData(sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
           }
         } else if (selectedProdi) {
           // Jika ada filter prodi, tampilkan data prodi yang dipilih
-          const filteredData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(selectedProdi) && !r.deleted_at);
-          setCurrentData(filteredData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
+          const filteredData = sortedDataArray.find(r => 
+            String(r.id_unit_prodi) === String(selectedProdi) && 
+            (showDeleted ? r.deleted_at : !r.deleted_at)
+          );
+          setCurrentData(filteredData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
         } else if (!isSuperAdmin && userProdiId) {
           // User prodi: tampilkan data prodi mereka
-          const userData = sortedDataArray.find(r => String(r.id_unit_prodi) === String(userProdiId) && !r.deleted_at);
-          setCurrentData(userData || sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
+          const userData = sortedDataArray.find(r => 
+            String(r.id_unit_prodi) === String(userProdiId) && 
+            (showDeleted ? r.deleted_at : !r.deleted_at)
+          );
+          setCurrentData(userData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
         } else {
-          // Fallback: tampilkan data pertama
-          setCurrentData(sortedDataArray.find(r => !r.deleted_at) || sortedDataArray[0]);
+          // Fallback: tampilkan data pertama sesuai filter deleted
+          setCurrentData(sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
         }
       } else {
         setCurrentData(null);
@@ -452,24 +601,52 @@ export default function Tabel6({ auth, role: propRole }) {
   // Handle save (create/update)
   const handleSave = async (formData) => {
     try {
+      // Pastikan id_unit_prodi dalam format yang benar (number)
+      const dataToSend = {
+        ...formData,
+        id_unit_prodi: formData.id_unit_prodi ? parseInt(formData.id_unit_prodi) : formData.id_unit_prodi
+      };
+      
       if (editData) {
         await apiFetch(`${ENDPOINT}/${editData.id}`, {
           method: 'PUT',
-          body: JSON.stringify(formData)
+          body: JSON.stringify(dataToSend)
         });
-        Swal.fire('Berhasil!', 'Data Kesesuaian Visi Misi berhasil diperbarui.', 'success');
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data Kesesuaian Visi Misi berhasil diperbarui.',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await apiFetch(ENDPOINT, {
           method: 'POST',
-          body: JSON.stringify(formData)
+          body: JSON.stringify(dataToSend)
         });
-        Swal.fire('Berhasil!', 'Data Kesesuaian Visi Misi berhasil ditambahkan.', 'success');
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data Kesesuaian Visi Misi berhasil ditambahkan.',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
+      
       setShowForm(false);
       setEditData(null);
-      fetchRows();
+      await fetchRows();
     } catch (e) {
-      Swal.fire('Error!', e?.message || "Gagal menyimpan data", 'error');
+      console.error('Error saving data:', e);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: e?.message || "Gagal menyimpan data",
+        confirmButtonColor: '#0384d6'
+      });
+      throw e; // Re-throw agar bisa di-handle di modal form
     }
   };
 
@@ -488,11 +665,26 @@ export default function Tabel6({ auth, role: propRole }) {
 
     if (result.isConfirmed) {
       try {
+        setLoading(true);
         await apiFetch(`${ENDPOINT}/${row.id}`, { method: 'DELETE' });
-        Swal.fire('Berhasil!', 'Data berhasil dihapus.', 'success');
-        fetchRows();
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil dihapus.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        await fetchRows();
       } catch (e) {
-        Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
+        console.error('Error deleting data:', e);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: e?.message || "Gagal menghapus data",
+          confirmButtonColor: '#0384d6'
+        });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -500,11 +692,26 @@ export default function Tabel6({ auth, role: propRole }) {
   // Handle restore
   const handleRestore = async (row) => {
     try {
+      setLoading(true);
       await apiFetch(`${ENDPOINT}/${row.id}/restore`, { method: 'POST' });
-      Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
-      fetchRows();
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil dipulihkan.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      await fetchRows();
     } catch (e) {
-      Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
+      console.error('Error restoring data:', e);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: e?.message || "Gagal memulihkan data",
+        confirmButtonColor: '#0384d6'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -523,11 +730,26 @@ export default function Tabel6({ auth, role: propRole }) {
 
     if (result.isConfirmed) {
       try {
+        setLoading(true);
         await apiFetch(`${ENDPOINT}/${row.id}/hard`, { method: 'DELETE' });
-        Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
-        fetchRows();
+        Swal.fire({
+          icon: 'success',
+          title: 'Terhapus!',
+          text: 'Data telah dihapus secara permanen.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        await fetchRows();
       } catch (e) {
-        Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
+        console.error('Error hard deleting data:', e);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: e?.message || "Gagal menghapus data",
+          confirmButtonColor: '#0384d6'
+        });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -730,18 +952,6 @@ export default function Tabel6({ auth, role: propRole }) {
               Tambah Data
             </button>
           )}
-          {canUpdate && currentData && !currentData.deleted_at && (
-            <button
-              onClick={() => {
-                setEditData(currentData);
-                setShowForm(true);
-              }}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors flex items-center gap-2"
-            >
-              <FiEdit2 size={18} />
-              Edit Data
-            </button>
-          )}
           <button
             onClick={handleExport}
             className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -759,78 +969,74 @@ export default function Tabel6({ auth, role: propRole }) {
       )}
 
       {/* Table - Struktur Khusus sesuai Gambar */}
-      <div className="space-y-6">
-        {/* Tabel Visi */}
-        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-          <table className="w-full text-sm text-left border-collapse">
-            <tbody>
-              {/* Row 1: Header Visi */}
-              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
-              </tr>
-              
-              {/* Row 2: Data Visi */}
-              {loading ? (
-                <tr>
-                  <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                    <p className="mt-4">Memuat data...</p>
-                  </td>
-                </tr>
-              ) : currentData ? (
-                <tr className="transition-colors bg-white hover:bg-[#eaf4ff]">
-                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_pt || "-"}</td>
-                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_upps || "-"}</td>
-                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.visi_keilmuan_ps || "-"}</td>
-                </tr>
-              ) : (
-                <tr className="bg-white">
-                  <td colSpan="3" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                    <p className="font-medium">Data tidak ditemukan</p>
-                    <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
-                  </td>
-                </tr>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead>
+            <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi UPPS</th>
+              {(canUpdate || canDelete || canHardDelete) && (
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
               )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Tabel Misi */}
-        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-          <table className="w-full text-sm text-left border-collapse">
-            <tbody>
-              {/* Row 1: Header Misi */}
-              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white border-r-0">Misi UPPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                  <p className="mt-4">Memuat data...</p>
+                </td>
               </tr>
-              
-              {/* Row 2: Data Misi */}
-              {loading ? (
-                <tr>
-                  <td colSpan="2" className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-slate-50">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                    <p className="mt-4">Memuat data...</p>
-                  </td>
-                </tr>
-              ) : currentData ? (
-                <tr className="transition-colors bg-slate-50 hover:bg-[#eaf4ff]">
-                  <td className="px-6 py-4 border border-slate-200 text-slate-700">{currentData.misi_pt || "-"}</td>
-                  <td className="px-6 py-4 border border-slate-200 border-r-0 text-slate-700">{currentData.misi_upps || "-"}</td>
-                </tr>
-              ) : (
-                <tr className="bg-slate-50">
-                  <td colSpan="2" className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                    <p className="font-medium">Data tidak ditemukan</p>
-                    <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ) : filteredRows.length > 0 ? (
+              filteredRows.map((row, idx) => {
+                const rowId = row.id || idx;
+                const isDeleted = row.deleted_at;
+                return (
+                  <tr 
+                    key={rowId} 
+                    className={`transition-colors ${isDeleted ? 'bg-red-50 hover:bg-red-100' : 'bg-white hover:bg-[#eaf4ff]'}`}
+                  >
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_pt || "-"}</td>
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_upps || "-"}</td>
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_keilmuan_ps || "-"}</td>
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.misi_pt || "-"}</td>
+                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.misi_upps || "-"}</td>
+                    {(canUpdate || canDelete || canHardDelete) && (
+                      <td className="px-6 py-4 border border-slate-200 text-center">
+                        <ActionDropdown
+                          row={row}
+                          canUpdate={canUpdate}
+                          canDelete={canDelete}
+                          canHardDelete={canHardDelete}
+                          onEdit={() => {
+                            setEditData(row);
+                            setShowForm(true);
+                          }}
+                          onDelete={handleDelete}
+                          onRestore={handleRestore}
+                          onHardDelete={handleHardDelete}
+                          openDropdownId={openDropdownId}
+                          setOpenDropdownId={setOpenDropdownId}
+                        />
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
+            ) : (
+              <tr className="bg-white">
+                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Modal Form */}
