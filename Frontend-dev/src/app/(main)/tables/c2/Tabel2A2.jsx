@@ -622,21 +622,48 @@ export default function Tabel2A2({ role }) {
   const cariProvinsiDariDaerah = (namaDaerah) => {
     if (!namaDaerah) return { provinsi: null, ditemukan: false };
     
-    const namaDaerahUpper = namaDaerah.toUpperCase();
+    const namaDaerahUpper = namaDaerah.toUpperCase().trim();
     
-    // Coba exact match dulu
+    // 1. Coba exact match dulu (case insensitive)
     let daerahFound = uniqueDaerahList.find(daerah => 
-      daerah.nama.toUpperCase() === namaDaerahUpper
+      daerah.nama.toUpperCase().trim() === namaDaerahUpper
     );
     
-    // Jika tidak ketemu exact match, coba partial match (contains)
+    // 2. Jika tidak ketemu exact match, coba match dengan menghilangkan prefix "KABUPATEN" atau "KOTA"
     if (!daerahFound) {
+      const namaTanpaPrefix = namaDaerahUpper
+        .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
+        .trim();
+      
+      if (namaTanpaPrefix !== namaDaerahUpper) {
+        daerahFound = uniqueDaerahList.find(daerah => {
+          const namaListUpper = daerah.nama.toUpperCase().trim();
+          const namaListTanpaPrefix = namaListUpper
+            .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
+            .trim();
+          return namaListTanpaPrefix === namaTanpaPrefix || namaListUpper === namaTanpaPrefix;
+        });
+      }
+    }
+    
+    // 3. Jika masih belum ketemu, coba match dengan nama tanpa prefix di kedua sisi
+    if (!daerahFound) {
+      const namaTanpaPrefix = namaDaerahUpper
+        .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
+        .trim();
+      
       daerahFound = uniqueDaerahList.find(daerah => {
-        const namaListUpper = daerah.nama.toUpperCase();
-        // Cek apakah nama daerah input mengandung nama dari list atau sebaliknya
-        return namaDaerahUpper.includes(namaListUpper) || namaListUpper.includes(namaDaerahUpper);
+        const namaListUpper = daerah.nama.toUpperCase().trim();
+        const namaListTanpaPrefix = namaListUpper
+          .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
+          .trim();
+        // Match jika nama tanpa prefix sama persis
+        return namaListTanpaPrefix === namaTanpaPrefix;
       });
     }
+    
+    // 4. Jangan gunakan partial match (includes) karena bisa salah match dengan daerah lain
+    // Contoh: "BANYUWANGI" bisa match dengan "ACEH BANYUWANGI" atau nama lain yang mengandung "BANYUWANGI"
     
     return {
       provinsi: daerahFound?.provinsi || null,
@@ -810,9 +837,23 @@ export default function Tabel2A2({ role }) {
         const hasilPencarian = cariProvinsiDariDaerah(form.nama_daerah_input);
         const provinsiDitemukan = hasilPencarian.provinsi;
         const daerahDitemukan = hasilPencarian.ditemukan;
-        const namaDaerahUpper = (form.nama_daerah_input || "").toUpperCase();
-        const isBanyuwangi = namaDaerahUpper.includes("KABUPATEN BANYUWANGI");
-        const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase() === "JAWA TIMUR";
+        const namaDaerahUpper = (form.nama_daerah_input || "").toUpperCase().trim();
+        
+        // Log untuk debugging
+        console.log("🔍 Pencarian daerah:", {
+          input: form.nama_daerah_input,
+          ditemukan: daerahDitemukan,
+          provinsi: provinsiDitemukan,
+          hasilPencarian
+        });
+        
+        // Cek apakah Banyuwangi (case-insensitive, dengan atau tanpa prefix)
+        const namaTanpaPrefix = namaDaerahUpper.replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '').trim();
+        const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" || 
+                            namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
+                            namaDaerahUpper === "KAB. BANYUWANGI";
+        
+        const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase().trim() === "JAWA TIMUR";
         
         // Jika tidak ditemukan di database, buat 1 record dengan kategori Negara Lain
         if (!daerahDitemukan) {
@@ -836,58 +877,34 @@ export default function Tabel2A2({ role }) {
             timer: 2000 
           });
         } else {
-          // Record 1: Kota/Kab Lain (selalu dibuat, kecuali jika Banyuwangi)
-          if (!isBanyuwangi) {
-            const payloadKotaKab = {
-              ...payload,
-              nama_daerah_input: form.nama_daerah_input.toUpperCase(),
-              kategori_geografis: "Kota/Kab Lain"
-            };
-            
-            await apiFetch(createUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payloadKotaKab)
-            });
-            console.log("✅ Create Kota/Kab Lain successful");
-          } else {
-            // Jika Banyuwangi, buat dengan kategori Sama Kota/Kab
-            const payloadBanyuwangi = {
-              ...payload,
-              nama_daerah_input: form.nama_daerah_input.toUpperCase(),
-              kategori_geografis: "Sama Kota/Kab"
-            };
-            
-            await apiFetch(createUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payloadBanyuwangi)
-            });
-            console.log("✅ Create Sama Kota/Kab (Banyuwangi) successful");
-          }
+          // Gunakan kategori_geografis dari form (yang sudah ditentukan oleh getKategoriGeografis)
+          // Jangan otomatis membuat record tambahan untuk provinsi
+          // User hanya membuat 1 record sesuai dengan kategori yang dipilih
+          const kategoriGeografis = form.kategori_geografis || getKategoriGeografis(form.nama_daerah_input);
           
-          // Record 2: Provinsi Lain (hanya jika provinsi ditemukan dan bukan Jawa Timur)
-          if (provinsiDitemukan && !isJawaTimur) {
-            const payloadProvinsi = {
-              ...payload,
-              nama_daerah_input: provinsiDitemukan.toUpperCase(),
-              kategori_geografis: "Provinsi Lain"
-            };
-            
-            await apiFetch(createUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payloadProvinsi)
-            });
-            console.log("✅ Create Provinsi Lain successful");
-          }
+          const payloadFinal = {
+            ...payload,
+            nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
+            kategori_geografis: kategoriGeografis
+          };
+          
+          console.log("📝 Membuat 1 record dengan kategori:", {
+            nama_daerah_input: payloadFinal.nama_daerah_input,
+            kategori_geografis: payloadFinal.kategori_geografis,
+            jumlah_mahasiswa: payloadFinal.jumlah_mahasiswa
+          });
+          
+          await apiFetch(createUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadFinal)
+          });
+          console.log("✅ Create successful");
           
           await Swal.fire({ 
             icon: 'success', 
             title: 'Berhasil!', 
-            text: provinsiDitemukan && !isJawaTimur 
-              ? 'Data berhasil ditambahkan (Kota/Kab Lain dan Provinsi Lain)' 
-              : 'Data berhasil ditambahkan', 
+            text: 'Data berhasil ditambahkan', 
             timer: 2000 
           });
         }

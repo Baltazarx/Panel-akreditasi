@@ -296,11 +296,27 @@ export default function Tabel2B6({ role }) {
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
     if (!selectedTahun && availableYears.length > 0) {
-      const nowYear = new Date().getFullYear();
-      const found = availableYears.find(y => (`${y.tahun}`.startsWith(nowYear.toString())));
-      if (found) {
-        console.log("Tabel2B6 - Auto-selecting tahun:", found.id);
-        setSelectedTahun(found.id);
+      // Default ke tahun 2024/2025 jika ada, jika tidak ada fallback ke tahun terakhir
+      // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+      let tahun2024 = availableYears.find(y => {
+        const yearText = String(y.tahun || "").toLowerCase();
+        const yearId = String(y.id || "");
+        return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+      });
+      
+      // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+      if (!tahun2024) {
+        tahun2024 = availableYears.find(y => {
+          const yearText = String(y.tahun || "").toLowerCase();
+          const yearId = String(y.id || "");
+          return yearText.includes("2024") || yearText.includes("2025") || 
+                 yearId.includes("2024") || yearId.includes("2025");
+        });
+      }
+      
+      if (tahun2024?.id) {
+        console.log("Tabel2B6 - Auto-selecting tahun 2024/2025:", tahun2024.id);
+        setSelectedTahun(parseInt(tahun2024.id));
       } else {
         console.log("Tabel2B6 - Auto-selecting last tahun:", availableYears[availableYears.length - 1].id);
         setSelectedTahun(availableYears[availableYears.length - 1].id);
@@ -1350,11 +1366,11 @@ export default function Tabel2B6({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h3 className="text-xl font-bold">{editing ? "Edit Data Tingkat Kepuasan" : "Tambah Data Tingkat Kepuasan"}</h3>
               <p className="text-white/80 mt-1 text-sm">
                 {editing 
@@ -1367,7 +1383,7 @@ export default function Tabel2B6({ role }) {
                       : 'yang dipilih'}`}
               </p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">

@@ -132,14 +132,32 @@ export default function Tabel2C({ role }) {
     return years;
   }, [maps.tahun]);
 
-  // Default ke tahun sekarang jika ada
+  // Default ke tahun 2024/2025 jika ada
   useEffect(() => {
     if (!selectedYear && availableYears.length) {
-      const now = new Date();
-      const yr = now.getFullYear();
-      const match = availableYears.find((y) => String(y.text).startsWith(String(yr)) || String(y.id) === String(yr));
-      // Jika tidak ada match, gunakan tahun terbaru (index terakhir karena ascending)
-      setSelectedYear((match?.id ?? availableYears[availableYears.length - 1].id) + "");
+      // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+      let tahun2024 = availableYears.find(y => {
+        const yearText = String(y.text || "").toLowerCase();
+        const yearId = String(y.id || "");
+        return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+      });
+      
+      // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+      if (!tahun2024) {
+        tahun2024 = availableYears.find(y => {
+          const yearText = String(y.text || "").toLowerCase();
+          const yearId = String(y.id || "");
+          return yearText.includes("2024") || yearText.includes("2025") || 
+                 yearId.includes("2024") || yearId.includes("2025");
+        });
+      }
+      
+      if (tahun2024?.id) {
+        setSelectedYear(String(tahun2024.id));
+      } else {
+        // Fallback ke tahun terakhir jika 2024/2025 tidak ditemukan
+        setSelectedYear(String(availableYears[availableYears.length - 1].id));
+      }
     }
   }, [availableYears, selectedYear]);
 

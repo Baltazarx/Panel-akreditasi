@@ -253,6 +253,32 @@ export default function Tabel2B4({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
+  // Set default tahun menjadi 2024/2025 saat pertama kali masuk
+  useEffect(() => {
+    if (!selectedTahun && availableYears.length > 0) {
+      // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+      let tahun2024 = availableYears.find(y => {
+        const yearText = String(y.tahun || "").toLowerCase();
+        const yearId = String(y.id || "");
+        return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+      });
+      
+      // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+      if (!tahun2024) {
+        tahun2024 = availableYears.find(y => {
+          const yearText = String(y.tahun || "").toLowerCase();
+          const yearId = String(y.id || "");
+          return yearText.includes("2024") || yearText.includes("2025") || 
+                 yearId.includes("2024") || yearId.includes("2025");
+        });
+      }
+      
+      if (tahun2024?.id) {
+        setSelectedTahun(parseInt(tahun2024.id));
+      }
+    }
+  }, [availableYears, selectedTahun]);
+
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
     const activeData = data.filter(item => !item.deleted_at);

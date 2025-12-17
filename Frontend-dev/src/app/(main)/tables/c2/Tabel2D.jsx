@@ -203,10 +203,32 @@ export default function Tabel2D({ role }) {
 
     useEffect(() => {
         if (!selectedYear && availableYears.length) {
-            // Default ke tahun terakhir (seperti Tabel2A2.jsx)
-            const latestYear = availableYears[availableYears.length - 1];
-            if (latestYear?.id) {
-                setSelectedYear(String(latestYear.id));
+            // Default ke tahun 2024/2025 jika ada, jika tidak ada fallback ke tahun terakhir
+            // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+            let tahun2024 = availableYears.find(y => {
+                const yearText = String(y.text || "").toLowerCase();
+                const yearId = String(y.id || "");
+                return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+            });
+            
+            // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+            if (!tahun2024) {
+                tahun2024 = availableYears.find(y => {
+                    const yearText = String(y.text || "").toLowerCase();
+                    const yearId = String(y.id || "");
+                    return yearText.includes("2024") || yearText.includes("2025") || 
+                           yearId.includes("2024") || yearId.includes("2025");
+                });
+            }
+            
+            if (tahun2024?.id) {
+                setSelectedYear(String(tahun2024.id));
+            } else {
+                // Fallback ke tahun terakhir jika 2024/2025 tidak ditemukan
+                const latestYear = availableYears[availableYears.length - 1];
+                if (latestYear?.id) {
+                    setSelectedYear(String(latestYear.id));
+                }
             }
         }
     }, [availableYears, selectedYear]);

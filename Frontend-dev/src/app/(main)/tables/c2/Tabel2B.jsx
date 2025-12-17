@@ -36,9 +36,9 @@ export default function Tabel2B({ role }) {
     { id: "pemetaan2b3", label: "2B.3 Peta CPL", icon: "🗺️" },
     { id: "pemetaanCpmkCpl", label: "CPMK vs CPL", icon: "🔗" },
     { id: "cpmk", label: "CPMK", icon: "📋" },
+    { id: "mata_kuliah", label: "Mata Kuliah", icon: "📖" },
     { id: "cpl", label: "CPL", icon: "🎓" },
-    { id: "profil_lulusan", label: "Profil Lulusan", icon: "👨‍🎓" },
-    { id: "mata_kuliah", label: "Mata Kuliah", icon: "📖" }
+    { id: "profil_lulusan", label: "Profil Lulusan", icon: "👨‍🎓" }
   ];
 
   return (
