@@ -114,17 +114,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData }) {
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Sarpras PkM" : "Tambah Sarpras PkM"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Lengkapi data sarana dan prasarana PkM sesuai dengan format LKPS.</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Nama Sarpras */}
           <div>
             <label htmlFor="nama_sarpras" className="block text-sm font-medium text-slate-700 mb-1">

@@ -1182,13 +1182,13 @@ export default function Tabel1A3({ role }) {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Tambah Data Penggunaan Dana</h2>
               <p className="text-white/80 mt-1 text-sm">Lengkapi jenis penggunaan, jumlah dan tahun.</p>
             </div>
             <form
-              className="p-8 space-y-6"
+              className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
                 
@@ -1354,13 +1354,13 @@ export default function Tabel1A3({ role }) {
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Ubah Data Penggunaan Dana</h2>
               <p className="text-white/80 mt-1 text-sm">Perbarui jenis penggunaan, jumlah dan tahun.</p>
             </div>
             <form
-              className="p-8 space-y-6"
+              className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
                 

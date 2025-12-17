@@ -778,11 +778,11 @@ export default function Tabel2A3() {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">
                 {modalMode === 'add' ? 'Tambah' : 'Edit'} Data Lulus & DO untuk Tahun {selectedTahun}
               </h2>
@@ -790,7 +790,7 @@ export default function Tabel2A3() {
                 Lengkapi data jumlah mahasiswa lulus dan mengundurkan diri.
               </p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <KondisiMahasiswaForm
                 initialData={editingData}
                 onSubmit={handleFormSubmit}

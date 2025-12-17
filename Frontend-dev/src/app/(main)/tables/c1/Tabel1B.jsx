@@ -1234,24 +1234,24 @@ export default function Tabel1B({ role }) {
       
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Tambah Data Audit Mutu Internal</h2>
               <p className="text-white/80 mt-1 text-sm">Lengkapi data AMI termasuk auditor dan dokumen pendukung.</p>
             </div>
-            <div className="p-8">{renderModalForm(false)}</div>
+            <div className="p-8 overflow-y-auto flex-1">{renderModalForm(false)}</div>
           </div>
         </div>
       )}
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Ubah Data Audit Mutu Internal</h2>
               <p className="text-white/80 mt-1 text-sm">Perbarui data AMI termasuk auditor dan dokumen pendukung.</p>
             </div>
-            <div className="p-8">{renderModalForm(true)}</div>
+            <div className="p-8 overflow-y-auto flex-1">{renderModalForm(true)}</div>
           </div>
         </div>
       )}

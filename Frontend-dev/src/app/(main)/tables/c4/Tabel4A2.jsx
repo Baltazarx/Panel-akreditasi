@@ -303,17 +303,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit PkM DTPR" : "Tambah PkM DTPR"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Lengkapi data PkM DTPR sesuai dengan format LKPS.</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Link Roadmap */}
           <div>
             <label htmlFor="link_roadmap" className="block text-sm font-medium text-slate-700 mb-1">
@@ -1437,25 +1437,25 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                 {filteredRows.length > 0 && !loading && !showDeleted && (
                   <>
                     {/* Jumlah Dana */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="7" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Dana
                       </td>
                       {tahunLaporan && (
                         <>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS4 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS3 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS2 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS1 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS / 1000000).toFixed(2)}
                           </td>
                         </>
@@ -1464,11 +1464,11 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                     </tr>
                     
                     {/* Jumlah PkM */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="2" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah PkM
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                         {summary.jumlahPkm}
                       </td>
                       <td colSpan={tahunLaporan ? 9 : 4} className="px-6 py-4 border border-slate-200"></td>
@@ -1478,11 +1478,11 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                     </tr>
                     
                     {/* Jumlah Jenis Hibah PKM */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="4" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Jenis Hibah PKM
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                         {summary.jumlahJenisHibah}
                       </td>
                       <td colSpan={tahunLaporan ? 7 : 2} className="px-6 py-4 border border-slate-200"></td>
