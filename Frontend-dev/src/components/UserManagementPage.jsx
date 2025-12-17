@@ -601,10 +601,10 @@ export default function UserManagementPage() {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">
                 {editMode ? 'Edit' : 'Tambah'} Akun Pengguna
               </h2>
@@ -612,7 +612,8 @@ export default function UserManagementPage() {
                 {editMode ? 'Perbarui informasi akun pengguna' : 'Buat akun pengguna baru untuk sistem penjaminan mutu'}.
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <div className="overflow-y-auto flex-1">
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Username
@@ -839,7 +840,8 @@ export default function UserManagementPage() {
                   )}
                 </button>
               </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
