@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2B6({ role }) {
   const { authUser } = useAuth();
@@ -194,6 +195,34 @@ export default function Tabel2B6({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = useCallback((rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  }, []);
+
   const fetchData = useCallback(async () => {
     // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
     // Untuk role lain, jangan fetch jika selectedTahun atau selectedUnit belum di-set
@@ -238,7 +267,8 @@ export default function Tabel2B6({ role }) {
         rows = [result.data];
       }
       
-      setData(rows);
+      const sortedRows = sortRowsByLatest(rows);
+      setData(sortedRows);
       setStatistik(result?.statistik || null);
     } catch (error) {
       console.error("Tabel2B6 - Error fetching data:", {
@@ -261,16 +291,32 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
+  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan, sortRowsByLatest]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
     if (!selectedTahun && availableYears.length > 0) {
-      const nowYear = new Date().getFullYear();
-      const found = availableYears.find(y => (`${y.tahun}`.startsWith(nowYear.toString())));
-      if (found) {
-        console.log("Tabel2B6 - Auto-selecting tahun:", found.id);
-        setSelectedTahun(found.id);
+      // Default ke tahun 2024/2025 jika ada, jika tidak ada fallback ke tahun terakhir
+      // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+      let tahun2024 = availableYears.find(y => {
+        const yearText = String(y.tahun || "").toLowerCase();
+        const yearId = String(y.id || "");
+        return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+      });
+      
+      // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+      if (!tahun2024) {
+        tahun2024 = availableYears.find(y => {
+          const yearText = String(y.tahun || "").toLowerCase();
+          const yearId = String(y.id || "");
+          return yearText.includes("2024") || yearText.includes("2025") || 
+                 yearId.includes("2024") || yearId.includes("2025");
+        });
+      }
+      
+      if (tahun2024?.id) {
+        console.log("Tabel2B6 - Auto-selecting tahun 2024/2025:", tahun2024.id);
+        setSelectedTahun(parseInt(tahun2024.id));
       } else {
         console.log("Tabel2B6 - Auto-selecting last tahun:", availableYears[availableYears.length - 1].id);
         setSelectedTahun(availableYears[availableYears.length - 1].id);
@@ -419,13 +465,17 @@ export default function Tabel2B6({ role }) {
   };
 
   const handleAddClick = () => {
+    if (!selectedTahun) {
+      Swal.fire("Pilih Tahun", "Silakan pilih Tahun pada filter sebelum menambah data.", "info");
+      return;
+    }
     if (!selectedUnit) {
       Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter sebelum menambah data.", "info");
       return;
     }
     setFormState({
       id_unit_prodi: selectedUnit,
-      id_tahun: selectedTahun || "",
+      id_tahun: selectedTahun, // Selalu gunakan selectedTahun dari filter
       jenis_kemampuan: "",
       persen_sangat_baik: "",
       persen_baik: "",
@@ -539,6 +589,18 @@ export default function Tabel2B6({ role }) {
     setOpenFormTahunDropdown(false);
     setOpenFormJenisDropdown(false);
     
+    // Validasi tahun harus dipilih di filter
+    if (!selectedTahun) {
+      Swal.fire("Error", "Silakan pilih Tahun pada filter terlebih dahulu", "error");
+      return;
+    }
+    
+    // Validasi jenis kemampuan harus diisi
+    if (!formState.jenis_kemampuan || formState.jenis_kemampuan.trim() === "") {
+      Swal.fire("Error", "Jenis Kemampuan harus diisi", "error");
+      return;
+    }
+    
     // Validasi total persentase tidak lebih dari 100%
     const totalPersen = parseFloat((parseFloat(formState.persen_sangat_baik || 0) + 
                             parseFloat(formState.persen_baik || 0) + 
@@ -552,16 +614,23 @@ export default function Tabel2B6({ role }) {
 
     try {
       setSaving(true);
+      if (!selectedTahun) {
+        Swal.fire("Pilih Tahun", "Silakan pilih Tahun pada filter terlebih dahulu.", "error");
+        setSaving(false);
+        return;
+      }
       if (!selectedUnit) {
         Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter terlebih dahulu.", "error");
         setSaving(false);
         return;
       }
 
+      // Pastikan id_tahun selalu menggunakan selectedTahun dari filter
       const submitData = {
         ...formState,
         id_unit_prodi: parseInt(selectedUnit),
-        id_tahun: parseInt(formState.id_tahun),
+        id_tahun: parseInt(selectedTahun), // Selalu gunakan selectedTahun dari filter
+        jenis_kemampuan: formState.jenis_kemampuan.trim(),
         persen_sangat_baik: parseFloat(formState.persen_sangat_baik) || 0,
         persen_baik: parseFloat(formState.persen_baik) || 0,
         persen_cukup: parseFloat(formState.persen_cukup) || 0,
@@ -591,6 +660,180 @@ export default function Tabel2B6({ role }) {
       Swal.fire("Error", error.message || "Gagal menyimpan data", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+      const currentJumlah = showDeleted ? jumlahDataDeleted : jumlahDataActive;
+      const currentStatData = statData;
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = ['No', 'Jenis Kemampuan', 'Tingkat Kepuasan Pengguna (%)', '', '', '', 'Rencana Tindak Lanjut oleh UPPS/PS'];
+      exportData.push(headerRow1);
+      const headerRow2 = ['', '', 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', ''];
+      exportData.push(headerRow2);
+      
+      // Tambahkan data rows
+      currentData.forEach((row, idx) => {
+        const rowData = [
+          idx + 1,
+          row.jenis_kemampuan || '',
+          row.sangat_baik ?? '',
+          row.baik ?? '',
+          row.cukup ?? '',
+          row.kurang ?? '',
+          row.data?.rencana_tindak_lanjut || ''
+        ];
+        exportData.push(rowData);
+      });
+      
+      // Tambahkan baris Jumlah
+      exportData.push([
+        '',
+        'Jumlah',
+        currentJumlah.sangat_baik || '',
+        currentJumlah.baik || '',
+        currentJumlah.cukup || '',
+        currentJumlah.kurang || '',
+        ''
+      ]);
+      
+      // Tambahkan baris statistik
+      exportData.push([
+        '',
+        'Jumlah alumni/lulusan dalam 3 tahun terakhir',
+        currentStatData?.jumlah_alumni_3_tahun ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        'Jumlah pengguna lulusan sebagai responden',
+        currentStatData?.jumlah_responden ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        'Jumlah mahasiswa aktif pada tahun TS',
+        currentStatData?.jumlah_mahasiswa_aktif_ts ?? '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Merge cells untuk header
+      ws['!merges'] = [
+        { s: { r: 0, c: 2 }, e: { r: 0, c: 5 } } // Merge "Tingkat Kepuasan Pengguna (%)" header
+      ];
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // No
+        { wch: 35 },  // Jenis Kemampuan
+        { wch: 15 },  // Sangat Baik
+        { wch: 12 },  // Baik
+        { wch: 12 },  // Cukup
+        { wch: 12 },  // Kurang
+        { wch: 50 }   // Rencana Tindak Lanjut
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Kepuasan Pengguna';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_2B6_Kepuasan_Pengguna_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+        const currentJumlah = showDeleted ? jumlahDataDeleted : jumlahDataActive;
+        const currentStatData = statData;
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['No', 'Jenis Kemampuan', 'Sangat Baik', 'Baik', 'Cukup', 'Kurang', 'Rencana Tindak Lanjut'],
+          ...currentData.map((row, idx) => [
+            idx + 1,
+            row.jenis_kemampuan || '',
+            row.sangat_baik ?? '',
+            row.baik ?? '',
+            row.cukup ?? '',
+            row.kurang ?? '',
+            row.data?.rencana_tindak_lanjut || ''
+          ]),
+          ['', 'Jumlah', currentJumlah.sangat_baik || '', currentJumlah.baik || '', currentJumlah.cukup || '', currentJumlah.kurang || '', ''],
+          ['', 'Jumlah alumni/lulusan dalam 3 tahun terakhir', currentStatData?.jumlah_alumni_3_tahun ?? '', '', '', '', ''],
+          ['', 'Jumlah pengguna lulusan sebagai responden', currentStatData?.jumlah_responden ?? '', '', '', '', ''],
+          ['', 'Jumlah mahasiswa aktif pada tahun TS', currentStatData?.jumlah_mahasiswa_aktif_ts ?? '', '', '', '', '']
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2B6_Kepuasan_Pengguna_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
     }
   };
 
@@ -1006,15 +1249,27 @@ export default function Tabel2B6({ role }) {
             </div>
           )}
         </div>
-        {canCreate && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleAddClick}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
+            onClick={handleExport}
+            disabled={loading || (showDeleted ? !tableDataDeleted || tableDataDeleted.length === 0 : !tableDataActive || tableDataActive.length === 0)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            + Tambah Data
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
-        )}
+          
+          {canCreate && (
+            <button
+              onClick={handleAddClick}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              + Tambah Data
+            </button>
+          )}
+        </div>
       </div>
       {showDeleted ? renderTableDeleted() : renderTableActive()}
 
@@ -1111,15 +1366,24 @@ export default function Tabel2B6({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0">
-              <h3 className="text-xl font-bold">{editing ? "Edit Data Kepuasan Pengguna" : "Tambah Data Kepuasan Pengguna"}</h3>
-              <p className="text-white/80 mt-1 text-sm">Lengkapi data kepuasan pengguna terhadap kemampuan lulusan</p>
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
+              <h3 className="text-xl font-bold">{editing ? "Edit Data Tingkat Kepuasan" : "Tambah Data Tingkat Kepuasan"}</h3>
+              <p className="text-white/80 mt-1 text-sm">
+                {editing 
+                  ? "Edit data tingkat kepuasan pengguna untuk jenis kemampuan yang dipilih"
+                  : `Pilih jenis kemampuan dan isi data tingkat kepuasan untuk tahun ${selectedTahun 
+                      ? (() => {
+                          const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                          return found ? found.tahun : selectedTahun;
+                        })()
+                      : 'yang dipilih'}`}
+              </p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -1133,72 +1397,31 @@ export default function Tabel2B6({ role }) {
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
-                    <div className="relative form-tahun-dropdown-container">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenFormTahunDropdown(!openFormTahunDropdown);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_tahun
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
-                        aria-label="Pilih tahun akademik"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
-                          <span className={`truncate ${formState.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_tahun 
-                              ? (() => {
-                                  const found = availableYears.find((y) => String(y.id) === String(formState.id_tahun));
-                                  return found ? found.tahun : formState.id_tahun;
-                                })()
-                              : "-- Pilih Tahun --"}
-                          </span>
-                        </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormTahunDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
-                        />
-                      </button>
-                      {openFormTahunDropdown && (
-                        <div 
-                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-tahun-dropdown-menu mt-1 w-full"
-                        >
-                          {availableYears.length > 0 ? (
-                            availableYears.map(year => (
-                              <button
-                                key={year.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormState({...formState, id_tahun: String(year.id)});
-                                  setOpenFormTahunDropdown(false);
-                                }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.id_tahun === String(year.id)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
-                              >
-                                <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                                <span>{year.tahun}</span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                              Tidak ada data tahun
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <input
+                      type="text"
+                      value={selectedTahun 
+                        ? (() => {
+                            const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                            return found ? found.tahun : selectedTahun;
+                          })()
+                        : "(Pilih tahun di filter atas)"}
+                      readOnly
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg text-slate-700 bg-slate-50"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Tahun mengikuti filter yang dipilih di atas</p>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Kemampuan <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Pilih Jenis Kemampuan <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-slate-500 mb-2">
+                      Pilih jenis kemampuan untuk menambah data tingkat kepuasan di tahun {selectedTahun 
+                        ? (() => {
+                            const found = availableYears.find((y) => Number(y.id) === Number(selectedTahun));
+                            return found ? found.tahun : selectedTahun;
+                          })()
+                        : 'yang dipilih'}
+                    </p>
                     <div className="relative form-jenis-dropdown-container">
                       <button
                         type="button"
@@ -1234,24 +1457,41 @@ export default function Tabel2B6({ role }) {
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-jenis-dropdown-menu mt-1 w-full"
                         >
                           {jenisKemampuanList.length > 0 ? (
-                            jenisKemampuanList.map(jenis => (
-                              <button
-                                key={jenis}
-                                type="button"
-                                onClick={() => {
-                                  setFormState({...formState, jenis_kemampuan: jenis});
-                                  setOpenFormJenisDropdown(false);
-                                }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.jenis_kemampuan === jenis
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
-                              >
-                                <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
-                                <span>{jenis}</span>
-                              </button>
-                            ))
+                            jenisKemampuanList.map(jenis => {
+                              // Cek apakah sudah ada data untuk jenis kemampuan ini di tahun yang dipilih
+                              const existingData = data.find(d => 
+                                !d.deleted_at &&
+                                String(d.jenis_kemampuan).toLowerCase() === jenis.toLowerCase() &&
+                                parseInt(d.id_tahun) === parseInt(selectedTahun) &&
+                                parseInt(d.id_unit_prodi) === parseInt(selectedUnit)
+                              );
+                              
+                              return (
+                                <button
+                                  key={jenis}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormState({...formState, jenis_kemampuan: jenis});
+                                    setOpenFormJenisDropdown(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-[#eaf4ff] transition-colors ${
+                                    formState.jenis_kemampuan === jenis
+                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
+                                    <span className="truncate">{jenis}</span>
+                                  </div>
+                                  {existingData && (
+                                    <span className="text-xs text-slate-500 ml-2 flex-shrink-0">
+                                      (Sudah ada data)
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500 text-center">
                               Tidak ada data jenis kemampuan
@@ -1344,18 +1584,23 @@ export default function Tabel2B6({ role }) {
                         setOpenFormJenisDropdown(false);
                         setShowAddModal(false);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={saving}
                   >
-                      <span className="relative z-10">{saving ? "Menyimpan..." : (editing ? "Perbarui" : "Simpan")}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {saving ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                        </div>
+                      ) : (
+                        editing ? "Perbarui" : "Simpan"
+                      )}
                   </button>
                 </div>
               </form>

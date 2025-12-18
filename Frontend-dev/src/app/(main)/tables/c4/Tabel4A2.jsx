@@ -303,17 +303,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit PkM DTPR" : "Tambah PkM DTPR"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Lengkapi data PkM DTPR sesuai dengan format LKPS.</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Link Roadmap */}
           <div>
             <label htmlFor="link_roadmap" className="block text-sm font-medium text-slate-700 mb-1">
@@ -735,17 +735,15 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                 setOpenTahunPendanaanDropdown(false);
                 onClose();
               }}
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">Batal</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Batal
             </button>
             <button
               type="submit"
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              <span className="relative z-10">Simpan</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Simpan
             </button>
           </div>
         </form>
@@ -780,6 +778,34 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
+  
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
   
   // Fetch tahun akademik
   useEffect(() => {
@@ -829,7 +855,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
       }
       
       const data = Array.isArray(response.data) ? response.data : (response.items || []);
-      setRows(data);
+      const sortedRows = sortRowsByLatest(data);
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
       Swal.fire('Error!', e?.message || "Gagal memuat data", 'error');
@@ -1410,25 +1437,25 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                 {filteredRows.length > 0 && !loading && !showDeleted && (
                   <>
                     {/* Jumlah Dana */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="7" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Dana
                       </td>
                       {tahunLaporan && (
                         <>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS4 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS3 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS2 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS1 / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                             {(summary.totalDanaTS / 1000000).toFixed(2)}
                           </td>
                         </>
@@ -1437,11 +1464,11 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                     </tr>
                     
                     {/* Jumlah PkM */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="2" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah PkM
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                         {summary.jumlahPkm}
                       </td>
                       <td colSpan={tahunLaporan ? 9 : 4} className="px-6 py-4 border border-slate-200"></td>
@@ -1451,11 +1478,11 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                     </tr>
                     
                     {/* Jumlah Jenis Hibah PKM */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="4" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Jenis Hibah PKM
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
                         {summary.jumlahJenisHibah}
                       </td>
                       <td colSpan={tahunLaporan ? 7 : 2} className="px-6 py-4 border border-slate-200"></td>

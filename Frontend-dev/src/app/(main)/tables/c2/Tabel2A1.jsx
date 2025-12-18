@@ -3,7 +3,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield, FiDownload } from 'react-icons/fi';
 
 export default function Tabel2A1({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -238,6 +238,33 @@ export default function Tabel2A1({ role }) {
     }
   }, [role]);
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = useCallback((rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  }, []);
 
   const fetchPend = useCallback(async (isToggle = false) => {
     try {
@@ -283,14 +310,8 @@ export default function Tabel2A1({ role }) {
       const data = await apiFetch(`${tablePend.path}?${params}`);
       
       // Backend sudah melakukan filtering, jadi langsung gunakan data
-      const sortedData = Array.isArray(data) ? data : (data?.items || []);
-      sortedData.sort((a, b) => {
-        // Sort by tahun (descending) lalu by id (descending)
-        if (a.id_tahun !== b.id_tahun) {
-          return b.id_tahun - a.id_tahun;
-        }
-        return b.id - a.id;
-      });
+      const rowsArray = Array.isArray(data) ? data : (data?.items || []);
+      const sortedData = sortRowsByLatest(rowsArray);
       
       setRowsPend(sortedData);
     } catch (e) {
@@ -302,7 +323,7 @@ export default function Tabel2A1({ role }) {
         setInitialLoadingPend(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun, sortRowsByLatest]);
   
   const fetchMaba = useCallback(async (isToggle = false) => {
     try {
@@ -348,14 +369,8 @@ export default function Tabel2A1({ role }) {
       const data = await apiFetch(`${tableMaba.path}?${params}`);
       
       // Backend sudah melakukan filtering, jadi langsung gunakan data
-      const sortedData = Array.isArray(data) ? data : (data?.items || []);
-      sortedData.sort((a, b) => {
-        // Sort by tahun (descending) lalu by id (descending)
-        if (a.id_tahun !== b.id_tahun) {
-          return b.id_tahun - a.id_tahun;
-        }
-        return b.id - a.id;
-      });
+      const rowsArray = Array.isArray(data) ? data : (data?.items || []);
+      const sortedData = sortRowsByLatest(rowsArray);
       
       setRowsMaba(sortedData);
     } catch (e) {
@@ -367,7 +382,7 @@ export default function Tabel2A1({ role }) {
         setInitialLoadingMaba(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun]);
+  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun, sortRowsByLatest]);
 
   const combineRows = (pendaftaran, mabaAktif) => {
     return pendaftaran.map((p) => {
@@ -512,6 +527,520 @@ export default function Tabel2A1({ role }) {
     });
 
     return [...result, jumlah];
+  };
+
+  // Fungsi export Excel untuk Tabel Pendaftaran
+  const exportPendaftaranToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Filter data berdasarkan showDeleted
+      const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
+      
+      if (filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      if (selectedYear && maps?.tahun) {
+        // Format TS jika ada filter tahun
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYear);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          for (let i = 0; i <= 4; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex < 0 || yearIndex >= tahunList.length) {
+              exportData.push({
+                'TS': i === 0 ? 'TS' : `TS-${i}`,
+                'Tahun': '',
+                'Daya Tampung': '',
+                'Pendaftar': '',
+                'Pendaftar Afirmasi': '',
+                'Pendaftar Kebutuhan Khusus': ''
+              });
+              continue;
+            }
+
+            const year = tahunList[yearIndex];
+            const pendData = filteredRows.find(p => 
+              p.id_tahun === year.id_tahun && 
+              (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId))
+            );
+
+            exportData.push({
+              'TS': i === 0 ? 'TS' : `TS-${i}`,
+              'Tahun': year.tahun || '',
+              'Daya Tampung': pendData?.daya_tampung || '',
+              'Pendaftar': pendData?.pendaftar || '',
+              'Pendaftar Afirmasi': pendData?.pendaftar_afirmasi || '',
+              'Pendaftar Kebutuhan Khusus': pendData?.pendaftar_kebutuhan_khusus || ''
+            });
+          }
+        }
+      } else {
+        // Format normal jika tidak ada filter tahun
+        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+        const filteredByProdi = filteredRows.filter(row => 
+          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
+        );
+
+        exportData.push(...filteredByProdi.map((row, index) => ({
+          'No': index + 1,
+          'Tahun': getTahunName(row.id_tahun),
+          'Unit Prodi': getUnitName(row.id_unit_prodi),
+          'Daya Tampung': row.daya_tampung || '',
+          'Pendaftar': row.pendaftar || '',
+          'Pendaftar Afirmasi': row.pendaftar_afirmasi || '',
+          'Pendaftar Kebutuhan Khusus': row.pendaftar_kebutuhan_khusus || ''
+        })));
+      }
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Pendaftaran_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS/No
+        { wch: 20 },   // Tahun
+        { wch: 25 },   // Unit Prodi (jika ada)
+        { wch: 15 },   // Daya Tampung
+        { wch: 15 },   // Pendaftar
+        { wch: 20 },   // Pendaftar Afirmasi
+        { wch: 25 }    // Pendaftar Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Pendaftaran');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Pendaftaran_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi export Excel untuk Tabel Mahasiswa Baru & Aktif
+  const exportMabaToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Filter data berdasarkan showDeleted
+      const filteredRows = rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at);
+      
+      if (filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      if (selectedYear && maps?.tahun) {
+        // Format TS jika ada filter tahun
+        const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
+        const currentYearId = parseInt(selectedYear);
+        const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
+        
+        if (currentYearIndex !== -1) {
+          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+          
+          for (let i = 0; i <= 4; i++) {
+            const yearIndex = currentYearIndex - i;
+            if (yearIndex < 0 || yearIndex >= tahunList.length) {
+              exportData.push({
+                'TS': i === 0 ? 'TS' : `TS-${i}`,
+                'Tahun': '',
+                'Baru Reguler - Diterima': '',
+                'Baru Reguler - Afirmasi': '',
+                'Baru Reguler - Kebutuhan Khusus': '',
+                'Baru RPL - Diterima': '',
+                'Baru RPL - Afirmasi': '',
+                'Baru RPL - Kebutuhan Khusus': '',
+                'Aktif Reguler - Diterima': '',
+                'Aktif Reguler - Afirmasi': '',
+                'Aktif Reguler - Kebutuhan Khusus': '',
+                'Aktif RPL - Diterima': '',
+                'Aktif RPL - Afirmasi': '',
+                'Aktif RPL - Kebutuhan Khusus': ''
+              });
+              continue;
+            }
+
+            const year = tahunList[yearIndex];
+            const mabaData = filteredRows.filter(m => 
+              m.id_tahun === year.id_tahun && 
+              (m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId))
+            );
+
+            const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+            const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+            const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+            const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+
+            exportData.push({
+              'TS': i === 0 ? 'TS' : `TS-${i}`,
+              'Tahun': year.tahun || '',
+              'Baru Reguler - Diterima': baruReguler?.jumlah_total || '',
+              'Baru Reguler - Afirmasi': baruReguler?.jumlah_afirmasi || '',
+              'Baru Reguler - Kebutuhan Khusus': baruReguler?.jumlah_kebutuhan_khusus || '',
+              'Baru RPL - Diterima': baruRPL?.jumlah_total || '',
+              'Baru RPL - Afirmasi': baruRPL?.jumlah_afirmasi || '',
+              'Baru RPL - Kebutuhan Khusus': baruRPL?.jumlah_kebutuhan_khusus || '',
+              'Aktif Reguler - Diterima': aktifReguler?.jumlah_total || '',
+              'Aktif Reguler - Afirmasi': aktifReguler?.jumlah_afirmasi || '',
+              'Aktif Reguler - Kebutuhan Khusus': aktifReguler?.jumlah_kebutuhan_khusus || '',
+              'Aktif RPL - Diterima': aktifRPL?.jumlah_total || '',
+              'Aktif RPL - Afirmasi': aktifRPL?.jumlah_afirmasi || '',
+              'Aktif RPL - Kebutuhan Khusus': aktifRPL?.jumlah_kebutuhan_khusus || ''
+            });
+          }
+        }
+      } else {
+        // Format normal jika tidak ada filter tahun
+        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+        const filteredByProdi = filteredRows.filter(row => 
+          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
+        );
+
+        // Group by tahun
+        const groupedByYear = {};
+        filteredByProdi.forEach(row => {
+          const yearId = row.id_tahun;
+          if (!groupedByYear[yearId]) {
+            groupedByYear[yearId] = [];
+          }
+          groupedByYear[yearId].push(row);
+        });
+
+        Object.keys(groupedByYear).forEach(yearId => {
+          const tahunName = getTahunName(parseInt(yearId));
+          const mabaData = groupedByYear[yearId];
+          
+          const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+          const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+          const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+          const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+
+          exportData.push({
+            'Tahun': tahunName,
+            'Unit Prodi': getUnitName(unitProdiId),
+            'Baru Reguler - Diterima': baruReguler?.jumlah_total || '',
+            'Baru Reguler - Afirmasi': baruReguler?.jumlah_afirmasi || '',
+            'Baru Reguler - Kebutuhan Khusus': baruReguler?.jumlah_kebutuhan_khusus || '',
+            'Baru RPL - Diterima': baruRPL?.jumlah_total || '',
+            'Baru RPL - Afirmasi': baruRPL?.jumlah_afirmasi || '',
+            'Baru RPL - Kebutuhan Khusus': baruRPL?.jumlah_kebutuhan_khusus || '',
+            'Aktif Reguler - Diterima': aktifReguler?.jumlah_total || '',
+            'Aktif Reguler - Afirmasi': aktifReguler?.jumlah_afirmasi || '',
+            'Aktif Reguler - Kebutuhan Khusus': aktifReguler?.jumlah_kebutuhan_khusus || '',
+            'Aktif RPL - Diterima': aktifRPL?.jumlah_total || '',
+            'Aktif RPL - Afirmasi': aktifRPL?.jumlah_afirmasi || '',
+            'Aktif RPL - Kebutuhan Khusus': aktifRPL?.jumlah_kebutuhan_khusus || ''
+          });
+        });
+      }
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Mahasiswa_Baru_Aktif_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS
+        { wch: 20 },  // Tahun
+        { wch: 25 },  // Unit Prodi (jika ada)
+        { wch: 20 },  // Baru Reguler - Diterima
+        { wch: 20 },  // Baru Reguler - Afirmasi
+        { wch: 25 },  // Baru Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Baru RPL - Diterima
+        { wch: 18 },  // Baru RPL - Afirmasi
+        { wch: 23 },  // Baru RPL - Kebutuhan Khusus
+        { wch: 20 },  // Aktif Reguler - Diterima
+        { wch: 20 },  // Aktif Reguler - Afirmasi
+        { wch: 25 },  // Aktif Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Aktif RPL - Diterima
+        { wch: 18 },  // Aktif RPL - Afirmasi
+        { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Mahasiswa Baru & Aktif');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Mahasiswa_Baru_Aktif_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi export Excel untuk Tabel Data Mahasiswa (Gabungan)
+  const exportGabunganToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      if (!selectedYear || !maps?.tahun) {
+        throw new Error('Pilih tahun TS terlebih dahulu untuk mengekspor data.');
+      }
+
+      const unitProdiId = parseInt(selectedUnitProdi) || 4;
+      const tableData = processDataForTable(unitProdiId);
+      
+      if (tableData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel gabungan
+      const exportData = tableData.map((row) => ({
+        'TS': row.ts || '',
+        'Daya Tampung': row.dayaTampung || '',
+        'Pendaftar': row.pendaftar || '',
+        'Pendaftar Afirmasi': row.pendaftarAfirmasi || '',
+        'Pendaftar Kebutuhan Khusus': row.pendaftarKebutuhanKhusus || '',
+        'Baru Reguler - Diterima': row.baruRegulerDiterima || '',
+        'Baru Reguler - Afirmasi': row.baruRegulerAfirmasi || '',
+        'Baru Reguler - Kebutuhan Khusus': row.baruRegulerKebutuhanKhusus || '',
+        'Baru RPL - Diterima': row.baruRPLDiterima || '',
+        'Baru RPL - Afirmasi': row.baruRPLAfirmasi || '',
+        'Baru RPL - Kebutuhan Khusus': row.baruRPLKebutuhanKhusus || '',
+        'Aktif Reguler - Diterima': row.aktifRegulerDiterima || '',
+        'Aktif Reguler - Afirmasi': row.aktifRegulerAfirmasi || '',
+        'Aktif Reguler - Kebutuhan Khusus': row.aktifRegulerKebutuhanKhusus || '',
+        'Aktif RPL - Diterima': row.aktifRPLDiterima || '',
+        'Aktif RPL - Afirmasi': row.aktifRPLAfirmasi || '',
+        'Aktif RPL - Kebutuhan Khusus': row.aktifRPLKebutuhanKhusus || ''
+      }));
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A1_Data_Mahasiswa_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // TS
+        { wch: 15 },  // Daya Tampung
+        { wch: 15 },  // Pendaftar
+        { wch: 20 },  // Pendaftar Afirmasi
+        { wch: 25 },  // Pendaftar Kebutuhan Khusus
+        { wch: 20 },  // Baru Reguler - Diterima
+        { wch: 20 },  // Baru Reguler - Afirmasi
+        { wch: 25 },  // Baru Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Baru RPL - Diterima
+        { wch: 18 },  // Baru RPL - Afirmasi
+        { wch: 23 },  // Baru RPL - Kebutuhan Khusus
+        { wch: 20 },  // Aktif Reguler - Diterima
+        { wch: 20 },  // Aktif Reguler - Afirmasi
+        { wch: 25 },  // Aktif Reguler - Kebutuhan Khusus
+        { wch: 18 },  // Aktif RPL - Diterima
+        { wch: 18 },  // Aktif RPL - Afirmasi
+        { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Mahasiswa');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A1_Data_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Set default tahun saat pertama kali maps dimuat berdasarkan tahun sistem
@@ -1303,9 +1832,11 @@ export default function Tabel2A1({ role }) {
               <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 JUMLAH CALON MAHASISWA
               </th>
+              {role?.toLowerCase() !== "ala" && (
               <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                 AKSI
               </th>
+              )}
             </tr>
             {/* Row 2: Sub-header */}
             <tr className="sticky top-0">
@@ -1368,6 +1899,7 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftarKebutuhanKhusus || '-'}
                   </td>
+                  {role?.toLowerCase() !== "ala" && (
                   <td className="px-6 py-4 border border-slate-200">
                     {row.rowData && !row.rowData.deleted_at && (
                       <div className="flex items-center justify-center dropdown-container">
@@ -1399,12 +1931,13 @@ export default function Tabel2A1({ role }) {
                       <div className="text-center italic text-red-600">Dihapus</div>
                     )}
                   </td>
+                  )}
                 </tr>
               );
             })}
             {displayRows.length === 0 && (
               <tr>
-                <td colSpan={showDeleted ? 8 : 7} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={showDeleted ? (role?.toLowerCase() === "ala" ? 7 : 8) : (role?.toLowerCase() === "ala" ? 6 : 7)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
@@ -2111,23 +2644,34 @@ export default function Tabel2A1({ role }) {
             
           </div>
           
-          {canCPend && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowModalPend(true)}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              onClick={exportPendaftaranToExcel}
+              disabled={loading || rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at).length === 0}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              + Tambah Data
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
-          )}
+            {canCPend && role?.toLowerCase() !== "ala" && (
+              <button
+                onClick={() => setShowModalPend(true)}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                + Tambah Data
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="relative transition-opacity duration-300 ease-in-out">
           {renderTablePendaftaran()}
         </div>
 
-        {/* Dropdown Menu Pendaftaran - Fixed Position */}
-        {openDropdownIdPend !== null && (() => {
+        {/* Dropdown Menu Pendaftaran - Fixed Position - Hidden for role ala */}
+        {openDropdownIdPend !== null && role?.toLowerCase() !== "ala" && (() => {
           const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
           const currentRow = filteredRows.find((r, idx) => {
             const rowId = getIdField(r) ? r[getIdField(r)] : idx;
@@ -2206,7 +2750,8 @@ export default function Tabel2A1({ role }) {
         })()}
       </section>
 
-      {/* Mahasiswa Baru & Aktif */}
+      {/* Mahasiswa Baru & Aktif - Hidden for role pmb */}
+      {role?.toLowerCase() !== "pmb" && (
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
           <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
@@ -2264,15 +2809,26 @@ export default function Tabel2A1({ role }) {
             
           </div>
           
-          {canCMaba && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowModalMaba(true)}
-              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              onClick={exportMabaToExcel}
+              disabled={loading || rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at).length === 0}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              + Tambah Data
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
-          )}
+            {canCMaba && role?.toLowerCase() !== "pmb" && (
+              <button
+                onClick={() => setShowModalMaba(true)}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                + Tambah Data
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="relative transition-opacity duration-300 ease-in-out">
@@ -2368,6 +2924,7 @@ export default function Tabel2A1({ role }) {
           );
         })()}
       </section>
+      )}
 
       {/* Tabel Data Mahasiswa - Struktur Kompleks */}
       <section>
@@ -2410,6 +2967,19 @@ export default function Tabel2A1({ role }) {
               containerClass="gabungan-unit-dropdown-container"
               menuClass="gabungan-unit-dropdown-menu"
             />
+            <button
+              onClick={exportGabunganToExcel}
+              disabled={loading || !selectedYear || (() => {
+                const unitProdiId = parseInt(selectedUnitProdi) || 4;
+                const tableData = processDataForTable(unitProdiId);
+                return tableData.length === 0;
+              })()}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
+            >
+              <FiDownload size={18} />
+              <span>Export Excel</span>
+            </button>
           </div>
         </div>
 
@@ -2590,8 +3160,8 @@ export default function Tabel2A1({ role }) {
         })()}
       </section>
 
-      {/* Modal Form Pendaftaran */}
-      {showModalPend && (
+      {/* Modal Form Pendaftaran - Hidden for role ala */}
+      {showModalPend && role?.toLowerCase() !== "ala" && (
         <div 
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
@@ -2602,15 +3172,15 @@ export default function Tabel2A1({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h3 className="text-xl font-bold">{editingPend?"Edit Pendaftaran":"Tambah Pendaftaran"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir daya tampung & pendaftar per tahun.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={submitPend} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-1 space-y-2">
@@ -2771,18 +3341,23 @@ export default function Tabel2A1({ role }) {
                         setOpenPendTahunDropdown(false);
                         setShowModalPend(false);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={loading}
                   >
-                      <span className="relative z-10">{loading?"Menyimpan...":"Simpan"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {loading ? (
+                          <div className="flex items-center justify-center space-x-2">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                              <span>Menyimpan...</span>
+                          </div>
+                      ) : (
+                          'Simpan'
+                      )}
                   </button>
                 </div>
               </form>
@@ -2791,8 +3366,8 @@ export default function Tabel2A1({ role }) {
         </div>
       )}
 
-      {/* Modal Form Maba */}
-      {showModalMaba && (
+      {/* Modal Form Maba - Hidden for role pmb */}
+      {showModalMaba && role?.toLowerCase() !== "pmb" && (
         <div 
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
@@ -2803,15 +3378,15 @@ export default function Tabel2A1({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 relative z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h3 className="text-xl font-bold">{editingMaba?"Edit Mahasiswa Baru/Aktif":"Tambah Mahasiswa Baru/Aktif"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir jumlah mahasiswa berdasarkan jenis dan tahun.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={submitMaba} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-1 space-y-2">
@@ -3122,18 +3697,23 @@ export default function Tabel2A1({ role }) {
                         setOpenMabaJalurDropdown(false);
                         setShowModalMaba(false);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={loading}
                   >
-                      <span className="relative z-10">{loading?"Menyimpan...":"Simpan"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {loading ? (
+                          <div className="flex items-center justify-center space-x-2">
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                              <span>Menyimpan...</span>
+                          </div>
+                      ) : (
+                          'Simpan'
+                      )}
                   </button>
                 </div>
               </form>

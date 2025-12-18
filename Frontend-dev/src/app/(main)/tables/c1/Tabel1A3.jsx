@@ -483,6 +483,39 @@ export default function Tabel1A3({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idField = getIdField(a) || getIdField(b);
+      if (idField) {
+        const idA = a[idField] || 0;
+        const idB = b[idField] || 0;
+        return idB - idA; // ID terbesar di atas
+      }
+      
+      return 0;
+    });
+  };
+
   async function fetchRows(isToggle = false) {
     try {
       // Only show loading skeleton on initial load, not when toggling
@@ -498,7 +531,9 @@ export default function Tabel1A3({ role }) {
         qs += `&include_deleted=1`;
       }
       const data = await apiFetch(`${ENDPOINT}${qs}`);
-      setRows(Array.isArray(data) ? data : data?.items || []);
+      const rowsArray = Array.isArray(data) ? data : data?.items || [];
+      const sortedRows = sortRowsByLatest(rowsArray);
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
     } finally {
@@ -1147,13 +1182,13 @@ export default function Tabel1A3({ role }) {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Tambah Data Penggunaan Dana</h2>
               <p className="text-white/80 mt-1 text-sm">Lengkapi jenis penggunaan, jumlah dan tahun.</p>
             </div>
             <form
-              className="p-8 space-y-6"
+              className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
                 
@@ -1288,23 +1323,28 @@ export default function Tabel1A3({ role }) {
               </div>
               <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     setOpenNewTahunDropdown(false);
                   }}
                 >
-                  <span className="relative z-10">Batal</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  Batal
                 </button>
                 <button
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                  className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                   disabled={loading}
                   type="submit"
                 >
-                  <span className="relative z-10">{loading ? 'Menyimpan...' : 'Simpan'}</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                      </div>
+                  ) : (
+                      'Simpan'
+                  )}
                 </button>
               </div>
             </form>
@@ -1314,13 +1354,13 @@ export default function Tabel1A3({ role }) {
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Ubah Data Penggunaan Dana</h2>
               <p className="text-white/80 mt-1 text-sm">Perbarui jenis penggunaan, jumlah dan tahun.</p>
             </div>
             <form
-              className="p-8 space-y-6"
+              className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
                 
@@ -1455,7 +1495,7 @@ export default function Tabel1A3({ role }) {
               </div>
               <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   type="button"
                   onClick={() => {
                     setShowEditModal(false);
@@ -1463,16 +1503,21 @@ export default function Tabel1A3({ role }) {
                     setOpenEditTahunDropdown(false);
                   }}
                 >
-                  <span className="relative z-10">Batal</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  Batal
                 </button>
                 <button
-                  className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                  className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                   disabled={loading}
                   type="submit"
                 >
-                  <span className="relative z-10">{loading ? 'Menyimpan...' : 'Simpan'}</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                  {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                      </div>
+                  ) : (
+                      'Simpan'
+                  )}
                 </button>
               </div>
             </form>

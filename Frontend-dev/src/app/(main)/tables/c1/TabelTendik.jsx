@@ -628,15 +628,15 @@ export default function TabelTendik({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">{editing ? 'Edit Data Tenaga Kependidikan' : 'Tambah Data Tenaga Kependidikan'}</h2>
               <p className="text-white/80 mt-1 text-sm">Isi formulir data tenaga kependidikan dengan lengkap.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -740,18 +740,23 @@ export default function TabelTendik({ role }) {
                         setShowModal(false);
                         setEditing(null);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={loading}
                   >
-                      <span className="relative z-10">{loading ? "Menyimpan..." : "Simpan"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                        </div>
+                      ) : (
+                        'Simpan'
+                      )}
                   </button>
                 </div>
               </form>

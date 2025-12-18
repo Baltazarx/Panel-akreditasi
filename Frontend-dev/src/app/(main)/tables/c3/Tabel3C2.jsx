@@ -7,6 +7,7 @@ import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiUser, FiShield } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3c2-publikasi";
 const TABLE_KEY = "tabel_3c2_publikasi_penelitian";
@@ -177,11 +178,11 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-bold">
@@ -200,7 +201,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Nama DTPR */}
           <div>
             <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-2">
@@ -452,17 +453,15 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                 setOpenTahunDropdown(false);
                 onClose();
               }}
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">Batal</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Batal
             </button>
             <button
               type="submit"
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              <span className="relative z-10">{initialData ? "Simpan Perubahan" : "Tambah Data"}</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              {initialData ? "Simpan Perubahan" : "Tambah Data"}
             </button>
           </div>
         </form>
@@ -829,6 +828,34 @@ export default function Tabel3C2({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   // Tahun options
   const tahunList = useMemo(() => {
     if (!maps || !maps.tahun) {
@@ -920,7 +947,9 @@ export default function Tabel3C2({ auth, role }) {
           console.log('Tabel3C2 - Fetched data:', response.data.length, 'rows');
           console.log('Tabel3C2 - showDeleted:', showDeleted);
           console.log('Tabel3C2 - Sample row:', response.data[0]);
-          setRows(response.data);
+          const rowsArray = Array.isArray(response.data) ? response.data : [];
+          const sortedRows = sortRowsByLatest(rowsArray);
+          setRows(sortedRows);
           setTahunLaporan(response.tahun_laporan);
         } else {
           console.log('Tabel3C2 - No data in response:', response);
@@ -978,7 +1007,9 @@ export default function Tabel3C2({ auth, role }) {
         }
         const response = await apiFetch(url);
         if (response && response.data) {
-          setRows(response.data);
+          const rowsArray = Array.isArray(response.data) ? response.data : [];
+          const sortedRows = sortRowsByLatest(rowsArray);
+          setRows(sortedRows);
           setTahunLaporan(response.tahun_laporan);
         }
       }
@@ -1127,46 +1158,180 @@ export default function Tabel3C2({ auth, role }) {
   };
 
   const handleExport = async () => {
-    if (!selectedTahun) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Pilih Tahun',
-        text: 'Harap pilih tahun terlebih dahulu'
-      });
-      return;
-    }
-
     try {
-      const response = await fetch(`http://localhost:3000/api${ENDPOINT}/export?ts_id=${selectedTahun}`, {
-        credentials: "include",
-        mode: "cors",
+      const currentData = rows.filter(r => {
+        const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+        return showDeleted ? hasDeletedAt : !hasDeletedAt;
       });
-
-      if (!response.ok) {
-        throw new Error('Gagal mengekspor data');
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Tabel_3C2_Publikasi_Penelitian.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = [
+        'No',
+        'Nama DTPR',
+        'Judul Publikasi',
+        'Jenis Publikasi (IB/I/S1,S2,S3,S4,T)',
+        'Tahun Terbit (beri tanda √)',
+        '',
+        '',
+        '',
+        '',
+        'Link Bukti'
+      ];
+      exportData.push(headerRow1);
+      
+      const headerRow2 = [
+        '',
+        '',
+        '',
+        '',
+        tahunLaporan?.nama_ts4 || 'TS-4',
+        tahunLaporan?.nama_ts3 || 'TS-3',
+        tahunLaporan?.nama_ts2 || 'TS-2',
+        tahunLaporan?.nama_ts1 || 'TS-1',
+        tahunLaporan?.nama_ts || 'TS',
+        ''
+      ];
+      exportData.push(headerRow2);
+      
+      // Format checkmark untuk tahun terbit
+      const formatTahunTerbit = (row) => {
+        const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+        const ts3 = row.tahun_ts3 === '√' ? '√' : '';
+        const ts2 = row.tahun_ts2 === '√' ? '√' : '';
+        const ts1 = row.tahun_ts1 === '√' ? '√' : '';
+        const ts = row.tahun_ts === '√' ? '√' : '';
+        return { ts4, ts3, ts2, ts1, ts };
+      };
+      
+      // Tambahkan data rows
+      currentData.forEach((row, index) => {
+        const tahunTerbit = formatTahunTerbit(row);
+        exportData.push([
+          index + 1,
+          row.nama_dtpr || "-",
+          row.judul_publikasi || "-",
+          row.jenis_publikasi || "-",
+          tahunTerbit.ts4,
+          tahunTerbit.ts3,
+          tahunTerbit.ts2,
+          tahunTerbit.ts1,
+          tahunTerbit.ts,
+          row.link_bukti || "-"
+        ]);
+      });
+      
+      // Tambahkan summary row
+      if (currentData.length > 0) {
+        exportData.push([
+          'Jumlah Publikasi',
+          '',
+          '',
+          '',
+          currentData.filter(r => r.tahun_ts4 === '√').length,
+          currentData.filter(r => r.tahun_ts3 === '√').length,
+          currentData.filter(r => r.tahun_ts2 === '√').length,
+          currentData.filter(r => r.tahun_ts1 === '√').length,
+          currentData.filter(r => r.tahun_ts === '√').length,
+          ''
+        ]);
+      }
 
+      // Buat worksheet
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 25 },  // Nama DTPR
+        { wch: 40 },  // Judul Publikasi
+        { wch: 20 },  // Jenis Publikasi
+        { wch: 12 },  // TS-4
+        { wch: 12 },  // TS-3
+        { wch: 12 },  // TS-2
+        { wch: 12 },  // TS-1
+        { wch: 12 },  // TS
+        { wch: 30 }   // Link Bukti
+      ];
+      
+      // Buat workbook dan tambahkan worksheet
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Publikasi Penelitian');
+      
+      // Export ke file
+      XLSX.writeFile(wb, `Tabel_3C2_Publikasi_Penelitian_${selectedTahun || 'Data'}.xlsx`);
+      
       Swal.fire({
         icon: 'success',
-        title: 'Berhasil',
-        text: 'Data berhasil diekspor'
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor.',
+        timer: 1500,
+        showConfirmButton: false
       });
     } catch (err) {
-      console.error("Error exporting data:", err);
+      console.error("Export error:", err);
+      
+      // Fallback ke CSV jika XLSX gagal
+      try {
+        const currentData = rows.filter(r => {
+          const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
+          return showDeleted ? hasDeletedAt : !hasDeletedAt;
+        });
+        if (currentData && currentData.length > 0) {
+          const csvContent = [
+            ['No', 'Nama DTPR', 'Judul Publikasi', 'Jenis Publikasi', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'],
+            ...currentData.map((row, index) => {
+              const ts4 = row.tahun_ts4 === '√' ? '√' : '';
+              const ts3 = row.tahun_ts3 === '√' ? '√' : '';
+              const ts2 = row.tahun_ts2 === '√' ? '√' : '';
+              const ts1 = row.tahun_ts1 === '√' ? '√' : '';
+              const ts = row.tahun_ts === '√' ? '√' : '';
+              return [
+                index + 1,
+                row.nama_dtpr || "-",
+                row.judul_publikasi || "-",
+                row.jenis_publikasi || "-",
+                ts4,
+                ts3,
+                ts2,
+                ts1,
+                ts,
+                row.link_bukti || "-"
+              ];
+            })
+          ].map(row => row.join(',')).join('\n');
+          
+          const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Tabel_3C2_Publikasi_Penelitian_${selectedTahun || 'Data'}.csv`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          
+          Swal.fire({
+            icon: 'info',
+            title: 'Diekspor sebagai CSV',
+            text: 'Data diekspor sebagai CSV karena library Excel tidak tersedia.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
+        }
+      } catch (csvErr) {
+        console.error("CSV export error:", csvErr);
+      }
+      
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: err.message || 'Gagal mengekspor data'
+        title: 'Gagal mengekspor',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
       });
     }
   };

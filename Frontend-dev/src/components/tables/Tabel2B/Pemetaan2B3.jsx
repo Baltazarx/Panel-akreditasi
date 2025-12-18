@@ -5,7 +5,7 @@ import { apiFetch } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiBriefcase } from 'react-icons/fi';
+import { FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
 
 // ============================================================
 // 2B.3 PETA PEMENUHAN CPL (LAPORAN)
@@ -89,36 +89,113 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
   const handleExport = async () => {
     if (!canRead) return;
     
-    // Tambahkan query parameter jika filter aktif
-    const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
-    if (!isSuperAdmin && userProdiId) {
-      queryParams.append("id_unit_prodi", String(userProdiId));
-    } else if (isSuperAdmin && selectedProdi) {
-      queryParams.append("id_unit_prodi", selectedProdi);
-    }
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    
     try {
-      const response = await fetch(`/api/pemetaan-2b3/export${queryString}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      setLoading(true);
+
+      if (!data || !data.rows || data.rows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headers = ['CPL', 'CPMK', ...data.semesters.map(sem => `Semester ${sem}`)];
+      exportData.push(headers);
+      
+      // Tambahkan data rows
+      data.rows.forEach((row) => {
+        const rowData = [
+          row.kode_cpl || '',
+          row.kode_cpmk || '',
+          ...data.semesters.map(sem => {
+            if (row.semester_map && row.semester_map[sem] && row.semester_map[sem].length > 0) {
+              return row.semester_map[sem].join(", ");
+            }
+            return '';
+          })
+        ];
+        exportData.push(rowData);
       });
-      if (response.ok) {
-        const blob = await response.blob();
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = exportData.map(row => 
+          row.map(cell => escapeCsv(cell)).join(',')
+        );
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Tabel_2B3_Peta_Pemenuhan_CPL.xlsx';
+        a.download = `Tabel_2B3_Peta_Pemenuhan_CPL_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        Swal.fire('Success', 'File Excel berhasil diunduh', 'success');
-      } else {
-        throw new Error('Gagal mengunduh file');
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
       }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 15 },  // CPL
+        { wch: 15 },  // CPMK
+        ...data.semesters.map(() => ({ wch: 30 })) // Semester columns
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Peta Pemenuhan CPL');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2B3_Peta_Pemenuhan_CPL_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
     } catch (err) {
-      Swal.fire('Error', 'Gagal mengexport data', 'error');
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -234,9 +311,12 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            disabled={loading || !data || !data.rows || data.rows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            📥 Export Excel
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
         </div>
       </div>

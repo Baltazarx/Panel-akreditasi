@@ -176,7 +176,7 @@ const NewsCard = ({ post, onEdit, onDelete, onReadMore }) => {
         {/* Author & User Info */}
         <div className="mb-4 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-500">Oleh: <span className="font-medium">{post.author}</span></span>
+          <span className="text-xs text-gray-500">Oleh: <span className="font-medium">{post.author}</span></span>
             {post.nama_user && (
               <span className="text-xs text-gray-400">({post.nama_user})</span>
             )}
@@ -196,18 +196,18 @@ const NewsCard = ({ post, onEdit, onDelete, onReadMore }) => {
 
         {/* Tags - hanya tampilkan jika ada tags */}
         {post.tags && post.tags.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-1">
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <span key={index} className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-                #{tag}
-              </span>
-            ))}
-            {post.tags.length > 3 && (
-              <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-                +{post.tags.length - 3}
-              </span>
-            )}
-          </div>
+        <div className="mb-4 flex flex-wrap gap-1">
+          {post.tags.slice(0, 3).map((tag, index) => (
+            <span key={index} className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
+              #{tag}
+            </span>
+          ))}
+          {post.tags.length > 3 && (
+            <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
+              +{post.tags.length - 3}
+            </span>
+          )}
+        </div>
         )}
 
         {/* Footer */}
@@ -254,14 +254,14 @@ const NewsCard = ({ post, onEdit, onDelete, onReadMore }) => {
                 Hapus
               </button>
             )}
-            <button 
-              onClick={handleReadMore}
-              className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:ring-offset-2 rounded-md px-2 py-1"
-              aria-label={`Baca lebih lanjut: ${post.title}`}
-            >
-              Baca
-              <ArrowRight className="w-3 h-3" aria-hidden="true" />
-            </button>
+          <button 
+            onClick={handleReadMore}
+            className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:ring-offset-2 rounded-md px-2 py-1"
+            aria-label={`Baca lebih lanjut: ${post.title}`}
+          >
+            Baca
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
+          </button>
           </div>
         </div>
       </div>
@@ -886,11 +886,11 @@ export default function TpmNewsPage() {
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-            {isLoading ? (
-              // Loading skeletons
-              Array.from({ length: 4 }).map((_, index) => (
-                <NewsCardSkeleton key={`skeleton-${index}`} />
-              ))
+              {isLoading ? (
+                // Loading skeletons
+                Array.from({ length: 4 }).map((_, index) => (
+                  <NewsCardSkeleton key={`skeleton-${index}`} />
+                ))
             ) : newsData.length > 0 ? (
               <AnimatePresence>
                 {newsData.map((post, index) => {
@@ -1137,8 +1137,8 @@ export default function TpmNewsPage() {
                 </div>
               </motion.div>
             </div>
-          )}
-        </AnimatePresence>
+              )}
+            </AnimatePresence>
 
         {/* Edit Modal */}
         <AnimatePresence>
@@ -1358,7 +1358,7 @@ export default function TpmNewsPage() {
                     </div>
                   </form>
                 </div>
-              </motion.div>
+          </motion.div>
             </div>
           )}
         </AnimatePresence>
@@ -1400,7 +1400,7 @@ export default function TpmNewsPage() {
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryStyles[color]} shadow-md`}>
                         <IconComponent className="h-5 w-5 text-white" />
-                      </div>
+        </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         {selectedNews.priority === 'high' && (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">

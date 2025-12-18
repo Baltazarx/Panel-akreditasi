@@ -259,3 +259,115 @@ export const searchPegawai = async (req, res) => {
     res.status(500).json({ error: 'Search pegawai failed' });
   }
 };
+
+// ===== VERIFY PASSWORD (Untuk Verifikasi Password User Sendiri) =====
+export const verifyPassword = async (req, res) => {
+  try {
+    // Ambil id_user dari JWT token (user yang sedang login)
+    const userId = req.user?.id_user;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
+    }
+
+    const { password } = req.body;
+
+    // Validasi input
+    if (!password) {
+      return res.status(400).json({ error: 'Password wajib diisi.' });
+    }
+
+    // Ambil password dari database
+    const [userRows] = await pool.query(
+      `SELECT password FROM users WHERE id_user = ? AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    const user = userRows[0];
+
+    // Validasi password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Password salah.' });
+    }
+
+    // Password benar, return success
+    res.json({ 
+      ok: true, 
+      message: 'Password berhasil diverifikasi.',
+      verified: true
+    });
+  } catch (err) {
+    console.error("Error verifyPassword:", err);
+    res.status(500).json({ error: 'Gagal memverifikasi password', details: err.message });
+  }
+};
+
+// ===== CHANGE PASSWORD (Untuk User Sendiri) =====
+export const changePassword = async (req, res) => {
+  try {
+    // Ambil id_user dari JWT token (user yang sedang login)
+    const userId = req.user?.id_user;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Validasi input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Kata sandi saat ini dan kata sandi baru wajib diisi.' });
+    }
+
+    // Validasi panjang password baru
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Kata sandi baru minimal 6 karakter.' });
+    }
+
+    // Ambil password saat ini dari database
+    const [userRows] = await pool.query(
+      `SELECT password FROM users WHERE id_user = ? AND deleted_at IS NULL`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan' });
+    }
+
+    const user = userRows[0];
+
+    // Validasi password saat ini
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Kata sandi saat ini salah.' });
+    }
+
+    // Hash password baru
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    const updateData = { password: hashedPassword };
+    
+    if (await hasColumn('users', 'updated_by') && req.user?.id_user) {
+      updateData.updated_by = req.user.id_user;
+    }
+
+    await pool.query(
+      `UPDATE users SET ? WHERE id_user = ?`,
+      [updateData, userId]
+    );
+
+    res.json({ 
+      ok: true, 
+      message: 'Kata sandi berhasil diubah.' 
+    });
+  } catch (err) {
+    console.error("Error changePassword:", err);
+    res.status(500).json({ error: 'Gagal mengubah kata sandi', details: err.message });
+  }
+};

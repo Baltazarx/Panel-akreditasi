@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser, FiCalendar, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser, FiCalendar, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3a2-penelitian";
 const TABLE_KEY = "tabel_3a2_penelitian";
@@ -260,17 +261,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Data Penelitian DTPR" : "Input Data Penelitian DTPR"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Formulir dengan input pendanaan dinamis</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Judul Penelitian */}
           <div>
             <label htmlFor="judul_penelitian" className="block text-sm font-medium text-slate-700 mb-1">
@@ -657,17 +658,15 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                 setOpenTahunDropdown({});
                 onClose();
               }} 
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">Batal</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Batal
             </button>
             <button 
               type="submit" 
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              <span className="relative z-10">Tambahkan Penelitian ke Tabel</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Tambahkan Penelitian ke Tabel
             </button>
           </div>
         </form>
@@ -1043,6 +1042,34 @@ export default function Tabel3A2({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   // Tahun options untuk dropdown
   const tahunList = useMemo(() => {
     const tahun = Object.values(maps?.tahun || {});
@@ -1235,7 +1262,9 @@ export default function Tabel3A2({ auth, role }) {
         }
         
         const data = await apiFetch(url);
-        setRows(Array.isArray(data) ? data : data?.items || []);
+        const rowsArray = Array.isArray(data) ? data : data?.items || [];
+        const sortedRows = sortRowsByLatest(rowsArray);
+        setRows(sortedRows);
       } catch (err) {
         console.error("Error fetching data:", err);
         Swal.fire({
@@ -1498,6 +1527,236 @@ export default function Tabel3A2({ auth, role }) {
     }
   };
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      if (!filteredRows || filteredRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = [
+        'No',
+        'Nama DTPR (Ketua)',
+        'Judul Penelitian',
+        'Jumlah Mahasiswa yang Terlibat',
+        'Jenis Hibah Penelitian',
+        'L/N/I',
+        'Durasi (tahun)',
+        'TS-4',
+        'TS-3',
+        'TS-2',
+        'TS-1',
+        'TS',
+        'Link Bukti'
+      ];
+      exportData.push(headerRow1);
+      
+      // Tambahkan data rows
+      filteredRows.forEach((row, idx) => {
+        const rowData = [
+          idx + 1,
+          row.nama_dosen_ketua || '',
+          row.judul_penelitian || '',
+          row.jml_mhs_terlibat || '',
+          row.jenis_hibah || '',
+          row.sumber_dana || '',
+          row.durasi_tahun || '',
+          row.dana_ts_4 ? parseFloat(row.dana_ts_4).toLocaleString('id-ID') : '',
+          row.dana_ts_3 ? parseFloat(row.dana_ts_3).toLocaleString('id-ID') : '',
+          row.dana_ts_2 ? parseFloat(row.dana_ts_2).toLocaleString('id-ID') : '',
+          row.dana_ts_1 ? parseFloat(row.dana_ts_1).toLocaleString('id-ID') : '',
+          row.dana_ts ? parseFloat(row.dana_ts).toLocaleString('id-ID') : '',
+          row.link_bukti || ''
+        ];
+        exportData.push(rowData);
+      });
+      
+      // Tambahkan baris summary
+      const totalDana = filteredRows.reduce((sum, row) => {
+        const danaTS4 = parseFloat(row.dana_ts_4 || 0);
+        const danaTS3 = parseFloat(row.dana_ts_3 || 0);
+        const danaTS2 = parseFloat(row.dana_ts_2 || 0);
+        const danaTS1 = parseFloat(row.dana_ts_1 || 0);
+        const danaTS = parseFloat(row.dana_ts || 0);
+        return sum + danaTS4 + danaTS3 + danaTS2 + danaTS1 + danaTS;
+      }, 0);
+      
+      const jenisSet = new Set();
+      filteredRows.forEach(row => {
+        if (row.jenis_hibah) jenisSet.add(row.jenis_hibah);
+      });
+      const jumlahJenisHibah = jenisSet.size;
+      const jumlahPenelitian = filteredRows.length;
+      
+      exportData.push([
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        'Jumlah Dana',
+        totalDana.toLocaleString('id-ID'),
+        '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        '',
+        '',
+        'Jumlah Jenis Hibah',
+        jumlahJenisHibah,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+      exportData.push([
+        '',
+        'Jumlah Penelitian',
+        jumlahPenelitian,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // No
+        { wch: 25 },  // Nama DTPR (Ketua)
+        { wch: 50 },  // Judul Penelitian
+        { wch: 20 },  // Jumlah Mahasiswa yang Terlibat
+        { wch: 25 },  // Jenis Hibah Penelitian
+        { wch: 10 },  // L/N/I
+        { wch: 15 },  // Durasi (tahun)
+        { wch: 15 },  // TS-4
+        { wch: 15 },  // TS-3
+        { wch: 15 },  // TS-2
+        { wch: 15 },  // TS-1
+        { wch: 15 },  // TS
+        { wch: 40 }   // Link Bukti
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Penelitian DTPR';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_3A2_Penelitian_DTPR_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const totalDana = filteredRows.reduce((sum, row) => {
+          const danaTS4 = parseFloat(row.dana_ts_4 || 0);
+          const danaTS3 = parseFloat(row.dana_ts_3 || 0);
+          const danaTS2 = parseFloat(row.dana_ts_2 || 0);
+          const danaTS1 = parseFloat(row.dana_ts_1 || 0);
+          const danaTS = parseFloat(row.dana_ts || 0);
+          return sum + danaTS4 + danaTS3 + danaTS2 + danaTS1 + danaTS;
+        }, 0);
+        
+        const jenisSet = new Set();
+        filteredRows.forEach(row => {
+          if (row.jenis_hibah) jenisSet.add(row.jenis_hibah);
+        });
+        const jumlahJenisHibah = jenisSet.size;
+        const jumlahPenelitian = filteredRows.length;
+        
+        const csvRows = [
+          ['No', 'Nama DTPR (Ketua)', 'Judul Penelitian', 'Jumlah Mahasiswa yang Terlibat', 'Jenis Hibah Penelitian', 'L/N/I', 'Durasi (tahun)', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'],
+          ...filteredRows.map((row, idx) => [
+            idx + 1,
+            row.nama_dosen_ketua || '',
+            row.judul_penelitian || '',
+            row.jml_mhs_terlibat || '',
+            row.jenis_hibah || '',
+            row.sumber_dana || '',
+            row.durasi_tahun || '',
+            row.dana_ts_4 ? parseFloat(row.dana_ts_4).toLocaleString('id-ID') : '',
+            row.dana_ts_3 ? parseFloat(row.dana_ts_3).toLocaleString('id-ID') : '',
+            row.dana_ts_2 ? parseFloat(row.dana_ts_2).toLocaleString('id-ID') : '',
+            row.dana_ts_1 ? parseFloat(row.dana_ts_1).toLocaleString('id-ID') : '',
+            row.dana_ts ? parseFloat(row.dana_ts).toLocaleString('id-ID') : '',
+            row.link_bukti || ''
+          ]),
+          ['', '', '', '', '', '', 'Jumlah Dana', totalDana.toLocaleString('id-ID'), '', '', '', '', ''],
+          ['', '', '', 'Jumlah Jenis Hibah', jumlahJenisHibah, '', '', '', '', '', '', '', ''],
+          ['', 'Jumlah Penelitian', jumlahPenelitian, '', '', '', '', '', '', '', '', '', '']
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_3A2_Penelitian_DTPR_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -1653,6 +1912,15 @@ export default function Tabel3A2({ auth, role }) {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={handleExport}
+            disabled={loading || !filteredRows || filteredRows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
           {canCreate && (
             <button
               onClick={() => { setModalOpen(true); setEditingRow(null); }}

@@ -7,7 +7,8 @@ import { useMaps } from "../../../../hooks/useMaps";
 import { roleCan } from "../../../../lib/role"; 
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from "sweetalert2";
-import { FiChevronDown, FiCalendar, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2D({ role }) {
     const { maps } = useMaps(true);
@@ -146,14 +147,14 @@ export default function Tabel2D({ role }) {
     }, [maps.units]);
 
     const yearOrder = useMemo(() => {
-        if (!selectedYear) return [];
+        if (availableYears.length === 0) return [];
         
-        // Jika "Semua Tahun" dipilih, kembalikan semua tahun yang tersedia
-        if (selectedYear === "all") {
-            return availableYears.map(y => y.id).filter(y => y != null);
-        }
+        // Gunakan selectedYear jika ada, jika tidak gunakan tahun terakhir sebagai default
+        const tahunReferensi = selectedYear || (availableYears.length > 0 ? String(availableYears[availableYears.length - 1].id) : null);
         
-        const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
+        if (!tahunReferensi) return [];
+        
+        const idx = availableYears.findIndex((y) => String(y.id) === String(tahunReferensi));
         if (idx === -1) return [];
         
         // PENTING: Tahun yang dipilih (selectedYear) SELALU menjadi TS di kolom paling kanan
@@ -166,8 +167,9 @@ export default function Tabel2D({ role }) {
         
         // Urutan array dari kiri ke kanan: [TS-4, TS-3, TS-2, TS-1, TS]
         // ts (tahun yang dipilih/selectedYear) SELALU ada di index terakhir, sesuai dengan label 'TS' di index terakhir
-        // Contoh: Pilih 2021/2022 → ts = 2021/2022 (TS), ts1 = 2020/2021 (TS-1), dst.
-        return [ts4, ts3, ts2, ts1, ts].filter(y => y != null);
+        // Contoh: Pilih 2020/2021 → ts = 2020/2021 (TS), ts1 = tahun sebelumnya (TS-1), dst.
+        // Jika tidak ada tahun sebelumnya, akan ada null di array, tapi kita tetap tampilkan 5 kolom
+        return [ts4, ts3, ts2, ts1, ts];
     }, [availableYears, selectedYear]);
 
     // State untuk menandai apakah "Semua Tahun" dipilih
@@ -175,9 +177,13 @@ export default function Tabel2D({ role }) {
 
     // Mapping tahun ke label untuk memastikan label selalu sesuai dengan posisi relatif terhadap tahun yang dipilih
     const yearLabelMap = useMemo(() => {
-        if (!selectedYear || selectedYear === "all" || isAllYearsSelected) return {};
+        if (!selectedYear && availableYears.length === 0) return {};
         
-        const idx = availableYears.findIndex((y) => String(y.id) === String(selectedYear));
+        // Gunakan selectedYear atau tahun terakhir sebagai referensi
+        const tahunReferensi = selectedYear || (availableYears.length > 0 ? String(availableYears[availableYears.length - 1].id) : null);
+        if (!tahunReferensi) return {};
+        
+        const idx = availableYears.findIndex((y) => String(y.id) === String(tahunReferensi));
         if (idx === -1) return {};
         
         const map = {};
@@ -193,22 +199,36 @@ export default function Tabel2D({ role }) {
         if (idx > 3) map[availableYears[idx - 4]?.id] = 'TS-4';
         
         return map;
-    }, [availableYears, selectedYear, isAllYearsSelected]);
+    }, [availableYears, selectedYear]);
 
     useEffect(() => {
         if (!selectedYear && availableYears.length) {
-            // Default ke tahun 2020/2021 (tahun pertama setelah filter)
-            // Cari tahun yang id-nya 2020 atau text mengandung "2020/2021"
-            const defaultYear = availableYears.find(y => {
-                const yearId = Number(y.id);
+            // Default ke tahun 2024/2025 jika ada, jika tidak ada fallback ke tahun terakhir
+            // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+            let tahun2024 = availableYears.find(y => {
                 const yearText = String(y.text || "").toLowerCase();
-                return yearId === 2020 || yearText.includes("2020/2021") || yearText.includes("2020");
+                const yearId = String(y.id || "");
+                return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
             });
             
-            // Jika tidak ditemukan, gunakan tahun pertama yang tersedia
-            const yearToSelect = defaultYear || availableYears[0];
-            if (yearToSelect?.id) {
-                setSelectedYear(String(yearToSelect.id));
+            // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+            if (!tahun2024) {
+                tahun2024 = availableYears.find(y => {
+                    const yearText = String(y.text || "").toLowerCase();
+                    const yearId = String(y.id || "");
+                    return yearText.includes("2024") || yearText.includes("2025") || 
+                           yearId.includes("2024") || yearId.includes("2025");
+                });
+            }
+            
+            if (tahun2024?.id) {
+                setSelectedYear(String(tahun2024.id));
+            } else {
+                // Fallback ke tahun terakhir jika 2024/2025 tidak ditemukan
+                const latestYear = availableYears[availableYears.length - 1];
+                if (latestYear?.id) {
+                    setSelectedYear(String(latestYear.id));
+                }
             }
         }
     }, [availableYears, selectedYear]);
@@ -220,9 +240,39 @@ export default function Tabel2D({ role }) {
         }
     }, [isSuperAdmin, availableProdi, selectedProdi]);
     
+    // Helper function untuk sorting data berdasarkan terbaru
+    const sortRowsByLatest = useCallback((rowsArray) => {
+        return [...rowsArray].sort((a, b) => {
+            // Jika ada created_at, urutkan berdasarkan created_at terbaru
+            if (a.created_at && b.created_at) {
+                const dateA = new Date(a.created_at);
+                const dateB = new Date(b.created_at);
+                if (dateA.getTime() !== dateB.getTime()) {
+                    return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+                }
+            }
+            
+            // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+            if (a.updated_at && b.updated_at) {
+                const dateA = new Date(a.updated_at);
+                const dateB = new Date(b.updated_at);
+                if (dateA.getTime() !== dateB.getTime()) {
+                    return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+                }
+            }
+            
+            // Fallback ke ID terbesar jika tidak ada timestamp
+            const idA = a.id_sumber || a.id || 0;
+            const idB = b.id_sumber || b.id || 0;
+            return idB - idA;
+        });
+    }, []);
+
     // --- Fetch Data Utama ---
     const fetchData = useCallback(async () => {
-        if (yearOrder.length === 0) {
+        // Filter tahun yang valid (bukan null) untuk fetch data
+        const validYears = yearOrder.filter(y => y != null);
+        if (validYears.length === 0) {
             setMasterSumber([]);
             setDataByYear({});
             return;
@@ -232,7 +282,6 @@ export default function Tabel2D({ role }) {
             setLoading(true);
             setError("");
             
-            const validYears = yearOrder.filter(y => y != null);
             const yearParams = `id_tahun_in=${validYears.join(',')}`;
             const deletedParam = showDeleted ? '&include_deleted=1' : '';
             
@@ -253,7 +302,9 @@ export default function Tabel2D({ role }) {
             const dataTahunan = resAll.dataTahunan || [];
             const dataDetails = resAll.dataDetails || [];
             
-            setMasterSumber(Array.isArray(masterSumber) ? masterSumber : []);
+            // Set master sumber dengan sorting
+            const sortedSumber = sortRowsByLatest(Array.isArray(masterSumber) ? masterSumber : []);
+            setMasterSumber(sortedSumber);
             
             // Set default sumber jika belum ada
             if (!singleInput.id_sumber && masterSumber.length > 0) {
@@ -287,8 +338,29 @@ export default function Tabel2D({ role }) {
                                 id_sumber: d.id_sumber,
                                 jenis_pengakuan: d.jenis_pengakuan,
                                 link_bukti: d.link_bukti,
-                                jumlah_mahasiswa_rekognisi: d.jumlah_mahasiswa_rekognisi || 0
-                            }));
+                                jumlah_mahasiswa_rekognisi: d.jumlah_mahasiswa_rekognisi || 0,
+                                created_at: d.created_at,
+                                updated_at: d.updated_at,
+                                id: d.id
+                            }))
+                            .sort((a, b) => {
+                                // Sort details berdasarkan terbaru
+                                if (a.updated_at && b.updated_at) {
+                                    const dateA = new Date(a.updated_at);
+                                    const dateB = new Date(b.updated_at);
+                                    if (dateA.getTime() !== dateB.getTime()) {
+                                        return dateB.getTime() - dateA.getTime();
+                                    }
+                                }
+                                if (a.created_at && b.created_at) {
+                                    const dateA = new Date(a.created_at);
+                                    const dateB = new Date(b.created_at);
+                                    if (dateA.getTime() !== dateB.getTime()) {
+                                        return dateB.getTime() - dateA.getTime();
+                                    }
+                                }
+                                return (b.id || 0) - (a.id || 0);
+                            });
                         
                         map[y] = { id_tahunan, lulusan_ts, details, hasData: true, deleted_at };
                     } else {
@@ -303,7 +375,7 @@ export default function Tabel2D({ role }) {
         } finally {
             setLoading(false);
         }
-    }, [yearOrder, selectedYear, singleInput.id_sumber, showDeleted, selectedProdi, isSuperAdmin, isProdiUser, authUser?.id_unit_prodi]);
+    }, [yearOrder, selectedYear, singleInput.id_sumber, showDeleted, selectedProdi, isSuperAdmin, isProdiUser, authUser?.id_unit_prodi, sortRowsByLatest]);
 
     useEffect(() => {
         fetchData();
@@ -327,7 +399,7 @@ export default function Tabel2D({ role }) {
             })));
             setModalJustOpened(false);
         }
-    }, [selectedYear, dataByYear, showAddModal, modalJustOpened]);
+    }, [selectedYear, yearOrder, dataByYear, showAddModal, modalJustOpened]);
     
     // Reset flag saat modal ditutup
     useEffect(() => {
@@ -377,6 +449,164 @@ export default function Tabel2D({ role }) {
             return dataByYear[yearId];
         }
         return null;
+    };
+
+    // Fungsi export Excel
+    const handleExport = async () => {
+        try {
+            if (!selectedYear || yearOrder.length === 0 || masterSumber.length === 0) {
+                throw new Error('Tidak ada data untuk diekspor.');
+            }
+
+            // Prepare data untuk export sesuai struktur tabel
+            const exportData = [];
+            
+            // Tambahkan header (merged header)
+            const headerRow1 = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y) => {
+                return yearLabelMap[y] || getTahunName(y);
+            }), 'LINK BUKTI'];
+            exportData.push(headerRow1);
+            
+            // Tambahkan baris untuk setiap sumber
+            masterSumber.forEach((sumber) => {
+                // Ambil detail untuk setiap tahun
+                const detailsByYear = yearOrder.map(y => {
+                    const yearData = getYearData(y);
+                    return yearData?.details.find(d => d.id_sumber === sumber.id_sumber) || null;
+                });
+                
+                // Ambil jenis pengakuan dari tahun TS (tahun yang dipilih, index terakhir)
+                const jenisPengakuan = detailsByYear[detailsByYear.length - 1]?.jenis_pengakuan || '-';
+                const linkBukti = detailsByYear[detailsByYear.length - 1]?.link_bukti || '';
+                
+                const sumberRow = [
+                    sumber.nama_sumber || '',
+                    jenisPengakuan,
+                    ...detailsByYear.map(detail => detail?.jumlah_mahasiswa_rekognisi || 0),
+                    linkBukti
+                ];
+                exportData.push(sumberRow);
+            });
+            
+            // Tambahkan baris Jumlah Rekognisi
+            exportData.push([
+                'Jumlah Rekognisi',
+                '',
+                ...yearOrder.map(y => totalsByYear[y] ?? 0),
+                ''
+            ]);
+            
+            // Tambahkan baris Jumlah Lulusan
+            exportData.push([
+                'Jumlah Lulusan',
+                '',
+                ...yearOrder.map(y => getYearData(y)?.lulusan_ts ?? 0),
+                ''
+            ]);
+            
+            // Tambahkan baris Persentase
+            exportData.push([
+                'Persentase',
+                '',
+                ...yearOrder.map(y => `${(percentByYear[y] ?? 0).toFixed(2)}%`),
+                ''
+            ]);
+
+            // Buat workbook baru
+            const wb = XLSX.utils.book_new();
+            
+            // Buat worksheet dari array data
+            const ws = XLSX.utils.aoa_to_sheet(exportData);
+            
+            // Set column widths
+            const colWidths = [
+                { wch: 30 },  // SUMBER REKOGNISI
+                { wch: 40 },  // JENIS PENGAKUAN LULUSAN (REKOGNISI)
+                ...yearOrder.map(() => ({ wch: 15 })), // Kolom tahun
+                { wch: 40 }   // LINK BUKTI
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Tambahkan worksheet ke workbook
+            const sheetName = showDeleted ? 'Data Terhapus' : 'Data Rekognisi';
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            
+            // Generate file dan download
+            const fileName = `Tabel_2D_Rekognisi_Lulusan_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Data berhasil diekspor ke Excel.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (err) {
+            console.error("Error exporting data:", err);
+            
+            // Fallback ke CSV jika xlsx gagal
+            try {
+                const escapeCsv = (str) => {
+                    if (str === null || str === undefined) return '';
+                    const strValue = String(str);
+                    if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+                        return `"${strValue.replace(/"/g, '""')}"`;
+                    }
+                    return strValue;
+                };
+                
+                const headerRow = ['SUMBER REKOGNISI', 'JENIS PENGAKUAN LULUSAN (REKOGNISI)', ...yearOrder.map((y) => {
+                    return yearLabelMap[y] || getTahunName(y);
+                }), 'LINK BUKTI'];
+                
+                const csvRows = [
+                    headerRow,
+                    ...masterSumber.map(sumber => {
+                        const detailsByYear = yearOrder.map(y => {
+                            const yearData = getYearData(y);
+                            return yearData?.details.find(d => d.id_sumber === sumber.id_sumber) || null;
+                        });
+                        const jenisPengakuan = detailsByYear[detailsByYear.length - 1]?.jenis_pengakuan || '-';
+                        const linkBukti = detailsByYear[detailsByYear.length - 1]?.link_bukti || '';
+                        return [
+                            sumber.nama_sumber || '',
+                            jenisPengakuan,
+                            ...detailsByYear.map(detail => detail?.jumlah_mahasiswa_rekognisi || 0),
+                            linkBukti
+                        ];
+                    }),
+                    ['Jumlah Rekognisi', '', ...yearOrder.map(y => totalsByYear[y] ?? 0), ''],
+                    ['Jumlah Lulusan', '', ...yearOrder.map(y => getYearData(y)?.lulusan_ts ?? 0), ''],
+                    ['Persentase', '', ...yearOrder.map(y => `${(percentByYear[y] ?? 0).toFixed(2)}%`), '']
+                ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+                
+                const csvContent = '\ufeff' + csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Tabel_2D_Rekognisi_Lulusan_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (csvErr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mengekspor data',
+                    text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+                });
+            }
+        }
     };
     
     // Handler untuk mengubah input tunggal
@@ -459,8 +689,11 @@ export default function Tabel2D({ role }) {
         e.preventDefault();
         setOpenFormSumberDropdown(false);
         
-        if (!selectedYear || isAllYearsSelected || !canManageData) {
-            Swal.fire("Error", "Pilih tahun akademik spesifik untuk menambah atau mengedit data", "error");
+        // Gunakan tahun TS (tahun terakhir dari yearOrder) jika selectedYear belum dipilih
+        const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+        
+        if (!tahunTS || isAllYearsSelected || !canManageData) {
+            Swal.fire("Error", "Tidak dapat menambah atau mengedit data", "error");
             return;
         }
 
@@ -476,8 +709,11 @@ export default function Tabel2D({ role }) {
                     jumlah_mahasiswa_rekognisi: Number(d.jumlah_mahasiswa_rekognisi) || 0
                 }));
 
+            // Gunakan tahun TS (tahun terakhir dari yearOrder) jika selectedYear belum dipilih
+            const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+            
             // Jika daftar rincian kosong, dan ada data historis, tawarkan hapus
-            if (payloadDetails.length === 0 && dataByYear[selectedYear]?.hasData) {
+            if (payloadDetails.length === 0 && tahunTS && dataByYear[tahunTS]?.hasData) {
                  const confirmed = await Swal.fire({
                     title: "Hapus Semua Rincian?",
                     text: "Daftar rincian kosong. Apakah Anda ingin menghapus semua data rekognisi untuk tahun TS ini?",
@@ -918,19 +1154,25 @@ export default function Tabel2D({ role }) {
                                 setShowAddModal(true);
                             }}
                             className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={loading || !selectedYear || isAllYearsSelected}
+                            disabled={loading || yearOrder.length === 0 || isAllYearsSelected}
                             title={isAllYearsSelected ? "Pilih tahun spesifik untuk menambah data" : ""}
                         >
                             + Tambah Data
                         </button>
                     )}
                     <button 
-                        onClick={() => window.open(`/api/tabel2d-rekognisi-lulusan/export`, '_blank')}
-                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors"
+                        onClick={handleExport}
+                        disabled={loading || yearOrder.length === 0 || masterSumber.length === 0}
+                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        title="Export ke Excel"
                     >
-                        Export Excel
+                        <FiDownload size={18} />
+                        <span>Export Excel</span>
                     </button>
-                    {canManageData && !isAllYearsSelected && dataByYear[selectedYear]?.hasData && (
+                    {canManageData && !isAllYearsSelected && (() => {
+                        const tahunTS = selectedYear || (yearOrder.length > 0 ? String(yearOrder[yearOrder.length - 1]) : null);
+                        return tahunTS && dataByYear[tahunTS]?.hasData;
+                    })() && (
                         <>
                             {showDeleted ? (
                                 <>
@@ -994,26 +1236,33 @@ export default function Tabel2D({ role }) {
                                 <tr>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">SUMBER REKOGNISI</th>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">JENIS PENGAKUAN LULUSAN (REKOGNISI)</th>
-                                    <th colSpan={yearOrder.length} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TAHUN AKADEMIK</th>
+                                    <th colSpan={5} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">TAHUN AKADEMIK</th>
                                     <th rowSpan={2} className="px-4 py-3 text-xs font-semibold uppercase text-center border border-white">LINK BUKTI</th>
                                 </tr>
                                 <tr>
-                                    {yearOrder.map((y, idx) => {
-                                        // Jika "Semua Tahun" dipilih, tampilkan nama tahun
-                                        // Jika tidak, gunakan mapping label berdasarkan posisi relatif terhadap tahun yang dipilih
-                                        let label;
-                                        if (isAllYearsSelected) {
-                                            label = getTahunName(y);
-                                        } else {
-                                            // Gunakan mapping label untuk memastikan tahun yang dipilih selalu mendapat label 'TS'
-                                            label = yearLabelMap[y] || getTahunName(y);
-                                        }
-                                        return (
-                                            <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
-                                                {label}
-                                            </th>
-                                        );
-                                    })}
+                                    {yearOrder.length > 0 ? (
+                                        yearOrder.map((y, idx) => {
+                                            // Selalu tampilkan 5 kolom TS meskipun ada null
+                                            // Label berdasarkan posisi: TS-4, TS-3, TS-2, TS-1, TS
+                                            const label = y != null 
+                                                ? (yearLabelMap[y] || getTahunName(y))
+                                                : (idx === 0 ? 'TS-4' : idx === 1 ? 'TS-3' : idx === 2 ? 'TS-2' : idx === 3 ? 'TS-1' : 'TS');
+                                            return (
+                                                <th key={y ?? `null-${idx}`} className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">
+                                                    {label}
+                                                </th>
+                                            );
+                                        })
+                                    ) : (
+                                        // Fallback: tampilkan 5 kolom TS jika yearOrder kosong
+                                        <>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-4</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-3</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-2</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS-1</th>
+                                            <th className="px-4 py-2 text-xs font-semibold uppercase text-center border border-white">TS</th>
+                                        </>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
@@ -1047,6 +1296,14 @@ export default function Tabel2D({ role }) {
                                             </td>
                                             <td className="px-4 py-3 text-slate-800 border border-slate-200 text-left">{jenisPengakuan}</td>
                                             {yearOrder.map((y, yearIdx) => {
+                                                // Selalu tampilkan 5 kolom TS meskipun ada null
+                                                if (y == null) {
+                                                    return (
+                                                        <td key={`null-${yearIdx}`} className="px-4 py-3 text-slate-800 border border-slate-200 text-center">
+                                                            -
+                                                        </td>
+                                                    );
+                                                }
                                                 const detail = detailsByYear[yearIdx];
                                                 const yearData = getYearData(y);
                                                 const isDeleted = yearData?.deleted_at;
@@ -1071,7 +1328,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Jumlah Rekognisi</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`total-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {totalsByYear[y] ?? 0}
+                                            {y != null ? (totalsByYear[y] ?? 0) : '-'}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3 border border-slate-200"></td>
@@ -1080,7 +1337,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Jumlah Lulusan</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`lulusan-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {getYearData(y)?.lulusan_ts ?? 0}
+                                            {y != null ? (getYearData(y)?.lulusan_ts ?? 0) : '-'}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3 border border-slate-200" rowSpan={2}></td>
@@ -1089,7 +1346,7 @@ export default function Tabel2D({ role }) {
                                     <td className="px-4 py-3 border border-slate-200 text-slate-800 bg-gray-50" colSpan={2}>Persentase</td>
                                     {yearOrder.map((y, idx) => (
                                         <td key={`persen-${y ?? idx}`} className="px-4 py-3 border border-slate-200 text-center text-slate-800">
-                                            {`${(percentByYear[y] ?? 0).toFixed(2)}%`}
+                                            {y != null ? `${(percentByYear[y] ?? 0).toFixed(2)}%` : '-'}
                                         </td>
                                     ))}
                                 </tr>
@@ -1112,15 +1369,15 @@ export default function Tabel2D({ role }) {
                   }}
                 >
                     <div 
-                      className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+                      className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
                       style={{ zIndex: 10000 }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white sticky top-0">
+                        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
                             <h3 className="text-xl font-bold">{isEditMode ? "Edit Data Rekognisi Lulusan" : "Tambah Data Rekognisi Lulusan"}</h3>
                             <p className="text-white/80 mt-1 text-sm">Lengkapi data rekognisi lulusan untuk tahun TS ({getTahunName(selectedYear)})</p>
                         </div>
-                        <div className="p-8">
+                        <div className="p-8 overflow-y-auto flex-1">
                             {/* Form Input Rincian Baris Tunggal - Tampil jika tidak sedang edit detail (bisa tambah rincian baru baik dalam mode tambah maupun edit) */}
                             {!editingDetail && (
                                 <form onSubmit={handleAddRekognisi} className="space-y-4 mb-6 pb-6 border-b border-gray-200">
@@ -1238,7 +1495,7 @@ export default function Tabel2D({ role }) {
                                         <button
                                             type="submit"
                                             disabled={saving || !singleInput.id_sumber}
-                                            className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                                         >
                                             + Tambah ke Daftar
                                         </button>
@@ -1385,7 +1642,7 @@ export default function Tabel2D({ role }) {
                                 <button
                                     type="submit"
                                     disabled={saving || !singleInput.id_sumber}
-                                            className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                                 >
                                             Perbarui Rincian
                                 </button>
@@ -1468,16 +1725,23 @@ export default function Tabel2D({ role }) {
                                                 link_bukti: "",
                                             });
                                         }} 
-                                        className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                                        className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                     >
                                         Batal
                                     </button>
                             <button
                                 type="submit"
                                 disabled={saving || (detailsToSubmit.length === 0 && !dataByYear[selectedYear]?.hasData)}
-                                className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                             >
-                                {saving ? "Menyimpan..." : (dataByYear[selectedYear]?.hasData ? "Perbarui Semua Data TS" : "Simpan Semua Data TS")}
+                                {saving ? (
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                                    <span>Menyimpan...</span>
+                                  </div>
+                                ) : (
+                                  dataByYear[selectedYear]?.hasData ? "Perbarui Semua Data TS" : "Simpan Semua Data TS"
+                                )}
                             </button>
                         </div>
                     </form>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiKey, FiChevronDown, FiBriefcase, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiKey, FiChevronDown, FiBriefcase, FiShield, FiUser } from 'react-icons/fi';
 
 export default function UserManagementPage() {
   const api = useApi();
@@ -13,8 +13,7 @@ export default function UserManagementPage() {
   const isReadOnlyRole = loweredRole === "ketuastikom";
   const [users, setUsers] = useState([]);
   const [units, setUnits] = useState([]);
-  const [pegawaiList, setPegawaiList] = useState([]);
-  const [pegawaiQuery, setPegawaiQuery] = useState("");
+  const [allPegawai, setAllPegawai] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,6 +26,7 @@ export default function UserManagementPage() {
   
   // Form dropdown states
   const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
+  const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
   
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -114,6 +114,31 @@ export default function UserManagementPage() {
     }
   };
 
+  // Ambil semua pegawai untuk dropdown
+  const fetchAllPegawai = async () => {
+    try {
+      const data = await api.get("/pegawai");
+      // Urutkan berdasarkan nama_lengkap secara alfabetis
+      const sortedPegawai = Array.isArray(data) ? [...data].sort((a, b) => {
+        const namaA = (a.nama_lengkap || '').trim().toLowerCase();
+        const namaB = (b.nama_lengkap || '').trim().toLowerCase();
+        
+        if (namaA === namaB) {
+          return (a.id_pegawai || 0) - (b.id_pegawai || 0);
+        }
+        
+        return namaA.localeCompare(namaB, 'id', { 
+          sensitivity: 'base',
+          numeric: true 
+        });
+      }) : [];
+      setAllPegawai(sortedPegawai);
+    } catch (err) {
+      console.error("Gagal ambil pegawai:", err);
+      setAllPegawai([]);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []); // Fetch sekali saat mount
@@ -122,10 +147,39 @@ export default function UserManagementPage() {
     fetchUnits();
   }, []); // Fetch units sekali saat mount
 
+  // Fetch pegawai saat form dibuka
+  useEffect(() => {
+    if (showForm) {
+      fetchAllPegawai();
+    }
+  }, [showForm]);
+
+  // Lock body scroll when form is open
+  useEffect(() => {
+    if (showForm) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showForm]);
+
   // Close form dropdowns when form closes
   useEffect(() => {
     if (!showForm) {
       setOpenFormUnitDropdown(false);
+      setOpenFormPegawaiDropdown(false);
     }
   }, [showForm]);
 
@@ -135,21 +189,25 @@ export default function UserManagementPage() {
       if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
         setOpenFormUnitDropdown(false);
       }
+      if (openFormPegawaiDropdown && !event.target.closest('.form-pegawai-dropdown-container') && !event.target.closest('.form-pegawai-dropdown-menu')) {
+        setOpenFormPegawaiDropdown(false);
+      }
     };
 
-    if (openFormUnitDropdown) {
+    if (openFormUnitDropdown || openFormPegawaiDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openFormUnitDropdown]);
+  }, [openFormUnitDropdown, openFormPegawaiDropdown]);
 
   // Submit tambah/edit user
   const handleSubmit = async (e) => {
     if (isReadOnlyRole) return;
     e.preventDefault();
     setOpenFormUnitDropdown(false);
+    setOpenFormPegawaiDropdown(false);
     
     // Validasi form
     if (!formData.username || !formData.username.trim()) {
@@ -227,8 +285,6 @@ export default function UserManagementPage() {
       id_pegawai: "",
       role: "PRODI",
     });
-    setPegawaiQuery("");
-    setPegawaiList([]);
     setEditMode(false);
   };
 
@@ -243,8 +299,6 @@ export default function UserManagementPage() {
       id_pegawai: user.id_pegawai || "",
       role: user.role || "PRODI",
     });
-    setPegawaiQuery(user.pegawai_name || "");
-    setPegawaiList([]);
     setEditMode(true);
     setShowForm(true);
   };
@@ -313,16 +367,16 @@ export default function UserManagementPage() {
   const handleResetPassword = (user) => {
     if (isReadOnlyRole) return;
     
-    // Cek apakah user adalah superadmin (waket1, waket2, tpm)
+    // Cek apakah user yang sedang login adalah superadmin (waket1, waket2, tpm, superadmin)
     const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
-    const userRole = user.role?.toLowerCase();
-    const isSuperAdmin = superAdminRoles.includes(userRole);
+    const currentUserRole = authUser?.role?.toLowerCase();
+    const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
     
-    if (!isSuperAdmin) {
+    if (!isCurrentUserSuperAdmin) {
       Swal.fire({
         icon: 'warning',
         title: 'Akses Ditolak',
-        text: 'Reset password hanya tersedia untuk role superadmin (WAKET-1, WAKET-2, TPM).'
+        text: 'Hanya superadmin (WAKET-1, WAKET-2, TPM) yang dapat mereset password.'
       });
       return;
     }
@@ -342,7 +396,7 @@ export default function UserManagementPage() {
           await api.put(`/users/${user.id_user}`, {
             password: "123"
           });
-          fetchUsers();
+          await fetchUsers();
           Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
@@ -352,7 +406,8 @@ export default function UserManagementPage() {
           });
         } catch (err) {
           console.error("Gagal reset password:", err);
-          Swal.fire('Gagal!', `Gagal mereset password: ${err.message}`, 'error');
+          const errorMessage = err?.response?.data?.error || err?.message || 'Gagal mereset password.';
+          Swal.fire('Gagal!', errorMessage, 'error');
         }
       }
     });
@@ -492,12 +547,13 @@ export default function UserManagementPage() {
               <span>Edit</span>
             </button>
             {(() => {
-              // Cek apakah user adalah superadmin (waket1, waket2, tpm, superadmin)
+              // Cek apakah user yang sedang login adalah superadmin (waket1, waket2, tpm, superadmin)
               const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
-              const userRole = currentUser.role?.toLowerCase();
-              const isSuperAdmin = superAdminRoles.includes(userRole);
+              const currentUserRole = authUser?.role?.toLowerCase();
+              const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
               
-              if (isSuperAdmin) {
+              // Super admin bisa reset password untuk semua user
+              if (isCurrentUserSuperAdmin) {
                 return (
                   <button
                     onClick={(e) => {
@@ -537,6 +593,7 @@ export default function UserManagementPage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setOpenFormUnitDropdown(false);
+              setOpenFormPegawaiDropdown(false);
               setShowForm(false);
               setEditMode(false);
               resetForm();
@@ -544,10 +601,10 @@ export default function UserManagementPage() {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 border border-slate-100 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">
                 {editMode ? 'Edit' : 'Tambah'} Akun Pengguna
               </h2>
@@ -555,7 +612,8 @@ export default function UserManagementPage() {
                 {editMode ? 'Perbarui informasi akun pengguna' : 'Buat akun pengguna baru untuk sistem penjaminan mutu'}.
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <div className="overflow-y-auto flex-1">
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Username
@@ -653,47 +711,77 @@ export default function UserManagementPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Pegawai
                 </label>
-                <input
-                  type="text"
-                  value={pegawaiQuery}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setPegawaiQuery(val);
-                    if (val.length >= 2) {
-                      api.get(`/users/extra/pegawai?search=${val}`)
-                        .then(setPegawaiList)
-                        .catch(console.error);
-                    } else {
-                      setPegawaiList([]);
-                    }
-                    setFormData({ ...formData, id_pegawai: "" });
-                  }}
-                  placeholder="Ketik nama pegawai untuk mencari..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-                />
-                {pegawaiList.length > 0 && (
-                  <ul className="border border-slate-200 mt-1 max-h-40 overflow-y-auto rounded-lg shadow bg-white z-50 relative">
-                    {pegawaiList.map((p) => (
-                      <li
-                        key={p.id_pegawai}
-                        className="px-4 py-3 hover:bg-[#eaf4ff] cursor-pointer border-b border-gray-100 last:border-b-0"
-                        onClick={() => {
-                          setFormData({ ...formData, id_pegawai: p.id_pegawai });
-                          setPegawaiQuery(p.nama_lengkap);
-                          setPegawaiList([]);
-                        }}
-                      >
-                        <div className="font-medium text-slate-700">{p.nama_lengkap}</div>
-                        {p.nip && (
-                          <div className="text-sm text-slate-500">{p.nip}</div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="relative form-pegawai-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenFormPegawaiDropdown(!openFormPegawaiDropdown);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                      formData.id_pegawai
+                        ? 'border-[#0384d6] bg-white' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                    aria-label="Pilih pegawai"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${formData.id_pegawai ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {formData.id_pegawai 
+                          ? (() => {
+                              const found = allPegawai.find(p => String(p.id_pegawai) === String(formData.id_pegawai));
+                              return found ? found.nama_lengkap : formData.id_pegawai;
+                            })()
+                          : '-- Pilih Pegawai --'}
+                      </span>
+                    </div>
+                    <FiChevronDown 
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                        openFormPegawaiDropdown ? 'rotate-180' : ''
+                      }`} 
+                      size={18} 
+                    />
+                  </button>
+                  {openFormPegawaiDropdown && (
+                    <div 
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pegawai-dropdown-menu mt-1 w-full"
+                    >
+                      {allPegawai.length > 0 ? (
+                        allPegawai.map(p => (
+                          <button
+                            key={p.id_pegawai}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, id_pegawai: p.id_pegawai });
+                              setOpenFormPegawaiDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                              formData.id_pegawai === String(p.id_pegawai)
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{p.nama_lengkap}</div>
+                              {p.nip && (
+                                <div className="text-sm text-gray-500 truncate">{p.nip}</div>
+                              )}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data pegawai
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -728,22 +816,23 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={() => {
                     setOpenFormUnitDropdown(false);
+                    setOpenFormPegawaiDropdown(false);
                     setShowForm(false);
                     setEditMode(false);
                     resetForm();
                   }}
-                  className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 flex items-center gap-2"
                 >
                   {submitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
                       <span>Menyimpan...</span>
                     </>
                   ) : (
@@ -751,7 +840,8 @@ export default function UserManagementPage() {
                   )}
                 </button>
               </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

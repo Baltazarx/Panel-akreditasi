@@ -5,7 +5,8 @@ import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 // ============================================================
 // PROFIL LULUSAN CRUD
@@ -45,6 +46,32 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
   const canUpdate = roleCan(role, "profil_lulusan", "U");
   const canDelete = roleCan(role, "profil_lulusan", "D");
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      return (b.id_pl || 0) - (a.id_pl || 0);
+    });
+  };
+  
   // Set selectedProdi untuk user prodi
   useEffect(() => {
     if (!isSuperAdmin && userProdiId && !selectedProdi) {
@@ -72,7 +99,9 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
         url += `?id_unit_prodi=${selectedProdi}`;
       }
       const result = await apiFetch(url);
-      setRows(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      const sortedRows = sortRowsByLatest(rowsArray);
+      setRows(sortedRows);
     } catch (err) {
       console.error("Error fetching Profil Lulusan:", err);
       Swal.fire('Error', 'Gagal memuat data Profil Lulusan', 'error');
@@ -266,11 +295,129 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
     uk => uk.id_unit === 4 || uk.id_unit === 5 // Asumsi hanya TI (4) dan MI (5)
   );
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      const dataToExport = filteredRows && filteredRows.length > 0 ? filteredRows : rows;
+      
+      if (!dataToExport || dataToExport.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headers = ['ID', 'Kode PL', 'Deskripsi', 'Unit Prodi'];
+      exportData.push(headers);
+      
+      // Tambahkan data rows
+      dataToExport.forEach((row) => {
+        const rowData = [
+          row.id_pl || '',
+          row.kode_pl || '',
+          row.deskripsi_pl || '',
+          row.nama_unit_prodi || ''
+        ];
+        exportData.push(rowData);
+      });
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 8 },   // ID
+        { wch: 15 },  // Kode PL
+        { wch: 60 },  // Deskripsi
+        { wch: 20 }   // Unit Prodi
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Profil Lulusan');
+      
+      // Generate file dan download
+      const fileName = `Data_Profil_Lulusan_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const dataToExport = filteredRows && filteredRows.length > 0 ? filteredRows : rows;
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['ID', 'Kode PL', 'Deskripsi', 'Unit Prodi'],
+          ...dataToExport.map(row => [
+            row.id_pl || '',
+            row.kode_pl || '',
+            row.deskripsi_pl || '',
+            row.nama_unit_prodi || ''
+          ])
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Data_Profil_Lulusan_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-800">Profil Lulusan</h2>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={loading || (!rows || rows.length === 0) && (!filteredRows || filteredRows.length === 0)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
           
           {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
           {isSuperAdmin && (
@@ -484,14 +631,14 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">{editing ? 'Edit Profil Lulusan (PL)' : 'Tambah Profil Lulusan (PL) Baru'}</h2>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Kode PL</label>
@@ -597,15 +744,23 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange }) {
                       setShowModal(false);
                       setEditing(null);
                     }}
-                    className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                    {loading ? "Menyimpan..." : "Simpan"}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      "Simpan"
+                    )}
                   </button>
                 </div>
               </form>

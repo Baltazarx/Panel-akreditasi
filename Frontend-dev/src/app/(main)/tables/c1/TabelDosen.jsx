@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiBook, FiAward } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiBook, FiAward, FiUser } from 'react-icons/fi';
 
 export default function TabelDosen({ role }) {
   const table = { key: "dosen", label: "Manajemen Data Dosen", path: "/dosen" };
@@ -26,10 +26,9 @@ export default function TabelDosen({ role }) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [ptCustom, setPtCustom] = useState("");
   const [showPtInput, setShowPtInput] = useState(false);
-  const [pegawaiSearch, setPegawaiSearch] = useState("");
-  const [showPegawaiDropdown, setShowPegawaiDropdown] = useState(false);
   
   // Form dropdown states
+  const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
   const [openFormHomebaseDropdown, setOpenFormHomebaseDropdown] = useState(false);
   const [openFormPtDropdown, setOpenFormPtDropdown] = useState(false);
   const [openFormJabatanDropdown, setOpenFormJabatanDropdown] = useState(false);
@@ -72,6 +71,7 @@ export default function TabelDosen({ role }) {
       setOpenDropdownId(null);
     } else {
       // Close form dropdowns when modal closes
+      setOpenFormPegawaiDropdown(false);
       setOpenFormHomebaseDropdown(false);
       setOpenFormPtDropdown(false);
       setOpenFormJabatanDropdown(false);
@@ -81,6 +81,9 @@ export default function TabelDosen({ role }) {
   // Close form dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (openFormPegawaiDropdown && !event.target.closest('.form-pegawai-dropdown-container') && !event.target.closest('.form-pegawai-dropdown-menu')) {
+        setOpenFormPegawaiDropdown(false);
+      }
       if (openFormHomebaseDropdown && !event.target.closest('.form-homebase-dropdown-container') && !event.target.closest('.form-homebase-dropdown-menu')) {
         setOpenFormHomebaseDropdown(false);
       }
@@ -92,13 +95,13 @@ export default function TabelDosen({ role }) {
       }
     };
 
-    if (openFormHomebaseDropdown || openFormPtDropdown || openFormJabatanDropdown) {
+    if (openFormPegawaiDropdown || openFormHomebaseDropdown || openFormPtDropdown || openFormJabatanDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openFormHomebaseDropdown, openFormPtDropdown, openFormJabatanDropdown]);
+  }, [openFormPegawaiDropdown, openFormHomebaseDropdown, openFormPtDropdown, openFormJabatanDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -126,24 +129,6 @@ export default function TabelDosen({ role }) {
   const canUpdate = roleCan(role, table.key, "U");
   const canDelete = roleCan(role, table.key, "D");
 
-  // Filter pegawai berdasarkan pencarian (bisa di mana saja dalam nama)
-  const filteredPegawai = maps?.pegawai ? Object.values(maps.pegawai).filter(pegawai => 
-    pegawai.nama_lengkap.toLowerCase().includes(pegawaiSearch.toLowerCase())
-  ).sort((a, b) => {
-    // Urutkan berdasarkan relevansi: yang dimulai dengan pencarian di atas
-    const aStartsWith = a.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
-    const bStartsWith = b.nama_lengkap.toLowerCase().startsWith(pegawaiSearch.toLowerCase());
-    
-    if (aStartsWith && !bStartsWith) return -1;
-    if (!aStartsWith && bStartsWith) return 1;
-    
-    // Jika sama-sama dimulai atau tidak dimulai, urutkan alfabetis
-    return a.nama_lengkap.localeCompare(b.nama_lengkap);
-  }) : [];
-
-  // Mendapatkan nama pegawai yang dipilih
-  const selectedPegawai = maps?.pegawai && formState.id_pegawai ? 
-    maps.pegawai[formState.id_pegawai] : null;
   const canRestore = roleCan(role, table.key, "H");
   
   // Debug permissions
@@ -266,12 +251,12 @@ export default function TabelDosen({ role }) {
   useEffect(() => {
     if (editing) {
       setFormState({
-        id_pegawai: editing.id_pegawai || "",
+        id_pegawai: editing.id_pegawai ? String(editing.id_pegawai) : "",
         nidn: editing.nidn || "",
         nuptk: editing.nuptk || "",
         homebase: editing.homebase || "",
         pt: editing.pt || "",
-        id_jafung: editing.id_jafung || "",
+        id_jafung: editing.id_jafung ? String(editing.id_jafung) : "",
         beban_sks: editing.beban_sks || "",
       });
       // Set ptCustom untuk input text jika PT bukan STIKOM PGRI Banyuwangi
@@ -281,13 +266,6 @@ export default function TabelDosen({ role }) {
       } else {
         setPtCustom("");
         setShowPtInput(false);
-      }
-      
-      // Set pegawaiSearch untuk combobox
-      if (editing.id_pegawai && maps?.pegawai && maps.pegawai[editing.id_pegawai]) {
-        setPegawaiSearch(maps.pegawai[editing.id_pegawai].nama_lengkap);
-      } else {
-        setPegawaiSearch("");
       }
     } else {
       setFormState({
@@ -301,13 +279,12 @@ export default function TabelDosen({ role }) {
       });
       setPtCustom("");
       setShowPtInput(false);
-      setPegawaiSearch("");
-      setShowPegawaiDropdown(false);
     }
   }, [editing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setOpenFormPegawaiDropdown(false);
     setOpenFormHomebaseDropdown(false);
     setOpenFormPtDropdown(false);
     setOpenFormJabatanDropdown(false);
@@ -349,26 +326,32 @@ export default function TabelDosen({ role }) {
       const url = editing ? `${table.path}/${editing[idField]}` : table.path;
       const method = editing ? "PUT" : "POST";
       
+      // Prepare payload dengan konversi id_pegawai ke integer
+      const payload = {
+        ...formState,
+        id_pegawai: formState.id_pegawai ? parseInt(formState.id_pegawai) : null,
+        id_jafung: formState.id_jafung ? parseInt(formState.id_jafung) : null,
+        beban_sks: formState.beban_sks ? parseFloat(formState.beban_sks) : null,
+      };
+      
       console.log('Edit data:', {
         url,
         method,
         idField,
         editingId: editing ? editing[idField] : null,
-        formState
+        payload
       });
       
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
+        body: JSON.stringify(payload),
       });
       
       setShowModal(false);
       setEditing(null);
       setPtCustom("");
       setShowPtInput(false);
-      setPegawaiSearch("");
-      setShowPegawaiDropdown(false);
       fetchRows();
       
       Swal.fire({
@@ -701,6 +684,7 @@ export default function TabelDosen({ role }) {
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
+              setOpenFormPegawaiDropdown(false);
               setOpenFormHomebaseDropdown(false);
               setOpenFormPtDropdown(false);
               setOpenFormJabatanDropdown(false);
@@ -709,72 +693,88 @@ export default function TabelDosen({ role }) {
             }
           }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">{editing ? 'Edit Data Dosen' : 'Tambah Data Dosen'}</h2>
               <p className="text-white/80 mt-1 text-sm">Isi formulir data dosen dengan lengkap.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">ID Pegawai <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={pegawaiSearch}
-                        onChange={(e) => {
-                          setPegawaiSearch(e.target.value);
-                          setShowPegawaiDropdown(true);
-                          if (!e.target.value) {
-                            setFormState({...formState, id_pegawai: ""});
-                          }
+                    <label className="block text-sm font-semibold text-gray-700">Pilih Pegawai <span className="text-red-500">*</span></label>
+                    <div className="relative form-pegawai-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenFormPegawaiDropdown(!openFormPegawaiDropdown);
                         }}
-                        onFocus={() => setShowPegawaiDropdown(true)}
-                        onBlur={() => {
-                          // Delay untuk memungkinkan click pada dropdown
-                          setTimeout(() => {
-                            setShowPegawaiDropdown(false);
-                            // Jika user mengetik tapi tidak memilih dari dropdown, reset id_pegawai
-                            if (pegawaiSearch && !selectedPegawai) {
-                              setFormState({...formState, id_pegawai: ""});
-                            }
-                          }, 200);
-                        }}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                        placeholder="Cari atau pilih pegawai..."
-                      />
-                      {showPegawaiDropdown && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {filteredPegawai.length > 0 ? (
-                            filteredPegawai.map((pegawai) => (
-                              <div
-                                key={pegawai.id_pegawai}
-                                className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                onMouseDown={(e) => {
-                                  e.preventDefault(); // Mencegah onBlur dari input
-                                }}
-                                onClick={() => {
-                                  setFormState({...formState, id_pegawai: pegawai.id_pegawai});
-                                  setPegawaiSearch(pegawai.nama_lengkap);
-                                  setShowPegawaiDropdown(false);
-                                }}
-                              >
-                                <div className="font-medium text-gray-900">{pegawai.nama_lengkap}</div>
-                                <div className="text-sm text-gray-500">ID: {pegawai.id_pegawai}</div>
-                              </div>
-                            ))
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
+                          formState.id_pegawai
+                            ? 'border-[#0384d6] bg-white' 
+                            : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                        aria-label="Pilih pegawai"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                          <span className={`truncate ${formState.id_pegawai ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {formState.id_pegawai 
+                              ? (() => {
+                                  const found = maps?.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
+                                  return found ? (found.nama_lengkap || found.nama || formState.id_pegawai) : formState.id_pegawai;
+                                })()
+                              : '-- Pilih Pegawai --'}
+                          </span>
+                        </div>
+                        <FiChevronDown 
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+                            openFormPegawaiDropdown ? 'rotate-180' : ''
+                          }`} 
+                          size={18} 
+                        />
+                      </button>
+                      {openFormPegawaiDropdown && (
+                        <div 
+                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pegawai-dropdown-menu mt-1 w-full"
+                        >
+                          {maps?.pegawai && Object.values(maps.pegawai).length > 0 ? (
+                            Object.values(maps.pegawai)
+                              .filter(p => !p.deleted_at) // Hanya tampilkan pegawai yang tidak dihapus
+                              .sort((a, b) => {
+                                const namaA = (a.nama_lengkap || a.nama || '').toLowerCase();
+                                const namaB = (b.nama_lengkap || b.nama || '').toLowerCase();
+                                return namaA.localeCompare(namaB, 'id', { sensitivity: 'base', numeric: true });
+                              })
+                              .map(p => (
+                                <button
+                                  key={p.id_pegawai}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormState({...formState, id_pegawai: String(p.id_pegawai)});
+                                    setOpenFormPegawaiDropdown(false);
+                                  }}
+                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
+                                    formState.id_pegawai === String(p.id_pegawai)
+                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                                  <span className="truncate">{p.nama_lengkap || p.nama || `Pegawai ${p.id_pegawai}`}</span>
+                                </button>
+                              ))
                           ) : (
-                            <div className="px-4 py-3 text-gray-500 text-center">
-                              {pegawaiSearch ? "Pegawai tidak ditemukan" : "Tidak ada data pegawai"}
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              Tidak ada data pegawai
                             </div>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">NIDN <span className="text-red-500">*</span></label>
                     <input
@@ -1028,6 +1028,7 @@ export default function TabelDosen({ role }) {
                   <button 
                       type="button" 
                       onClick={() => {
+                        setOpenFormPegawaiDropdown(false);
                         setOpenFormHomebaseDropdown(false);
                         setOpenFormPtDropdown(false);
                         setOpenFormJabatanDropdown(false);
@@ -1035,21 +1036,24 @@ export default function TabelDosen({ role }) {
                         setEditing(null);
                         setPtCustom("");
                         setShowPtInput(false);
-                        setPegawaiSearch("");
-                        setShowPegawaiDropdown(false);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={loading}
                   >
-                      <span className="relative z-10">{loading ? "Menyimpan..." : "Simpan"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                        </div>
+                      ) : (
+                        'Simpan'
+                      )}
                   </button>
                 </div>
               </form>

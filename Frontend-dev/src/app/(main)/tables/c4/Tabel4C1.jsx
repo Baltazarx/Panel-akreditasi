@@ -28,7 +28,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   const [jumlahDanaPendanaan, setJumlahDanaPendanaan] = useState("");
 
   const [tahunList, setTahunList] = useState([]);
-  const [tahunLaporan, setTahunLaporan] = useState(null);
 
   // Dropdown state
   const [openSumberDropdown, setOpenSumberDropdown] = useState(false);
@@ -101,25 +100,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
     setOpenTahunPendanaanDropdown(false);
   }, [initialData, isOpen]);
 
-  // Get tahun laporan untuk menentukan tahun laporan (untuk display di tabel)
-  useEffect(() => {
-    const getTahunLaporan = async () => {
-      try {
-        if (tahunList.length > 0 && selectedTahun) {
-          const response = await apiFetch(`${ENDPOINT}?ts_id=${selectedTahun}`);
-          if (response.tahun_laporan) {
-            setTahunLaporan(response.tahun_laporan);
-          }
-        }
-      } catch (err) {
-        console.error("Error getting tahun laporan:", err);
-      }
-    };
-    
-    if (isOpen && tahunList.length > 0 && selectedTahun) {
-      getTahunLaporan();
-    }
-  }, [isOpen, tahunList, selectedTahun]);
 
   // Lock body scroll when modal is open - HARUS SEBELUM EARLY RETURN
   useEffect(() => {
@@ -248,17 +228,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Kerjasama PKM" : "Tambah Kerjasama PKM"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Lengkapi data Kerjasama PKM sesuai dengan format LKPS.</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Judul Kerjasama */}
           <div>
             <label htmlFor="judul_kerjasama" className="block text-sm font-medium text-slate-700 mb-1">
@@ -575,17 +555,15 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                 setOpenTahunPendanaanDropdown(false);
                 onClose();
               }}
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">Batal</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Batal
             </button>
             <button
               type="submit"
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              <span className="relative z-10">Simpan</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Simpan
             </button>
           </div>
         </form>
@@ -600,7 +578,6 @@ export default function Tabel4C1({ auth, role: propRole }) {
   const { maps } = useMaps(auth?.user || authUser || true);
   
   const [rows, setRows] = useState([]);
-  const [tahunLaporan, setTahunLaporan] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -620,6 +597,34 @@ export default function Tabel4C1({ auth, role: propRole }) {
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
   
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+  
   // Fetch tahun akademik
   useEffect(() => {
     const fetchTahun = async () => {
@@ -636,12 +641,27 @@ export default function Tabel4C1({ auth, role: propRole }) {
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          // Prioritaskan tahun 2020/2021, jika tidak ada gunakan tahun terkecil
-          const tahun2020 = sorted.find(t => {
-            const tahunStr = String(t.tahun || t.nama || "");
-            return tahunStr.includes("2020") || parseInt(t.id_tahun) === 2020;
+          // Prioritaskan tahun 2024/2025, jika tidak ada cari 2024/2025, lalu fallback ke 2020/2021
+          let tahun2024 = sorted.find(t => {
+            const tahunStr = String(t.tahun || t.nama || "").toLowerCase();
+            const yearId = String(t.id_tahun || "");
+            return (tahunStr.includes("2024/2025") || yearId.includes("2024/2025"));
           });
-          setSelectedTahun(tahun2020 ? tahun2020.id_tahun : sorted[0].id_tahun);
+          if (!tahun2024) {
+            tahun2024 = sorted.find(t => {
+              const tahunStr = String(t.tahun || t.nama || "").toLowerCase();
+              const yearId = String(t.id_tahun || "");
+              return tahunStr.includes("2024") || tahunStr.includes("2025") || 
+                     yearId.includes("2024") || yearId.includes("2025");
+            });
+          }
+          if (!tahun2024) {
+            tahun2024 = sorted.find(t => {
+              const tahunStr = String(t.tahun || t.nama || "");
+              return tahunStr.includes("2020") || parseInt(t.id_tahun) === 2020;
+            });
+          }
+          setSelectedTahun(tahun2024 ? tahun2024.id_tahun : sorted[0].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -650,25 +670,83 @@ export default function Tabel4C1({ auth, role: propRole }) {
     fetchTahun();
   }, []);
 
-  // Fetch data
+  // Hitung yearOrder untuk 5 kolom TS (TS-4, TS-3, TS-2, TS-1, TS) berdasarkan selectedTahun
+  const yearOrder = useMemo(() => {
+    if (tahunList.length === 0 || !selectedTahun) return [];
+    
+    const idx = tahunList.findIndex((y) => y.id_tahun === selectedTahun);
+    if (idx === -1) return [];
+    
+    // Tahun yang dipilih = TS (kolom paling kanan)
+    const ts = tahunList[idx]?.id_tahun;
+    const ts1 = idx > 0 ? tahunList[idx - 1]?.id_tahun : null; // Tahun sebelumnya = TS-1
+    const ts2 = idx > 1 ? tahunList[idx - 2]?.id_tahun : null; // Tahun sebelumnya lagi = TS-2
+    const ts3 = idx > 2 ? tahunList[idx - 3]?.id_tahun : null; // Tahun sebelumnya lagi = TS-3
+    const ts4 = idx > 3 ? tahunList[idx - 4]?.id_tahun : null; // Tahun sebelumnya lagi = TS-4
+    
+    // Urutan array dari kiri ke kanan: [TS-4, TS-3, TS-2, TS-1, TS]
+    // Tampilkan semua 5 kolom meskipun ada null (untuk konsistensi tampilan)
+    return [ts4, ts3, ts2, ts1, ts];
+  }, [tahunList, selectedTahun]);
+
+  // Mapping tahun ke label untuk display
+  const yearLabelMap = useMemo(() => {
+    if (tahunList.length === 0 || !selectedTahun) return {};
+    
+    const idx = tahunList.findIndex((y) => y.id_tahun === selectedTahun);
+    if (idx === -1) return {};
+    
+    const map = {};
+    // Tahun yang dipilih = TS
+    map[tahunList[idx]?.id_tahun] = 'TS';
+    // Tahun sebelumnya = TS-1
+    if (idx > 0) map[tahunList[idx - 1]?.id_tahun] = 'TS-1';
+    // Tahun sebelumnya lagi = TS-2
+    if (idx > 1) map[tahunList[idx - 2]?.id_tahun] = 'TS-2';
+    // Tahun sebelumnya lagi = TS-3
+    if (idx > 2) map[tahunList[idx - 3]?.id_tahun] = 'TS-3';
+    // Tahun sebelumnya lagi = TS-4
+    if (idx > 3) map[tahunList[idx - 4]?.id_tahun] = 'TS-4';
+    
+    return map;
+  }, [tahunList, selectedTahun]);
+
+  // Helper function untuk mendapatkan nama tahun
+  const getTahunName = (id) => {
+    if (!id) return null;
+    const found = tahunList.find(t => t.id_tahun === id);
+    return found ? (found.tahun || found.nama || found.id_tahun) : id;
+  };
+
+  // Fetch data - menggunakan ts_id seperti yang diharapkan backend
   const fetchRows = async () => {
     if (!selectedTahun) return;
     
     try {
       setLoading(true);
       setError("");
+      
+      // Build URL dengan ts_id (backend akan menghitung 5 tahun secara otomatis)
       let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
       if (showDeleted) {
         url += "&include_deleted=1";
       }
+      
       const response = await apiFetch(url);
       
-      if (response.tahun_laporan) {
-        setTahunLaporan(response.tahun_laporan);
-      }
-      
       const data = Array.isArray(response.data) ? response.data : (response.items || []);
-      setRows(data);
+      
+      // Hapus duplikasi berdasarkan ID (jika ada)
+      const uniqueData = data.filter((row, index, self) => {
+        const rowId = getIdField(row) ? row[getIdField(row)] : row.id;
+        return index === self.findIndex((r) => {
+          const rId = getIdField(r) ? r[getIdField(r)] : r.id;
+          return rId === rowId;
+        });
+      });
+      
+      const sortedRows = sortRowsByLatest(uniqueData);
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
       Swal.fire('Error!', e?.message || "Gagal memuat data", 'error');
@@ -855,28 +933,47 @@ export default function Tabel4C1({ auth, role: propRole }) {
     }
   };
 
-  // Filter rows
+  // Filter rows dan hapus duplikasi
   const filteredRows = useMemo(() => {
+    let filtered = [];
     if (showDeleted) {
       // Hanya tampilkan data yang benar-benar dihapus (deleted_at IS NOT NULL)
-      return rows.filter(r => r.deleted_at);
+      filtered = rows.filter(r => r.deleted_at);
+    } else {
+      // Tampilkan data yang tidak dihapus (deleted_at IS NULL)
+      filtered = rows.filter(r => !r.deleted_at);
     }
-    // Tampilkan data yang tidak dihapus (deleted_at IS NULL)
-    return rows.filter(r => !r.deleted_at);
+    
+    // Hapus duplikasi berdasarkan ID
+    const uniqueFiltered = filtered.filter((row, index, self) => {
+      const rowId = getIdField(row) ? row[getIdField(row)] : row.id;
+      return index === self.findIndex((r) => {
+        const rId = getIdField(r) ? r[getIdField(r)] : r.id;
+        return rId === rowId;
+      });
+    });
+    
+    return uniqueFiltered;
   }, [rows, showDeleted]);
 
-  // Calculate summary (hanya dari data yang tidak dihapus)
+  // Calculate summary berdasarkan field pendanaan dari backend (5 kolom: TS-4, TS-3, TS-2, TS-1, TS)
   const summary = useMemo(() => {
     const activeRows = rows.filter(r => !r.deleted_at);
+    
+    // Hitung total dana untuk setiap kolom TS dari field backend
+    const totalDanaTS4 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts4) || 0), 0);
+    const totalDanaTS3 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts3) || 0), 0);
     const totalDanaTS2 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts2) || 0), 0);
     const totalDanaTS1 = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts1) || 0), 0);
     const totalDanaTS = activeRows.reduce((sum, r) => sum + (Number(r.pendanaan_ts) || 0), 0);
+    
+    // Map ke array sesuai urutan yearOrder [TS-4, TS-3, TS-2, TS-1, TS]
+    const totalsByPosition = [totalDanaTS4, totalDanaTS3, totalDanaTS2, totalDanaTS1, totalDanaTS];
+    
     const jumlahKerjasama = activeRows.length;
     
     return {
-      totalDanaTS2,
-      totalDanaTS1,
-      totalDanaTS,
+      totalsByPosition,
       jumlahKerjasama
     };
   }, [rows]);
@@ -1043,8 +1140,8 @@ export default function Tabel4C1({ auth, role: propRole }) {
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                 Durasi<br/>(tahun)
               </th>
-              {tahunLaporan && (
-                <th colSpan="3" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+              {yearOrder.length > 0 && (
+                <th colSpan={yearOrder.length} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
                   Pendanaan (Rp Juta)
                 </th>
               )}
@@ -1053,31 +1150,34 @@ export default function Tabel4C1({ auth, role: propRole }) {
                 <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
               )}
             </tr>
-            {tahunLaporan && (
+            {yearOrder.length > 0 && (
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-2<br/>({tahunLaporan.nama_ts2})
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-1<br/>({tahunLaporan.nama_ts1})
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS<br/>({tahunLaporan.nama_ts})
-                </th>
+                {yearOrder.map((yearId, idx) => {
+                  // Selalu tampilkan 5 kolom TS meskipun ada null
+                  // Label berdasarkan posisi: TS-4, TS-3, TS-2, TS-1, TS
+                  const label = yearId != null 
+                    ? (yearLabelMap[yearId] || 'TS')
+                    : (idx === 0 ? 'TS-4' : idx === 1 ? 'TS-3' : idx === 2 ? 'TS-2' : idx === 3 ? 'TS-1' : 'TS');
+                  return (
+                    <th key={yearId ?? `null-${idx}`} className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
+                      {label}
+                    </th>
+                  );
+                })}
               </tr>
             )}
           </thead>
           <tbody className="divide-y divide-slate-200">
             {loading ? (
               <tr>
-                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={yearOrder.length > 0 ? 6 + yearOrder.length + (canUpdate || canDelete ? 1 : 0) : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <p className="mt-4">Memuat data...</p>
                 </td>
               </tr>
             ) : filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={tahunLaporan ? 9 : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={yearOrder.length > 0 ? 6 + yearOrder.length + (canUpdate || canDelete ? 1 : 0) : 6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -1108,13 +1208,26 @@ export default function Tabel4C1({ auth, role: propRole }) {
                       <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.mitra_kerja_sama || "-"}</td>
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.sumber || "-"}</td>
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{r.durasi_tahun || "-"}</td>
-                      {tahunLaporan && (
-                        <>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts2)}</td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts1)}</td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-700">{formatPendanaan(r.pendanaan_ts)}</td>
-                        </>
-                      )}
+                      {yearOrder.map((yearId, idx) => {
+                        // Selalu tampilkan 5 kolom TS meskipun ada null
+                        if (yearId == null) {
+                          return (
+                            <td key={`null-${idx}`} className="px-6 py-4 text-center border border-slate-200 text-slate-700">
+                              -
+                            </td>
+                          );
+                        }
+                        // Backend mengembalikan field: pendanaan_ts4, pendanaan_ts3, pendanaan_ts2, pendanaan_ts1, pendanaan_ts
+                        // Map ke posisi sesuai yearOrder [TS-4, TS-3, TS-2, TS-1, TS]
+                        const pendanaanFields = ['pendanaan_ts4', 'pendanaan_ts3', 'pendanaan_ts2', 'pendanaan_ts1', 'pendanaan_ts'];
+                        const fieldName = pendanaanFields[idx];
+                        const jumlahDana = r[fieldName] || 0;
+                        return (
+                          <td key={yearId} className="px-6 py-4 text-center border border-slate-200 text-slate-700">
+                            {formatPendanaan(jumlahDana)}
+                          </td>
+                        );
+                      })}
                       <td className="px-6 py-4 border border-slate-200 text-slate-700">
                         {r.link_bukti ? (
                           <a 
@@ -1164,35 +1277,38 @@ export default function Tabel4C1({ auth, role: propRole }) {
                 {filteredRows.length > 0 && !loading && !showDeleted && (
                   <>
                     {/* Jumlah Dana */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td colSpan="5" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Dana
                       </td>
-                      {tahunLaporan && (
-                        <>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
-                            {(summary.totalDanaTS2 / 1000000).toFixed(2)}
+                      {yearOrder.map((yearId, idx) => {
+                        if (yearId == null) {
+                          return (
+                            <td key={`null-${idx}`} className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
+                              -
+                            </td>
+                          );
+                        }
+                        // totalsByPosition sesuai urutan [TS-4, TS-3, TS-2, TS-1, TS]
+                        const totalDana = summary.totalsByPosition[idx] || 0;
+                        return (
+                          <td key={yearId} className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
+                            {(totalDana / 1000000).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
-                            {(summary.totalDanaTS1 / 1000000).toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
-                            {(summary.totalDanaTS / 1000000).toFixed(2)}
-                          </td>
-                        </>
-                      )}
+                        );
+                      })}
                       <td colSpan={(canUpdate || canDelete) ? 2 : 1} className="px-6 py-4 border border-slate-200"></td>
                     </tr>
                     
                     {/* Jumlah Kerjasama */}
-                    <tr className="bg-yellow-50 font-semibold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
                         Jumlah Kerjasama
                       </td>
-                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-yellow-100">
+                      <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
                         {summary.jumlahKerjasama}
                       </td>
-                      <td colSpan={tahunLaporan ? 6 : 3} className="px-6 py-4 border border-slate-200"></td>
+                      <td colSpan={yearOrder.length > 0 ? yearOrder.length + 3 : 3} className="px-6 py-4 border border-slate-200"></td>
                       {(canUpdate || canDelete) && (
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}

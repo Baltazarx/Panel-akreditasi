@@ -72,9 +72,11 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
 
               const idField = getIdField(r);
               const rowId = idField && r[idField] ? r[idField] : i;
+              // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
+              const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
 
               return (
-                <tr key={`${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
                   <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
                   <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
@@ -90,22 +92,24 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
                           const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                          if (openDropdownId !== rowId) {
+                          const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+                          if (openDropdownId !== uniqueRowId) {
                             const rect = e.currentTarget.getBoundingClientRect();
                             const dropdownWidth = 192;
                             setDropdownPosition({
                               top: rect.bottom + 4,
                               left: Math.max(8, rect.right - dropdownWidth)
                             });
-                            setOpenDropdownId(rowId);
+                            setOpenDropdownId(uniqueRowId);
                           } else {
                             setOpenDropdownId(null);
                           }
                         }}
                         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                         aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                        aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
                       >
                         <FiMoreVertical size={18} />
                       </button>
@@ -263,6 +267,9 @@ export default function Tabel1A4({ role }) {
 
   const [editIdTahun, setEditIdTahun] = useState("");
   const [editIdDosen, setEditIdDosen] = useState("");
+  
+  // State untuk data dosen (untuk dropdown)
+  const [dosenList, setDosenList] = useState([]);
   const [editPengajaranPsSendiri, setEditPengajaranPsSendiri] = useState("");
   const [editPengajaranPsLainPtSendiri, setEditPengajaranPsLainPtSendiri] = useState("");
   const [editPengajaranPtLain, setEditPengajaranPtLain] = useState("");
@@ -274,6 +281,39 @@ export default function Tabel1A4({ role }) {
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
+
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idField = getIdField(a) || getIdField(b);
+      if (idField) {
+        const idA = a[idField] || 0;
+        const idB = b[idField] || 0;
+        return idB - idA; // ID terbesar di atas
+      }
+      
+      return 0;
+    });
+  };
 
   async function fetchRows(isToggle = false) {
     try {
@@ -288,7 +328,9 @@ export default function Tabel1A4({ role }) {
       const filteredData = showDeleted
         ? data.filter((row) => row.deleted_at !== null)
         : data.filter((row) => row.deleted_at === null);
-      setRows(Array.isArray(filteredData) ? filteredData : filteredData?.items || []);
+      const rowsArray = Array.isArray(filteredData) ? filteredData : filteredData?.items || [];
+      const sortedRows = sortRowsByLatest(rowsArray);
+      setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
     } finally {
@@ -296,6 +338,34 @@ export default function Tabel1A4({ role }) {
       setInitialLoading(false);
     }
   }
+
+  // Fetch data dosen untuk dropdown
+  useEffect(() => {
+    const fetchDosen = async () => {
+      try {
+        const data = await apiFetch("/dosen");
+        const list = Array.isArray(data) ? data : [];
+        // Filter dan map data dosen
+        const dosenMap = new Map();
+        list.forEach((d) => {
+          if (d.id_dosen && !dosenMap.has(d.id_dosen)) {
+            dosenMap.set(d.id_dosen, {
+              id_dosen: d.id_dosen,
+              id_pegawai: d.id_pegawai,
+              nama_lengkap: d.nama_lengkap || d.nama || `Dosen ${d.id_dosen}`
+            });
+          }
+        });
+        setDosenList(Array.from(dosenMap.values()).sort((a, b) => 
+          (a.nama_lengkap || '').localeCompare(b.nama_lengkap || '')
+        ));
+      } catch (err) {
+        console.error("Error fetching dosen:", err);
+        setDosenList([]);
+      }
+    };
+    fetchDosen();
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -826,7 +896,8 @@ export default function Tabel1A4({ role }) {
         const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
         const currentRow = filteredRows.find((r, idx) => {
           const rowId = getIdField(r) ? r[getIdField(r)] : idx;
-          return rowId === openDropdownId;
+          const uniqueRowId = `${rowId}-${idx}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+          return uniqueRowId === openDropdownId;
         });
         if (!currentRow) return null;
         
@@ -900,12 +971,12 @@ export default function Tabel1A4({ role }) {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Tambah Data Beban Kerja Dosen</h2>
               <p className="text-white/80 mt-1 text-sm">Lengkapi data beban kerja dosen dan distribusi SKS.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
             <form
               className="space-y-4"
               onSubmit={async (e) => {
@@ -933,7 +1004,14 @@ export default function Tabel1A4({ role }) {
                   setLoading(true);
                   setOpenNewTahunDropdown(false);
                   setOpenNewDosenDropdown(false);
-                  const body = { id_tahun: parseInt(newIdTahun), id_dosen: parseInt(newIdDosen), sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), sks_penelitian: n(newPenelitian), sks_pkm: n(newPkm), sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain), created_by: role?.user?.name || role?.user?.username || "Unknown User", created_at: new Date().toISOString() };
+                  const body = { 
+                    id_tahun: parseInt(newIdTahun), 
+                    id_dosen: parseInt(newIdDosen), 
+                    sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), 
+                    sks_penelitian: n(newPenelitian), 
+                    sks_pkm: n(newPkm), 
+                    sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain)
+                  };
                   await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
                   setShowCreateModal(false);
                   setNewIdTahun(""); setNewIdDosen(""); setNewPengajaranPsSendiri(""); setNewPengajaranPsLainPtSendiri(""); setNewPengajaranPtLain(""); setNewPenelitian(""); setNewPkm(""); setNewManajemenPtSendiri(""); setNewManajemenPtLain("");
@@ -1033,8 +1111,8 @@ export default function Tabel1A4({ role }) {
                       <span className={`truncate ${newIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
                         {newIdDosen 
                           ? (() => {
-                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(newIdDosen));
-                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                              const found = dosenList.find((d) => String(d.id_dosen) === String(newIdDosen));
+                              return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
                           : "Pilih dosen..."}
                       </span>
@@ -1050,27 +1128,27 @@ export default function Tabel1A4({ role }) {
                     <div 
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-dosen-dropdown-menu mt-1 w-full"
                     >
-                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                      {dosenList.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 text-center">
                           Tidak ada data dosen
                         </div>
                       ) : (
-                        Object.values(maps.pegawai || {}).map((p) => (
+                        dosenList.map((d) => (
                           <button
-                            key={p.id_pegawai}
+                            key={d.id_dosen}
                             type="button"
                             onClick={() => {
-                              setNewIdDosen(p.id_pegawai.toString());
+                              setNewIdDosen(d.id_dosen.toString());
                               setOpenNewDosenDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              newIdDosen === p.id_pegawai.toString()
+                              newIdDosen === d.id_dosen.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                            <span className="truncate">{d.nama_lengkap}</span>
                           </button>
                         ))
                       )}
@@ -1126,7 +1204,7 @@ export default function Tabel1A4({ role }) {
 
               <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button 
-                    className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                     type="button" 
                     onClick={() => {
                       setShowCreateModal(false);
@@ -1134,16 +1212,21 @@ export default function Tabel1A4({ role }) {
                       setOpenNewDosenDropdown(false);
                     }}
                 >
-                    <span className="relative z-10">Batal</span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                    Batal
                 </button>
                 <button 
-                    className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
                     disabled={loading} 
                     type="submit"
                 >
-                    <span className="relative z-10">{loading ? 'Menyimpan...' : 'Simpan'}</span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                    {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                            <span>Menyimpan...</span>
+                        </div>
+                    ) : (
+                        'Simpan'
+                    )}
                 </button>
               </div>
             </form>
@@ -1154,12 +1237,12 @@ export default function Tabel1A4({ role }) {
 
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">Edit Data Beban Kerja Dosen</h2>
               <p className="text-white/80 mt-1 text-sm">Perbarui data beban kerja dosen dan distribusi SKS.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form
               className="space-y-4"
               onSubmit={async (e) => {
@@ -1188,7 +1271,14 @@ export default function Tabel1A4({ role }) {
                   setOpenEditTahunDropdown(false);
                   setOpenEditDosenDropdown(false);
                   const idField = getIdField(editing);
-                  const body = { id_tahun: parseInt(editIdTahun), id_dosen: parseInt(editIdDosen), sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), sks_penelitian: n(editPenelitian), sks_pkm: n(editPkm), sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain), updated_by: role?.user?.name || role?.user?.username || "Unknown User", updated_at: new Date().toISOString() };
+                  const body = { 
+                    id_tahun: parseInt(editIdTahun), 
+                    id_dosen: parseInt(editIdDosen), 
+                    sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), 
+                    sks_penelitian: n(editPenelitian), 
+                    sks_pkm: n(editPkm), 
+                    sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain)
+                  };
                   await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
                   setShowEditModal(false);
                   setEditing(null);
@@ -1288,8 +1378,8 @@ export default function Tabel1A4({ role }) {
                       <span className={`truncate ${editIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
                         {editIdDosen 
                           ? (() => {
-                              const found = Object.values(maps.pegawai || {}).find((p) => String(p.id_pegawai) === String(editIdDosen));
-                              return found ? (found.nama_lengkap || found.nama || "Pilih...") : "Pilih dosen...";
+                              const found = dosenList.find((d) => String(d.id_dosen) === String(editIdDosen));
+                              return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
                           : "Pilih dosen..."}
                       </span>
@@ -1305,27 +1395,27 @@ export default function Tabel1A4({ role }) {
                     <div 
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-dosen-dropdown-menu mt-1 w-full"
                     >
-                      {Object.values(maps.pegawai || {}).length === 0 ? (
+                      {dosenList.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 text-center">
                           Tidak ada data dosen
                         </div>
                       ) : (
-                        Object.values(maps.pegawai || {}).map((p) => (
+                        dosenList.map((d) => (
                           <button
-                            key={p.id_pegawai}
+                            key={d.id_dosen}
                             type="button"
                             onClick={() => {
-                              setEditIdDosen(p.id_pegawai.toString());
+                              setEditIdDosen(d.id_dosen.toString());
                               setOpenEditDosenDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              editIdDosen === p.id_pegawai.toString()
+                              editIdDosen === d.id_dosen.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
                             }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{p.nama_lengkap || p.nama}</span>
+                            <span className="truncate">{d.nama_lengkap}</span>
                           </button>
                         ))
                       )}
@@ -1381,7 +1471,7 @@ export default function Tabel1A4({ role }) {
 
               <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button 
-                    className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
                     type="button" 
                     onClick={() => {
                       setShowEditModal(false);
@@ -1390,16 +1480,21 @@ export default function Tabel1A4({ role }) {
                       setOpenEditDosenDropdown(false);
                     }}
                 >
-                    <span className="relative z-10">Batal</span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                    Batal
                 </button>
                 <button 
-                    className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
                     disabled={loading} 
                     type="submit"
                 >
-                    <span className="relative z-10">{loading ? 'Menyimpan...' : 'Simpan'}</span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                    {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                            <span>Menyimpan...</span>
+                        </div>
+                    ) : (
+                        'Simpan'
+                    )}
                 </button>
               </div>
             </form>

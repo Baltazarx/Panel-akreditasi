@@ -10,7 +10,9 @@ import {
   restoreUser,
   hardDeleteUser,
   listUnits,
-  searchPegawai
+  searchPegawai,
+  changePassword,
+  verifyPassword
 } from '../controllers/users.controller.js';
 
 const router = express.Router();
@@ -27,5 +29,13 @@ router.delete('/:id/hard-delete', requireAuth, permit('users', 'D'), hardDeleteU
 // ===== EXTRA ENDPOINTS =====
 router.get('/extra/units', requireAuth, permit('users', 'R'), listUnits);
 router.get('/extra/pegawai', requireAuth, permit('users', 'R'), searchPegawai);
+
+// ===== VERIFY PASSWORD (Untuk Verifikasi Password User Sendiri) =====
+// Endpoint ini tidak memerlukan permit karena user hanya bisa memverifikasi password mereka sendiri
+router.post('/verify-password', requireAuth, verifyPassword);
+
+// ===== CHANGE PASSWORD (Untuk User Sendiri) =====
+// Endpoint ini tidak memerlukan permit karena user hanya bisa mengubah password mereka sendiri
+router.post('/change-password', requireAuth, changePassword);
 
 export default router;

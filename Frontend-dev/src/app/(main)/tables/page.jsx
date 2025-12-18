@@ -48,12 +48,12 @@ const useMediaQuery = (query) => {
 
 // Map menu ke komponen dengan icon yang bervariasi
 const menuMap = {
-  C1: { name: "C1", Component: C1Page, icon: FaUserTie, description: "Data Dosen dan Pegawai" },
-  C2: { name: "C2", Component: C2Page, icon: FaGraduationCap, description: "Data Mahasiswa" },
-  C3: { name: "C3", Component: C3Page, icon: FaFlask, description: "Penelitian dan Pengabdian" },
-  C4: { name: "C4", Component: C4Page, icon: FaBook, description: "Pendidikan" },
-  C5: { name: "C5", Component: C5Page, icon: FaUserGroup, description: "Kerjasama" },
-  C6: { name: "C6", Component: C6Page, icon: FaChartLine, description: "Luaran dan Capaian" },
+  C1: { name: "Budaya Mutu", Component: C1Page, icon: FaUserTie, description: "Data Dosen dan Pegawai" },
+  C2: { name: "Relevansi Pendidikan", Component: C2Page, icon: FaGraduationCap, description: "Data Mahasiswa" },
+  C3: { name: "Relevansi Penelitian", Component: C3Page, icon: FaFlask, description: "Penelitian dan Pengabdian" },
+  C4: { name: "Relevansi PkM", Component: C4Page, icon: FaBook, description: "Pendidikan" },
+  C5: { name: "Akuntabilitas", Component: C5Page, icon: FaUserGroup, description: "Kerjasama" },
+  C6: { name: "Diferensiasi Misi", Component: C6Page, icon: FaChartLine, description: "Luaran dan Capaian" },
   ManajemenAkun: { name: "Manajemen Akun", Component: UserManagementPage, icon: FaShield, description: "Kelola Pengguna Sistem" },
   TabelDosen: { name: "Tabel Dosen", Component: TabelDosen, icon: FaChalkboard, description: "Data Dosen" },
   TabelPegawai: { name: "Data Pegawai", Component: TabelPegawai, icon: FaUserTie, description: "Data Pegawai" },
@@ -87,12 +87,21 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
         },
     };
 
+    // Define loweredRole for use in admin items filtering
+    const loweredRole = (authUser?.role || "").toLowerCase();
+
     // Filter admin items berdasarkan akses
     const adminItemsList = [];
     if (canSeeUserMgmt) {
-      adminItemsList.push('ManajemenAkun');
-      if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
-      if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+      // ManajemenAkun hanya untuk role yang memiliki akses ke "users"
+      if (roleCan(authUser?.role, "users", "r") || ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)) {
+        adminItemsList.push('ManajemenAkun');
+      }
+      // Role kepegawaian hanya melihat TabelTendik, bukan TabelDosen dan TabelPegawai
+      if (loweredRole !== "kepegawaian") {
+        if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
+        if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+      }
       if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminItemsList.push('TabelTendik');
     }
     const adminItems = adminItemsList;
@@ -254,12 +263,21 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
     },
     }), [sidebarHeight]);
 
+  // Define loweredRole for use in admin items filtering
+  const loweredRole = (authUser?.role || "").toLowerCase();
+
   // Filter admin items berdasarkan akses
   const adminItemsList = [];
   if (canSeeUserMgmt) {
-    adminItemsList.push('ManajemenAkun');
-    if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
-    if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+    // ManajemenAkun hanya untuk role yang memiliki akses ke "users"
+    if (roleCan(authUser?.role, "users", "r") || ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)) {
+      adminItemsList.push('ManajemenAkun');
+    }
+    // Role kepegawaian hanya melihat TabelTendik, bukan TabelDosen dan TabelPegawai
+    if (loweredRole !== "kepegawaian") {
+      if (roleCan(authUser?.role, "dosen", "r")) adminItemsList.push('TabelDosen');
+      if (roleCan(authUser?.role, "pegawai", "r")) adminItemsList.push('TabelPegawai');
+    }
     if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminItemsList.push('TabelTendik');
   }
   const adminItems = adminItemsList;
@@ -460,7 +478,7 @@ export default function TablesPage() {
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
   // KECUALI role kemahasiswaan, ALA, PMB, dan SARPRAS yang tidak boleh akses C1
   const loweredRole = (authUser?.role || "").toLowerCase();
-  const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
+  const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tenaga_kependidikan"]; 
   const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && loweredRole !== "sarpras" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
@@ -512,8 +530,9 @@ export default function TablesPage() {
   const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai/tenaga_kependidikan
-  // KECUALI role kemahasiswaan, ALA, LPPM, KEPEGAWAIAN, dan SARPRAS yang tidak boleh akses Panel Admin
-  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "kepegawaian" && loweredRole !== "sarpras" && (
+  // KECUALI role kemahasiswaan, ALA, LPPM, dan SARPRAS yang tidak boleh akses Panel Admin
+  // KEPEGAWAIAN diperbolehkan karena memiliki akses CRUD untuk dosen, pegawai, dan tenaga_kependidikan
+  const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "sarpras" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
     || roleCan(authUser?.role, "dosen", "r")
     || roleCan(authUser?.role, "pegawai", "r")
@@ -568,9 +587,15 @@ export default function TablesPage() {
     // Build admin keys based on access (same logic as adminItems)
     const adminKeysList = [];
     if (canSeeUserMgmt) {
-      adminKeysList.push('ManajemenAkun');
-      if (roleCan(authUser?.role, "dosen", "r")) adminKeysList.push('TabelDosen');
-      if (roleCan(authUser?.role, "pegawai", "r")) adminKeysList.push('TabelPegawai');
+      // ManajemenAkun hanya untuk role yang memiliki akses ke "users"
+      if (roleCan(authUser?.role, "users", "r") || ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)) {
+        adminKeysList.push('ManajemenAkun');
+      }
+      // Role kepegawaian hanya melihat TabelTendik, bukan TabelDosen dan TabelPegawai
+      if (loweredRole !== "kepegawaian") {
+        if (roleCan(authUser?.role, "dosen", "r")) adminKeysList.push('TabelDosen');
+        if (roleCan(authUser?.role, "pegawai", "r")) adminKeysList.push('TabelPegawai');
+      }
       if (roleCan(authUser?.role, "tenaga_kependidikan", "r")) adminKeysList.push('TabelTendik');
     }
     const adminKeys = adminKeysList;

@@ -7,6 +7,7 @@ import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiShield } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3c1-kerjasama";
 const TABLE_KEY = "tabel_3c1_kerjasama_penelitian";
@@ -161,17 +162,17 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
       }}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-[10000] pointer-events-auto"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+        <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
           <h2 className="text-xl font-bold">
             {initialData ? "Edit Kerjasama Penelitian" : "Tambah Kerjasama Penelitian"}
           </h2>
           <p className="text-white/80 mt-1 text-sm">Lengkapi data kerjasama penelitian sesuai dengan format LKPS.</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           {/* Judul Kerjasama */}
           <div>
             <label htmlFor="judul_kerjasama" className="block text-sm font-medium text-slate-700 mb-1">
@@ -470,17 +471,15 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                 setOpenTahunDropdown({});
                 onClose();
               }} 
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-              <span className="relative z-10">Batal</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Batal
             </button>
             <button 
               type="submit" 
-              className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
-              <span className="relative z-10">Simpan</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+              Simpan
             </button>
           </div>
         </form>
@@ -844,6 +843,34 @@ export default function Tabel3C1({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   // Tahun options
   const tahunList = useMemo(() => {
     if (!maps || !maps.tahun) {
@@ -911,7 +938,9 @@ export default function Tabel3C1({ auth, role }) {
           url += "&include_deleted=1";
         }
         const data = await apiFetch(url);
-        setRows(Array.isArray(data) ? data : data?.items || []);
+        const rowsArray = Array.isArray(data) ? data : data?.items || [];
+        const sortedRows = sortRowsByLatest(rowsArray);
+        setRows(sortedRows);
       } catch (err) {
         console.error("Error fetching data:", err);
         Swal.fire({
@@ -1090,46 +1119,129 @@ export default function Tabel3C1({ auth, role }) {
 
   // Export handler
   const handleExport = async () => {
-    if (!tahunTS) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Pilih Tahun',
-        text: 'Silakan pilih tahun akademik terlebih dahulu.'
-      });
-      return;
-    }
-
     try {
-      const BASE_URL = "http://localhost:3000/api";
-      const url = `${BASE_URL}${ENDPOINT}/export?ts_id=${tahunTS}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        mode: 'cors'
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMsg = 'Gagal mengekspor data';
-        try {
-          const json = JSON.parse(text);
-          errorMsg = json.error || json.message || errorMsg;
-        } catch (e) {
-          errorMsg = text || errorMsg;
-        }
-        throw new Error(errorMsg);
+      const currentData = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
       }
 
-      const blob = await response.blob();
-      const urlBlob = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = urlBlob;
-      a.download = `Tabel_3C1_Kerjasama_Penelitian_${tahunTS}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(urlBlob);
-      document.body.removeChild(a);
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header (merged header)
+      const headerRow1 = [
+        'No',
+        'Judul Kerjasama',
+        'Mitra Kerja Sama',
+        'Sumber',
+        'Durasi (Tahun)',
+        'Pendanaan (Rp Juta)',
+        '',
+        '',
+        '',
+        '',
+        'Link Bukti'
+      ];
+      exportData.push(headerRow1);
+      
+      const headerRow2 = [
+        '',
+        '',
+        '',
+        '',
+        '',
+        'TS-4',
+        'TS-3',
+        'TS-2',
+        'TS-1',
+        'TS',
+        ''
+      ];
+      exportData.push(headerRow2);
+      
+      // Format untuk export (dalam juta)
+      const formatJutaExport = (value) => {
+        if (!value || value === 0) return "-";
+        const juta = value / 1000000;
+        return `${juta.toFixed(2)} juta`;
+      };
+      
+      // Tambahkan data rows
+      currentData.forEach((r, i) => {
+        exportData.push([
+          i + 1,
+          r.judul_kerjasama || "-",
+          r.mitra_kerja_sama || "-",
+          r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-",
+          r.durasi_tahun || "-",
+          formatJutaExport(r.pendanaan_ts4 || 0),
+          formatJutaExport(r.pendanaan_ts3 || 0),
+          formatJutaExport(r.pendanaan_ts2 || 0),
+          formatJutaExport(r.pendanaan_ts1 || 0),
+          formatJutaExport(r.pendanaan_ts || 0),
+          r.link_bukti || "-"
+        ]);
+      });
+      
+      // Tambahkan summary rows
+      if (currentData.length > 0) {
+        // Jumlah Dana
+        exportData.push([
+          'Jumlah Dana',
+          '',
+          '',
+          '',
+          '',
+          formatJutaExport(currentData.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts4) || 0), 0)),
+          formatJutaExport(currentData.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts3) || 0), 0)),
+          formatJutaExport(currentData.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0)),
+          formatJutaExport(currentData.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0)),
+          formatJutaExport(currentData.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0)),
+          ''
+        ]);
+        
+        // Jumlah Mitra Kerjasama
+        exportData.push([
+          'Jumlah Mitra Kerjasama',
+          currentData.length,
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          ''
+        ]);
+      }
 
+      // Buat worksheet
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 40 },  // Judul Kerjasama
+        { wch: 25 },  // Mitra Kerja Sama
+        { wch: 10 },  // Sumber
+        { wch: 12 },  // Durasi
+        { wch: 15 },  // TS-4
+        { wch: 15 },  // TS-3
+        { wch: 15 },  // TS-2
+        { wch: 15 },  // TS-1
+        { wch: 15 },  // TS
+        { wch: 30 }   // Link Bukti
+      ];
+      
+      // Buat workbook dan tambahkan worksheet
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Kerjasama Penelitian');
+      
+      // Export ke file
+      XLSX.writeFile(wb, `Tabel_3C1_Kerjasama_Penelitian_${tahunTS || 'Data'}.xlsx`);
+      
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -1139,6 +1251,49 @@ export default function Tabel3C1({ auth, role }) {
       });
     } catch (err) {
       console.error("Export error:", err);
+      
+      // Fallback ke CSV jika XLSX gagal
+      try {
+        const currentData = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+        if (currentData && currentData.length > 0) {
+          const csvContent = [
+            ['No', 'Judul Kerjasama', 'Mitra Kerja Sama', 'Sumber', 'Durasi (Tahun)', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'],
+            ...currentData.map((r, i) => [
+              i + 1,
+              r.judul_kerjasama || "-",
+              r.mitra_kerja_sama || "-",
+              r.sumber || "-",
+              r.durasi_tahun || "-",
+              r.pendanaan_ts4 || 0,
+              r.pendanaan_ts3 || 0,
+              r.pendanaan_ts2 || 0,
+              r.pendanaan_ts1 || 0,
+              r.pendanaan_ts || 0,
+              r.link_bukti || "-"
+            ])
+          ].map(row => row.join(',')).join('\n');
+          
+          const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Tabel_3C1_Kerjasama_Penelitian_${tahunTS || 'Data'}.csv`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          
+          Swal.fire({
+            icon: 'info',
+            title: 'Diekspor sebagai CSV',
+            text: 'Data diekspor sebagai CSV karena library Excel tidak tersedia.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
+        }
+      } catch (csvErr) {
+        console.error("CSV export error:", csvErr);
+      }
+      
       Swal.fire({
         icon: 'error',
         title: 'Gagal mengekspor',

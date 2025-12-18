@@ -6,7 +6,8 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from "sweetalert2";
-import { FiEdit2, FiTrash2, FiMoreVertical, FiRotateCw, FiXCircle, FiChevronDown, FiCalendar, FiBriefcase } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiRotateCw, FiXCircle, FiChevronDown, FiCalendar, FiBriefcase, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 export default function Tabel2B5({ role }) {
   const { authUser } = useAuth();
@@ -181,6 +182,34 @@ export default function Tabel2B5({ role }) {
   const canUpdate = roleCan(role, tableKey, "U");
   const canDelete = roleCan(role, tableKey, "D");
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback ke ID terbesar jika tidak ada timestamp
+      const idFieldA = getIdField(a);
+      const idFieldB = getIdField(b);
+      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+    });
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -191,7 +220,9 @@ export default function Tabel2B5({ role }) {
       }
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
       const result = await apiFetch(`/tabel2b5-kesesuaian-kerja${params}`);
-      setData(result);
+      const rowsArray = Array.isArray(result) ? result : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setData(sortedData);
     } catch (error) {
       Swal.fire("Error", "Gagal mengambil data", "error");
     } finally {
@@ -201,11 +232,30 @@ export default function Tabel2B5({ role }) {
 
   useEffect(() => {
     if (!selectedTahun && availableYears.length > 0) {
-      // Cari tahun sekarang di list dengan prefix, bukan includes biasa!
-      const nowYear = new Date().getFullYear();
-      const found = availableYears.find(y => (`${y.tahun}`.startsWith(nowYear.toString())));
-      if (found) setSelectedTahun(found.id);
-      else setSelectedTahun(availableYears[availableYears.length - 1].id); // tahun terbaru
+      // Default ke tahun 2024/2025 jika ada, jika tidak ada fallback ke tahun terakhir
+      // Prioritas: cari yang mengandung "2024/2025" terlebih dahulu
+      let tahun2024 = availableYears.find(y => {
+        const yearText = String(y.tahun || "").toLowerCase();
+        const yearId = String(y.id || "");
+        return (yearText.includes("2024/2025") || yearId.includes("2024/2025"));
+      });
+      
+      // Jika tidak ketemu "2024/2025", cari yang mengandung "2024" atau "2025"
+      if (!tahun2024) {
+        tahun2024 = availableYears.find(y => {
+          const yearText = String(y.tahun || "").toLowerCase();
+          const yearId = String(y.id || "");
+          return yearText.includes("2024") || yearText.includes("2025") || 
+                 yearId.includes("2024") || yearId.includes("2025");
+        });
+      }
+      
+      if (tahun2024?.id) {
+        setSelectedTahun(parseInt(tahun2024.id));
+      } else {
+        // Fallback ke tahun terakhir jika 2024/2025 tidak ditemukan
+        setSelectedTahun(availableYears[availableYears.length - 1].id);
+      }
     }
   }, [availableYears, selectedTahun]);
 
@@ -473,6 +523,137 @@ export default function Tabel2B5({ role }) {
       Swal.fire("Error", "Gagal menyimpan data", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+      
+      if (!currentData || currentData.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headers = [
+        'Tahun Lulus',
+        'Jumlah Lulusan',
+        'Jumlah Lulusan yang Terlacak',
+        'Profesi Kerja Bidang Infokom',
+        'Profesi Kerja Bidang Non Infokom',
+        'Multinasional / Internasional',
+        'Nasional',
+        'Wirausaha'
+      ];
+      exportData.push(headers);
+      
+      // Tambahkan data rows
+      currentData.forEach((row) => {
+        const rowData = [
+          row.tahun_lulus || '',
+          row.jumlah_lulusan !== "" ? row.jumlah_lulusan : '-',
+          row.jumlah_terlacak !== "" ? row.jumlah_terlacak : '-',
+          row.jml_infokom !== "" ? row.jml_infokom : '-',
+          row.jml_non_infokom !== "" ? row.jml_non_infokom : '-',
+          row.jml_internasional !== "" ? row.jml_internasional : '-',
+          row.jml_nasional !== "" ? row.jml_nasional : '-',
+          row.jml_wirausaha !== "" ? row.jml_wirausaha : '-'
+        ];
+        exportData.push(rowData);
+      });
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 20 },  // Tahun Lulus
+        { wch: 18 },  // Jumlah Lulusan
+        { wch: 30 },  // Jumlah Lulusan yang Terlacak
+        { wch: 28 },  // Profesi Kerja Bidang Infokom
+        { wch: 32 },  // Profesi Kerja Bidang Non Infokom
+        { wch: 30 },  // Multinasional / Internasional
+        { wch: 15 },  // Nasional
+        { wch: 15 }   // Wirausaha
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      const sheetName = showDeleted ? 'Data Terhapus' : 'Data Kesesuaian Kerja';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      // Generate file dan download
+      const fileName = `Tabel_2B5_Kesesuaian_Kerja_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const currentData = showDeleted ? tableDataDeleted : tableDataActive;
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['Tahun Lulus', 'Jumlah Lulusan', 'Jumlah Lulusan yang Terlacak', 'Profesi Kerja Bidang Infokom', 'Profesi Kerja Bidang Non Infokom', 'Multinasional / Internasional', 'Nasional', 'Wirausaha'],
+          ...currentData.map(row => [
+            row.tahun_lulus || '',
+            row.jumlah_lulusan !== "" ? row.jumlah_lulusan : '-',
+            row.jumlah_terlacak !== "" ? row.jumlah_terlacak : '-',
+            row.jml_infokom !== "" ? row.jml_infokom : '-',
+            row.jml_non_infokom !== "" ? row.jml_non_infokom : '-',
+            row.jml_internasional !== "" ? row.jml_internasional : '-',
+            row.jml_nasional !== "" ? row.jml_nasional : '-',
+            row.jml_wirausaha !== "" ? row.jml_wirausaha : '-'
+          ])
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2B5_Kesesuaian_Kerja_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
     }
   };
 
@@ -764,15 +945,27 @@ export default function Tabel2B5({ role }) {
             </div>
           )}
         </div>
-        {canCreate && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleAddClick}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
+            onClick={handleExport}
+            disabled={loading || (showDeleted ? !tableDataDeleted || tableDataDeleted.length === 0 : !tableDataActive || tableDataActive.length === 0)}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            + Tambah Data
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
-        )}
+          
+          {canCreate && (
+            <button
+              onClick={handleAddClick}
+              className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              + Tambah Data
+            </button>
+          )}
+        </div>
       </div>
       {renderTable()}
 
@@ -869,15 +1062,15 @@ export default function Tabel2B5({ role }) {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h3 className="text-xl font-bold">{editing ? "Edit Data Kesesuaian Kerja" : "Tambah Data Kesesuaian Kerja"}</h3>
               <p className="text-white/80 mt-1 text-sm">Lengkapi data terkait bidang kerja lulusan sesuai format tabel 2B.5</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -1099,18 +1292,23 @@ export default function Tabel2B5({ role }) {
                         setOpenFormTahunDropdown(false);
                         setShowAddModal(false);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={saving}
                   >
-                      <span className="relative z-10">{saving ? "Menyimpan..." : (editing ? "Perbarui" : "Simpan")}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {saving ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                        </div>
+                      ) : (
+                        editing ? "Perbarui" : "Simpan"
+                      )}
                   </button>
                 </div>
               </form>

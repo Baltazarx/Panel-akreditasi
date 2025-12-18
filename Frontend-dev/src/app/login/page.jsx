@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
+import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -14,20 +15,7 @@ export default function LoginPage() {
   const [transitioning, setTransitioning] = useState(false);
   const { login, isLoading, error, authUser } = useAuth();
   const router = useRouter();
-  const [now, setNow] = useState(new Date());
-
-  // Update waktu setiap detik untuk kartu di sebelah form
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const monthShorts = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-  const monthShort = monthShorts[now.getMonth()];
-  const yearNow = now.getFullYear();
-  const weekdayText = now.toLocaleDateString('id-ID', { weekday: 'long' });
-  const fullDateText = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-  const timeText = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const yearNow = new Date().getFullYear();
 
   useEffect(() => {
     // Jika user sudah login dan bukan dalam proses transisi, langsung arahkan
@@ -87,7 +75,16 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-md">
         {/* Main Card */}
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/30 p-6 md:p-8 space-y-8">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/30 p-6 md:p-8 space-y-8 relative">
+          {/* Logo Maskot di pojok kanan atas */}
+          <div className="absolute top-4 right-4 z-10">
+            <img 
+              src="/maskot.png" 
+              alt="Maskot STIKOM" 
+              className="h-12 w-12 md:h-14 md:w-14 object-contain drop-shadow-md"
+            />
+          </div>
+          
           {/* Header - minimal style like reference */}
           <div className="flex items-start justify-between">
             <div>
@@ -101,12 +98,10 @@ export default function LoginPage() {
             <div className="space-y-5">
               {/* Username Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700">Username</label>
-                <div className="relative">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <FiUser className="h-5 w-5 text-slate-400 group-focus-within:text-[#0384d6] transition-colors" />
                   </div>
                   <input
                     type="text"
@@ -114,7 +109,7 @@ export default function LoginPage() {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] focus:outline-none transition-all duration-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm"
+                    className="w-full pl-12 pr-4 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] focus:outline-none transition-all duration-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm hover:border-slate-400"
                     placeholder="Masukkan username"
                   />
                 </div>
@@ -122,12 +117,10 @@ export default function LoginPage() {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700">Password</label>
-                <div className="relative">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    <FiLock className="h-5 w-5 text-slate-400 group-focus-within:text-[#0384d6] transition-colors" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -135,23 +128,19 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] focus:outline-none transition-all duration-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm"
+                    className="w-full pl-12 pr-12 py-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] focus:outline-none transition-all duration-200 bg-white text-slate-900 placeholder-slate-400 shadow-sm hover:border-slate-400"
                     placeholder="Masukkan password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-slate-50 rounded-r-xl transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0384d6] transition-colors"
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                   >
                     {showPassword ? (
-                      <svg className="h-5 w-5 text-slate-400 hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
+                      <FiEyeOff className="h-5 w-5" />
                     ) : (
-                      <svg className="h-5 w-5 text-slate-400 hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
+                      <FiEye className="h-5 w-5" />
                     )}
                   </button>
                 </div>
@@ -160,15 +149,15 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800">{error}</p>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-semibold text-red-800">{error}</p>
                   </div>
                 </div>
               </div>
@@ -178,7 +167,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#043975] to-[#0384d6] hover:from-[#032a5a] hover:to-[#0270b8] disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 shadow-lg"
+              className="w-full bg-gradient-to-r from-[#043975] to-[#0384d6] hover:from-[#032a5a] hover:to-[#0270b8] disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -196,49 +185,6 @@ export default function LoginPage() {
             <p className="text-sm text-slate-500">
               Sistem Penjaminan Mutu Internal STIKOM PGRI Banyuwangi
             </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right side minimalism card (reference) - tidak mengubah background */}
-      <div className="relative hidden md:block ml-6">
-        <div className="w-[260px] lg:w-[320px] rounded-[28px] bg-white/90 backdrop-blur-md shadow-2xl border border-white/30 overflow-hidden relative">
-          {/* Global frosted strip to overlap header and body */}
-          <div className="absolute top-4 bottom-4 left-4 right-1/2 rounded-[24px] z-20 bg-white/55 backdrop-blur-lg border border-white/40 shadow" />
-          {/* Header Month */}
-          <div className="p-6 relative z-30">
-            <div className="text-4xl font-bold text-slate-800 leading-none">{monthShort}</div>
-            <div className="text-2xl text-slate-400 -mt-1">{yearNow}</div>
-          </div>
-
-          {/* Body with blur panel and pink orb */}
-          <div className="relative h-[300px] px-6">
-            {/* Blue orb centered */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-60 w-60 rounded-full z-10 bg-[radial-gradient(circle_at_30%_30%,#7ec9ff,#38a9e8,#0384d6_70%,transparent_82%)]"></div>
-
-            {/* Small details */}
-            <div className="absolute left-8 top-10 text-[11px] leading-4 text-slate-600 z-30">
-              <p className="capitalize">{weekdayText}</p>
-              <p>{fullDateText}</p>
-              <p className="font-medium text-slate-700">{timeText} WIB</p>
-            </div>
-
-            {/* Bottom row */}
-            <div className="absolute left-0 right-0 bottom-0 px-6 pb-5 flex items-center justify-between z-30">
-              <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-600">CS</span>
-                <span>Creative.style</span>
-              </div>
-              <button type="button" className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white text-[11px] px-4 py-2 shadow hover:bg-black">
-                Click Here
-                <span className="inline-block h-2 w-2 rounded-full bg-white"></span>
-              </button>
-            </div>
-            {/* Top-right note */}
-            <div className="absolute right-4 top-4 text-[11px] leading-4 text-slate-600 text-right z-30">
-              <p>Minimalism style</p>
-              <p>Typography</p>
-            </div>
           </div>
         </div>
       </div>

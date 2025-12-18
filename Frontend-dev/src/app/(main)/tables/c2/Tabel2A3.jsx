@@ -4,7 +4,7 @@ import { apiFetch } from "../../../../lib/api";
 import { useAuth } from "../../../../context/AuthContext";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiCalendar } from 'react-icons/fi';
+import { FiChevronDown, FiCalendar, FiDownload } from 'react-icons/fi';
 
 // Helper functions for building table headers
 const seg = (n) => (n.key ? String(n.key) : String(n.label || "col")).replace(/\s+/g, "_");
@@ -98,13 +98,13 @@ function KondisiMahasiswaForm({ initialData, onSubmit, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+          className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
         >
           Batal
         </button>
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-lg bg-[#0384d6] hover:bg-[#043975] text-white"
+          className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
         >
           Simpan
         </button>
@@ -175,6 +175,34 @@ export default function Tabel2A3() {
     return Object.values(maps.tahun || {}).sort((a, b) => a.id_tahun - b.id_tahun);
   }, [maps.tahun]);
 
+  // Helper function untuk sorting data berdasarkan terbaru
+  const sortRowsByLatest = (rowsArray) => {
+    return [...rowsArray].sort((a, b) => {
+      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      if (a.created_at && b.created_at) {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
+      if (a.updated_at && b.updated_at) {
+        const dateA = new Date(a.updated_at);
+        const dateB = new Date(b.updated_at);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+        }
+      }
+      
+      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return idB - idA; // ID terbesar di atas
+    });
+  };
+
   const refresh = async () => {
     setLoading(true);
     setError(null);
@@ -187,7 +215,9 @@ export default function Tabel2A3() {
       console.log("📊 Is array:", Array.isArray(mc));
       console.log("📊 Length:", Array.isArray(mc) ? mc.length : 'N/A');
       
-      setMahasiswaConditions(Array.isArray(mc) ? mc : []);
+      const rowsArray = Array.isArray(mc) ? mc : [];
+      const sortedData = sortRowsByLatest(rowsArray);
+      setMahasiswaConditions(sortedData);
       
       const years = [...(Array.isArray(mc) ? mc : [])].map((x) => Number(x?.id_tahun)).filter((n) => Number.isFinite(n));
       console.log("📅 Available years:", years);
@@ -442,6 +472,142 @@ export default function Tabel2A3() {
     );
   };
 
+  // Fungsi export Excel untuk Tabel Kondisi Mahasiswa
+  const exportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      if (!selectedTahun) {
+        throw new Error('Pilih tahun akademik terlebih dahulu untuk mengekspor data.');
+      }
+
+      if (displayRows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan data dari displayRows
+      displayRows.forEach((row) => {
+        exportData.push({
+          'Kategori': row.kategori || '',
+          'TS': row.ts || 0,
+          'TS-1': row.ts_minus_1 || 0,
+          'TS-2': row.ts_minus_2 || 0,
+          'TS-3': row.ts_minus_3 || 0,
+          'TS-4': row.ts_minus_4 || 0,
+          'Jumlah': row.jumlah || 0
+        });
+      });
+      
+      // Tambahkan baris Jumlah
+      const totals = {};
+      leaves.forEach(leaf => {
+        if (leaf.key !== "kategori") {
+          totals[leaf.key] = displayRows.reduce((acc, r) => acc + (Number(r?.[leaf.key]) || 0), 0);
+        }
+      });
+      
+      exportData.push({
+        'Kategori': 'Jumlah',
+        'TS': totals.ts || 0,
+        'TS-1': totals.ts_minus_1 || 0,
+        'TS-2': totals.ts_minus_2 || 0,
+        'TS-3': totals.ts_minus_3 || 0,
+        'TS-4': totals.ts_minus_4 || 0,
+        'Jumlah': totals.jumlah || 0
+      });
+
+      // Import xlsx library
+      let XLSX;
+      try {
+        XLSX = await import('xlsx');
+      } catch (importErr) {
+        console.warn('xlsx library tidak tersedia, menggunakan CSV fallback:', importErr);
+        // Fallback ke CSV
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        // Get headers from first row
+        const headers = Object.keys(exportData[0] || {});
+        const csvRows = [
+          headers.map(escapeCsv).join(','),
+          ...exportData.map(row => 
+            headers.map(header => escapeCsv(row[header])).join(',')
+          )
+        ];
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tabel_2A3_Kondisi_Mahasiswa_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari data
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 35 },  // Kategori
+        { wch: 12 },  // TS
+        { wch: 12 },  // TS-1
+        { wch: 12 },  // TS-2
+        { wch: 12 },  // TS-3
+        { wch: 12 },  // TS-4
+        { wch: 12 }   // Jumlah
+      ];
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Kondisi Mahasiswa');
+      
+      // Generate file dan download
+      const fileName = `Tabel_2A3_Kondisi_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal mengekspor data',
+        text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return (
     <div className="p-8 text-center">
       <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
@@ -545,32 +711,43 @@ export default function Tabel2A3() {
           </div>
         </div>
         
-        {currentYearLulusDoData ? (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportToExcel}
+            disabled={loading || !selectedTahun || displayRows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
+          {currentYearLulusDoData ? (
+            <>
+              <button
+                onClick={handleOpenEditModal}
+                disabled={loading}
+                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Edit Data
+              </button>
+              <button
+                onClick={handleHapus}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Hapus Data
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleOpenEditModal}
+              onClick={handleOpenAddModal}
               disabled={loading}
               className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Edit Data
+              + Tambah Data
             </button>
-            <button
-              onClick={handleHapus}
-              disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Hapus Data
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleOpenAddModal}
-            disabled={loading}
-            className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            + Tambah Data
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
@@ -601,11 +778,11 @@ export default function Tabel2A3() {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto z-[10000] pointer-events-auto"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">
                 {modalMode === 'add' ? 'Tambah' : 'Edit'} Data Lulus & DO untuk Tahun {selectedTahun}
               </h2>
@@ -613,7 +790,7 @@ export default function Tabel2A3() {
                 Lengkapi data jumlah mahasiswa lulus dan mengundurkan diri.
               </p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <KondisiMahasiswaForm
                 initialData={editingData}
                 onSubmit={handleFormSubmit}

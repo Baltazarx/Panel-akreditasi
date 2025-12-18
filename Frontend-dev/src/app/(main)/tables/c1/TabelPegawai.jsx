@@ -225,6 +225,49 @@ export default function TabelPegawai({ role }) {
         nikp: formState.nikp || null,
       };
       
+      // Validasi: Cek apakah unit kerja adalah "Ketua STIKOM" dan jabatan adalah "Ketua"
+      if (payload.id_unit && payload.id_jabatan) {
+        const selectedUnit = maps.units?.[payload.id_unit];
+        const selectedJabatan = maps.ref_jabatan_struktural?.[payload.id_jabatan];
+        
+        // Cek apakah unit kerja mengandung "Ketua" (case-insensitive)
+        const isUnitKetua = selectedUnit?.nama_unit?.toLowerCase().includes('ketua') || 
+                           selectedUnit?.kode_role?.toLowerCase() === 'ketua' ||
+                           payload.id_unit === 1; // id_unit = 1 adalah "Ketua STIKOM"
+        
+        // Cek apakah jabatan adalah "Ketua"
+        const isJabatanKetua = selectedJabatan?.nama_jabatan?.toLowerCase() === 'ketua' ||
+                               payload.id_jabatan === 1; // id_jabatan = 1 adalah "Ketua"
+        
+        // Jika kedua kondisi terpenuhi, validasi duplikasi
+        if (isUnitKetua && isJabatanKetua) {
+          // Cek apakah sudah ada data dengan kombinasi id_unit dan id_jabatan yang sama (aktif, tidak deleted)
+          const existingKetua = rows.find(row => {
+            // Skip data yang sedang diedit
+            if (editing && row[idField] === editing[idField]) {
+              return false;
+            }
+            // Cek apakah data aktif (tidak deleted)
+            if (row.deleted_at) {
+              return false;
+            }
+            // Cek kombinasi id_unit dan id_jabatan
+            return row.id_unit === payload.id_unit && row.id_jabatan === payload.id_jabatan;
+          });
+          
+          if (existingKetua) {
+            setLoading(false);
+            Swal.fire({
+              icon: 'error',
+              title: 'Data Ganda Tidak Diizinkan',
+              text: 'Sudah ada data Ketua untuk unit kerja ini. Hanya boleh ada satu Ketua per unit kerja.',
+              confirmButtonColor: '#3085d6'
+            });
+            return;
+          }
+        }
+      }
+      
       console.log('Edit pegawai data:', {
         url,
         method,
@@ -569,12 +612,12 @@ export default function TabelPegawai({ role }) {
             }
           }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">{editing ? 'Edit Data Pegawai' : 'Tambah Data Pegawai'}</h2>
               <p className="text-white/80 mt-1 text-sm">Isi formulir data pegawai dengan lengkap.</p>
             </div>
-            <div className="p-8">
+            <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -800,18 +843,23 @@ export default function TabelPegawai({ role }) {
                         setShowModal(false);
                         setEditing(null);
                       }} 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      <span className="relative z-10">Batal</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      Batal
                   </button>
                   <button 
                       type="submit" 
-                      className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
                       disabled={loading}
                   >
-                      <span className="relative z-10">{loading ? "Menyimpan..." : "Simpan"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
+                      {loading ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                          <span>Menyimpan...</span>
+                        </div>
+                      ) : (
+                        'Simpan'
+                      )}
                   </button>
                 </div>
               </form>

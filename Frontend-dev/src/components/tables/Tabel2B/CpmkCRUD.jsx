@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiBriefcase } from 'react-icons/fi';
+import { FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 // ============================================================
 // CPMK CRUD
@@ -102,11 +103,129 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
   // Ambil daftar MK dari maps
   const mkList = Object.values(maps?.mata_kuliah || {});
 
+  // Fungsi export Excel
+  const handleExport = async () => {
+    try {
+      if (!rows || rows.length === 0) {
+        throw new Error('Tidak ada data untuk diekspor.');
+      }
+
+      // Prepare data untuk export sesuai struktur tabel
+      const exportData = [];
+      
+      // Tambahkan header
+      const headers = ['ID', 'Kode CPMK', 'Deskripsi', 'Unit Prodi', 'Mata Kuliah'];
+      exportData.push(headers);
+      
+      // Tambahkan data rows
+      rows.forEach((row) => {
+        const rowData = [
+          row.id_cpmk || '',
+          row.kode_cpmk || '',
+          row.deskripsi_cpmk || '',
+          row.nama_unit_prodi || '',
+          row.nama_mk || ''
+        ];
+        exportData.push(rowData);
+      });
+
+      // Buat workbook baru
+      const wb = XLSX.utils.book_new();
+      
+      // Buat worksheet dari array data
+      const ws = XLSX.utils.aoa_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 8 },   // ID
+        { wch: 15 },  // Kode CPMK
+        { wch: 50 },  // Deskripsi
+        { wch: 20 },  // Unit Prodi
+        { wch: 30 }   // Mata Kuliah
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Tambahkan worksheet ke workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'CPMK');
+      
+      // Generate file dan download
+      const fileName = `Data_CPMK_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Data berhasil diekspor ke Excel.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      
+      // Fallback ke CSV jika xlsx gagal
+      try {
+        const escapeCsv = (str) => {
+          if (str === null || str === undefined) return '';
+          const strValue = String(str);
+          if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
+            return `"${strValue.replace(/"/g, '""')}"`;
+          }
+          return strValue;
+        };
+        
+        const csvRows = [
+          ['ID', 'Kode CPMK', 'Deskripsi', 'Unit Prodi', 'Mata Kuliah'],
+          ...rows.map(row => [
+            row.id_cpmk || '',
+            row.kode_cpmk || '',
+            row.deskripsi_cpmk || '',
+            row.nama_unit_prodi || '',
+            row.nama_mk || ''
+          ])
+        ].map(row => row.map(cell => escapeCsv(cell)).join(','));
+        
+        const csvContent = '\ufeff' + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Data_CPMK_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Data berhasil diekspor ke CSV. File dapat dibuka di Excel.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } catch (csvErr) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal mengekspor data',
+          text: err.message || 'Terjadi kesalahan saat mengekspor data.'
+        });
+      }
+    }
+  };
+
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-800">Capaian Pembelajaran Mata Kuliah (CPMK)</h2>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={loading || !rows || rows.length === 0}
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
+          >
+            <FiDownload size={18} />
+            <span>Export Excel</span>
+          </button>
           
           {/* === Dropdown filter hanya untuk superadmin === */}
           {isSuperAdmin && (
