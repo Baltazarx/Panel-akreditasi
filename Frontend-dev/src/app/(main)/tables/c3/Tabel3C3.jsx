@@ -587,27 +587,27 @@ function DataTable({
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Jenis HKI</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Nama DTPR</th>
             <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              Tahun Perolehan (Beri Tanda √)
+              TS (Beri Tanda √)
             </th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Link Bukti</th>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
           </tr>
-          {/* Header Level 2 - Tahun */}
+          {/* Header Level 2 - TS */}
           <tr>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              {tahunLaporan?.nama_ts4 || 'TS-4'}
+              TS-4
             </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              {tahunLaporan?.nama_ts3 || 'TS-3'}
+              TS-3
             </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              {tahunLaporan?.nama_ts2 || 'TS-2'}
+              TS-2
             </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              {tahunLaporan?.nama_ts1 || 'TS-1'}
+              TS-1
             </th>
             <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-              {tahunLaporan?.nama_ts || 'TS'}
+              TS
             </th>
           </tr>
         </thead>
@@ -1151,7 +1151,7 @@ export default function Tabel3C3({ auth, role }) {
         'Judul',
         'Jenis HKI',
         'Nama DTPR',
-        'Tahun Perolehan (Beri Tanda √)',
+        'TS (Beri Tanda √)',
         '',
         '',
         '',
@@ -1165,11 +1165,11 @@ export default function Tabel3C3({ auth, role }) {
         '',
         '',
         '',
-        tahunLaporan?.nama_ts4 || 'TS-4',
-        tahunLaporan?.nama_ts3 || 'TS-3',
-        tahunLaporan?.nama_ts2 || 'TS-2',
-        tahunLaporan?.nama_ts1 || 'TS-1',
-        tahunLaporan?.nama_ts || 'TS',
+        'TS-4',
+        'TS-3',
+        'TS-2',
+        'TS-1',
+        'TS',
         ''
       ];
       exportData.push(headerRow2);

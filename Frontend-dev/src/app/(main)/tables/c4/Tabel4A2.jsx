@@ -1319,19 +1319,19 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
             {tahunLaporan && (
               <tr>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-4<br/>({tahunLaporan.nama_ts4})
+                  TS-4
                 </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-3<br/>({tahunLaporan.nama_ts3})
+                  TS-3
                 </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-2<br/>({tahunLaporan.nama_ts2})
+                  TS-2
                 </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS-1<br/>({tahunLaporan.nama_ts1})
+                  TS-1
                 </th>
                 <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                  TS<br/>({tahunLaporan.nama_ts})
+                  TS
                 </th>
               </tr>
             )}

@@ -970,23 +970,12 @@ export default function Tabel6({ auth, role: propRole }) {
 
       {/* Table - Struktur Khusus sesuai Gambar */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead>
-            <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi UPPS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Visi Keilmuan PS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi PT</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Misi UPPS</th>
-              {(canUpdate || canDelete || canHardDelete) && (
-                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Aksi</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
+        <div className="relative transition-opacity duration-200 ease-in-out">
+          <table className="w-full text-sm text-left">
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {loading ? (
               <tr>
-                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
+                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
                   <p className="mt-4">Memuat data...</p>
                 </td>
@@ -995,41 +984,99 @@ export default function Tabel6({ auth, role: propRole }) {
               filteredRows.map((row, idx) => {
                 const rowId = row.id || idx;
                 const isDeleted = row.deleted_at;
+                // Alternating row colors seperti Tabel1A1
+                const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
                 return (
-                  <tr 
-                    key={rowId} 
-                    className={`transition-colors ${isDeleted ? 'bg-red-50 hover:bg-red-100' : 'bg-white hover:bg-[#eaf4ff]'}`}
-                  >
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_pt || "-"}</td>
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_upps || "-"}</td>
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.visi_keilmuan_ps || "-"}</td>
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.misi_pt || "-"}</td>
-                    <td className="px-6 py-4 border border-slate-200 text-slate-700">{row.misi_upps || "-"}</td>
-                    {(canUpdate || canDelete || canHardDelete) && (
-                      <td className="px-6 py-4 border border-slate-200 text-center">
-                        <ActionDropdown
-                          row={row}
-                          canUpdate={canUpdate}
-                          canDelete={canDelete}
-                          canHardDelete={canHardDelete}
-                          onEdit={() => {
-                            setEditData(row);
-                            setShowForm(true);
-                          }}
-                          onDelete={handleDelete}
-                          onRestore={handleRestore}
-                          onHardDelete={handleHardDelete}
-                          openDropdownId={openDropdownId}
-                          setOpenDropdownId={setOpenDropdownId}
-                        />
+                  <React.Fragment key={rowId}>
+                    {/* Row 1: Header Visi */}
+                    <tr className={`bg-gradient-to-r from-[#043975] to-[#0384d6] ${isDeleted ? 'opacity-75' : ''}`}>
+                      <th className="px-6 py-4 border-l border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        Visi PT
+                      </th>
+                      <th className="px-6 py-4 border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        Visi UPPS
+                      </th>
+                      <th className="px-6 py-4 border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        Visi Keilmuan PS
+                      </th>
+                      {(canUpdate || canDelete || canHardDelete) && (
+                        <th rowSpan={4} className="px-4 py-0 border-r border-t border-b border-white/20 text-white font-semibold text-center w-24 align-top" style={{ padding: 0 }}>
+                          <div className="flex flex-col h-full">
+                            <div className="px-4 py-4 border-b border-white/20 flex-shrink-0 text-xs font-semibold tracking-wide uppercase">
+                              <span>Aksi</span>
+                            </div>
+                            <div className={`px-4 py-4 flex-shrink-0 ${isDeleted ? 'bg-red-50' : 'bg-white'}`}>
+                              {/* Row 2: Data Visi - Kosong */}
+                            </div>
+                            <div className="px-4 py-4 border-b border-white/20 flex-shrink-0 bg-gradient-to-r from-[#043975] to-[#0384d6]">
+                              {/* Row 3: Header Misi - Kosong */}
+                            </div>
+                            <div className={`px-4 py-4 flex items-center justify-center flex-shrink-0 ${isDeleted ? 'bg-red-50' : 'bg-white'}`}>
+                              <ActionDropdown
+                                row={row}
+                                canUpdate={canUpdate}
+                                canDelete={canDelete}
+                                canHardDelete={canHardDelete}
+                                onEdit={() => {
+                                  setEditData(row);
+                                  setShowForm(true);
+                                }}
+                                onDelete={handleDelete}
+                                onRestore={handleRestore}
+                                onHardDelete={handleHardDelete}
+                                openDropdownId={openDropdownId}
+                                setOpenDropdownId={setOpenDropdownId}
+                              />
+                            </div>
+                          </div>
+                        </th>
+                      )}
+                    </tr>
+                    {/* Row 2: Data Visi */}
+                    <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {row.visi_pt || ""}
                       </td>
-                    )}
-                  </tr>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {row.visi_upps || ""}
+                      </td>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {row.visi_keilmuan_ps || ""}
+                      </td>
+                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                    </tr>
+                    {/* Row 3: Header Misi */}
+                    <tr className={`bg-gradient-to-r from-[#043975] to-[#0384d6] ${isDeleted ? 'opacity-75' : ''}`}>
+                      <th className="px-6 py-4 border-l border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        Misi PT
+                      </th>
+                      <th className="px-6 py-4 border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        Misi UPPS
+                      </th>
+                      <th className="px-6 py-4 border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                        {/* Kosong */}
+                      </th>
+                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                    </tr>
+                    {/* Row 4: Data Misi */}
+                    <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {row.misi_pt || ""}
+                      </td>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {row.misi_upps || ""}
+                      </td>
+                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {/* Kosong */}
+                      </td>
+                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                    </tr>
+                  </React.Fragment>
                 );
               })
             ) : (
               <tr className="bg-white">
-                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                   <p className="font-medium">Data tidak ditemukan</p>
                   <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
                 </td>
@@ -1037,6 +1084,7 @@ export default function Tabel6({ auth, role: propRole }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal Form */}

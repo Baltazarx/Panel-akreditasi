@@ -677,34 +677,39 @@ export default function Tabel2A2({ role }) {
       return "Kota/Kab Lain";
     }
     
-    const namaDaerahUpper = namaDaerah.toUpperCase();
-    
-    // Prioritas 1: Jika nama daerah mengandung KABUPATEN BANYUWANGI, maka Sama Kota/Kab
-    if (namaDaerahUpper.includes("KABUPATEN BANYUWANGI")) {
-      return "Sama Kota/Kab";
-    }
+    const namaDaerahUpper = namaDaerah.toUpperCase().trim();
     
     // Cari provinsi dari database jika tidak tersedia atau untuk memastikan
     const hasilPencarian = cariProvinsiDariDaerah(namaDaerah);
-    const provinsiFinal = provinsi || hasilPencarian.provinsi;
     
     // Jika tidak ditemukan di database, maka Negara Lain
     if (!hasilPencarian.ditemukan) {
       return "Negara Lain";
     }
     
-    // Prioritas 2: Jika provinsi ditemukan dan bukan Jawa Timur, maka Provinsi Lain
-    if (provinsiFinal && provinsiFinal.toUpperCase() !== "JAWA TIMUR") {
-      return "Provinsi Lain";
+    // Prioritas 1: Cek apakah ini Banyuwangi (lebih spesifik)
+    // Cek dengan berbagai variasi nama Banyuwangi
+    const namaTanpaPrefix = namaDaerahUpper.replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '').trim();
+    const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" || 
+                        namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
+                        namaDaerahUpper === "KAB. BANYUWANGI" ||
+                        namaDaerahUpper === "KABUPATEN BANYUWANGI";
+    
+    // Jika ini Banyuwangi, maka Sama Kota/Kab
+    if (isBanyuwangi) {
+      return "Sama Kota/Kab";
     }
     
-    // Default: Kota/Kab Lain (untuk daerah di Jawa Timur selain Banyuwangi)
+    // Prioritas 2: Semua kota/kab lain (baik di Jawa Timur maupun di luar Jawa Timur) masuk ke Kota/Kab Lain
+    // "Provinsi Lain" digunakan untuk data agregat provinsi, bukan kota/kab individual
     return "Kota/Kab Lain";
   };
 
   const handleEditClick = (row) => {
     const upperDaerah = (row.nama_daerah_input || "").toUpperCase();
-    const kategoriGeografis = getKategoriGeografis(upperDaerah);
+    // Saat edit, pertahankan kategori_geografis yang sudah ada dari row
+    // Jangan hitung ulang karena bisa salah (misalnya nama provinsi tidak ditemukan sebagai kota/kab)
+    const kategoriGeografis = row.kategori_geografis || getKategoriGeografis(upperDaerah);
     setForm({
       id_unit_prodi: row.id_unit_prodi || authUser?.unit || "",
       id_tahun: row.id_tahun || "",
@@ -821,10 +826,23 @@ export default function Tabel2A2({ role }) {
         const updateUrl = `/tabel2a2-keragaman-asal/${editingRow.id}`;
         console.log("🌐 Update API URL:", updateUrl);
         
+        // Saat edit, pertahankan kategori_geografis yang sudah ada dari editingRow
+        // Jangan hitung ulang karena bisa salah (misalnya nama provinsi tidak ditemukan sebagai kota/kab)
+        const payloadUpdate = {
+          ...payload,
+          kategori_geografis: editingRow.kategori_geografis || form.kategori_geografis || payload.kategori_geografis
+        };
+        
+        console.log("📝 Update payload dengan kategori yang dipertahankan:", {
+          kategori_geografis: payloadUpdate.kategori_geografis,
+          nama_daerah_input: payloadUpdate.nama_daerah_input,
+          jumlah_mahasiswa: payloadUpdate.jumlah_mahasiswa
+        });
+        
         await apiFetch(updateUrl, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payloadUpdate)
         });
         console.log("✅ Update successful");
         await Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil diupdate', timer: 2000 });
@@ -877,36 +895,91 @@ export default function Tabel2A2({ role }) {
             timer: 2000 
           });
         } else {
-          // Gunakan kategori_geografis dari form (yang sudah ditentukan oleh getKategoriGeografis)
-          // Jangan otomatis membuat record tambahan untuk provinsi
-          // User hanya membuat 1 record sesuai dengan kategori yang dipilih
+          // Tentukan kategori geografis
           const kategoriGeografis = form.kategori_geografis || getKategoriGeografis(form.nama_daerah_input);
           
-          const payloadFinal = {
-            ...payload,
-            nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
-            kategori_geografis: kategoriGeografis
-          };
+          // Cek apakah ini kota/kab di luar Jawa Timur (bukan Banyuwangi)
+          const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase().trim() === "JAWA TIMUR";
+          const isLuarJawaTimur = daerahDitemukan && !isJawaTimur && !isBanyuwangi;
           
-          console.log("📝 Membuat 1 record dengan kategori:", {
-            nama_daerah_input: payloadFinal.nama_daerah_input,
-            kategori_geografis: payloadFinal.kategori_geografis,
-            jumlah_mahasiswa: payloadFinal.jumlah_mahasiswa
-          });
-          
-          await apiFetch(createUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payloadFinal)
-          });
-          console.log("✅ Create successful");
-          
-          await Swal.fire({ 
-            icon: 'success', 
-            title: 'Berhasil!', 
-            text: 'Data berhasil ditambahkan', 
-            timer: 2000 
-          });
+          if (isLuarJawaTimur) {
+            // Jika kota/kab di luar Jawa Timur, buat 2 record:
+            // 1. Kota/Kab Lain (dengan nama kota/kab)
+            // 2. Provinsi Lain (dengan nama provinsi)
+            
+            const payloadKotaKabLain = {
+              ...payload,
+              nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
+              kategori_geografis: "Kota/Kab Lain"
+            };
+            
+            // Untuk Provinsi Lain, gunakan nama provinsi, bukan nama kota/kab
+            const namaProvinsi = provinsiDitemukan ? provinsiDitemukan.toUpperCase().trim() : form.nama_daerah_input.toUpperCase().trim();
+            
+            const payloadProvinsiLain = {
+              ...payload,
+              nama_daerah_input: namaProvinsi,
+              kategori_geografis: "Provinsi Lain"
+            };
+            
+            console.log("📝 Membuat 2 record untuk kota/kab di luar Jawa Timur:", {
+              kota_kab: payloadKotaKabLain.nama_daerah_input,
+              provinsi: payloadProvinsiLain.nama_daerah_input,
+              kategori_1: payloadKotaKabLain.kategori_geografis,
+              kategori_2: payloadProvinsiLain.kategori_geografis,
+              jumlah_mahasiswa: payloadKotaKabLain.jumlah_mahasiswa
+            });
+            
+            // Buat record pertama: Kota/Kab Lain
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadKotaKabLain)
+            });
+            console.log("✅ Create Kota/Kab Lain successful");
+            
+            // Buat record kedua: Provinsi Lain
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadProvinsiLain)
+            });
+            console.log("✅ Create Provinsi Lain successful");
+            
+            await Swal.fire({ 
+              icon: 'success', 
+              title: 'Berhasil!', 
+              text: 'Data berhasil ditambahkan (Kota/Kab Lain dan Provinsi Lain)', 
+              timer: 2000 
+            });
+          } else {
+            // Untuk kota/kab di Jawa Timur (selain Banyuwangi) atau Banyuwangi, buat 1 record saja
+            const payloadFinal = {
+              ...payload,
+              nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
+              kategori_geografis: kategoriGeografis
+            };
+            
+            console.log("📝 Membuat 1 record dengan kategori:", {
+              nama_daerah_input: payloadFinal.nama_daerah_input,
+              kategori_geografis: payloadFinal.kategori_geografis,
+              jumlah_mahasiswa: payloadFinal.jumlah_mahasiswa
+            });
+            
+            await apiFetch(createUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payloadFinal)
+            });
+            console.log("✅ Create successful");
+            
+            await Swal.fire({ 
+              icon: 'success', 
+              title: 'Berhasil!', 
+              text: 'Data berhasil ditambahkan', 
+              timer: 2000 
+            });
+          }
         }
       }
       
