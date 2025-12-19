@@ -139,7 +139,9 @@ export function useAuth() {
       console.log("Respons dari API login:", response);
 
       if (!response?.user) {
-        throw new Error("Respons API tidak valid.");
+        // Cek apakah ada error message di response
+        const errorMsg = response?.error || response?.message || "Respons API tidak valid.";
+        throw new Error(errorMsg);
       }
 
       // Backend mengembalikan id_unit_prodi di response.user
@@ -169,7 +171,27 @@ export function useAuth() {
 
       return userData;
     } catch (err) {
-      const errorMessage = err.message || "Login gagal.";
+      // Extract error message dari berbagai sumber
+      let errorMessage = "Login gagal.";
+      
+      if (err.response) {
+        // Error dari API response
+        errorMessage = err.response.error || err.response.message || err.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Jika error message adalah JSON string, parse dulu
+      if (typeof errorMessage === 'string' && errorMessage.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(errorMessage);
+          errorMessage = parsed.error || parsed.message || errorMessage;
+        } catch (e) {
+          // Tetap gunakan errorMessage asli jika parsing gagal
+        }
+      }
+      
+      console.error("Login error:", err);
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
