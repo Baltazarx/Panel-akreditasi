@@ -725,64 +725,67 @@ const StatistikCards = () => {
         }, 500);
     }, []);
 
+    // Helper function untuk mendapatkan warna solid dari gradient
+    const getColorClasses = (color) => {
+        const colorMap = {
+            'from-blue-500 to-cyan-500': { bg: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50' },
+            'from-green-500 to-emerald-500': { bg: 'bg-green-500', text: 'text-green-600', light: 'bg-green-50' },
+            'from-purple-500 to-violet-500': { bg: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50' },
+            'from-orange-500 to-red-500': { bg: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50' }
+        };
+        return colorMap[color] || { bg: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50' };
+    };
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="group relative bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-lg border border-white/50 animate-pulse">
-                        <div className="h-14 w-14 bg-slate-200 rounded-2xl mb-4"></div>
-                        <div className="h-4 bg-slate-200 rounded-lg mb-3 w-1/2"></div>
-                        <div className="h-8 bg-slate-200 rounded-lg mb-2"></div>
-                        <div className="h-3 bg-slate-200 rounded-lg w-2/3"></div>
+                    <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-pulse">
+                        <div className="h-10 w-10 bg-slate-200 rounded-lg mb-4"></div>
+                        <div className="h-8 bg-slate-200 rounded mb-2 w-3/4"></div>
+                        <div className="h-4 bg-slate-200 rounded w-1/2"></div>
                     </div>
                 ))
             ) : (
                 stats.map((stat, index) => {
                     const IconComponent = stat.icon;
+                    const colors = getColorClasses(stat.color);
                     return (
                         <motion.div
                             key={index}
                             variants={slideUp}
                             initial="hidden"
                             animate="visible"
-                            transition={{ delay: index * 0.1 }}
-                            whileHover={{ y: -8, scale: 1.03, rotate: 0.5 }}
-                            className="group relative bg-white/80 backdrop-blur-xl p-7 rounded-3xl shadow-xl border border-white/60 hover:border-white/80 transition-all duration-500 ease-out overflow-hidden"
+                            transition={{ delay: index * 0.05 }}
+                            whileHover={{ y: -2 }}
+                            className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200"
                         >
-                            {/* Animated gradient background */}
-                            <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                            
-                            {/* Glassmorphism overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            
-                            {/* Shine effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            
-                            <div className="relative z-10">
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className={`relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                                        <IconComponent className="w-7 h-7" />
-                                        <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                    </div>
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl backdrop-blur-sm ${
-                                        stat.trend === 'up' ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-300/50' : 'bg-red-500/20 text-red-700 border border-red-300/50'
-                                    }`}>
-                                        {stat.trend === 'up' ? (
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                            </svg>
-                                        )}
-                                        {stat.change}
-                                    </span>
+                            <div className="flex items-start justify-between mb-4">
+                                <div className={`p-2.5 rounded-lg ${colors.light} group-hover:scale-105 transition-transform duration-200`}>
+                                    <IconComponent className={`w-5 h-5 ${colors.text}`} />
                                 </div>
-                                <h3 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md ${
+                                    stat.trend === 'up' 
+                                        ? 'bg-emerald-50 text-emerald-600' 
+                                        : 'bg-red-50 text-red-600'
+                                }`}>
+                                    {stat.trend === 'up' ? (
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                        </svg>
+                                    )}
+                                    {stat.change}
+                                </span>
+                            </div>
+                            <div>
+                                <h3 className="text-3xl font-bold text-slate-900 mb-1">
                                     {stat.value}
                                 </h3>
-                                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wider">
+                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                                     {stat.title}
                                 </p>
                             </div>
