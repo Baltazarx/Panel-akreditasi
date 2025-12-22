@@ -25,7 +25,6 @@ export default function UserManagementPage() {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   
   // Form dropdown states
-  const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
   const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
   
   // Close dropdown when clicking outside, scrolling, or resizing
@@ -178,7 +177,6 @@ export default function UserManagementPage() {
   // Close form dropdowns when form closes
   useEffect(() => {
     if (!showForm) {
-      setOpenFormUnitDropdown(false);
       setOpenFormPegawaiDropdown(false);
     }
   }, [showForm]);
@@ -186,27 +184,23 @@ export default function UserManagementPage() {
   // Close form dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
-        setOpenFormUnitDropdown(false);
-      }
       if (openFormPegawaiDropdown && !event.target.closest('.form-pegawai-dropdown-container') && !event.target.closest('.form-pegawai-dropdown-menu')) {
         setOpenFormPegawaiDropdown(false);
       }
     };
 
-    if (openFormUnitDropdown || openFormPegawaiDropdown) {
+    if (openFormPegawaiDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openFormUnitDropdown, openFormPegawaiDropdown]);
+  }, [openFormPegawaiDropdown]);
 
   // Submit tambah/edit user
   const handleSubmit = async (e) => {
     if (isReadOnlyRole) return;
     e.preventDefault();
-    setOpenFormUnitDropdown(false);
     setOpenFormPegawaiDropdown(false);
     
     // Validasi form
@@ -215,13 +209,18 @@ export default function UserManagementPage() {
       return;
     }
     
+    if (!formData.id_pegawai) {
+      Swal.fire('Gagal!', 'Pegawai harus dipilih.', 'error');
+      return;
+    }
+    
     if (!formData.id_unit) {
-      Swal.fire('Gagal!', 'Unit kerja harus dipilih.', 'error');
+      Swal.fire('Gagal!', 'Unit kerja tidak ditemukan. Pastikan pegawai yang dipilih memiliki unit kerja.', 'error');
       return;
     }
     
     if (!formData.role) {
-      Swal.fire('Gagal!', 'Role harus dipilih.', 'error');
+      Swal.fire('Gagal!', 'Role tidak ditemukan. Pastikan unit kerja dari pegawai memiliki kode_role.', 'error');
       return;
     }
     
@@ -592,7 +591,6 @@ export default function UserManagementPage() {
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              setOpenFormUnitDropdown(false);
               setOpenFormPegawaiDropdown(false);
               setShowForm(false);
               setEditMode(false);
@@ -632,87 +630,7 @@ export default function UserManagementPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Unit Kerja
-                </label>
-                <div className="relative form-unit-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenFormUnitDropdown(!openFormUnitDropdown);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      formData.id_unit
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih unit kerja"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${formData.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {formData.id_unit 
-                          ? (() => {
-                              const found = units.find(u => String(u.id_unit) === String(formData.id_unit));
-                              return found ? found.nama_unit : formData.id_unit;
-                            })()
-                          : '-- Pilih Unit Kerja --'}
-                      </span>
-                    </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openFormUnitDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openFormUnitDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
-                    >
-                      {units.length > 0 ? (
-                        units.map(u => (
-                          <button
-                            key={u.id_unit}
-                            type="button"
-                            onClick={() => {
-                              // Auto-fill role berdasarkan kode_role dari unit kerja
-                              const newFormData = {
-                                ...formData,
-                                id_unit: String(u.id_unit)
-                              };
-                              
-                              // Jika unit memiliki kode_role, gunakan untuk auto-fill role
-                              if (u.kode_role) {
-                                newFormData.role = u.kode_role;
-                              }
-                              
-                              setFormData(newFormData);
-                              setOpenFormUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formData.id_unit === String(u.id_unit)
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{u.nama_unit}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Tidak ada data unit kerja
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pegawai
+                  Pegawai <span className="text-red-500">*</span>
                 </label>
                 <div className="relative form-pegawai-dropdown-container">
                   <button
@@ -756,7 +674,25 @@ export default function UserManagementPage() {
                             key={p.id_pegawai}
                             type="button"
                             onClick={() => {
-                              setFormData({ ...formData, id_pegawai: p.id_pegawai });
+                              // Auto-fill id_unit dan role dari pegawai yang dipilih
+                              const selectedPegawai = p;
+                              const newFormData = {
+                                ...formData,
+                                id_pegawai: selectedPegawai.id_pegawai
+                              };
+                              
+                              // Ambil id_unit dari pegawai
+                              if (selectedPegawai.id_unit) {
+                                newFormData.id_unit = String(selectedPegawai.id_unit);
+                                
+                                // Cari unit kerja untuk mendapatkan kode_role
+                                const foundUnit = units.find(u => String(u.id_unit) === String(selectedPegawai.id_unit));
+                                if (foundUnit?.kode_role) {
+                                  newFormData.role = foundUnit.kode_role;
+                                }
+                              }
+                              
+                              setFormData(newFormData);
                               setOpenFormPegawaiDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
@@ -782,11 +718,46 @@ export default function UserManagementPage() {
                     </div>
                   )}
                 </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Unit kerja dan role akan otomatis terisi dari data pegawai yang dipilih
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Role <span className="text-xs text-gray-500 font-normal">(Otomatis dari Unit Kerja)</span>
+                  Unit Kerja <span className="text-xs text-gray-500 font-normal">(Otomatis dari Pegawai)</span>
+                </label>
+                <div className="relative">
+                  <div
+                    className={`w-full px-4 py-3 border rounded-lg shadow-sm flex items-center justify-between transition-all duration-200 ${
+                      formData.id_unit
+                        ? 'border-[#0384d6] bg-gray-50' 
+                        : 'border-gray-300 bg-gray-50'
+                    } cursor-not-allowed opacity-75`}
+                    aria-label="Unit kerja (otomatis dari pegawai)"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiBriefcase className="text-gray-400 flex-shrink-0" size={18} />
+                      <span className={`truncate ${formData.id_unit ? 'text-gray-700' : 'text-gray-400'}`}>
+                        {formData.id_unit 
+                          ? (() => {
+                              const found = units.find(u => String(u.id_unit) === String(formData.id_unit));
+                              return found ? found.nama_unit : formData.id_unit;
+                            })()
+                          : 'Pilih Pegawai terlebih dahulu'}
+                      </span>
+                    </div>
+                    <FiBriefcase className="text-gray-400 flex-shrink-0" size={18} />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Unit kerja otomatis diambil dari data pegawai yang dipilih
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Role <span className="text-xs text-gray-500 font-normal">(Otomatis dari Pegawai)</span>
                 </label>
                 <div className="relative form-role-dropdown-container">
                   <div
@@ -795,18 +766,18 @@ export default function UserManagementPage() {
                         ? 'border-[#0384d6] bg-gray-50' 
                         : 'border-gray-300 bg-gray-50'
                     } cursor-not-allowed opacity-75`}
-                    aria-label="Role (otomatis dari unit kerja)"
+                    aria-label="Role (otomatis dari pegawai)"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FiShield className="text-gray-400 flex-shrink-0" size={18} />
                       <span className={`truncate ${formData.role ? 'text-gray-700' : 'text-gray-400'}`}>
-                        {formData.role || 'Pilih Unit Kerja terlebih dahulu'}
+                        {formData.role || 'Pilih Pegawai terlebih dahulu'}
                       </span>
                     </div>
                     <FiShield className="text-gray-400 flex-shrink-0" size={18} />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    Role akan otomatis terisi sesuai dengan unit kerja yang dipilih
+                    Role akan otomatis terisi sesuai dengan unit kerja dari pegawai yang dipilih
                   </p>
                 </div>
               </div>
@@ -815,7 +786,6 @@ export default function UserManagementPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setOpenFormUnitDropdown(false);
                     setOpenFormPegawaiDropdown(false);
                     setShowForm(false);
                     setEditMode(false);

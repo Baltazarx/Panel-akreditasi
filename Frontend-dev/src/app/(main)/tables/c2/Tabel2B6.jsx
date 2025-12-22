@@ -844,23 +844,24 @@ export default function Tabel2B6({ role }) {
     
     return (
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead>
-            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
-            </tr>
-            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
+        <div className="relative transition-opacity duration-200 ease-in-out">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr className="sticky top-0">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
+              </tr>
+              <tr className="sticky top-0">
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {loading ? (
               <tr>
                 <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
@@ -879,76 +880,80 @@ export default function Tabel2B6({ role }) {
               </tr>
             ) : (
               <>
-              {currentData.map((row, idx) => (
-                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    {row.data && (
-                      <div className="flex items-center justify-center dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
-                            if (openDropdownId !== rowId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const dropdownWidth = 192;
-                              setDropdownPosition({
-                                top: rect.bottom + 4,
-                                left: Math.max(8, rect.right - dropdownWidth)
-                              });
-                              setOpenDropdownId(rowId);
-                            } else {
-                              setOpenDropdownId(null);
-                            }
-                          }}
-                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                          aria-label="Menu aksi"
-                          aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
-                        >
-                          <FiMoreVertical size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {currentData.map((row, idx) => {
+                const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+                return (
+                  <tr key={idx} className={`transition-all duration-200 ease-in-out ${rowBgClass} hover:bg-[#eaf4ff]`}>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 font-medium text-center ${rowBgClass}`}>{idx + 1}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 font-medium ${rowBgClass}`}>{row.jenis_kemampuan}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.sangat_baik ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.baik ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.cukup ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.kurang ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBgClass}`}>{row.data?.rencana_tindak_lanjut || ""}</td>
+                    <td className={`px-6 py-4 text-center border border-slate-200 ${rowBgClass}`}>
+                      {row.data && (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
+                              if (openDropdownId !== rowId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownId(rowId);
+                              } else {
+                                setOpenDropdownId(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi"
+                            aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               {/* Baris Jumlah */}
-              <tr className={currentData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.sangat_baik}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.baik}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.cukup}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.kurang}</td>
-                <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-                <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
+              <tr className="bg-slate-100">
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center" colSpan={2}>Jumlah</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.sangat_baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.cukup}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.kurang}</td>
+                <td className="px-6 py-4 border border-slate-200"></td>
+                <td className="px-6 py-4 text-center border border-slate-200"></td>
               </tr>
 
               {/* Baris Statistik */}
-              <tr className={(currentData.length + 1) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah alumni/lulusan dalam 3 tahun terakhir</td>
-                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_alumni_3_tahun ?? ""}</td>
-                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              <tr className="bg-white">
+                <td className="px-6 py-4 text-slate-700 border border-slate-200" colSpan={2}>Jumlah alumni/lulusan dalam 3 tahun terakhir</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-200 text-center font-semibold" colSpan={5}>{statData?.jumlah_alumni_3_tahun ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-200"></td>
               </tr>
-              <tr className={(currentData.length + 2) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah pengguna lulusan sebagai responden</td>
-                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_responden ?? ""}</td>
-                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              <tr className="bg-slate-50">
+                <td className="px-6 py-4 text-slate-700 border border-slate-200" colSpan={2}>Jumlah pengguna lulusan sebagai responden</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-200 text-center font-semibold" colSpan={5}>{statData?.jumlah_responden ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-200"></td>
               </tr>
-              <tr className={(currentData.length + 3) % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-300" colSpan={2}>Jumlah mahasiswa aktif pada tahun TS</td>
-                <td className="px-6 py-4 text-slate-900 border border-slate-300 text-center font-semibold" colSpan={5}>{statData?.jumlah_mahasiswa_aktif_ts ?? ""}</td>
-                <td className="px-6 py-4 text-center border border-slate-300"></td>
+              <tr className="bg-white">
+                <td className="px-6 py-4 text-slate-700 border border-slate-200" colSpan={2}>Jumlah mahasiswa aktif pada tahun TS</td>
+                <td className="px-6 py-4 text-slate-900 border border-slate-200 text-center font-semibold" colSpan={5}>{statData?.jumlah_mahasiswa_aktif_ts ?? ""}</td>
+                <td className="px-6 py-4 text-center border border-slate-200"></td>
               </tr>
               </>
             )}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };
@@ -960,23 +965,24 @@ export default function Tabel2B6({ role }) {
     
     return (
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead>
-            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
-            </tr>
-            <tr className="sticky top-0 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
-              <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
+        <div className="relative transition-opacity duration-200 ease-in-out">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr className="sticky top-0">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>No</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Jenis Kemampuan</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" colSpan={4}>Tingkat Kepuasan Pengguna (%)</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Rencana Tindak Lanjut oleh UPPS/PS</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20" rowSpan={2}>Aksi</th>
+              </tr>
+              <tr className="sticky top-0">
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sangat Baik</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Baik</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Cukup</th>
+                <th className="px-6 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Kurang</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
             {loading ? (
               <tr>
                 <td colSpan={8} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
@@ -995,59 +1001,63 @@ export default function Tabel2B6({ role }) {
               </tr>
             ) : (
               <>
-              {currentData.map((row, idx) => (
-                <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 bg-gray-50 font-medium text-center">{idx + 1}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 font-medium">{row.jenis_kemampuan}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.sangat_baik ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.baik ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.cukup ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">{row.kurang ?? ""}</td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.data?.rencana_tindak_lanjut || ""}</td>
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    {row.data && (
-                      <div className="flex items-center justify-center dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
-                            if (openDropdownId !== rowId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const dropdownWidth = 192;
-                              setDropdownPosition({
-                                top: rect.bottom + 4,
-                                left: Math.max(8, rect.right - dropdownWidth)
-                              });
-                              setOpenDropdownId(rowId);
-                            } else {
-                              setOpenDropdownId(null);
-                            }
-                          }}
-                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                          aria-label="Menu aksi"
-                          aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
-                        >
-                          <FiMoreVertical size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {currentData.map((row, idx) => {
+                const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+                return (
+                  <tr key={idx} className={`transition-all duration-200 ease-in-out ${rowBgClass} hover:bg-[#eaf4ff]`}>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 font-medium text-center ${rowBgClass}`}>{idx + 1}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 font-medium ${rowBgClass}`}>{row.jenis_kemampuan}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.sangat_baik ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.baik ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.cukup ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 text-center ${rowBgClass}`}>{row.kurang ?? ""}</td>
+                    <td className={`px-6 py-4 text-slate-700 border border-slate-200 ${rowBgClass}`}>{row.data?.rencana_tindak_lanjut || ""}</td>
+                    <td className={`px-6 py-4 text-center border border-slate-200 ${rowBgClass}`}>
+                      {row.data && (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rowId = getIdField(row.data) ? row.data[getIdField(row.data)] : idx;
+                              if (openDropdownId !== rowId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownId(rowId);
+                              } else {
+                                setOpenDropdownId(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi"
+                            aria-expanded={openDropdownId === (getIdField(row.data) ? row.data[getIdField(row.data)] : idx)}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               {/* Baris Jumlah */}
-              <tr className={currentData.length % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center" colSpan={2}>Jumlah</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.sangat_baik}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.baik}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.cukup}</td>
-                <td className="px-6 py-4 text-slate-800 border border-slate-300 bg-slate-100 font-semibold text-center">{currentJumlah.kurang}</td>
-                <td className="px-6 py-4 border border-slate-300 bg-slate-100"></td>
-                <td className="px-6 py-4 text-center border border-slate-300 bg-slate-100"></td>
+              <tr className="bg-slate-100">
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center" colSpan={2}>Jumlah</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.sangat_baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.baik}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.cukup}</td>
+                <td className="px-6 py-4 text-slate-800 border border-slate-200 font-semibold text-center">{currentJumlah.kurang}</td>
+                <td className="px-6 py-4 border border-slate-200"></td>
+                <td className="px-6 py-4 text-center border border-slate-200"></td>
               </tr>
               </>
             )}
           </tbody>
         </table>
+        </div>
       </div>
     );
   };

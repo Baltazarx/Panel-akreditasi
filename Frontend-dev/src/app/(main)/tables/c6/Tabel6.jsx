@@ -968,7 +968,7 @@ export default function Tabel6({ auth, role: propRole }) {
         </div>
       )}
 
-      {/* Table - Struktur Khusus sesuai Gambar */}
+      {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <div className="relative transition-opacity duration-200 ease-in-out">
           <table className="w-full text-sm text-left">
@@ -984,92 +984,91 @@ export default function Tabel6({ auth, role: propRole }) {
               filteredRows.map((row, idx) => {
                 const rowId = row.id || idx;
                 const isDeleted = row.deleted_at;
-                // Alternating row colors seperti Tabel1A1
+                // Alternating row colors
                 const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
                 return (
                   <React.Fragment key={rowId}>
                     {/* Row 1: Header Visi */}
-                    <tr className={`bg-gradient-to-r from-[#043975] to-[#0384d6] ${isDeleted ? 'opacity-75' : ''}`}>
-                      <th className="px-6 py-4 border-l border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                    <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         Visi PT
                       </th>
-                      <th className="px-6 py-4 border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         Visi UPPS
                       </th>
-                      <th className="px-6 py-4 border-t border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         Visi Keilmuan PS
                       </th>
                       {(canUpdate || canDelete || canHardDelete) && (
-                        <th rowSpan={4} className="px-4 py-0 border-r border-t border-b border-white/20 text-white font-semibold text-center w-24 align-top" style={{ padding: 0 }}>
-                          <div className="flex flex-col h-full">
-                            <div className="px-4 py-4 border-b border-white/20 flex-shrink-0 text-xs font-semibold tracking-wide uppercase">
-                              <span>Aksi</span>
-                            </div>
-                            <div className={`px-4 py-4 flex-shrink-0 ${isDeleted ? 'bg-red-50' : 'bg-white'}`}>
-                              {/* Row 2: Data Visi - Kosong */}
-                            </div>
-                            <div className="px-4 py-4 border-b border-white/20 flex-shrink-0 bg-gradient-to-r from-[#043975] to-[#0384d6]">
-                              {/* Row 3: Header Misi - Kosong */}
-                            </div>
-                            <div className={`px-4 py-4 flex items-center justify-center flex-shrink-0 ${isDeleted ? 'bg-red-50' : 'bg-white'}`}>
-                              <ActionDropdown
-                                row={row}
-                                canUpdate={canUpdate}
-                                canDelete={canDelete}
-                                canHardDelete={canHardDelete}
-                                onEdit={() => {
-                                  setEditData(row);
-                                  setShowForm(true);
-                                }}
-                                onDelete={handleDelete}
-                                onRestore={handleRestore}
-                                onHardDelete={handleHardDelete}
-                                openDropdownId={openDropdownId}
-                                setOpenDropdownId={setOpenDropdownId}
-                              />
-                            </div>
-                          </div>
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          Aksi
                         </th>
                       )}
                     </tr>
                     {/* Row 2: Data Visi */}
                     <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {row.visi_pt || ""}
                       </td>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {row.visi_upps || ""}
                       </td>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {row.visi_keilmuan_ps || ""}
                       </td>
-                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                      {(canUpdate || canDelete || canHardDelete) && (
+                        <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          <ActionDropdown
+                            row={row}
+                            canUpdate={canUpdate}
+                            canDelete={canDelete}
+                            canHardDelete={canHardDelete}
+                            onEdit={() => {
+                              setEditData(row);
+                              setShowForm(true);
+                            }}
+                            onDelete={handleDelete}
+                            onRestore={handleRestore}
+                            onHardDelete={handleHardDelete}
+                            openDropdownId={openDropdownId}
+                            setOpenDropdownId={setOpenDropdownId}
+                          />
+                        </td>
+                      )}
                     </tr>
                     {/* Row 3: Header Misi */}
-                    <tr className={`bg-gradient-to-r from-[#043975] to-[#0384d6] ${isDeleted ? 'opacity-75' : ''}`}>
-                      <th className="px-6 py-4 border-l border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                    <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         Misi PT
                       </th>
-                      <th className="px-6 py-4 border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         Misi UPPS
                       </th>
-                      <th className="px-6 py-4 border-b border-white/20 text-xs font-semibold tracking-wide uppercase text-center align-middle">
+                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                         {/* Kosong */}
                       </th>
-                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                      {(canUpdate || canDelete || canHardDelete) && (
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          {/* Kosong */}
+                        </th>
+                      )}
                     </tr>
                     {/* Row 4: Data Misi */}
                     <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {row.misi_pt || ""}
                       </td>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {row.misi_upps || ""}
                       </td>
-                      <td className={`px-6 py-4 border border-slate-200 text-slate-700 align-top ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                         {/* Kosong */}
                       </td>
-                      {/* Kolom Aksi sudah di-merge di row sebelumnya */}
+                      {(canUpdate || canDelete || canHardDelete) && (
+                        <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {/* Kosong */}
+                        </td>
+                      )}
                     </tr>
                   </React.Fragment>
                 );
