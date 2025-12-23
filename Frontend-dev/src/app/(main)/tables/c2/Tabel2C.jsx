@@ -209,6 +209,33 @@ export default function Tabel2C({ role }) {
     });
   }, []);
 
+  // Helper function untuk build query params
+  const buildQueryParams = useCallback((validYears, includeDeleted = false) => {
+    const params = [`id_tahun_in=${validYears.join(',')}`];
+    
+    // Untuk superadmin, gunakan selectedProdi
+    if (isSuperAdmin && selectedProdi) {
+      params.push(`id_unit_prodi=${selectedProdi}`);
+    } else if (!isSuperAdmin && authUser) {
+      // Untuk non-superadmin (kaprodi), gunakan id_unit_prodi dari authUser
+      // Coba beberapa kemungkinan field name
+      const userProdiId = authUser.id_unit_prodi || 
+                          authUser.unit || 
+                          authUser.id_unit;
+      
+      if (userProdiId) {
+        // Pastikan id_unit_prodi adalah number atau string yang valid
+        const prodiId = Number(userProdiId);
+        if (!isNaN(prodiId) && prodiId > 0) {
+          params.push(`id_unit_prodi=${prodiId}`);
+        }
+      }
+    }
+    
+    const deletedParam = includeDeleted ? '&include_deleted=1' : '';
+    return params.join('&') + deletedParam;
+  }, [isSuperAdmin, selectedProdi, authUser]);
+
   // Fetch master bentuk + data per tahun
   useEffect(() => {
     if (!selectedYear || yearOrder.length === 0) {
@@ -222,6 +249,25 @@ export default function Tabel2C({ role }) {
       return;
     }
 
+    // Untuk non-superadmin (kaprodi), pastikan authUser dan id_unit_prodi sudah tersedia
+    if (!isSuperAdmin) {
+      if (!authUser) {
+        // Jika authUser belum tersedia, tunggu
+        return;
+      }
+      const userProdiId = authUser.id_unit_prodi || authUser.unit || authUser.id_unit;
+      if (!userProdiId) {
+        // Jika id_unit_prodi tidak ada, tunggu
+        return;
+      }
+      // Validasi bahwa id_unit_prodi adalah number yang valid
+      const prodiId = Number(userProdiId);
+      if (isNaN(prodiId) || prodiId <= 0) {
+        // Jika id_unit_prodi tidak valid, tunggu
+        return;
+      }
+    }
+
     (async () => {
       try {
         setLoading(true);
@@ -233,13 +279,7 @@ export default function Tabel2C({ role }) {
         // Fetch data fleksibilitas untuk semua tahun dalam yearOrder (yang valid)
         let resAll = { masterBentuk: [], dataTahunan: [], dataDetails: [] };
         if (validYears.length > 0) {
-          // Build query params: tahun + prodi filter + include_deleted
-          const params = [`id_tahun_in=${validYears.join(',')}`];
-          if (isSuperAdmin && selectedProdi) {
-            params.push(`id_unit_prodi=${selectedProdi}`);
-          }
-          const deletedParam = showDeleted ? '&include_deleted=1' : '';
-          const queryParams = params.join('&') + deletedParam;
+          const queryParams = buildQueryParams(validYears, showDeleted);
           resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         }
         
@@ -262,7 +302,7 @@ export default function Tabel2C({ role }) {
         setLoading(false);
       }
     })();
-  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted, sortRowsByLatest]);
+  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted, sortRowsByLatest, buildQueryParams, authUser]);
 
   // Helper function untuk mapping data tahun dengan filter berdasarkan showDeleted
   const mapDataByYear = useCallback((dataTahunan, dataDetails, yearOrder, showDeletedFlag) => {
@@ -361,11 +401,7 @@ export default function Tabel2C({ role }) {
       // Refresh bentukList
       const validYears = yearOrder.filter(y => y != null);
       if (validYears.length > 0) {
-        const params = [`id_tahun_in=${validYears.join(',')}`];
-        if (isSuperAdmin && selectedProdi) {
-          params.push(`id_unit_prodi=${selectedProdi}`);
-        }
-        const queryParams = params.join('&');
+        const queryParams = buildQueryParams(validYears, showDeleted);
         const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         const masterBentuk = resAll.masterBentuk || [];
         const sortedBentuk = sortRowsByLatest(Array.isArray(masterBentuk) ? masterBentuk : []);
@@ -432,11 +468,7 @@ export default function Tabel2C({ role }) {
         // Refresh bentukList
         const validYears = yearOrder.filter(y => y != null);
         if (validYears.length > 0) {
-          const params = [`id_tahun_in=${validYears.join(',')}`];
-          if (isSuperAdmin && selectedProdi) {
-            params.push(`id_unit_prodi=${selectedProdi}`);
-          }
-          const queryParams = params.join('&');
+          const queryParams = buildQueryParams(validYears, showDeleted);
           const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
           const sortedBentuk = sortRowsByLatest(Array.isArray(masterBentuk) ? masterBentuk : []);
@@ -647,12 +679,7 @@ export default function Tabel2C({ role }) {
       // Refresh data termasuk master bentuk (untuk mendapatkan bentuk baru yang dibuat)
       const validYears = yearOrder.filter(y => y != null);
       if (validYears.length > 0) {
-        const params = [`id_tahun_in=${validYears.join(',')}`];
-        if (isSuperAdmin && selectedProdi) {
-          params.push(`id_unit_prodi=${selectedProdi}`);
-        }
-        const deletedParam = showDeleted ? '&include_deleted=1' : '';
-        const queryParams = params.join('&') + deletedParam;
+        const queryParams = buildQueryParams(validYears, showDeleted);
         const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
         const masterBentuk = resAll.masterBentuk || [];
         const dataTahunan = resAll.dataTahunan || [];
@@ -701,12 +728,7 @@ export default function Tabel2C({ role }) {
         // Refresh data
         const validYears = yearOrder.filter(y => y != null);
         if (validYears.length > 0) {
-          const params = [`id_tahun_in=${validYears.join(',')}`];
-          if (isSuperAdmin && selectedProdi) {
-            params.push(`id_unit_prodi=${selectedProdi}`);
-          }
-          const deletedParam = showDeleted ? '&include_deleted=1' : '';
-          const queryParams = params.join('&') + deletedParam;
+          const queryParams = buildQueryParams(validYears, showDeleted);
           const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
           const dataTahunan = resAll.dataTahunan || [];
@@ -756,12 +778,7 @@ export default function Tabel2C({ role }) {
         // Refresh data
         const validYears = yearOrder.filter(y => y != null);
         if (validYears.length > 0) {
-          const params = [`id_tahun_in=${validYears.join(',')}`];
-          if (isSuperAdmin && selectedProdi) {
-            params.push(`id_unit_prodi=${selectedProdi}`);
-          }
-          const deletedParam = showDeleted ? '&include_deleted=1' : '';
-          const queryParams = params.join('&') + deletedParam;
+          const queryParams = buildQueryParams(validYears, showDeleted);
           const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
           const dataTahunan = resAll.dataTahunan || [];
@@ -809,12 +826,7 @@ export default function Tabel2C({ role }) {
         // Refresh data
         const validYears = yearOrder.filter(y => y != null);
         if (validYears.length > 0) {
-          const params = [`id_tahun_in=${validYears.join(',')}`];
-          if (isSuperAdmin && selectedProdi) {
-            params.push(`id_unit_prodi=${selectedProdi}`);
-          }
-          const deletedParam = showDeleted ? '&include_deleted=1' : '';
-          const queryParams = params.join('&') + deletedParam;
+          const queryParams = buildQueryParams(validYears, showDeleted);
           const resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
           const masterBentuk = resAll.masterBentuk || [];
           const dataTahunan = resAll.dataTahunan || [];

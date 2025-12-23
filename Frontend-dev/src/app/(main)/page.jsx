@@ -1632,16 +1632,36 @@ const AksesCepatBeritaDashboard = () => {
         fetchBerita();
     }, []);
 
+    // Helper function untuk mendapatkan category styles dari gradient color
+    const getCategoryStyles = (color) => {
+        // Map gradient color ke category color untuk icon background
+        if (color.includes('indigo')) return 'from-indigo-500 to-indigo-600';
+        if (color.includes('emerald')) return 'from-emerald-500 to-emerald-600';
+        if (color.includes('amber')) return 'from-amber-500 to-amber-600';
+        if (color.includes('green')) return 'from-green-500 to-green-600';
+        return 'from-blue-500 to-blue-600'; // default blue
+    };
+
+    // Format tanggal untuk display
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
     return (
         <motion.div
             initial="hidden"
             animate="visible"
-            variants={slideUp}
-            className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 p-10 overflow-hidden"
+            variants={fadeIn}
+            className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 p-10 h-full overflow-hidden"
         >
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-cyan-500/5 to-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+            {/* Decorative background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-10">
@@ -1661,125 +1681,135 @@ const AksesCepatBeritaDashboard = () => {
                     </button>
                 </div>
 
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[1, 2].map((i) => (
-                            <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-                                <div className="h-16 bg-gray-200 rounded-2xl mb-4"></div>
-                                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-                                <div className="h-5 bg-gray-200 rounded w-full mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {berita.map((item, index) => {
-                            const IconComponent = item.icon || FiFileText;
-                            return (
-                                <motion.div
-                                    key={item.id}
-                                    variants={slideUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={shouldReduceMotion ? undefined : { y: -4, scale: 1.01 }}
-                                    onClick={() => router.push('/berita')}
-                                    className="group relative bg-white/90 backdrop-blur-sm p-7 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer overflow-hidden border border-white/60 hover:border-white/80"
-                                >
-                                {/* Header dengan badge dan icon */}
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {item.priority === 'high' && (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                                                Prioritas Tinggi
-                                            </span>
-                                        )}
-                                        {item.priority === 'medium' && (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                                <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                                                Prioritas Sedang
-                                            </span>
-                                        )}
-                                        {item.priority === 'low' && (
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                                                <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                                                Prioritas Rendah
-                                            </span>
-                                        )}
-                                        {item.status && (
-                                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
-                                                item.status === 'published' || item.status === 'diterbitkan'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : item.status === 'draft'
-                                                    ? 'bg-gray-100 text-gray-700'
-                                                    : 'bg-orange-100 text-orange-700'
-                                            }`}>
-                                                {item.status === 'published' || item.status === 'diterbitkan' ? 'Diterbitkan' : item.status === 'draft' ? 'Draft' : 'Diarsipkan'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${item.color} shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                                        <IconComponent className="h-6 w-6 text-white relative z-10" />
-                                        <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                    </div>
-                                </div>
-
-                                {/* Content */}
-                                <h3 className="text-xl font-extrabold text-slate-900 mb-4 leading-tight group-hover:bg-gradient-to-r group-hover:from-[#043975] group-hover:to-[#0384d6] group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
-                                    {item.title}
-                                </h3>
-
-                                <p className="text-slate-600 mb-5 leading-relaxed text-sm font-medium">
-                                    {item.excerpt}
-                                </p>
-
-                                {/* Author & Created Info */}
-                                <div className="mb-4 space-y-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs text-gray-500">
-                                            Oleh: <span className="font-medium">{item.author}</span>
-                                        </span>
-                                        {item.nama_user && (
-                                            <span className="text-xs text-gray-400">
-                                                ({item.nama_user})
-                                            </span>
-                                        )}
-                                    </div>
-                                    {item.created_at_display && (
-                                        <div className="text-xs text-gray-400">
-                                            Dibuat: {item.created_at_display}
+            {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+                            <div className="h-12 w-12 bg-gray-200 rounded-xl mb-3"></div>
+                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {berita.map((item, index) => {
+                        const IconComponent = item.icon || FiFileText;
+                        const categoryColor = getCategoryStyles(item.color);
+                        return (
+                            <motion.article
+                                key={item.id}
+                                variants={slideUp}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+                                onClick={() => router.push('/berita')}
+                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-[#0384d6]/20 cursor-pointer"
+                                role="article"
+                            >
+                                <div className="p-6">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {item.priority === 'high' && (
+                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                                    Prioritas Tinggi
+                                                </span>
+                                            )}
+                                            {item.priority === 'medium' && (
+                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                                    <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                                                    Prioritas Sedang
+                                                </span>
+                                            )}
+                                            {item.priority === 'low' && (
+                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                                                    <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                                                    Prioritas Rendah
+                                                </span>
+                                            )}
+                                            {item.status && (
+                                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                                                    item.status === 'published' || item.status === 'diterbitkan'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : item.status === 'draft'
+                                                        ? 'bg-gray-100 text-gray-700'
+                                                        : 'bg-orange-100 text-orange-700'
+                                                }`}>
+                                                    {item.status === 'published' || item.status === 'diterbitkan' ? 'Diterbitkan' : item.status === 'draft' ? 'Draft' : 'Diarsipkan'}
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                        <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryColor} shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                                            <IconComponent className="h-5 w-5 text-white" />
+                                        </div>
+                                    </div>
 
-                                {/* Footer */}
-                                <div className="flex items-center justify-between pt-5 border-t border-slate-200/50">
-                                    <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
-                                        {item.dateDisplay && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50/80 backdrop-blur-sm">
-                                                <FiCalendar className="w-3.5 h-3.5" />
-                                                <span>{item.dateDisplay}</span>
-                                            </div>
-                                        )}
-                                        {item.readTime && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50/80 backdrop-blur-sm">
-                                                <FiClock className="w-3.5 h-3.5" />
-                                                <span>{item.readTime}</span>
+                                    {/* Content */}
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300 line-clamp-2">
+                                        {item.title}
+                                    </h3>
+
+                                    <p className="text-gray-600 mb-4 leading-relaxed text-sm line-clamp-2">
+                                        {item.excerpt}
+                                    </p>
+
+                                    {/* Author & User Info */}
+                                    <div className="mb-4 space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-xs text-gray-500">
+                                                Oleh: <span className="font-medium">{item.author}</span>
+                                            </span>
+                                            {item.nama_user && (
+                                                <span className="text-xs text-gray-400">
+                                                    ({item.nama_user})
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.created_at_display && (
+                                            <div className="text-xs text-gray-400">
+                                                Dibuat: {item.created_at_display}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#0384d6]/10 to-[#043975]/10 text-sm font-bold text-[#0384d6] group-hover:from-[#0384d6] group-hover:to-[#043975] group-hover:text-white transition-all duration-300">
-                                        <span>Baca</span>
-                                        <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+
+                                    {/* Footer */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                                            {item.dateDisplay && (
+                                                <div className="flex items-center gap-1">
+                                                    <FiCalendar className="w-3 h-3" />
+                                                    <time>{item.dateDisplay}</time>
+                                                </div>
+                                            )}
+                                            {item.readTime && (
+                                                <div className="flex items-center gap-1">
+                                                    <FiClock className="w-3 h-3" />
+                                                    <span>{item.readTime}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                router.push('/berita');
+                                            }}
+                                            className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 rounded-md px-2 py-1"
+                                        >
+                                            Baca
+                                            <FiArrowRight className="w-3 h-3" />
+                                        </button>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </motion.article>
                         );
                     })}
-                    </div>
-                )}
+                </div>
+            )}
             </div>
         </motion.div>
     );
@@ -2215,7 +2245,13 @@ const AksesCepatMarket = ({ quickActions }) => {
         if (!quickActions || quickActions.length === 0) return { tables: [], admin: [] };
         
         const adminLabels = ['Data Dosen', 'Tabel Pegawai', 'Tenaga Kependidikan', 'Management Akun', 'Panel Admin'];
-        const tables = quickActions.filter(item => item.label.startsWith('Tabel C'));
+        // Filter tabel data: label yang merupakan standar (bukan admin)
+        const tableLabels = ['Budaya Mutu', 'Relevansi Pendidikan', 'Relevansi Penelitian', 'Relevansi PKM', 'Akuntabilitas', 'Diferensiasi Misi'];
+        const tables = quickActions.filter(item => 
+            tableLabels.includes(item.label) || 
+            item.label.startsWith('Standar C') || 
+            item.label.startsWith('Tabel C')
+        );
         const admin = quickActions.filter(item => adminLabels.includes(item.label));
         
         return { tables, admin };
@@ -2657,7 +2693,7 @@ const GrafikTabel = () => {
 
         const chartDataArray = [
             { 
-                name: 'C1', 
+                name: 'Budaya Mutu', 
                 count: c1Total, 
                 color: 'from-blue-500 to-cyan-500', 
                 icon: FiBarChart, 
@@ -2669,7 +2705,7 @@ const GrafikTabel = () => {
                 ]
             },
             { 
-                name: 'C2', 
+                name: 'Relevansi Pendidikan', 
                 count: c2Total, 
                 color: 'from-purple-500 to-violet-500', 
                 icon: FiTrendingUp, 
@@ -2681,7 +2717,7 @@ const GrafikTabel = () => {
                 ]
             },
             { 
-                name: 'C3', 
+                name: 'Relevansi Penelitian', 
                 count: c3Total, 
                 color: 'from-green-500 to-emerald-500', 
                 icon: FiUsers, 
@@ -2697,7 +2733,7 @@ const GrafikTabel = () => {
         // Tambahkan grafik C4 jika user punya akses
         if (c4Results.filter(Boolean).length > 0) {
             chartDataArray.push({
-                name: 'C4',
+                name: 'Relevansi PKM',
                 count: c4Total,
                 color: 'from-teal-500 to-cyan-500',
                 icon: FiTarget,
@@ -2712,7 +2748,7 @@ const GrafikTabel = () => {
         // Tambahkan grafik C5 jika user punya akses
         if (c5Results.filter(Boolean).length > 0) {
             chartDataArray.push({
-                name: 'C5',
+                name: 'Akuntabilitas',
                 count: c5Total,
                 color: 'from-amber-500 to-orange-500',
                 icon: FiDatabase,
@@ -2727,7 +2763,7 @@ const GrafikTabel = () => {
         // Tambahkan grafik C6 jika user punya akses
         if (c6Results.filter(Boolean).length > 0) {
             chartDataArray.push({
-                name: 'C6',
+                name: 'Diferensiasi Misi',
                 count: c6Total,
                 color: 'from-rose-500 to-pink-500',
                 icon: FiFileText,
@@ -2956,23 +2992,23 @@ const GrafikTabel = () => {
                                                                 type="monotone"
                                                                 dataKey="value" 
                                                                 stroke={
-                                                                    item.name === 'C1' ? '#3b82f6' : 
-                                                                    item.name === 'C2' ? '#8b5cf6' : 
-                                                                    item.name === 'C3' ? '#10b981' :
-                                                                    item.name === 'C4' ? '#14b8a6' :
-                                                                    item.name === 'C5' ? '#f59e0b' :
-                                                                    item.name === 'C6' ? '#f43f5e' :
+                                                                    item.name === 'Budaya Mutu' ? '#3b82f6' : 
+                                                                    item.name === 'Relevansi Pendidikan' ? '#8b5cf6' : 
+                                                                    item.name === 'Relevansi Penelitian' ? '#10b981' :
+                                                                    item.name === 'Relevansi PKM' ? '#14b8a6' :
+                                                                    item.name === 'Akuntabilitas' ? '#f59e0b' :
+                                                                    item.name === 'Diferensiasi Misi' ? '#f43f5e' :
                                                                     item.name === 'Panel Admin' ? '#ec4899' :
                                                                     '#3b82f6'
                                                                 }
                                                                 strokeWidth={2}
                                                                 dot={{ 
-                                                                    fill: item.name === 'C1' ? '#3b82f6' : 
-                                                                          item.name === 'C2' ? '#8b5cf6' : 
-                                                                          item.name === 'C3' ? '#10b981' :
-                                                                          item.name === 'C4' ? '#14b8a6' :
-                                                                          item.name === 'C5' ? '#f59e0b' :
-                                                                          item.name === 'C6' ? '#f43f5e' :
+                                                                    fill: item.name === 'Budaya Mutu' ? '#3b82f6' : 
+                                                                          item.name === 'Relevansi Pendidikan' ? '#8b5cf6' : 
+                                                                          item.name === 'Relevansi Penelitian' ? '#10b981' :
+                                                                          item.name === 'Relevansi PKM' ? '#14b8a6' :
+                                                                          item.name === 'Akuntabilitas' ? '#f59e0b' :
+                                                                          item.name === 'Diferensiasi Misi' ? '#f43f5e' :
                                                                           item.name === 'Panel Admin' ? '#ec4899' :
                                                                           '#3b82f6', 
                                                                     r: 4 
@@ -2992,7 +3028,17 @@ const GrafikTabel = () => {
                                                         if (item.name === 'Panel Admin') {
                                                             router.push('/tables');
                                                         } else {
-                                                            router.push(`/tables?table=${item.name}`);
+                                                            // Map nama baru ke C1, C2, etc
+                                                            const nameToTableMap = {
+                                                                'Budaya Mutu': 'C1',
+                                                                'Relevansi Pendidikan': 'C2',
+                                                                'Relevansi Penelitian': 'C3',
+                                                                'Relevansi PKM': 'C4',
+                                                                'Akuntabilitas': 'C5',
+                                                                'Diferensiasi Misi': 'C6'
+                                                            };
+                                                            const tableParam = nameToTableMap[item.name] || item.name;
+                                                            router.push(`/tables?table=${tableParam}`);
                                                         }
                                                     }}
                                                 >
@@ -3133,12 +3179,12 @@ export default function App() {
     const isKepegawaian = roleLower === 'kepegawaian';
     
     const allQuickActions = [
-      { label: 'Tabel C1', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
-      { label: 'Tabel C2', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
-      { label: 'Tabel C3', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
-      { label: 'Tabel C4', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
-      { label: 'Tabel C5', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
-      { label: 'Tabel C6', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
+      { label: 'Budaya Mutu', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
+      { label: 'Relevansi Pendidikan', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
+      { label: 'Relevansi Penelitian', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
+      { label: 'Relevansi PKM', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
+      { label: 'Akuntabilitas', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
+      { label: 'Diferensiasi Misi', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
       // Role kepegawaian hanya melihat Tenaga Kependidikan, bukan Data Dosen dan Tabel Pegawai
       { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess && !isKepegawaian },
       { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess && !isKepegawaian },
