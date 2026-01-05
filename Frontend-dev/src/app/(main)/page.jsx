@@ -129,7 +129,7 @@ const Hero = () => {
         };
         setGreeting(getGreeting());
     }, []); // Array kosong berarti efek ini hanya berjalan sekali saat komponen dimuat
-    
+
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#043975_0%,#0384d6_50%,#ffbf1b_100%)]" style={{ minHeight: '100vh', minHeight: '100svh', minHeight: '100dvh' }}>
             {/* Background Pattern - Grid Effect */}
@@ -142,10 +142,10 @@ const Hero = () => {
                     `,
                     backgroundSize: '50px 50px'
                 }}></div>
-                
+
                 {/* Frosted Glass Effect */}
                 <div className="absolute inset-0 backdrop-blur-sm bg-white/5"></div>
-                
+
                 {/* Vertical Lines */}
                 <div className="absolute inset-0">
                     <div className="absolute left-1/4 top-0 w-px h-full bg-white/20"></div>
@@ -153,11 +153,11 @@ const Hero = () => {
                     <div className="absolute left-3/4 top-0 w-px h-full bg-white/20"></div>
                 </div>
             </div>
-            
+
             <div className="relative z-10 container mx-auto px-4 w-full h-full flex flex-col items-center justify-center text-center">
-                
+
                 {/* Top Section */}
-                <motion.div 
+                <motion.div
                     initial={false}
                     animate="visible"
                     variants={staggerContainer}
@@ -192,11 +192,11 @@ const Hero = () => {
                     <motion.div variants={fadeIn} className="mb-16">
                         <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/20">
                             <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                                PORTAL PENJAMINAN<br/>
-                                MUTU TERPADU<br/>
+                                PORTAL PENJAMINAN<br />
+                                MUTU TERPADU<br />
                                 STIKOM
                             </h2>
-                            
+
                             <div className="inline-block bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/30">
                                 <p className="text-lg font-semibold text-white">
                                     @ Tim Penjaminan Mutu
@@ -215,13 +215,13 @@ const Hero = () => {
                                 PORTAL PENJAMINAN MUTU
                             </p>
                         </div>
-                        
+
                         <div className="flex justify-center items-center gap-4">
                             <p className="text-sm text-white/70">2025</p>
                             <div className="w-1 h-1 bg-white/50 rounded-full"></div>
                             <p className="text-sm text-white/70">DESEMBER</p>
                         </div>
-                        
+
                         <div>
                             <p className="text-lg font-semibold text-white/90">
                                 SIMPAN UNTUK NANTI
@@ -230,11 +230,11 @@ const Hero = () => {
                     </motion.div>
 
                     {/* Action Buttons - Fixed positioning */}
-                    <motion.div 
+                    <motion.div
                         variants={fadeIn}
                         className="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-30 mt-8"
                     >
-                        <motion.button 
+                        <motion.button
                             whileHover={shouldReduceMotion ? undefined : { scale: 1.05, y: -3 }}
                             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                             onClick={() => router.push('/tables')}
@@ -244,8 +244,8 @@ const Hero = () => {
                             Akses Tabel Data
                             <FiArrowRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                         </motion.button>
-                        
-                        <motion.button 
+
+                        <motion.button
                             whileHover={shouldReduceMotion ? undefined : { scale: 1.05, y: -3 }}
                             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                             onClick={() => router.push('/panduan')}
@@ -255,7 +255,7 @@ const Hero = () => {
                             Panduan Penggunaan
                         </motion.button>
                     </motion.div>
-                    
+
                     {/* Bottom spacing */}
                     <div className="h-16"></div>
                 </motion.div>
@@ -268,42 +268,42 @@ const Hero = () => {
 const MobileTableCard = ({ table, router }) => {
     const IconComponent = table.icon;
     const shouldReduceMotion = useReducedMotion();
-    
+
     return (
-        <motion.div 
+        <motion.div
             variants={slideUp}
             whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
             whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
             onClick={() => router.push(`/tables?table=${table.id}`)}
             className="group relative flex flex-col items-center cursor-pointer w-full mobile-table-card p-2"
         >
-                {/* Icon Container - Squircle dengan gradient */}
-                <div className="relative w-14 h-14 mb-3">
-                    <div className={`w-full h-full rounded-xl bg-gradient-to-br ${table.color} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 mobile-card-icon`}>
-                        <IconComponent className="w-7 h-7 text-white" />
-                    </div>
+            {/* Icon Container - Squircle dengan gradient */}
+            <div className="relative w-14 h-14 mb-3">
+                <div className={`w-full h-full rounded-xl bg-gradient-to-br ${table.color} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 mobile-card-icon`}>
+                    <IconComponent className="w-7 h-7 text-white" />
                 </div>
-                
-                {/* Category Label - Pill shaped */}
-                <div className="mb-2">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-blue-600">
-                        {table.category}
-                    </span>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-sm font-bold text-gray-800 text-center leading-tight">
-                    {table.title}
-                </h3>
+            </div>
+
+            {/* Category Label - Pill shaped */}
+            <div className="mb-2">
+                <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-blue-600">
+                    {table.category}
+                </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-sm font-bold text-gray-800 text-center leading-tight">
+                {table.title}
+            </h3>
         </motion.div>
     );
 };
 
 const MobileTablesSection = () => {
     const router = useRouter();
-    
+
     return (
-        <motion.section 
+        <motion.section
             initial={false}
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
@@ -320,15 +320,15 @@ const MobileTablesSection = () => {
                         Kelola data penjaminan mutu dengan mudah
                     </p>
                 </motion.div>
-                
-                        <motion.div 
-                            variants={staggerContainer}
-                            className="grid grid-cols-4 gap-4"
-                        >
-                            {tableData.map((table) => (
-                                <MobileTableCard key={table.id} table={table} router={router} />
-                            ))}
-                        </motion.div>
+
+                <motion.div
+                    variants={staggerContainer}
+                    className="grid grid-cols-4 gap-4"
+                >
+                    {tableData.map((table) => (
+                        <MobileTableCard key={table.id} table={table} router={router} />
+                    ))}
+                </motion.div>
             </div>
         </motion.section>
     );
@@ -339,7 +339,7 @@ const TableCard = ({ table, router }) => {
     const IconComponent = table.icon;
     const shouldReduceMotion = useReducedMotion();
     return (
-        <motion.div 
+        <motion.div
             variants={slideUp}
             whileHover={shouldReduceMotion ? undefined : { y: -8, scale: 1.02 }}
             whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
@@ -380,9 +380,9 @@ const TablesSection = () => {
         acc[table.category].push(table);
         return acc;
     }, {});
-    
+
     return (
-        <motion.section 
+        <motion.section
             initial={false}
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
@@ -398,7 +398,7 @@ const TablesSection = () => {
                         Kelola dan akses semua data penjaminan mutu dengan mudah melalui tabel interaktif
                     </p>
                 </motion.div>
-                
+
                 {Object.entries(groupedTables).map(([category, tables]) => (
                     <motion.div key={category} variants={fadeIn} className="mb-16">
                         <div className="mb-8">
@@ -407,7 +407,7 @@ const TablesSection = () => {
                             </h3>
                             <div className="w-20 h-1 rounded-full bg-[#ffbf1b]"></div>
                         </div>
-                        <motion.div 
+                        <motion.div
                             variants={staggerContainer}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                         >
@@ -431,11 +431,11 @@ const QuickActions = () => {
     // Generate icon dan color otomatis berdasarkan judul dan prioritas
     const generateIconAndColor = (judul, prioritas) => {
         const judulLower = judul?.toLowerCase() || '';
-        
+
         // Tentukan icon berdasarkan kata kunci di judul
         let icon = FiFileText;
         let color = 'from-blue-500 to-cyan-500';
-        
+
         if (judulLower.includes('audit') || judulLower.includes('ami') || judulLower.includes('mutu')) {
             icon = FiShield;
             color = 'from-indigo-500 to-indigo-600';
@@ -470,7 +470,7 @@ const QuickActions = () => {
                 color = 'from-blue-500 to-cyan-500';
             }
         }
-        
+
         return { icon, color };
     };
 
@@ -479,7 +479,7 @@ const QuickActions = () => {
         return backendData.map(item => {
             // Generate icon dan color otomatis
             const { icon, color } = generateIconAndColor(item.judul, item.prioritas);
-            
+
             // Format tanggal untuk time display dengan hari dan jam
             const formatTime = (dateString) => {
                 if (!dateString) return '';
@@ -498,7 +498,7 @@ const QuickActions = () => {
                 });
                 return `${dayName}, ${dateStr} ${timeStr} WIB`;
             };
-            
+
             // Format tanggal untuk display
             const formatDateDisplay = (dateString) => {
                 if (!dateString) return '';
@@ -556,7 +556,7 @@ const QuickActions = () => {
         setLoading(true);
         try {
             const data = await apiFetch('/berita');
-            
+
             // Pastikan data adalah array
             let dataArray = [];
             if (Array.isArray(data)) {
@@ -564,26 +564,26 @@ const QuickActions = () => {
             } else if (data && typeof data === 'object') {
                 dataArray = data.data || data.items || data.results || Object.values(data);
             }
-            
+
             if (dataArray.length === 0) {
                 setBerita([]);
                 setLoading(false);
                 return;
             }
-            
+
             // Filter out deleted items
             const activeData = dataArray.filter(item => !item.deleted_at);
-            
+
             // Sort berdasarkan tanggal publikasi (terbaru di atas)
             activeData.sort((a, b) => {
                 const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
                 const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
                 return dateB - dateA; // Descending (terbaru di atas)
             });
-            
+
             // Ambil 2 berita terbaru
             const latestBerita = activeData.slice(0, 2);
-            
+
             // Map data ke format frontend
             const mappedData = mapBackendToFrontend(latestBerita);
             setBerita(mappedData);
@@ -598,9 +598,9 @@ const QuickActions = () => {
     useEffect(() => {
         fetchBerita();
     }, []);
-    
+
     return (
-        <motion.section 
+        <motion.section
             initial={false}
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
@@ -629,7 +629,7 @@ const QuickActions = () => {
                         ))}
                     </div>
                 ) : (
-                    <motion.div 
+                    <motion.div
                         variants={staggerContainer}
                         className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
@@ -688,34 +688,34 @@ const StatistikCards = () => {
     useEffect(() => {
         setTimeout(() => {
             setStats([
-                { 
-                    title: 'Total Tabel', 
-                    value: '97', 
-                    icon: FiDatabase, 
+                {
+                    title: 'Total Tabel',
+                    value: '97',
+                    icon: FiDatabase,
                     color: 'from-blue-500 to-cyan-500',
                     change: '+12%',
                     trend: 'up'
                 },
-                { 
-                    title: 'Data Terisi', 
-                    value: '1,248', 
-                    icon: FiFileText, 
+                {
+                    title: 'Data Terisi',
+                    value: '1,248',
+                    icon: FiFileText,
                     color: 'from-green-500 to-emerald-500',
                     change: '+8%',
                     trend: 'up'
                 },
-                { 
-                    title: 'Tabel Aktif', 
-                    value: '24', 
-                    icon: FiBarChart, 
+                {
+                    title: 'Tabel Aktif',
+                    value: '24',
+                    icon: FiBarChart,
                     color: 'from-purple-500 to-violet-500',
                     change: '+3',
                     trend: 'up'
                 },
-                { 
-                    title: 'Update Hari Ini', 
-                    value: '156', 
-                    icon: FiTrendingUp, 
+                {
+                    title: 'Update Hari Ini',
+                    value: '156',
+                    icon: FiTrendingUp,
                     color: 'from-orange-500 to-red-500',
                     change: '+45',
                     trend: 'up'
@@ -756,19 +756,18 @@ const StatistikCards = () => {
                             variants={slideUp}
                             initial="hidden"
                             animate="visible"
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={{ y: -2 }}
-                            className="group bg-white p-6 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200"
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ y: -4, scale: 1.02 }}
+                            className="group relative bg-white p-6 rounded-2xl border border-gray-100/50 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
                         >
                             <div className="flex items-start justify-between mb-4">
                                 <div className={`p-2.5 rounded-lg ${colors.light} group-hover:scale-105 transition-transform duration-200`}>
                                     <IconComponent className={`w-5 h-5 ${colors.text}`} />
                                 </div>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md ${
-                                    stat.trend === 'up' 
-                                        ? 'bg-emerald-50 text-emerald-600' 
-                                        : 'bg-red-50 text-red-600'
-                                }`}>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md ${stat.trend === 'up'
+                                    ? 'bg-emerald-50 text-emerald-600'
+                                    : 'bg-red-50 text-red-600'
+                                    }`}>
                                     {stat.trend === 'up' ? (
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -815,7 +814,7 @@ const UnduhDokumenSection = () => {
     const fetchDocumentsFromTables = async () => {
         const BASE_URL = "http://localhost:3000/api";
         const allDocuments = [];
-        
+
         // Daftar endpoint dan field yang mengandung link dokumen
         const tableConfigs = [
             // C1
@@ -849,14 +848,14 @@ const UnduhDokumenSection = () => {
                         credentials: "include",
                         mode: "cors",
                     });
-                    
+
                     if (!response.ok) {
                         return [];
                     }
-                    
+
                     const data = await response.json();
                     const items = Array.isArray(data) ? data : (data?.items || data?.data || []);
-                    
+
                     // Ekstrak dokumen dari setiap item
                     const docs = [];
                     items.forEach((item, index) => {
@@ -878,7 +877,7 @@ const UnduhDokumenSection = () => {
                             }
                         });
                     });
-                    
+
                     return docs;
                 } catch (error) {
                     console.warn(`Failed to fetch from ${config.endpoint}:`, error);
@@ -888,7 +887,7 @@ const UnduhDokumenSection = () => {
 
             const results = await Promise.all(fetchPromises);
             const flattenedDocs = results.flat();
-            
+
             // Sort by date (newest first)
             flattenedDocs.sort((a, b) => {
                 const dateA = new Date(a.date);
@@ -972,7 +971,7 @@ const UnduhDokumenSection = () => {
             }
 
             const result = await response.json();
-            
+
             // Tambahkan dokumen baru ke list
             const newDoc = {
                 id: documents.length + 1,
@@ -1023,7 +1022,7 @@ const UnduhDokumenSection = () => {
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-slate-900">Link Dokumen</h3>
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={() => {
                                 setLoading(true);
                                 fetchDocumentsFromTables();
@@ -1035,7 +1034,7 @@ const UnduhDokumenSection = () => {
                             <FiRefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                             <span>Refresh</span>
                         </button>
-                        <button 
+                        <button
                             onClick={() => router.push('/tables')}
                             className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
                         >
@@ -1072,8 +1071,8 @@ const UnduhDokumenSection = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {documents.map((doc, index) => (
-                                        <tr 
-                                            key={doc.id} 
+                                        <tr
+                                            key={doc.id}
                                             className="hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="py-3 px-2">
@@ -1157,11 +1156,10 @@ const UnduhDokumenSection = () => {
                                         />
                                         <label
                                             htmlFor="file-upload"
-                                            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                                                selectedFile
-                                                    ? 'border-[#0384d6] bg-blue-50'
-                                                    : 'border-gray-300 hover:border-[#0384d6] hover:bg-gray-50'
-                                            } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${selectedFile
+                                                ? 'border-[#0384d6] bg-blue-50'
+                                                : 'border-gray-300 hover:border-[#0384d6] hover:bg-gray-50'
+                                                } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {selectedFile ? (
                                                 <div className="flex flex-col items-center">
@@ -1396,7 +1394,7 @@ const BeritaCard = ({ berita, index }) => {
         >
             {/* Background gradient on hover */}
             <div className={`absolute inset-0 bg-gradient-to-br ${berita.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-            
+
             <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-4">
                     <div className={`p-3 rounded-xl bg-gradient-to-br ${berita.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -1429,11 +1427,11 @@ const AksesCepatBeritaDashboard = () => {
     // Generate icon dan color otomatis berdasarkan judul dan prioritas
     const generateIconAndColor = (judul, prioritas) => {
         const judulLower = judul?.toLowerCase() || '';
-        
+
         // Tentukan icon berdasarkan kata kunci di judul
         let icon = FiFileText;
         let color = 'from-blue-500 to-cyan-500';
-        
+
         if (judulLower.includes('audit') || judulLower.includes('ami') || judulLower.includes('mutu')) {
             icon = FiShield;
             color = 'from-indigo-500 to-indigo-600';
@@ -1468,7 +1466,7 @@ const AksesCepatBeritaDashboard = () => {
                 color = 'from-blue-500 to-cyan-500';
             }
         }
-        
+
         return { icon, color };
     };
 
@@ -1477,7 +1475,7 @@ const AksesCepatBeritaDashboard = () => {
         return backendData.map(item => {
             // Generate icon dan color otomatis
             const { icon, color } = generateIconAndColor(item.judul, item.prioritas);
-            
+
             // Format tanggal untuk time display dengan hari dan jam
             const formatTime = (dateString) => {
                 if (!dateString) return '';
@@ -1496,7 +1494,7 @@ const AksesCepatBeritaDashboard = () => {
                 });
                 return `${dayName}, ${dateStr} ${timeStr} WIB`;
             };
-            
+
             // Format tanggal untuk display
             const formatDateDisplay = (dateString) => {
                 if (!dateString) return '';
@@ -1555,7 +1553,7 @@ const AksesCepatBeritaDashboard = () => {
         setLoading(true);
         try {
             const data = await apiFetch('/berita');
-            
+
             // Pastikan data adalah array
             let dataArray = [];
             if (Array.isArray(data)) {
@@ -1563,46 +1561,46 @@ const AksesCepatBeritaDashboard = () => {
             } else if (data && typeof data === 'object') {
                 dataArray = data.data || data.items || data.results || Object.values(data);
             }
-            
+
             if (dataArray.length === 0) {
                 setBerita([]);
                 setLoading(false);
                 return;
             }
-            
+
             // Filter out deleted items
             const activeData = dataArray.filter(item => !item.deleted_at);
-            
+
             // Sort: Pinned berita di atas, lalu berdasarkan updated_at (terbaru di atas), lalu created_at
             activeData.sort((a, b) => {
                 const aPinned = a.is_pinned || a.pinned || false;
                 const bPinned = b.is_pinned || b.pinned || false;
-                
+
                 // Pinned berita selalu di atas
                 if (aPinned && !bPinned) return -1;
                 if (!aPinned && bPinned) return 1;
-                
+
                 // Jika keduanya pinned atau tidak pinned, sort berdasarkan updated_at terlebih dahulu
                 const updatedA = new Date(a.updated_at || a.created_at || a.tanggal_publikasi || 0);
                 const updatedB = new Date(b.updated_at || b.created_at || b.tanggal_publikasi || 0);
-                
+
                 // Jika updated_at berbeda, sort berdasarkan updated_at (terbaru di atas)
                 if (updatedA.getTime() !== updatedB.getTime()) {
                     return updatedB - updatedA; // Descending (terbaru di atas)
                 }
-                
+
                 // Jika updated_at sama, sort berdasarkan tanggal publikasi atau created_at
                 const dateA = new Date(a.tanggal_publikasi || a.created_at || 0);
                 const dateB = new Date(b.tanggal_publikasi || b.created_at || 0);
                 return dateB - dateA; // Descending (terbaru di atas)
             });
-            
+
             // Ambil berita dengan prioritas: pinned berita dulu, lalu yang terbaru
             // Jika ada pinned berita, ambil pinned berita terlebih dahulu (maks 2)
             // Jika tidak ada atau kurang dari 2, tambahkan berita terbaru yang tidak di-pin
             const pinnedBerita = activeData.filter(item => item.is_pinned || item.pinned);
             const unpinnedBerita = activeData.filter(item => !(item.is_pinned || item.pinned));
-            
+
             let latestBerita = [];
             if (pinnedBerita.length > 0) {
                 // Ambil pinned berita (maks 2)
@@ -1616,7 +1614,7 @@ const AksesCepatBeritaDashboard = () => {
                 // Jika tidak ada pinned berita, ambil 2 berita terbaru
                 latestBerita = activeData.slice(0, 2);
             }
-            
+
             // Map data ke format frontend
             const mappedData = mapBackendToFrontend(latestBerita);
             setBerita(mappedData);
@@ -1662,7 +1660,7 @@ const AksesCepatBeritaDashboard = () => {
         >
             {/* Decorative background */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            
+
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-10">
                     <div className="space-y-2">
@@ -1671,7 +1669,7 @@ const AksesCepatBeritaDashboard = () => {
                         </h3>
                         <p className="text-base text-slate-500 font-medium">Informasi terbaru dari Tim Penjaminan Mutu</p>
                     </div>
-                    <button 
+                    <button
                         onClick={() => router.push('/berita')}
                         className="group relative px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-[#0384d6] to-[#043975] rounded-xl hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-2 overflow-hidden"
                     >
@@ -1681,147 +1679,145 @@ const AksesCepatBeritaDashboard = () => {
                     </button>
                 </div>
 
-            {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[1, 2].map((i) => (
-                        <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
-                            <div className="h-12 w-12 bg-gray-200 rounded-xl mb-3"></div>
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {berita.map((item, index) => {
-                        const IconComponent = item.icon || FiFileText;
-                        const categoryColor = getCategoryStyles(item.color);
-                        return (
-                            <motion.article
-                                key={item.id}
-                                variants={slideUp}
-                                initial="hidden"
-                                animate="visible"
-                                transition={{ delay: index * 0.05 }}
-                                whileHover={shouldReduceMotion ? undefined : { y: -4 }}
-                                onClick={() => router.push('/berita')}
-                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-[#0384d6]/20 cursor-pointer"
-                                role="article"
-                            >
-                                <div className="p-6">
-                                    {/* Header */}
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            {item.priority === 'high' && (
-                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                                                    Prioritas Tinggi
-                                                </span>
-                                            )}
-                                            {item.priority === 'medium' && (
-                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                                    <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                                                    Prioritas Sedang
-                                                </span>
-                                            )}
-                                            {item.priority === 'low' && (
-                                                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                                                    <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                                                    Prioritas Rendah
-                                                </span>
-                                            )}
-                                            {item.status && (
-                                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
-                                                    item.status === 'published' || item.status === 'diterbitkan'
+                {loading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[1, 2].map((i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+                                <div className="h-12 w-12 bg-gray-200 rounded-xl mb-3"></div>
+                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {berita.map((item, index) => {
+                            const IconComponent = item.icon || FiFileText;
+                            const categoryColor = getCategoryStyles(item.color);
+                            return (
+                                <motion.article
+                                    key={item.id}
+                                    variants={slideUp}
+                                    initial="hidden"
+                                    animate="visible"
+                                    transition={{ delay: index * 0.05 }}
+                                    whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+                                    onClick={() => router.push('/berita')}
+                                    className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-[#0384d6]/20 cursor-pointer"
+                                    role="article"
+                                >
+                                    <div className="p-6">
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                {item.priority === 'high' && (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                                        Prioritas Tinggi
+                                                    </span>
+                                                )}
+                                                {item.priority === 'medium' && (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                                        <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                                                        Prioritas Sedang
+                                                    </span>
+                                                )}
+                                                {item.priority === 'low' && (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                                                        <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                                                        Prioritas Rendah
+                                                    </span>
+                                                )}
+                                                {item.status && (
+                                                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${item.status === 'published' || item.status === 'diterbitkan'
                                                         ? 'bg-green-100 text-green-700'
                                                         : item.status === 'draft'
-                                                        ? 'bg-gray-100 text-gray-700'
-                                                        : 'bg-orange-100 text-orange-700'
-                                                }`}>
-                                                    {item.status === 'published' || item.status === 'diterbitkan' ? 'Diterbitkan' : item.status === 'draft' ? 'Draft' : 'Diarsipkan'}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryColor} shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                                            <IconComponent className="h-5 w-5 text-white" />
-                                        </div>
-                                    </div>
-
-                                    {/* Content */}
-                                    <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300 line-clamp-2">
-                                        {item.title}
-                                    </h3>
-
-                                    <p className="text-gray-600 mb-4 leading-relaxed text-sm line-clamp-2">
-                                        {item.excerpt}
-                                    </p>
-
-                                    {/* Author & User Info */}
-                                    <div className="mb-4 space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs text-gray-500">
-                                                Oleh: <span className="font-medium">{item.author}</span>
-                                            </span>
-                                            {item.nama_user && (
-                                                <span className="text-xs text-gray-400">
-                                                    ({item.nama_user})
-                                                </span>
-                                            )}
-                                        </div>
-                                        {item.created_at_display && (
-                                            <div className="text-xs text-gray-400">
-                                                Dibuat: {item.created_at_display}
+                                                            ? 'bg-gray-100 text-gray-700'
+                                                            : 'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                        {item.status === 'published' || item.status === 'diterbitkan' ? 'Diterbitkan' : item.status === 'draft' ? 'Draft' : 'Diarsipkan'}
+                                                    </span>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
+                                            <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryColor} shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                                                <IconComponent className="h-5 w-5 text-white" />
+                                            </div>
+                                        </div>
 
-                                    {/* Footer */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                                            {item.dateDisplay && (
-                                                <div className="flex items-center gap-1">
-                                                    <FiCalendar className="w-3 h-3" />
-                                                    <time>{item.dateDisplay}</time>
-                                                </div>
-                                            )}
-                                            {item.readTime && (
-                                                <div className="flex items-center gap-1">
-                                                    <FiClock className="w-3 h-3" />
-                                                    <span>{item.readTime}</span>
+                                        {/* Content */}
+                                        <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300 line-clamp-2">
+                                            {item.title}
+                                        </h3>
+
+                                        <p className="text-gray-600 mb-4 leading-relaxed text-sm line-clamp-2">
+                                            {item.excerpt}
+                                        </p>
+
+                                        {/* Author & User Info */}
+                                        <div className="mb-4 space-y-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs text-gray-500">
+                                                    Oleh: <span className="font-medium">{item.author}</span>
+                                                </span>
+                                                {item.nama_user && (
+                                                    <span className="text-xs text-gray-400">
+                                                        ({item.nama_user})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {item.created_at_display && (
+                                                <div className="text-xs text-gray-400">
+                                                    Dibuat: {item.created_at_display}
                                                 </div>
                                             )}
                                         </div>
-                                        
-                                        <button 
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                router.push('/berita');
-                                            }}
-                                            className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 rounded-md px-2 py-1"
-                                        >
-                                            Baca
-                                            <FiArrowRight className="w-3 h-3" />
-                                        </button>
+
+                                        {/* Footer */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                {item.dateDisplay && (
+                                                    <div className="flex items-center gap-1">
+                                                        <FiCalendar className="w-3 h-3" />
+                                                        <time>{item.dateDisplay}</time>
+                                                    </div>
+                                                )}
+                                                {item.readTime && (
+                                                    <div className="flex items-center gap-1">
+                                                        <FiClock className="w-3 h-3" />
+                                                        <span>{item.readTime}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    router.push('/berita');
+                                                }}
+                                                className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 rounded-md px-2 py-1"
+                                            >
+                                                Baca
+                                                <FiArrowRight className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.article>
-                        );
-                    })}
-                </div>
-            )}
+                                </motion.article>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </motion.div>
     );
 };
 
-// Komponen Aktivitas Website
+// Komponen Aktivitas Website - Modern Clean Design
 const AktivitasWebsite = () => {
     const router = useRouter();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const shouldReduceMotion = useReducedMotion();
-
     // Dummy log dengan status & icon ala notifikasi
     const activityData = [
         {
@@ -1849,166 +1845,145 @@ const AktivitasWebsite = () => {
             timestamp: '2025-12-09T10:11:00Z'
         }
     ];
-
     useEffect(() => {
         setTimeout(() => {
             setActivities(activityData);
             setLoading(false);
         }, 500);
     }, []);
-
     return (
         <motion.div
             initial="hidden"
             animate="visible"
             variants={slideUp}
-            className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 p-10 overflow-hidden"
+            className="bg-white rounded-2xl shadow-lg border border-gray-100/50 p-6 h-full"
         >
-            {/* Decorative background */}
-            <div className="absolute top-0 left-0 w-80 h-80 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
-            
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-10">
-                    <div className="space-y-2">
-                        <h3 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-                            Aktivitas Terbaru
-                        </h3>
-                        <p className="text-base text-slate-500 font-medium">Log aktivitas sistem terkini</p>
-                    </div>
-                    <button 
-                        onClick={() => router.push('/activity')}
-                        className="group relative px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-[#0384d6] to-[#043975] rounded-xl hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 flex items-center gap-2 overflow-hidden"
-                    >
-                        <span className="relative z-10">Lihat Semua</span>
-                        <FiArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#043975] to-[#0384d6] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </button>
-                </div>
-
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-900">Aktivitas Terbaru</h3>
+                <button
+                    onClick={() => router.push('/activity')}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+                >
+                    Lihat Semua
+                    <FiArrowRight className="w-4 h-4" />
+                </button>
+            </div>
             {loading ? (
-                <div className="space-y-3 overflow-x-hidden">
+                <div className="space-y-3">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse">
-                            <div className="flex gap-4">
-                                <div className="h-10 w-10 bg-gray-200 rounded-xl flex-shrink-0"></div>
-                                <div className="flex-1 min-w-0 space-y-2">
-                                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                                </div>
+                        <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-lg p-6 animate-pulse">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+                                <div className="h-9 w-9 bg-gray-200 rounded-lg"></div>
                             </div>
+                            <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="relative">
-                    {/* Timeline line */}
-                    <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent pointer-events-none"></div>
-
-                    <div className="space-y-3 max-h-[520px] overflow-y-auto overflow-x-hidden pr-2">
-                        {activities.map((item, index) => {
-                            // Status styling map
-                            const statusMap = {
-                                success: {
-                                    label: 'Berhasil',
-                                    icon: FiCheckCircle,
-                                    dot: 'bg-emerald-500',
-                                    badgeBg: 'bg-emerald-50',
-                                    badgeText: 'text-emerald-700',
-                                    badgeBorder: 'border border-emerald-100'
-                                },
-                                info: {
-                                    label: 'Informasi',
-                                    icon: FiClipboard,
-                                    dot: 'bg-blue-500',
-                                    badgeBg: 'bg-blue-50',
-                                    badgeText: 'text-blue-700',
-                                    badgeBorder: 'border border-blue-100'
-                                },
-                                warning: {
-                                    label: 'Peringatan',
-                                    icon: FiAlertTriangle,
-                                    dot: 'bg-amber-500',
-                                    badgeBg: 'bg-amber-50',
-                                    badgeText: 'text-amber-700',
-                                    badgeBorder: 'border border-amber-100'
-                                },
-                                default: {
-                                    label: 'Aktivitas',
-                                    icon: FiActivity,
-                                    dot: 'bg-slate-400',
-                                    badgeBg: 'bg-slate-50',
-                                    badgeText: 'text-slate-700',
-                                    badgeBorder: 'border border-slate-100'
-                                }
-                            };
-
-                            const status = statusMap[item.status] || statusMap.default;
-                            const StatusIcon = status.icon;
-
-                            // Format timestamp
-                            const ts = item.timestamp ? new Date(item.timestamp) : null;
-                            const formattedDate = ts
-                                ? ts.toLocaleString('id-ID', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })
-                                : item.time;
-
-                            return (
-                                <motion.div
-                                    key={item.id}
-                                    variants={slideUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    transition={{ delay: index * 0.04 }}
-                                    whileHover={undefined}
-                                    className="group relative flex gap-4 pl-10 pr-4 py-5 rounded-2xl bg-white/60 backdrop-blur-sm hover:bg-white/90 hover:shadow-lg border border-transparent hover:border-white/40 transition-all duration-300"
-                                >
-                                    {/* Timeline dot */}
-                                    <div className={`absolute left-4 top-4 w-2.5 h-2.5 rounded-full ${status.dot} shadow-sm`}></div>
-
-                                    {/* Icon */}
-                                    <div className={`flex-shrink-0 p-3.5 rounded-xl ${status.badgeBg} ${status.badgeBorder} text-slate-700 shadow-md group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
-                                        <StatusIcon className="w-5 h-5" />
+                <div className="space-y-4 max-h-[520px] overflow-y-auto overflow-x-hidden pr-2">
+                    {activities.map((item, index) => {
+                        // Status styling map
+                        const statusMap = {
+                            success: {
+                                label: 'Berhasil',
+                                icon: FiCheckCircle,
+                                light: 'from-emerald-500',
+                                text: 'text-emerald-600',
+                                badgeBg: 'bg-emerald-100',
+                                badgeText: 'text-emerald-700'
+                            },
+                            info: {
+                                label: 'Info',
+                                icon: FiClipboard,
+                                light: 'from-blue-500',
+                                text: 'text-blue-600',
+                                badgeBg: 'bg-blue-100',
+                                badgeText: 'text-blue-700'
+                            },
+                            warning: {
+                                label: 'Peringatan',
+                                icon: FiAlertTriangle,
+                                light: 'from-amber-500',
+                                text: 'text-amber-600',
+                                badgeBg: 'bg-amber-100',
+                                badgeText: 'text-amber-700'
+                            },
+                            default: {
+                                label: 'Aktivitas',
+                                icon: FiActivity,
+                                light: 'from-gray-500',
+                                text: 'text-gray-600',
+                                badgeBg: 'bg-gray-100',
+                                badgeText: 'text-gray-700'
+                            }
+                        };
+                        const status = statusMap[item.status] || statusMap.default;
+                        const StatusIcon = status.icon;
+                        // Format timestamp
+                        const ts = item.timestamp ? new Date(item.timestamp) : null;
+                        const formattedTime = ts
+                            ? ts.toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                            : '';
+                        return (
+                            <motion.div
+                                key={item.id}
+                                variants={slideUp}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: index * 0.05 }}
+                                whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+                                className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-[#0384d6]/20"
+                            >
+                                <div className="p-6">
+                                    {/* Header: Badges and Icon */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${status.badgeBg} ${status.badgeText}`}>
+                                                <div className="w-1.5 h-1.5 rounded-full ${status.text.replace('text-', 'bg-')}"></div>
+                                                {status.label}
+                                            </span>
+                                        </div>
+                                        <div className={`p-2 rounded-lg bg-gradient-to-r ${status.light.replace('bg-', 'from-').replace('-50', '-500')} to-${status.text.replace('text-', '').replace('-600', '-600')} shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                                            <StatusIcon className="h-5 w-5 text-white" />
+                                        </div>
                                     </div>
 
                                     {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded ${status.badgeBg} ${status.badgeText} ${status.badgeBorder}`}>
-                                                <StatusIcon className="w-3.5 h-3.5" />
-                                                {status.label.toUpperCase()}
-                                            </span>
-                                            {formattedDate && (
-                                                <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                                                    <FiClock className="w-3 h-3" />
-                                                    {formattedDate}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h4 className="text-base font-extrabold text-slate-900 mb-1 line-clamp-1 group-hover:bg-gradient-to-r group-hover:from-[#043975] group-hover:to-[#0384d6] group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
-                                            {item.activity}
-                                        </h4>
-                                        {item.detail && (
-                                            <p className="text-xs text-gray-600 mb-0.5 line-clamp-2">
-                                                {item.detail}
-                                            </p>
-                                        )}
-                                        <p className="text-[11px] text-gray-400">
-                                            oleh {item.user}
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300 line-clamp-2">
+                                        {item.activity}
+                                    </h3>
+
+                                    {/* Detail */}
+                                    {item.detail && (
+                                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                                            {item.detail}
                                         </p>
+                                    )}
+
+                                    {/* Footer */}
+                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <FiUsers className="w-3.5 h-3.5" />
+                                            {item.user}
+                                        </span>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="flex items-center gap-1">
+                                            <FiClock className="w-3.5 h-3.5" />
+                                            {formattedTime}
+                                        </span>
                                     </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             )}
-            </div>
         </motion.div>
     );
 };
@@ -2053,7 +2028,7 @@ const BeritaSection = () => {
         >
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-slate-900">Berita</h3>
-                <button 
+                <button
                     onClick={() => router.push('/berita')}
                     className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
                 >
@@ -2173,7 +2148,7 @@ const UpdateStatusTerkini_OLD = () => {
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Update Status Terkini</h3>
                 </div>
-                <button 
+                <button
                     onClick={() => router.push('/activity')}
                     className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
                 >
@@ -2243,17 +2218,17 @@ const AksesCepatMarket = ({ quickActions }) => {
     // Kategorisasi quick actions
     const categorizedActions = useMemo(() => {
         if (!quickActions || quickActions.length === 0) return { tables: [], admin: [] };
-        
+
         const adminLabels = ['Data Dosen', 'Tabel Pegawai', 'Tenaga Kependidikan', 'Management Akun', 'Panel Admin'];
         // Filter tabel data: label yang merupakan standar (bukan admin)
         const tableLabels = ['Budaya Mutu', 'Relevansi Pendidikan', 'Relevansi Penelitian', 'Relevansi PKM', 'Akuntabilitas', 'Diferensiasi Misi'];
-        const tables = quickActions.filter(item => 
-            tableLabels.includes(item.label) || 
-            item.label.startsWith('Standar C') || 
+        const tables = quickActions.filter(item =>
+            tableLabels.includes(item.label) ||
+            item.label.startsWith('Standar C') ||
             item.label.startsWith('Tabel C')
         );
         const admin = quickActions.filter(item => adminLabels.includes(item.label));
-        
+
         return { tables, admin };
     }, [quickActions]);
 
@@ -2266,7 +2241,7 @@ const AksesCepatMarket = ({ quickActions }) => {
         >
             {/* Decorative background */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            
+
             <div className="relative z-10">
                 <div className="mb-10 space-y-2">
                     <h3 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
@@ -2275,101 +2250,101 @@ const AksesCepatMarket = ({ quickActions }) => {
                     <p className="text-base text-slate-500 font-medium">Navigasi cepat ke tabel data</p>
                 </div>
 
-            {quickActions && quickActions.length > 0 ? (
-                <div className="space-y-6">
-                    {/* Tabel Data Section */}
-                    {categorizedActions.tables.length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Tabel Data</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {categorizedActions.tables.map((item, i) => {
-                                    const IconComponent = item.icon;
-                                    return (
-                                        <motion.button
-                                            key={i}
-                                            variants={slideUp}
-                                            initial="hidden"
-                                            animate="visible"
-                                            transition={{ delay: i * 0.05 }}
-                                            whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
-                                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                                            onClick={() => router.push(item.path)}
-                                            className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
-                                        >
-                                            {/* Background Gradient on Hover */}
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                                            
-                                            {/* Content */}
-                                            <div className="relative z-10 flex items-center gap-3">
-                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
-                                                    <IconComponent className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
-                                                        {item.label}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">Klik untuk buka</div>
-                                                </div>
-                                                <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
-                                            </div>
-                                        </motion.button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                {quickActions && quickActions.length > 0 ? (
+                    <div className="space-y-6">
+                        {/* Tabel Data Section */}
+                        {categorizedActions.tables.length > 0 && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Tabel Data</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {categorizedActions.tables.map((item, i) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                            <motion.button
+                                                key={i}
+                                                variants={slideUp}
+                                                initial="hidden"
+                                                animate="visible"
+                                                transition={{ delay: i * 0.05 }}
+                                                whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
+                                                whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                                                onClick={() => router.push(item.path)}
+                                                className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
+                                            >
+                                                {/* Background Gradient on Hover */}
+                                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
 
-                    {/* Panel Admin Section */}
-                    {categorizedActions.admin.length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Panel Admin</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {categorizedActions.admin.map((item, i) => {
-                                    const IconComponent = item.icon;
-                                    return (
-                                        <motion.button
-                                            key={i}
-                                            variants={slideUp}
-                                            initial="hidden"
-                                            animate="visible"
-                                            transition={{ delay: (categorizedActions.tables.length + i) * 0.05 }}
-                                            whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
-                                            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                                            onClick={() => router.push(item.path)}
-                                            className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
-                                        >
-                                            {/* Background Gradient on Hover */}
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                                            
-                                            {/* Content */}
-                                            <div className="relative z-10 flex items-center gap-3">
-                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
-                                                    <IconComponent className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
-                                                        {item.label}
+                                                {/* Content */}
+                                                <div className="relative z-10 flex items-center gap-3">
+                                                    <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                                                        <IconComponent className="w-5 h-5" />
                                                     </div>
-                                                    <div className="text-xs text-gray-500">Klik untuk buka</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
+                                                            {item.label}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">Klik untuk buka</div>
+                                                    </div>
+                                                    <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
                                                 </div>
-                                                <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
-                                            </div>
-                                        </motion.button>
-                                    );
-                                })}
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="text-center py-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                        <FiGrid className="w-8 h-8 text-gray-400" />
+                        )}
+
+                        {/* Panel Admin Section */}
+                        {categorizedActions.admin.length > 0 && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Panel Admin</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {categorizedActions.admin.map((item, i) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                            <motion.button
+                                                key={i}
+                                                variants={slideUp}
+                                                initial="hidden"
+                                                animate="visible"
+                                                transition={{ delay: (categorizedActions.tables.length + i) * 0.05 }}
+                                                whileHover={shouldReduceMotion ? undefined : { y: -2, scale: 1.02 }}
+                                                whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                                                onClick={() => router.push(item.path)}
+                                                className="group relative p-4 rounded-xl bg-gradient-to-br from-white to-gray-50 border border-gray-200 hover:border-transparent transition-all duration-300 text-left overflow-hidden"
+                                            >
+                                                {/* Background Gradient on Hover */}
+                                                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+
+                                                {/* Content */}
+                                                <div className="relative z-10 flex items-center gap-3">
+                                                    <div className={`p-3 rounded-xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                                                        <IconComponent className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-bold text-slate-900 text-sm mb-0.5 truncate group-hover:text-[#0384d6] transition-colors">
+                                                            {item.label}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">Klik untuk buka</div>
+                                                    </div>
+                                                    <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#0384d6] group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+                                                </div>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <p className="text-gray-500 text-sm font-medium">Tidak ada akses cepat tersedia</p>
-                    <p className="text-gray-400 text-xs mt-1">Hubungi administrator untuk mendapatkan akses</p>
-                </div>
-            )}
+                ) : (
+                    <div className="text-center py-12">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                            <FiGrid className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <p className="text-gray-500 text-sm font-medium">Tidak ada akses cepat tersedia</p>
+                        <p className="text-gray-400 text-xs mt-1">Hubungi administrator untuk mendapatkan akses</p>
+                    </div>
+                )}
             </div>
         </motion.div>
     );
@@ -2438,41 +2413,41 @@ const GrafikTabel = () => {
                 credentials: "include",
                 mode: "cors",
             });
-            
+
             if (!response.ok) {
                 return null;
             }
-            
+
             const data = await response.json();
             const tahunList = Array.isArray(data) ? data : (data?.items || []);
-            
+
             if (tahunList.length === 0) {
                 return null;
             }
-            
+
             // Urutkan tahun dari terkecil ke terbesar
             const sortedTahunList = [...tahunList].sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
-            
+
             // Cari tahun yang mengandung tahun saat ini
             const currentYear = new Date().getFullYear();
             const tahunTerpilih = sortedTahunList.find(t => {
                 const tahunStr = String(t.tahun || t.nama || '');
                 return tahunStr.includes(String(currentYear));
             });
-            
+
             // Gunakan tahun terpilih atau tahun terakhir
             const selectedTahun = tahunTerpilih || sortedTahunList[sortedTahunList.length - 1];
             if (!selectedTahun) return null;
-            
+
             const selectedIndex = sortedTahunList.findIndex(t => t.id_tahun === selectedTahun.id_tahun);
             if (selectedIndex === -1) return null;
-            
+
             const tahunTS = sortedTahunList[selectedIndex]?.id_tahun;
             const tahunTS1 = selectedIndex > 0 ? sortedTahunList[selectedIndex - 1]?.id_tahun : tahunTS;
             const tahunTS2 = selectedIndex > 1 ? sortedTahunList[selectedIndex - 2]?.id_tahun : tahunTS1;
             const tahunTS3 = selectedIndex > 2 ? sortedTahunList[selectedIndex - 3]?.id_tahun : tahunTS2;
             const tahunTS4 = selectedIndex > 3 ? sortedTahunList[selectedIndex - 4]?.id_tahun : tahunTS3;
-            
+
             return { tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 };
         } catch (error) {
             console.warn('Failed to fetch tahun akademik for TS params:', error);
@@ -2485,7 +2460,7 @@ const GrafikTabel = () => {
         try {
             const BASE_URL = "http://localhost:3000/api";
             let url = `${BASE_URL}${endpoint}`;
-            
+
             // Jika menggunakan parameter tahun TS (untuk Tabel3A2, 3A3)
             if (useTahunTS) {
                 const tahunParams = await getTahunTSParams();
@@ -2495,21 +2470,21 @@ const GrafikTabel = () => {
                     return 0; // Jika tidak ada tahun params, return 0
                 }
             } else if (tsId) {
-            // Tambahkan parameter ts_id jika diperlukan
+                // Tambahkan parameter ts_id jika diperlukan
                 url += `${url.includes('?') ? '&' : '?'}ts_id=${tsId}`;
             }
-            
+
             const response = await fetch(url, {
                 credentials: "include",
                 mode: "cors",
             });
-            
+
             if (!response.ok) {
                 return 0;
             }
-            
+
             const data = await response.json();
-            
+
             // Handle berbagai format response
             if (data?.total !== undefined) {
                 return data.total;
@@ -2523,7 +2498,7 @@ const GrafikTabel = () => {
             } else if (data?.items && Array.isArray(data.items)) {
                 return data.items.length;
             }
-            
+
             return 0;
         } catch (error) {
             console.warn(`Failed to fetch data for ${endpoint}:`, error);
@@ -2539,30 +2514,30 @@ const GrafikTabel = () => {
                 credentials: "include",
                 mode: "cors",
             });
-            
+
             if (!response.ok) {
                 // Fallback ke tahun saat ini jika API gagal
                 return new Date().getFullYear();
             }
-            
+
             const data = await response.json();
             const tahunList = Array.isArray(data) ? data : (data?.items || []);
-            
+
             if (tahunList.length === 0) {
                 return new Date().getFullYear();
             }
-            
+
             // Cari tahun yang mengandung tahun saat ini
             const currentYear = new Date().getFullYear();
             const tahunTerpilih = tahunList.find(t => {
                 const tahunStr = String(t.tahun || t.nama || '');
                 return tahunStr.includes(String(currentYear));
             });
-            
+
             if (tahunTerpilih) {
                 return tahunTerpilih.id_tahun;
             }
-            
+
             // Jika tidak ditemukan, gunakan tahun terbaru berdasarkan id_tahun
             const sorted = tahunList.sort((a, b) => (b.id_tahun || 0) - (a.id_tahun || 0));
             return sorted[0]?.id_tahun || new Date().getFullYear();
@@ -2575,23 +2550,23 @@ const GrafikTabel = () => {
     // Fungsi untuk fetch semua data grafik (bisa dipanggil ulang untuk sinkronisasi)
     const fetchAllChartData = useCallback(async () => {
         if (!role) return;
-        
+
         setLoading(true);
-        
+
         // Fetch data untuk C1
         const c1DataPromises = C1_TABLES.map(async (table) => {
             if (!roleCan(role, table.accessKey, 'r')) return null;
             const count = await fetchTableDataCount(table.endpoint);
             return { label: table.label, count };
         });
-        
+
         // Fetch data untuk C2
         const c2DataPromises = C2_TABLES.map(async (table) => {
             if (!roleCan(role, table.accessKey, 'r')) return null;
             const count = await fetchTableDataCount(table.endpoint);
             return { label: table.label, count };
         });
-        
+
         // Fetch data untuk C3 - Perlu ts_id untuk beberapa tabel, dan tahun TS untuk 3a2 dan 3a3
         const latestTahunId = await getLatestTahunId();
         const c3DataPromises = C3_TABLES.map(async (table) => {
@@ -2678,25 +2653,25 @@ const GrafikTabel = () => {
         const hasDosenAccess = roleCan(role, 'dosen', 'r');
         const hasPegawaiAccess = roleCan(role, 'pegawai', 'r');
         const hasUsersAccess = roleCan(role, 'users', 'r');
-        
+
         if (hasDosenAccess) {
             dosenCount = await fetchTableDataCount('/dosen');
         }
-        
+
         if (hasPegawaiAccess) {
             pegawaiCount = await fetchTableDataCount('/pegawai');
         }
-        
+
         if (hasUsersAccess) {
             usersCount = await fetchTableDataCount('/users');
         }
 
         const chartDataArray = [
-            { 
-                name: 'Budaya Mutu', 
-                count: c1Total, 
-                color: 'from-blue-500 to-cyan-500', 
-                icon: FiBarChart, 
+            {
+                name: 'Budaya Mutu',
+                count: c1Total,
+                color: 'from-blue-500 to-cyan-500',
+                icon: FiBarChart,
                 description: 'Standar C1',
                 barData: c1BarData.length > 0 ? c1BarData : [
                     { category: '1A-1', value: 0 },
@@ -2704,11 +2679,11 @@ const GrafikTabel = () => {
                     { category: '1A-3', value: 0 }
                 ]
             },
-            { 
-                name: 'Relevansi Pendidikan', 
-                count: c2Total, 
-                color: 'from-purple-500 to-violet-500', 
-                icon: FiTrendingUp, 
+            {
+                name: 'Relevansi Pendidikan',
+                count: c2Total,
+                color: 'from-purple-500 to-violet-500',
+                icon: FiTrendingUp,
                 description: 'Standar C2',
                 barData: c2BarData.length > 0 ? c2BarData : [
                     { category: '2A-2', value: 0 },
@@ -2716,11 +2691,11 @@ const GrafikTabel = () => {
                     { category: '2B', value: 0 }
                 ]
             },
-            { 
-                name: 'Relevansi Penelitian', 
-                count: c3Total, 
-                color: 'from-green-500 to-emerald-500', 
-                icon: FiUsers, 
+            {
+                name: 'Relevansi Penelitian',
+                count: c3Total,
+                color: 'from-green-500 to-emerald-500',
+                icon: FiUsers,
                 description: 'Standar C3',
                 barData: c3BarData.length > 0 ? c3BarData : [
                     { category: '3A-1', value: 0 },
@@ -2787,9 +2762,9 @@ const GrafikTabel = () => {
             if (hasUsersAccess) {
                 panelAdminBarData.push({ category: 'Users', value: usersCount });
             }
-            
+
             const panelAdminTotal = dosenCount + pegawaiCount + usersCount;
-            
+
             chartDataArray.push({
                 name: 'Panel Admin',
                 count: panelAdminTotal,
@@ -2866,7 +2841,7 @@ const GrafikTabel = () => {
                     <p className="text-sm text-slate-500">Visualisasi data dari semua tabel</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={() => {
                             fetchAllChartData();
                         }}
@@ -2876,7 +2851,7 @@ const GrafikTabel = () => {
                     >
                         <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>
-                    <button 
+                    <button
                         onClick={() => router.push('/tables')}
                         className="text-sm font-semibold text-[#0384d6] hover:text-[#043975] transition-colors flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-blue-50"
                     >
@@ -2900,7 +2875,7 @@ const GrafikTabel = () => {
                             >
                                 <FiChevronLeft className="w-5 h-5" />
                             </button>
-                            
+
                             {/* Dots Indicator */}
                             <div className="flex items-center gap-2">
                                 {Array.from({ length: totalSlides }).map((_, index) => (
@@ -2910,16 +2885,15 @@ const GrafikTabel = () => {
                                             setIsLooping(false);
                                             setCurrentSlide(index);
                                         }}
-                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                            currentSlide === index
-                                                ? 'bg-[#0384d6] w-6'
-                                                : 'bg-gray-300 hover:bg-gray-400'
-                                        }`}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === index
+                                            ? 'bg-[#0384d6] w-6'
+                                            : 'bg-gray-300 hover:bg-gray-400'
+                                            }`}
                                         aria-label={`Go to slide ${index + 1}`}
                                     />
                                 ))}
                             </div>
-                            
+
                             <button
                                 onClick={nextSlide}
                                 className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-sm hover:shadow-md"
@@ -2941,10 +2915,10 @@ const GrafikTabel = () => {
                                 isLooping
                                     ? { duration: 0 }
                                     : {
-                                          type: "spring",
-                                          stiffness: 300,
-                                          damping: 30
-                                      }
+                                        type: "spring",
+                                        stiffness: 300,
+                                        damping: 30
+                                    }
                             }
                             className="flex"
                             style={{ width: `${totalSlides * 100}%` }}
@@ -2966,21 +2940,21 @@ const GrafikTabel = () => {
                                                     <ResponsiveContainer width="100%" height={200}>
                                                         <LineChart data={item.barData || []} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                                                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-                                                            <XAxis 
-                                                                dataKey="category" 
+                                                            <XAxis
+                                                                dataKey="category"
                                                                 tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 500 }}
                                                                 axisLine={false}
                                                                 tickLine={false}
                                                             />
-                                                            <YAxis 
+                                                            <YAxis
                                                                 tick={{ fill: '#6b7280', fontSize: 11 }}
                                                                 axisLine={false}
                                                                 tickLine={false}
                                                                 domain={[0, 'dataMax']}
                                                             />
-                                                            <Tooltip 
-                                                                contentStyle={{ 
-                                                                    backgroundColor: 'white', 
+                                                            <Tooltip
+                                                                contentStyle={{
+                                                                    backgroundColor: 'white',
                                                                     border: '1px solid #e5e7eb',
                                                                     borderRadius: '6px',
                                                                     padding: '6px 10px',
@@ -2988,30 +2962,30 @@ const GrafikTabel = () => {
                                                                 }}
                                                                 cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
                                                             />
-                                                            <Line 
+                                                            <Line
                                                                 type="monotone"
-                                                                dataKey="value" 
+                                                                dataKey="value"
                                                                 stroke={
-                                                                    item.name === 'Budaya Mutu' ? '#3b82f6' : 
-                                                                    item.name === 'Relevansi Pendidikan' ? '#8b5cf6' : 
-                                                                    item.name === 'Relevansi Penelitian' ? '#10b981' :
-                                                                    item.name === 'Relevansi PKM' ? '#14b8a6' :
-                                                                    item.name === 'Akuntabilitas' ? '#f59e0b' :
-                                                                    item.name === 'Diferensiasi Misi' ? '#f43f5e' :
-                                                                    item.name === 'Panel Admin' ? '#ec4899' :
-                                                                    '#3b82f6'
+                                                                    item.name === 'Budaya Mutu' ? '#3b82f6' :
+                                                                        item.name === 'Relevansi Pendidikan' ? '#8b5cf6' :
+                                                                            item.name === 'Relevansi Penelitian' ? '#10b981' :
+                                                                                item.name === 'Relevansi PKM' ? '#14b8a6' :
+                                                                                    item.name === 'Akuntabilitas' ? '#f59e0b' :
+                                                                                        item.name === 'Diferensiasi Misi' ? '#f43f5e' :
+                                                                                            item.name === 'Panel Admin' ? '#ec4899' :
+                                                                                                '#3b82f6'
                                                                 }
                                                                 strokeWidth={2}
-                                                                dot={{ 
-                                                                    fill: item.name === 'Budaya Mutu' ? '#3b82f6' : 
-                                                                          item.name === 'Relevansi Pendidikan' ? '#8b5cf6' : 
-                                                                          item.name === 'Relevansi Penelitian' ? '#10b981' :
-                                                                          item.name === 'Relevansi PKM' ? '#14b8a6' :
-                                                                          item.name === 'Akuntabilitas' ? '#f59e0b' :
-                                                                          item.name === 'Diferensiasi Misi' ? '#f43f5e' :
-                                                                          item.name === 'Panel Admin' ? '#ec4899' :
-                                                                          '#3b82f6', 
-                                                                    r: 4 
+                                                                dot={{
+                                                                    fill: item.name === 'Budaya Mutu' ? '#3b82f6' :
+                                                                        item.name === 'Relevansi Pendidikan' ? '#8b5cf6' :
+                                                                            item.name === 'Relevansi Penelitian' ? '#10b981' :
+                                                                                item.name === 'Relevansi PKM' ? '#14b8a6' :
+                                                                                    item.name === 'Akuntabilitas' ? '#f59e0b' :
+                                                                                        item.name === 'Diferensiasi Misi' ? '#f43f5e' :
+                                                                                            item.name === 'Panel Admin' ? '#ec4899' :
+                                                                                                '#3b82f6',
+                                                                    r: 4
                                                                 }}
                                                                 activeDot={{ r: 6 }}
                                                                 name="Jumlah Data"
@@ -3053,12 +3027,12 @@ const GrafikTabel = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-end justify-between gap-4">
                                                         <div className="flex-1">
                                                             <div className="text-4xl font-extrabold text-slate-900 mb-1">{item.count}</div>
                                                             <div className="text-xs text-gray-500 mb-3">Data</div>
-                                                            
+
                                                             <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
                                                                 <motion.div
                                                                     initial={{ width: 0 }}
@@ -3093,114 +3067,114 @@ const GrafikTabel = () => {
 
 // ----- [TIDAK DIUBAH] KOMPONEN UTAMA APP -----
 export default function App() {
-  const [mounted, setMounted] = useState(false);
-  const { authUser, isLoading: authLoading } = useAuth();
-  const router = useRouter();
-  const role = authUser?.role;
+    const [mounted, setMounted] = useState(false);
+    const { authUser, isLoading: authLoading } = useAuth();
+    const router = useRouter();
+    const role = authUser?.role;
 
-  // Tentukan akses C1, C2, C3 berdasarkan role (sama seperti di tables/page.jsx)
-  const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"]; 
-  const hasC1Access = useMemo(() => {
-    const roleLower = (role || '').toLowerCase();
-    if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "pmb") {
-      return false;
-    }
-    return c1AccessKeys.some((k) => roleCan(role, k, "r"));
-  }, [role]);
+    // Tentukan akses C1, C2, C3 berdasarkan role (sama seperti di tables/page.jsx)
+    const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tendik"];
+    const hasC1Access = useMemo(() => {
+        const roleLower = (role || '').toLowerCase();
+        if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "pmb") {
+            return false;
+        }
+        return c1AccessKeys.some((k) => roleCan(role, k, "r"));
+    }, [role]);
 
-  const c2AccessKeys = [
-    "tabel_2a1_pendaftaran",
-    "tabel_2a2_keragaman_asal", 
-    "tabel_2a3_kondisi_mahasiswa",
-    "pemetaan2b1",
-    "tabel_2b4_masa_tunggu",
-    "tabel_2b5_kesesuaian_kerja",
-    "tabel_2b6_kepuasan_pengguna",
-    "fleksibilitas_pembelajaran",
-    "rekognisi_lulusan"
-  ];
-  const hasC2Access = useMemo(() => c2AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
-
-  const c3AccessKeys = [
-    "tabel_3a1_sarpras_penelitian",
-    "tabel_3a2_penelitian",
-    "tabel_3a3_pengembangan_dtpr",
-    "tabel_3c1_kerjasama_penelitian",
-    "tabel_3c2_publikasi_penelitian",
-    "tabel_3c3_hki"
-  ];
-  const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
-
-  // Akses C4, C5, C6
-  const c4AccessKeys = [
-    "tabel_4a1_sarpras_pkm", 
-    "tabel_4a2",
-    "tabel_4a2_pkm",
-    "tabel_4c1_kerjasama_pkm",
-    "tabel_4c2_diseminasi_pkm",
-    "tabel_4c3_hki_pkm"
-  ];
-  const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
-
-  const c5AccessKeys = ["tabel_5a1", "tabel_5a2", "tabel_5_2_sarpras_pendidikan"];
-  const hasC5Access = useMemo(() => c5AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
-
-  const c6AccessKeys = ["tabel_6a1", "tabel_6a2"];
-  const hasC6Access = useMemo(() => c6AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
-
-  // Akses Data Dosen
-  const hasDosenAccess = useMemo(() => roleCan(role, "dosen", "r"), [role]);
-
-  // Akses Data Pegawai
-  const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
-
-  // Akses Data Tenaga Kependidikan
-  const hasTendikAccess = useMemo(() => roleCan(role, "tenaga_kependidikan", "r"), [role]);
-
-  // Akses Management Akun (kecuali untuk role ALA, kemahasiswaan, LPPM, dan KEPEGAWAIAN)
-  const hasUsersAccess = useMemo(() => {
-    const roleLower = (role || '').toLowerCase();
-    if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "lppm" || roleLower === "kepegawaian") {
-      return false;
-    }
-    return roleCan(role, "users", "r");
-  }, [role]);
-
-  // Cek apakah user bisa melihat grafik tabel (hanya untuk super admin, waket 1&2, tpm)
-  const canSeeGrafikTabel = useMemo(() => {
-    const roleLower = (role || '').toLowerCase();
-    const allowedRoles = ['super admin', 'admin', 'waket-1', 'waket1', 'waket-2', 'waket2', 'tpm'];
-    return allowedRoles.includes(roleLower);
-  }, [role]);
-
-  // Filter quick actions berdasarkan akses role
-  const quickActions = useMemo(() => {
-    const roleLower = (role || '').toLowerCase();
-    const isKepegawaian = roleLower === 'kepegawaian';
-    
-    const allQuickActions = [
-      { label: 'Budaya Mutu', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
-      { label: 'Relevansi Pendidikan', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
-      { label: 'Relevansi Penelitian', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
-      { label: 'Relevansi PKM', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
-      { label: 'Akuntabilitas', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
-      { label: 'Diferensiasi Misi', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
-      // Role kepegawaian hanya melihat Tenaga Kependidikan, bukan Data Dosen dan Tabel Pegawai
-      { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess && !isKepegawaian },
-      { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess && !isKepegawaian },
-      { label: 'Tenaga Kependidikan', path: '/tables?table=TabelTendik', icon: FiUsers, color: 'from-violet-500 to-purple-500', hasAccess: hasTendikAccess },
-      { label: 'Management Akun', path: '/users', icon: FiSettings, color: 'from-pink-500 to-rose-500', hasAccess: hasUsersAccess }
+    const c2AccessKeys = [
+        "tabel_2a1_pendaftaran",
+        "tabel_2a2_keragaman_asal",
+        "tabel_2a3_kondisi_mahasiswa",
+        "pemetaan2b1",
+        "tabel_2b4_masa_tunggu",
+        "tabel_2b5_kesesuaian_kerja",
+        "tabel_2b6_kepuasan_pengguna",
+        "fleksibilitas_pembelajaran",
+        "rekognisi_lulusan"
     ];
-    return allQuickActions.filter(item => item.hasAccess);
-  }, [role, hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasTendikAccess, hasUsersAccess]);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+    const hasC2Access = useMemo(() => c2AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
 
-  return (
-    <>
-        <style jsx global>{`
+    const c3AccessKeys = [
+        "tabel_3a1_sarpras_penelitian",
+        "tabel_3a2_penelitian",
+        "tabel_3a3_pengembangan_dtpr",
+        "tabel_3c1_kerjasama_penelitian",
+        "tabel_3c2_publikasi_penelitian",
+        "tabel_3c3_hki"
+    ];
+    const hasC3Access = useMemo(() => c3AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+    // Akses C4, C5, C6
+    const c4AccessKeys = [
+        "tabel_4a1_sarpras_pkm",
+        "tabel_4a2",
+        "tabel_4a2_pkm",
+        "tabel_4c1_kerjasama_pkm",
+        "tabel_4c2_diseminasi_pkm",
+        "tabel_4c3_hki_pkm"
+    ];
+    const hasC4Access = useMemo(() => c4AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+    const c5AccessKeys = ["tabel_5a1", "tabel_5a2", "tabel_5_2_sarpras_pendidikan"];
+    const hasC5Access = useMemo(() => c5AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+    const c6AccessKeys = ["tabel_6a1", "tabel_6a2"];
+    const hasC6Access = useMemo(() => c6AccessKeys.some((k) => roleCan(role, k, "r")), [role]);
+
+    // Akses Data Dosen
+    const hasDosenAccess = useMemo(() => roleCan(role, "dosen", "r"), [role]);
+
+    // Akses Data Pegawai
+    const hasPegawaiAccess = useMemo(() => roleCan(role, "pegawai", "r"), [role]);
+
+    // Akses Data Tenaga Kependidikan
+    const hasTendikAccess = useMemo(() => roleCan(role, "tenaga_kependidikan", "r"), [role]);
+
+    // Akses Management Akun (kecuali untuk role ALA, kemahasiswaan, LPPM, dan KEPEGAWAIAN)
+    const hasUsersAccess = useMemo(() => {
+        const roleLower = (role || '').toLowerCase();
+        if (roleLower === "ala" || roleLower === "kemahasiswaan" || roleLower === "lppm" || roleLower === "kepegawaian") {
+            return false;
+        }
+        return roleCan(role, "users", "r");
+    }, [role]);
+
+    // Cek apakah user bisa melihat grafik tabel (hanya untuk super admin, waket 1&2, tpm)
+    const canSeeGrafikTabel = useMemo(() => {
+        const roleLower = (role || '').toLowerCase();
+        const allowedRoles = ['super admin', 'admin', 'waket-1', 'waket1', 'waket-2', 'waket2', 'tpm'];
+        return allowedRoles.includes(roleLower);
+    }, [role]);
+
+    // Filter quick actions berdasarkan akses role
+    const quickActions = useMemo(() => {
+        const roleLower = (role || '').toLowerCase();
+        const isKepegawaian = roleLower === 'kepegawaian';
+
+        const allQuickActions = [
+            { label: 'Budaya Mutu', path: '/tables?table=C1', icon: FiBarChart, color: 'from-blue-500 to-cyan-500', hasAccess: hasC1Access },
+            { label: 'Relevansi Pendidikan', path: '/tables?table=C2', icon: FiTrendingUp, color: 'from-purple-500 to-violet-500', hasAccess: hasC2Access },
+            { label: 'Relevansi Penelitian', path: '/tables?table=C3', icon: FiGrid, color: 'from-indigo-500 to-purple-500', hasAccess: hasC3Access },
+            { label: 'Relevansi PKM', path: '/tables?table=C4', icon: FiTarget, color: 'from-teal-500 to-cyan-500', hasAccess: hasC4Access },
+            { label: 'Akuntabilitas', path: '/tables?table=C5', icon: FiDatabase, color: 'from-amber-500 to-orange-500', hasAccess: hasC5Access },
+            { label: 'Diferensiasi Misi', path: '/tables?table=C6', icon: FiFileText, color: 'from-rose-500 to-pink-500', hasAccess: hasC6Access },
+            // Role kepegawaian hanya melihat Tenaga Kependidikan, bukan Data Dosen dan Tabel Pegawai
+            { label: 'Data Dosen', path: '/tables?table=TabelDosen', icon: FiUsers, color: 'from-green-500 to-emerald-500', hasAccess: hasDosenAccess && !isKepegawaian },
+            { label: 'Tabel Pegawai', path: '/tables?table=TabelPegawai', icon: FiUsers, color: 'from-orange-500 to-red-500', hasAccess: hasPegawaiAccess && !isKepegawaian },
+            { label: 'Tenaga Kependidikan', path: '/tables?table=TabelTendik', icon: FiUsers, color: 'from-violet-500 to-purple-500', hasAccess: hasTendikAccess },
+            { label: 'Management Akun', path: '/users', icon: FiSettings, color: 'from-pink-500 to-rose-500', hasAccess: hasUsersAccess }
+        ];
+        return allQuickActions.filter(item => item.hasAccess);
+    }, [role, hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access, hasDosenAccess, hasPegawaiAccess, hasTendikAccess, hasUsersAccess]);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    return (
+        <>
+            <style jsx global>{`
             @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
             * {
                 box-sizing: border-box;
@@ -3269,114 +3243,114 @@ export default function App() {
                 }
             }
         `}</style>
-        <div className="bg-white mobile-viewport" style={{ color: '#043975' }}>
-            <main>
-                {!mounted ? (
-                  <div className="min-h-screen flex items-center justify-center" style={{ minHeight: '100vh', minHeight: '100svh', minHeight: '100dvh' }}>
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#043975] mx-auto mb-4"></div>
-                      <p className="text-[#043975]">Memuat...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <AnimatePresence mode="wait">
-                      {authUser ? (
-                        <motion.div
-                          key="content"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1, transition: { duration: 0.5 } }}
-                          className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white"
-                        >
-                          <div className="pt-10 pb-20 min-h-screen">
-                            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                              {/* Header Dashboard - Ultra Modern Design */}
-                              <motion.div 
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeIn}
-                                className="mb-10"
-                              >
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                                  <div className="space-y-2">
-                                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#043975] via-[#0384d6] to-[#043975]">
-                                        Dashboard
-                                    </h1>
-                                    <p className="text-slate-500 text-lg font-medium">Selamat datang kembali! Ringkasan data Anda</p>
-                                  </div>
-                                  <div className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300">
-                                    <div className="relative">
-                                      <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                                      <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
-                                    </div>
-                                    <span className="text-sm font-semibold text-slate-700">Sistem Aktif</span>
-                                  </div>
-                                </div>
-                              </motion.div>
-
-                              {/* Top Row: Statistik Cards (4 cards) */}
-                              <motion.div 
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeIn}
-                                className="mb-8"
-                              >
-                                <StatistikCards />
-                              </motion.div>
-
-                              {/* Middle Row: Akses Cepat Berita (Full Width) */}
-                              <motion.div 
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeIn}
-                                className="mb-8"
-                              >
-                                <AksesCepatBeritaDashboard />
-                              </motion.div>
-
-                              {/* Bottom Row: Akses Cepat (Wide) & Selamat Datang (Small) */}
-                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-                                {/* Left: Akses Cepat - Lebih Panjang */}
-                                <div className="lg:col-span-8">
-                                  <AksesCepatMarket quickActions={quickActions} />
-                                </div>
-
-                                {/* Right: Selamat Datang - Lebih Kecil */}
-                                <div className="lg:col-span-4">
-                                  <WelcomeSection authUser={authUser} />
-                                </div>
-                              </div>
-
-                              {/* Log Aktivitas (Dummy) */}
-                              <motion.div 
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeIn}
-                                className="mb-8"
-                              >
-                                <AktivitasWebsite />
-                              </motion.div>
+            <div className="bg-white mobile-viewport" style={{ color: '#043975' }}>
+                <main>
+                    {!mounted ? (
+                        <div className="min-h-screen flex items-center justify-center" style={{ minHeight: '100vh', minHeight: '100svh', minHeight: '100dvh' }}>
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#043975] mx-auto mb-4"></div>
+                                <p className="text-[#043975]">Memuat...</p>
                             </div>
-                          </div>
-                        </motion.div>
-                      ) : (
+                        </div>
+                    ) : (
                         <>
-                          <Hero />
-                          <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
-                              <MobileTablesSection />
-                              <div className="hidden md:block">
-                                  <TablesSection />
-                              </div>
-                              <QuickActions />
-                          </div>
+                            <AnimatePresence mode="wait">
+                                {authUser ? (
+                                    <motion.div
+                                        key="content"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                                        className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white"
+                                    >
+                                        <div className="pt-10 pb-20 min-h-screen">
+                                            <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                                {/* Header Dashboard - Ultra Modern Design */}
+                                                <motion.div
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={fadeIn}
+                                                    className="mb-10"
+                                                >
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                                                        <div className="space-y-2">
+                                                            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#043975] via-[#0384d6] to-[#043975]">
+                                                                Dashboard
+                                                            </h1>
+                                                            <p className="text-slate-500 text-lg font-medium">Selamat datang kembali! Ringkasan data Anda</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                                                            <div className="relative">
+                                                                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                                                                <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-slate-700">Sistem Aktif</span>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+
+                                                {/* Top Row: Statistik Cards (4 cards) */}
+                                                <motion.div
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={fadeIn}
+                                                    className="mb-8"
+                                                >
+                                                    <StatistikCards />
+                                                </motion.div>
+
+                                                {/* Middle Row: Akses Cepat Berita (Full Width) */}
+                                                <motion.div
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={fadeIn}
+                                                    className="mb-8"
+                                                >
+                                                    <AksesCepatBeritaDashboard />
+                                                </motion.div>
+
+                                                {/* Bottom Row: Akses Cepat (Wide) & Selamat Datang (Small) */}
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                                                    {/* Left: Akses Cepat - Lebih Panjang */}
+                                                    <div className="lg:col-span-8">
+                                                        <AksesCepatMarket quickActions={quickActions} />
+                                                    </div>
+
+                                                    {/* Right: Selamat Datang - Lebih Kecil */}
+                                                    <div className="lg:col-span-4">
+                                                        <WelcomeSection authUser={authUser} />
+                                                    </div>
+                                                </div>
+
+                                                {/* Log Aktivitas (Dummy) */}
+                                                <motion.div
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    variants={fadeIn}
+                                                    className="mb-8"
+                                                >
+                                                    <AktivitasWebsite />
+                                                </motion.div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <>
+                                        <Hero />
+                                        <div className="relative z-10 bg-white" style={{ borderTopLeftRadius: '3rem', borderTopRightRadius: '3rem', marginTop: '-3rem' }}>
+                                            <MobileTablesSection />
+                                            <div className="hidden md:block">
+                                                <TablesSection />
+                                            </div>
+                                            <QuickActions />
+                                        </div>
+                                    </>
+                                )}
+                            </AnimatePresence>
                         </>
-                      )}
-                    </AnimatePresence>
-                  </>
-                )}
-            </main>
-        </div>
-    </>
-  );
+                    )}
+                </main>
+            </div>
+        </>
+    );
 }
 

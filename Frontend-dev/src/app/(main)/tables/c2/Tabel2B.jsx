@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useMaps } from "../../../../hooks/useMaps"; // Path disesuaikan
+import { useAuth } from "../../../../context/AuthContext"; // Import useAuth
 
 // Impor semua komponen yang sudah dipecah dari folder 'components'
 import Pemetaan2B1 from "../../../../components/tables/Tabel2B/Pemetaan2B1";
@@ -19,13 +20,13 @@ import MataKuliahCRUD from "../../../../components/tables/Tabel2B/MataKuliahCRUD
 // ============================================================
 export default function Tabel2B({ role }) {
   const [activeTab, setActiveTab] = useState("pemetaan2b1");
-  const [authUser] = useState({}); // Asumsi ini didapat dari konteks/prop
+  const { authUser } = useAuth(); // Gunakan useAuth untuk mendapatkan data user yang sebenarnya
   const { maps } = useMaps(authUser);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Pastikan role adalah string
   const userRole = typeof role === 'string' ? role : role?.role || '';
-  
+
   // Fungsi untuk memicu refresh
   const handleDataChange = () => setRefreshTrigger(prev => prev + 1);
 
@@ -64,9 +65,8 @@ export default function Tabel2B({ role }) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                      isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
+                    className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
                   >
                     {isActive && (
                       <>
@@ -82,9 +82,8 @@ export default function Tabel2B({ role }) {
                         />
                       </>
                     )}
-                    <span className={`relative z-10 transition-colors duration-200 ${
-                      isActive ? "text-blue-700 font-semibold" : "text-gray-700"
-                    }`}>
+                    <span className={`relative z-10 transition-colors duration-200 ${isActive ? "text-blue-700 font-semibold" : "text-gray-700"
+                      }`}>
                       {tab.label}
                     </span>
                   </button>

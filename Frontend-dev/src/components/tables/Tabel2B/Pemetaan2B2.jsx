@@ -21,13 +21,13 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   // Cek role SuperAdmin
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
-  
+
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.id_unit || authUser?.unit;
-  
+
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
-  
+
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
@@ -66,21 +66,30 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   const fetchData = async () => {
     if (!canRead) return;
     setLoading(true);
-    
+
     // Tambahkan query parameter untuk filter prodi
     const queryParams = new URLSearchParams();
+
+    let fetchId = null;
     if (!isSuperAdmin && userProdiId) {
-      // User prodi: filter berdasarkan prodi mereka
-      queryParams.append("id_unit_prodi", String(userProdiId));
+      const pid = String(userProdiId);
+      if (pid === '6') fetchId = '4';
+      else if (pid === '7') fetchId = '5';
+      else fetchId = pid;
     } else if (isSuperAdmin && selectedProdi && selectedProdi !== "") {
-      // Superadmin: filter berdasarkan prodi yang dipilih di dropdown
-      // Hanya kirim query parameter jika bukan "Semua Prodi" (empty string)
-      queryParams.append("id_unit_prodi", selectedProdi);
+      if (selectedProdi === '6') fetchId = '4';
+      else if (selectedProdi === '7') fetchId = '5';
+      else fetchId = selectedProdi;
     }
+
+    if (fetchId) {
+      queryParams.append("id_unit_prodi", fetchId);
+    }
+
     // Jika superadmin memilih "Semua Prodi" (empty string), tidak kirim query parameter
     // Backend akan menggunakan req.user.id_unit_prodi dari token
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    
+
     try {
       const result = await apiFetch(`/pemetaan-2b2${queryString}`);
       setData(result);
@@ -94,7 +103,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
 
   const handleCellChange = (cplIndex, plCode, checked) => {
     if (!canUpdate) return;
-    
+
     // Buat salinan state yang mendalam agar React mendeteksi perubahan
     const newData = {
       ...data,
@@ -116,10 +125,10 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
 
   const handleSave = async () => {
     if (!canUpdate) return;
-    
+
     // Validasi: Pastikan id_unit_prodi tersedia
     let targetProdiId = null;
-    
+
     if (!isSuperAdmin) {
       // User prodi: gunakan id_unit_prodi dari authUser
       if (!userProdiId) {
@@ -154,25 +163,30 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
       }
       targetProdiId = selectedProdi;
     }
-    
+
+    // Map ID frontend (6/7) ke backend (4/5) untuk save
+    let saveId = String(targetProdiId);
+    if (saveId === '6') saveId = '4';
+    else if (saveId === '7') saveId = '5';
+
     // Query parameter untuk filter
     const queryParams = new URLSearchParams();
-    queryParams.append("id_unit_prodi", String(targetProdiId));
+    queryParams.append("id_unit_prodi", saveId);
     const queryString = `?${queryParams.toString()}`;
-    
+
     // Body request
     const requestBody = {
       rows: data.rows,
-      id_unit_prodi: Number(targetProdiId)
+      id_unit_prodi: Number(saveId)
     };
-    
+
     try {
       // Validasi: pastikan ada data rows yang akan disimpan
       if (!requestBody.rows || requestBody.rows.length === 0) {
         Swal.fire('Warning', 'Tidak ada data untuk disimpan', 'warning');
         return;
       }
-      
+
       // Validasi: pastikan setiap row memiliki kode_cpl dan row
       const invalidRows = requestBody.rows.filter(row => !row.kode_cpl || !row.row);
       if (invalidRows.length > 0) {
@@ -180,21 +194,21 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
         Swal.fire('Error', 'Format data tidak valid. Pastikan setiap baris memiliki kode_cpl dan row.', 'error');
         return;
       }
-      
+
       await apiFetch(`/pemetaan-2b2${queryString}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
-      
+
       // Trigger refresh untuk tab lain (terutama 2B.1)
       if (onDataChange) {
         onDataChange();
       }
-      
+
       // Refresh data
       await fetchData();
-      
+
       Swal.fire('Success', 'Data pemetaan berhasil disimpan. Tabel 2B.1 akan otomatis ter-update.', 'success');
     } catch (err) {
       console.error('Error saving Pemetaan2B2:', err);
@@ -205,7 +219,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
 
   const handleExport = async () => {
     if (!canRead) return;
-    
+
     try {
       setLoading(true);
 
@@ -215,18 +229,18 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-) untuk header export
-      const displayColumns = data.columns.map(col => 
-        col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+      const displayColumns = data.columns.map(col =>
+        col.startsWith('PL-') && !col.startsWith('PL-MI-')
           ? col.replace(/^PL-/, 'PL-TI-')
           : col
       );
-      
+
       // Tambahkan header
       const headers = ['CPL', ...displayColumns];
       exportData.push(headers);
-      
+
       // Tambahkan data rows
       data.rows.forEach((row) => {
         const rowData = [
@@ -251,12 +265,12 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           }
           return strValue;
         };
-        
-        const csvRows = exportData.map(row => 
+
+        const csvRows = exportData.map(row =>
           row.map(cell => escapeCsv(cell)).join(',')
         );
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -266,7 +280,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -279,20 +293,20 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 15 },  // CPL
         ...data.columns.map(() => ({ wch: 12 })) // Profil Lulusan columns
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Pemetaan CPL vs PL');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2B2_Pemetaan_CPL_vs_PL_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -339,7 +353,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           <h2 className="text-lg font-semibold text-slate-800">Pemetaan CPL vs Profil Lulusan</h2>
           {!isSuperAdmin && userProdiId && (
             <p className="text-sm text-slate-600 mt-1">
-              Prodi: {userProdiId === "4" || userProdiId === 4 ? "Teknik Informatika (TI)" : userProdiId === "5" || userProdiId === 5 ? "Manajemen Informatika (MI)" : userProdiId}
+              Prodi: {userProdiId === "6" || userProdiId === 6 ? "Teknik Informatika (TI)" : userProdiId === "7" || userProdiId === 7 ? "Manajemen Informatika (MI)" : userProdiId}
             </p>
           )}
         </div>
@@ -353,32 +367,30 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
                   e.preventDefault();
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedProdi 
-                    ? 'border-[#0384d6] bg-white text-black' 
-                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                }`}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
                 aria-label="Pilih prodi"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi === "4" 
+                    {selectedProdi === "6"
                       ? "Teknik Informatika (TI)"
-                      : selectedProdi === "5"
-                      ? "Manajemen Informatika (MI)"
-                      : "Semua Prodi"}
+                      : selectedProdi === "7"
+                        ? "Manajemen Informatika (MI)"
+                        : "Semua Prodi"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openProdiFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
                   style={{ minWidth: '200px' }}
                 >
@@ -389,11 +401,10 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
                       setOpenProdiFilterDropdown(false);
                       // fetchData akan dipanggil otomatis oleh useEffect ketika selectedProdi berubah
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === ""
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Semua Prodi</span>
@@ -401,15 +412,14 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("4");
+                      setSelectedProdi("6");
                       setOpenProdiFilterDropdown(false);
                       // fetchData akan dipanggil otomatis oleh useEffect ketika selectedProdi berubah
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "4"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "6"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Teknik Informatika (TI)</span>
@@ -417,15 +427,14 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("5");
+                      setSelectedProdi("7");
                       setOpenProdiFilterDropdown(false);
                       // fetchData akan dipanggil otomatis oleh useEffect ketika selectedProdi berubah
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "5"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "7"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Manajemen Informatika (MI)</span>
@@ -466,10 +475,10 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
                 <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPL</th>
                 {data.columns.map((col) => {
                   // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-)
-                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-')
                     ? col.replace(/^PL-/, 'PL-TI-')
                     : col;
-                  
+
                   return (
                     <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
                       {displayCol}
@@ -502,7 +511,7 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           </table>
         </div>
       )}
-      
+
       {/* Peringatan untuk superadmin jika belum memilih prodi */}
       {isSuperAdmin && !selectedProdi && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">

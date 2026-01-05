@@ -17,21 +17,21 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
-  
+
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
-  
+
   // === PERBAIKAN: State filter menyimpan id_unit_prodi ===
   const [selectedProdi, setSelectedProdi] = useState("");
-  
+
   // Dropdown states for filters and forms
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
   const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
@@ -49,7 +49,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   const canCreate = roleCan(role, "mata_kuliah", "C");
   const canUpdate = roleCan(role, "mata_kuliah", "U");
   const canDelete = roleCan(role, "mata_kuliah", "D");
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -61,7 +61,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -70,12 +70,12 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID terbesar jika tidak ada timestamp
       return (b.id_mk || 0) - (a.id_mk || 0);
     });
   };
-  
+
   // Set selectedProdi untuk user prodi
   useEffect(() => {
     if (!isSuperAdmin && userProdiId && !selectedProdi) {
@@ -88,8 +88,15 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
   }, [isSuperAdmin, userProdiId, selectedProdi]);
 
   // === PERBAIKAN: Logika filter disederhanakan ===
-  const filteredRows = selectedProdi 
-    ? rows.filter(row => row.id_unit_prodi == selectedProdi)
+  // === PERBAIKAN: Logika filter disederhanakan dan disesuaikan mapping ===
+  const filteredRows = selectedProdi
+    ? rows.filter(row => {
+      let rowId = String(row.id_unit_prodi);
+      // Map data ID ke user ID untuk comparison
+      if (rowId === '4') rowId = '6';
+      if (rowId === '5') rowId = '7';
+      return rowId == selectedProdi;
+    })
     : rows;
 
   const fetchRows = async () => {
@@ -97,10 +104,23 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
     try {
       // Jika user prodi, filter berdasarkan prodi mereka
       let url = "/mata-kuliah";
+
+      let fetchId = null;
       if (!isSuperAdmin && userProdiId) {
-        url += `?id_unit_prodi=${userProdiId}`;
-      } else if (isSuperAdmin && selectedProdi) {
-        url += `?id_unit_prodi=${selectedProdi}`;
+        const pid = String(userProdiId);
+        if (pid === '6') fetchId = '4';
+        else if (pid === '7') fetchId = '5';
+        else fetchId = pid;
+      } else if (selectedProdi) {
+        if (selectedProdi === '6') fetchId = '4';
+        else if (selectedProdi === '7') fetchId = '5';
+        else fetchId = selectedProdi;
+      }
+
+      if (fetchId) {
+        url += `?id_unit_prodi=${fetchId}`;
+      } else if (isSuperAdmin) {
+        // Default load for superadmin? Maybe load all? Or just TI/MI?
       }
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
@@ -121,7 +141,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
     try {
       const url = editing ? `/mata-kuliah/${editing.id_mk}` : "/mata-kuliah";
       const method = editing ? "PUT" : "POST";
-      
+
       // === PERBAIKAN: Payload 'cpmk' sekarang mengirim object utuh ===
       // Backend 'createMataKuliah' Anda akan menerima array 'cpmk' ini
       // dan memetakan 'deskripsi' -> 'deskripsi_cpmk'
@@ -134,19 +154,19 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         // Filter CPMK yang kode & deskripsinya tidak kosong
         cpmk: formState.cpmk.filter(c => c.kode_cpmk.trim() !== "" && c.deskripsi.trim() !== "")
       };
-      
+
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      
+
       setShowModal(false);
       setEditing(null);
       setSelectedProdi(""); // Reset filter
       fetchRows();
       if (onDataChange) onDataChange();
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -295,7 +315,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -314,17 +334,17 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
       // Debug: Log data editing untuk memastikan CPMK terambil
       console.log('Editing data:', editing);
       console.log('CPMK list:', editing.cpmk_list);
-      
+
       // Saat mengedit, ambil data CPMK yang ada
-      const existingCpmk = editing.cpmk_list 
+      const existingCpmk = editing.cpmk_list
         ? editing.cpmk_list.map(c => ({
-            kode_cpmk: c.kode_cpmk || "",
-            deskripsi: c.deskripsi_cpmk || "" // Map dari 'deskripsi_cpmk' (DB) ke 'deskripsi' (Form)
-          })) 
+          kode_cpmk: c.kode_cpmk || "",
+          deskripsi: c.deskripsi_cpmk || "" // Map dari 'deskripsi_cpmk' (DB) ke 'deskripsi' (Form)
+        }))
         : [{ kode_cpmk: "", deskripsi: "" }];
-        
+
       console.log('Processed CPMK for form:', existingCpmk);
-        
+
       setFormState({
         kode_mk: editing.kode_mk || "",
         nama_mk: editing.nama_mk || "",
@@ -345,28 +365,43 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
       });
     }
   }, [editing, isSuperAdmin, userProdiId]);
-  
-  // Ekstrak Prodi dari maps untuk filter
-  const prodiList = Object.values(maps?.units || {}).filter(
-    uk => uk.id_unit === 4 || uk.id_unit === 5 // Asumsi hanya TI (4) dan MI (5)
-  );
+
+  // Ekstrak Prodi dari maps untuk filter - HANYA Prodi TI (6) dan MI (7)
+  const prodiList = Object.values(maps?.units || {})
+    .filter(uk => uk.id_unit === 6 || uk.id_unit === 7)
+    .map(uk => ({
+      ...uk,
+      // Override nama unit untuk dropdown dengan singkatan dalam kurung
+      nama_unit: uk.id_unit === 6 ? 'Teknik Informatika (TI)' : uk.id_unit === 7 ? 'Manajemen Informatika (MI)' : uk.nama_unit
+    }));
+
+  // Helper function untuk mendapatkan nama prodi yang benar berdasarkan id_unit_prodi
+  const getProdiName = (id_unit_prodi) => {
+    if (!id_unit_prodi) return '-';
+    const id = parseInt(id_unit_prodi);
+    if (id === 6) return 'Prodi Teknik Informatika';
+    if (id === 7) return 'Prodi Manajemen Informatika';
+    // Fallback ke nama dari prodiList jika ada
+    const found = prodiList.find(p => p.id_unit === id);
+    return found ? found.nama_unit : `Unit ${id}`;
+  };
 
   // Fungsi export Excel
   const handleExport = async () => {
     try {
       const dataToExport = filteredRows && filteredRows.length > 0 ? filteredRows : rows;
-      
+
       if (!dataToExport || dataToExport.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Tambahkan header
       const headers = ['ID', 'Kode MK', 'Nama MK', 'SKS', 'Semester', 'Unit Prodi'];
       exportData.push(headers);
-      
+
       // Tambahkan data rows
       dataToExport.forEach((row) => {
         const rowData = [
@@ -375,17 +410,17 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           row.nama_mk || '',
           row.sks || '',
           row.semester || '',
-          row.nama_unit_prodi || ''
+          getProdiName(row.id_unit_prodi) || ''
         ];
         exportData.push(rowData);
       });
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 8 },   // ID
@@ -396,10 +431,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         { wch: 20 }   // Unit Prodi
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Mata Kuliah');
-      
+
       // Generate file dan download
       const fileName = `Data_Mata_Kuliah_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -413,7 +448,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
       });
     } catch (err) {
       console.error("Error exporting data:", err);
-      
+
       // Fallback ke CSV jika xlsx gagal
       try {
         const dataToExport = filteredRows && filteredRows.length > 0 ? filteredRows : rows;
@@ -425,7 +460,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
           }
           return strValue;
         };
-        
+
         const csvRows = [
           ['ID', 'Kode MK', 'Nama MK', 'SKS', 'Semester', 'Unit Prodi'],
           ...dataToExport.map(row => [
@@ -434,10 +469,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
             row.nama_mk || '',
             row.sks || '',
             row.semester || '',
-            row.nama_unit_prodi || ''
+            getProdiName(row.id_unit_prodi) || ''
           ])
         ].map(row => row.map(cell => escapeCsv(cell)).join(','));
-        
+
         const csvContent = '\ufeff' + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
@@ -448,7 +483,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -480,7 +515,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
             <FiDownload size={18} />
             <span>Export Excel</span>
           </button>
-          
+
           {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
           {isSuperAdmin && (
             <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
@@ -490,33 +525,31 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                   e.preventDefault();
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedProdi 
-                    ? 'border-[#0384d6] bg-white text-black' 
-                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                }`}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
                 aria-label="Pilih prodi"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi 
+                    {selectedProdi
                       ? (() => {
-                          const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
-                          return found ? found.nama_unit : selectedProdi;
-                        })()
+                        const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
+                        return found ? found.nama_unit : selectedProdi;
+                      })()
                       : "Semua Prodi"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openProdiFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
                   style={{ minWidth: '200px' }}
                 >
@@ -526,11 +559,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                       setSelectedProdi("");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === ""
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Semua Prodi</span>
@@ -543,11 +575,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                         setSelectedProdi(String(prodi.id_unit));
                         setOpenProdiFilterDropdown(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                        selectedProdi === String(prodi.id_unit)
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(prodi.id_unit)
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                       <span>{prodi.nama_unit}</span>
@@ -557,7 +588,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
               )}
             </div>
           )}
-          
+
           {canCreate && (
             <button
               onClick={() => {
@@ -600,7 +631,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_mk}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.sks}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.semester}</td>
-                <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.nama_unit_prodi}</td>
+                <td className="px-4 py-3 text-slate-700 border border-slate-200">{getProdiName(row.id_unit_prodi)}</td>
                 <td className="px-2 py-3 border border-slate-200 w-20">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
@@ -642,7 +673,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
         if (!currentRow) return null;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -656,12 +687,12 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                   // Ambil data lengkap mata kuliah beserta CPMK
                   const button = e.currentTarget;
                   const originalContent = button.innerHTML;
-                  
+
                   try {
                     // Tampilkan loading state
                     button.innerHTML = '<span class="flex items-center gap-2.5"><span class="animate-spin">⏳</span> Memuat...</span>';
                     button.disabled = true;
-                    
+
                     const mkDetail = await apiFetch(`/mata-kuliah/${currentRow.id_mk}`);
                     setEditing(mkDetail);
                     setShowModal(true);
@@ -702,7 +733,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
 
       {/* === PERBAIKAN BESAR: Modal Form untuk Mata Kuliah === */}
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -714,7 +745,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
@@ -724,7 +755,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
             </div>
             <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
-                
+
                 {/* Data Mata Kuliah */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -732,7 +763,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                     <input
                       type="text"
                       value={formState.kode_mk}
-                      onChange={(e) => setFormState({...formState, kode_mk: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, kode_mk: e.target.value })}
                       placeholder="cth: IF-202"
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
@@ -750,33 +781,31 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                           }
                         }}
                         disabled={!!editing || !isSuperAdmin}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_unit_prodi
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        } ${(!!editing || !isSuperAdmin) ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.id_unit_prodi
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          } ${(!!editing || !isSuperAdmin) ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
                         aria-label="Pilih unit prodi"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formState.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_unit_prodi 
+                            {formState.id_unit_prodi
                               ? (() => {
-                                  const found = prodiList.find((p) => String(p.id_unit) === String(formState.id_unit_prodi));
-                                  return found ? found.nama_unit : formState.id_unit_prodi;
-                                })()
+                                const found = prodiList.find((p) => String(p.id_unit) === String(formState.id_unit_prodi));
+                                return found ? found.nama_unit : formState.id_unit_prodi;
+                              })()
                               : '-- Pilih Unit Prodi --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormUnitDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormUnitDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormUnitDropdown && !editing && isSuperAdmin && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
                         >
                           {prodiList.length > 0 ? (
@@ -785,14 +814,13 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                                 key={prodi.id_unit}
                                 type="button"
                                 onClick={() => {
-                                  setFormState({...formState, id_unit_prodi: String(prodi.id_unit)});
+                                  setFormState({ ...formState, id_unit_prodi: String(prodi.id_unit) });
                                   setOpenFormUnitDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.id_unit_prodi === String(prodi.id_unit)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_unit_prodi === String(prodi.id_unit)
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                  }`}
                               >
                                 <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span>{prodi.nama_unit}</span>
@@ -818,7 +846,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                   <input
                     type="text"
                     value={formState.nama_mk}
-                    onChange={(e) => setFormState({...formState, nama_mk: e.target.value})}
+                    onChange={(e) => setFormState({ ...formState, nama_mk: e.target.value })}
                     placeholder="cth: Rekayasa Perangkat Lunak"
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
@@ -830,7 +858,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                     <input
                       type="number"
                       value={formState.sks}
-                      onChange={(e) => setFormState({...formState, sks: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, sks: e.target.value })}
                       placeholder="cth: 3"
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
@@ -841,21 +869,21 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                     <input
                       type="number"
                       value={formState.semester}
-                      onChange={(e) => setFormState({...formState, semester: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, semester: e.target.value })}
                       placeholder="cth: 3"
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
                     />
                   </div>
                 </div>
-                
+
                 {/* === PERBAIKAN: Bagian Form CPMK === */}
                 <div>
                   <div className="mb-3">
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">CPMK (Capaian Pembelajaran Mata Kuliah)</h3>
                     <p className="text-sm text-gray-600 mb-4">Definisikan kemampuan spesifik yang didapat dari mata kuliah ini.</p>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {formState.cpmk.map((cpmk, index) => (
                       <div key={index} className="flex flex-col md:flex-row items-center gap-3">
@@ -885,7 +913,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange }) {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-4">
                     <button
                       type="button"

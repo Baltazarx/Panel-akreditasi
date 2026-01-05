@@ -21,13 +21,14 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
   // Cek role SuperAdmin
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
-  
-  // Ambil id_unit dari authUser (ini adalah id_unit_prodi untuk user prodi)
-  const userProdiId = authUser?.id_unit;
-  
+
+  // Ambil id_unit_prodi dari authUser (ini adalah id_unit_prodi untuk user prodi)
+  // Fix: Gunakan fallback yang sama dengan komponen lain
+  const userProdiId = authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit;
+
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
-  
+
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
@@ -66,17 +67,27 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
   const fetchData = async () => {
     if (!canRead) return;
     setLoading(true);
-    
+
     // Tambahkan query parameter jika filter aktif
     const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
+
+    let fetchId = null;
     if (!isSuperAdmin && userProdiId) {
-      queryParams.append("id_unit_prodi", String(userProdiId));
+      const pid = String(userProdiId);
+      if (pid === '6') fetchId = '4';
+      else if (pid === '7') fetchId = '5';
+      else fetchId = pid;
     } else if (isSuperAdmin && selectedProdi) {
-      queryParams.append("id_unit_prodi", selectedProdi);
+      if (selectedProdi === '6') fetchId = '4';
+      else if (selectedProdi === '7') fetchId = '5';
+      else fetchId = selectedProdi;
+    }
+
+    if (fetchId) {
+      queryParams.append("id_unit_prodi", fetchId);
     }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    
+
     try {
       const result = await apiFetch(`/pemetaan-cpmk-cpl${queryString}`);
       setData(result);
@@ -90,7 +101,7 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
 
   const handleCellChange = (cpmkIndex, cplCode, checked) => {
     if (!canUpdate) return;
-    
+
     // Buat salinan state yang mendalam
     const newData = {
       ...data,
@@ -112,10 +123,10 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
 
   const handleSave = async () => {
     if (!canUpdate) return;
-    
+
     // Tentukan id_unit_prodi yang akan digunakan
     let targetProdiId = null;
-    
+
     if (!isSuperAdmin) {
       // User prodi: gunakan id_unit_prodi dari authUser
       if (!userProdiId) {
@@ -149,44 +160,49 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
       }
       targetProdiId = selectedProdi;
     }
-    
+
+    // Map ID frontend (6/7) ke backend (4/5) untuk save
+    let saveId = String(targetProdiId);
+    if (saveId === '6') saveId = '4';
+    else if (saveId === '7') saveId = '5';
+
     // Query parameter untuk filter (opsional, untuk konsistensi dengan fetch)
     const queryParams = new URLSearchParams();
-    if (targetProdiId) {
-      queryParams.append("id_unit_prodi", String(targetProdiId));
+    if (saveId) {
+      queryParams.append("id_unit_prodi", saveId);
     }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    
+
     // Body request: kirim id_unit_prodi untuk semua user (backend akan menggunakan ini jika ada)
     const requestBody = {
       rows: data.rows
     };
-    
+
     // Selalu kirim id_unit_prodi di body request jika ada targetProdiId
-    if (targetProdiId) {
-      requestBody.id_unit_prodi = Number(targetProdiId);
+    if (saveId) {
+      requestBody.id_unit_prodi = Number(saveId);
     }
-    
+
     try {
       // Validasi: pastikan ada data rows yang akan disimpan
       if (!requestBody.rows || requestBody.rows.length === 0) {
         Swal.fire('Warning', 'Tidak ada data untuk disimpan', 'warning');
         return;
       }
-      
+
       await apiFetch(`/pemetaan-cpmk-cpl${queryString}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
-      
+
       Swal.fire('Success', 'Data pemetaan CPMK vs CPL berhasil disimpan', 'success');
-      
+
       // Trigger refresh untuk tab lain SEBELUM menampilkan success message
       if (onDataChange) {
         onDataChange(); // Trigger refresh untuk Pemetaan2B1, Pemetaan2B3, dll
       }
-      
+
       // Refresh data
       await fetchData();
     } catch (err) {
@@ -198,7 +214,7 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
 
   const handleExport = async () => {
     if (!canRead) return;
-    
+
     try {
       setLoading(true);
 
@@ -208,18 +224,18 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-) untuk header export
-      const displayColumns = data.columns.map(col => 
-        col.startsWith('CPL-') && !col.startsWith('CPL-MI-') 
+      const displayColumns = data.columns.map(col =>
+        col.startsWith('CPL-') && !col.startsWith('CPL-MI-')
           ? col.replace(/^CPL-/, 'CPL-TI-')
           : col
       );
-      
+
       // Tambahkan header
       const headers = ['CPMK', ...displayColumns];
       exportData.push(headers);
-      
+
       // Tambahkan data rows
       data.rows.forEach((row) => {
         const rowData = [
@@ -244,12 +260,12 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
           }
           return strValue;
         };
-        
-        const csvRows = exportData.map(row => 
+
+        const csvRows = exportData.map(row =>
           row.map(cell => escapeCsv(cell)).join(',')
         );
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -259,7 +275,7 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -272,20 +288,20 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 15 },  // CPMK
         ...data.columns.map(() => ({ wch: 12 })) // CPL columns
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Pemetaan CPMK vs CPL');
-      
+
       // Generate file dan download
       const fileName = `Tabel_Pemetaan_CPMK_vs_CPL_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -340,32 +356,30 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
                   e.preventDefault();
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedProdi 
-                    ? 'border-[#0384d6] bg-white text-black' 
-                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                }`}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
                 aria-label="Pilih prodi"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi === "4" 
+                    {selectedProdi === "6"
                       ? "Teknik Informatika (TI)"
-                      : selectedProdi === "5"
-                      ? "Manajemen Informatika (MI)"
-                      : "Semua Prodi"}
+                      : selectedProdi === "7"
+                        ? "Manajemen Informatika (MI)"
+                        : "Semua Prodi"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openProdiFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
                   style={{ minWidth: '200px' }}
                 >
@@ -375,11 +389,10 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
                       setSelectedProdi("");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === ""
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Semua Prodi</span>
@@ -387,14 +400,13 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("4");
+                      setSelectedProdi("6");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "4"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "6"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Teknik Informatika (TI)</span>
@@ -402,14 +414,13 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("5");
+                      setSelectedProdi("7");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "5"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "7"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Manajemen Informatika (MI)</span>
@@ -450,10 +461,10 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange }) 
                 <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPMK</th>
                 {data.columns.map((col) => {
                   // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-)
-                  const displayCol = col.startsWith('CPL-') && !col.startsWith('CPL-MI-') 
+                  const displayCol = col.startsWith('CPL-') && !col.startsWith('CPL-MI-')
                     ? col.replace(/^CPL-/, 'CPL-TI-')
                     : col;
-                  
+
                   return (
                     <th key={col} className="px-4 py-3 text-xs font-semibold uppercase border border-white text-center">
                       {displayCol}

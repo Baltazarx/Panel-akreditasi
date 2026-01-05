@@ -19,13 +19,13 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
   // Cek role SuperAdmin
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
-  
+
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
-  
+
   // State untuk filter prodi
   const [selectedProdi, setSelectedProdi] = useState("");
-  
+
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
@@ -64,17 +64,27 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
   const fetchData = async () => {
     if (!canRead) return;
     setLoading(true);
-    
+
     // Tambahkan query parameter jika filter aktif
     const queryParams = new URLSearchParams();
-    // Jika user prodi, filter berdasarkan prodi mereka
+
+    let fetchId = null;
     if (!isSuperAdmin && userProdiId) {
-      queryParams.append("id_unit_prodi", String(userProdiId));
+      const pid = String(userProdiId);
+      if (pid === '6') fetchId = '4';
+      else if (pid === '7') fetchId = '5';
+      else fetchId = pid;
     } else if (isSuperAdmin && selectedProdi) {
-      queryParams.append("id_unit_prodi", selectedProdi);
+      if (selectedProdi === '6') fetchId = '4';
+      else if (selectedProdi === '7') fetchId = '5';
+      else fetchId = selectedProdi;
+    }
+
+    if (fetchId) {
+      queryParams.append("id_unit_prodi", fetchId);
     }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    
+
     try {
       const result = await apiFetch(`/pemetaan-2b3${queryString}`);
       setData(result);
@@ -88,7 +98,7 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
 
   const handleExport = async () => {
     if (!canRead) return;
-    
+
     try {
       setLoading(true);
 
@@ -98,11 +108,11 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Tambahkan header
       const headers = ['CPL', 'CPMK', ...data.semesters.map(sem => `Semester ${sem}`)];
       exportData.push(headers);
-      
+
       // Tambahkan data rows
       data.rows.forEach((row) => {
         const rowData = [
@@ -133,12 +143,12 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
           }
           return strValue;
         };
-        
-        const csvRows = exportData.map(row => 
+
+        const csvRows = exportData.map(row =>
           row.map(cell => escapeCsv(cell)).join(',')
         );
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -148,7 +158,7 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -161,10 +171,10 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 15 },  // CPL
@@ -172,10 +182,10 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
         ...data.semesters.map(() => ({ wch: 30 })) // Semester columns
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Peta Pemenuhan CPL');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2B3_Peta_Pemenuhan_CPL_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -220,7 +230,7 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
     <div>
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-lg font-semibold text-slate-800">🗺️ Peta Pemenuhan CPL</h2>
-        
+
         <div className="flex items-center gap-3">
           {/* Tampilkan filter HANYA jika superadmin */}
           {isSuperAdmin && (
@@ -231,32 +241,30 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
                   e.preventDefault();
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedProdi 
-                    ? 'border-[#0384d6] bg-white text-black' 
-                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                }`}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
                 aria-label="Pilih prodi"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi === "4" 
+                    {selectedProdi === "6"
                       ? "Teknik Informatika (TI)"
-                      : selectedProdi === "5"
-                      ? "Manajemen Informatika (MI)"
-                      : "Semua Prodi"}
+                      : selectedProdi === "7"
+                        ? "Manajemen Informatika (MI)"
+                        : "Semua Prodi"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openProdiFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
                   style={{ minWidth: '200px' }}
                 >
@@ -266,11 +274,10 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
                       setSelectedProdi("");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === ""
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Semua Prodi</span>
@@ -278,14 +285,13 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("4");
+                      setSelectedProdi("6");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "4"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "6"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Teknik Informatika (TI)</span>
@@ -293,14 +299,13 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("5");
+                      setSelectedProdi("7");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "5"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "7"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Manajemen Informatika (MI)</span>

@@ -39,24 +39,26 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
 
-  
+
 
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
 
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
 
-  
+
+
+
 
   // === BARU: State untuk filter prodi ===
 
   // Asumsi ID: 4 = TI, 5 = MI. "" = Semua Prodi
 
   const [selectedProdi, setSelectedProdi] = useState("");
-  
+
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
-  
+
 
   // Set selectedProdi untuk user prodi
 
@@ -97,7 +99,7 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openProdiFilterDropdown]); 
+  }, [openProdiFilterDropdown]);
 
 
 
@@ -114,15 +116,20 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
     const queryParams = new URLSearchParams();
 
     // Jika user prodi, filter berdasarkan prodi mereka
-
+    let fetchId = null;
     if (!isSuperAdmin && userProdiId) {
-
-      queryParams.append("id_unit_prodi", String(userProdiId));
-
+      const pid = String(userProdiId);
+      if (pid === '6') fetchId = '4';
+      else if (pid === '7') fetchId = '5';
+      else fetchId = pid;
     } else if (isSuperAdmin && selectedProdi) {
+      if (selectedProdi === '6') fetchId = '4';
+      else if (selectedProdi === '7') fetchId = '5';
+      else fetchId = selectedProdi;
+    }
 
-      queryParams.append("id_unit_prodi", selectedProdi);
-
+    if (fetchId) {
+      queryParams.append("id_unit_prodi", fetchId);
     }
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
@@ -167,18 +174,18 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-) untuk header export
-      const displayColumns = data.columns.map(col => 
-        col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+      const displayColumns = data.columns.map(col =>
+        col.startsWith('PL-') && !col.startsWith('PL-MI-')
           ? col.replace(/^PL-/, 'PL-TI-')
           : col
       );
-      
+
       // Tambahkan header
       const headers = ['Kode MK', 'Nama MK', 'SKS', 'Semester', ...displayColumns];
       exportData.push(headers);
-      
+
       // Tambahkan data rows
       data.data.forEach((row) => {
         const rowData = [
@@ -206,12 +213,12 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
           }
           return strValue;
         };
-        
-        const csvRows = exportData.map(row => 
+
+        const csvRows = exportData.map(row =>
           row.map(cell => escapeCsv(cell)).join(',')
         );
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -221,7 +228,7 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -234,10 +241,10 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 15 },  // Kode MK
@@ -247,10 +254,10 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
         ...data.columns.map(() => ({ wch: 12 })) // Profil Lulusan columns
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Pemetaan MK vs PL');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2B1_Pemetaan_MK_vs_PL_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -289,7 +296,7 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
     }
 
-  }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]); 
+  }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]);
 
   // === BARU: useEffect khusus untuk memastikan refresh ketika refreshTrigger berubah ===
   // Ini memastikan bahwa ketika data di 2B.2 disimpan, 2B.1 langsung refresh
@@ -334,7 +341,7 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
         <h2 className="text-lg font-semibold text-slate-800">Pemetaan Mata Kuliah vs Profil Lulusan</h2>
 
-        
+
 
         {/* === BARU: Wrapper untuk filter dan tombol export === */}
 
@@ -351,32 +358,30 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
                   e.preventDefault();
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedProdi 
-                    ? 'border-[#0384d6] bg-white text-black' 
-                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                }`}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                  }`}
                 aria-label="Pilih prodi"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi === "4" 
+                    {selectedProdi === "6"
                       ? "Teknik Informatika (TI)"
-                      : selectedProdi === "5"
-                      ? "Manajemen Informatika (MI)"
-                      : "Semua Prodi"}
+                      : selectedProdi === "7"
+                        ? "Manajemen Informatika (MI)"
+                        : "Semua Prodi"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openProdiFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openProdiFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
                   style={{ minWidth: '200px' }}
                 >
@@ -386,11 +391,10 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
                       setSelectedProdi("");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === ""
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Semua Prodi</span>
@@ -398,14 +402,13 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("4");
+                      setSelectedProdi("6");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "4"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "6"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Teknik Informatika (TI)</span>
@@ -413,14 +416,13 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedProdi("5");
+                      setSelectedProdi("7");
                       setOpenProdiFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedProdi === "5"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === "7"
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Manajemen Informatika (MI)</span>
@@ -431,7 +433,7 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
           )}
 
-          
+
 
           <button
             onClick={handleExport}
@@ -489,10 +491,10 @@ export default function Pemetaan2B1({ role, refreshTrigger }) {
 
                 {data.columns.map((col) => {
                   // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-)
-                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-') 
+                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-')
                     ? col.replace(/^PL-/, 'PL-TI-')
                     : col;
-                  
+
                   return (
                     <th key={col} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">
                       {displayCol}

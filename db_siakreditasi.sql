@@ -51,7 +51,6 @@ CREATE TABLE `audit_mutu_internal` (
 
 LOCK TABLES `audit_mutu_internal` WRITE;
 /*!40000 ALTER TABLE `audit_mutu_internal` DISABLE KEYS */;
-INSERT INTO `audit_mutu_internal` VALUES (5,9,2023,12,'ini dokumen','ini laporan','ini url',12,13,'2025-08-22 23:46:22','2025-08-28 03:24:10',NULL,NULL),(6,2,2022,1,'ini dokumen','link',NULL,1,1,'2025-09-26 08:15:56','2025-09-26 08:16:27','2025-09-26 15:16:28',1);
 /*!40000 ALTER TABLE `audit_mutu_internal` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -168,7 +167,6 @@ CREATE TABLE `berita` (
 
 LOCK TABLES `berita` WRITE;
 /*!40000 ALTER TABLE `berita` DISABLE KEYS */;
-INSERT INTO `berita` VALUES (1,'Semua Pegawai Wajib Mandi','Kebersihan adalah sebagian dari iman. Maka, untuk menunjang keberlanjutan STIKOM PGRI banyuwangi, dimohon mandi yang bersih.','Kebersihan adalah sebagian dari iman. Maka, untuk menunjang keberlanjutan STIKOM PGRI banyuwangi, dimohon mandi yang bersih. Agar tempat kerja menjadi nyaman, aman, dan cozy ea~~~','high','published','Rhegysa Alvyanthi Juniartha',2,'2025-12-09','1 menit','2025-12-09 08:59:53','2025-12-09 08:59:53',NULL,NULL,2,NULL);
 /*!40000 ALTER TABLE `berita` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -198,7 +196,7 @@ CREATE TABLE `cpl` (
 
 LOCK TABLES `cpl` WRITE;
 /*!40000 ALTER TABLE `cpl` DISABLE KEYS */;
-INSERT INTO `cpl` VALUES (1,4,'CPL-A','Menguasai algoritma dan struktur data.',NULL,NULL),(2,4,'CPL-B','Menerapkan model Machine Learning.',NULL,NULL),(3,5,'CPL-MI-A','Mampu merancang arsitektur sistem informasi.',NULL,NULL),(4,5,'CPL-MI-B','Mampu mengelola proyek IT.',NULL,NULL),(5,4,'CPL-C','Blablabla',NULL,NULL);
+INSERT INTO `cpl` VALUES (1,4,'CPL-A','Menguasai algoritma dan struktur data.',NULL,NULL),(2,4,'CPL-B','Menerapkan model Machine Learning.',NULL,NULL),(3,5,'CPL-MI-A','Mampu merancang arsitektur sistem informasi.',NULL,NULL),(4,5,'CPL-MI-B','Mampu mengelola proyek IT.',NULL,NULL);
 /*!40000 ALTER TABLE `cpl` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -228,7 +226,7 @@ CREATE TABLE `cpmk` (
 
 LOCK TABLES `cpmk` WRITE;
 /*!40000 ALTER TABLE `cpmk` DISABLE KEYS */;
-INSERT INTO `cpmk` VALUES (1,4,'CPMK-AI1','Mampu menjelaskan konsep dasar AI',NULL,NULL),(2,4,'CPMK-AI2','Mampu membuat model regresi',NULL,NULL),(3,4,'CPMK-BD1','Mampu merancang ERD',NULL,NULL),(4,4,'CPMK-BD2','Mampu melakukan normalisasi',NULL,NULL),(5,5,'CPMK-SIM1','Mampu menganalisis kebutuhan sistem',NULL,NULL),(6,5,'CPMK-SIM2','Mampu mendesain alur proses bisnis',NULL,NULL),(7,5,'CPMK-EB1','Mampu merancang model bisnis digital',NULL,NULL),(8,4,'IF-212-1','Menguasai bumi',NULL,NULL);
+INSERT INTO `cpmk` VALUES (1,4,'CPMK-AI1','Mampu menjelaskan konsep dasar AI',NULL,NULL),(2,4,'CPMK-AI2','Mampu membuat model regresi',NULL,NULL),(3,4,'CPMK-BD1','Mampu merancang ERD',NULL,NULL),(4,4,'CPMK-BD2','Mampu melakukan normalisasi',NULL,NULL),(5,5,'CPMK-SIM1','Mampu menganalisis kebutuhan sistem',NULL,NULL),(6,5,'CPMK-SIM2','Mampu mendesain alur proses bisnis',NULL,NULL),(7,5,'CPMK-EB1','Mampu merancang model bisnis digital',NULL,NULL);
 /*!40000 ALTER TABLE `cpmk` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -258,7 +256,7 @@ CREATE TABLE `dosen` (
   KEY `id_jafung` (`id_jafung`),
   CONSTRAINT `dosen_ibfk_1` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`) ON DELETE CASCADE,
   CONSTRAINT `dosen_ibfk_2` FOREIGN KEY (`id_jafung`) REFERENCES `ref_jabatan_fungsional` (`id_jafung`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -267,7 +265,7 @@ CREATE TABLE `dosen` (
 
 LOCK TABLES `dosen` WRITE;
 /*!40000 ALTER TABLE `dosen` DISABLE KEYS */;
-INSERT INTO `dosen` VALUES (1,1,'0701018001','-','Teknik Informatika','STIKOM PGRI Banyuwangi',3,12,'2025-12-07 12:54:28','2025-12-09 05:27:45',NULL,NULL),(2,2,'0701018002',NULL,'Teknik Informatika',NULL,3,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(3,3,'0701018003',NULL,'Manajemen Informatika',NULL,3,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(4,4,'0701018004',NULL,'Teknik Informatika',NULL,3,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(5,5,'0701018005',NULL,'Manajemen Informatika',NULL,3,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(6,6,'0701018006',NULL,'Teknik Informatika',NULL,4,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(7,7,'0701018007',NULL,'Teknik Informatika',NULL,3,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(9,9,'0701018009',NULL,'Teknik Informatika',NULL,2,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(10,10,'0701018010',NULL,'Teknik Informatika',NULL,2,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(11,11,'0701018011',NULL,'Teknik Informatika',NULL,2,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(12,12,'0701018012',NULL,'Teknik Informatika',NULL,2,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(13,15,'0701018013',NULL,'Teknik Informatika',NULL,4,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(14,16,'0701018014',NULL,'Teknik Informatika',NULL,2,0,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL);
+INSERT INTO `dosen` VALUES (1,1,'0701018001',NULL,'Teknik Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(2,2,'0701018002',NULL,'Teknik Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(3,3,'0701018003',NULL,'Manajemen Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(4,4,'0701018004',NULL,'Teknik Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(5,5,'0701018005',NULL,'Manajemen Informatika',NULL,4,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(6,6,'0701018006',NULL,'Teknik Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(7,7,'0701018007',NULL,'Manajemen Informatika',NULL,3,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(8,28,'0701018028',NULL,'Manajemen Informatika',NULL,4,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(9,29,'0701018029',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(10,30,'0701018030',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(11,31,'0701018038',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(12,32,'0701018039',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(13,33,'0701018040',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(14,34,'0701018041',NULL,'Manajemen Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL),(15,35,'0701018042',NULL,'Teknik Informatika',NULL,2,0,'2025-12-17 21:37:18','2025-12-17 21:37:18',NULL,NULL);
 /*!40000 ALTER TABLE `dosen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -389,7 +387,7 @@ CREATE TABLE `map_cpl_pl` (
 
 LOCK TABLES `map_cpl_pl` WRITE;
 /*!40000 ALTER TABLE `map_cpl_pl` DISABLE KEYS */;
-INSERT INTO `map_cpl_pl` VALUES (1,1),(2,1),(1,2),(3,3),(3,4),(4,4),(5,5);
+INSERT INTO `map_cpl_pl` VALUES (1,1),(2,1),(1,2),(3,3),(3,4),(4,4);
 /*!40000 ALTER TABLE `map_cpl_pl` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -416,7 +414,7 @@ CREATE TABLE `map_cpmk_cpl` (
 
 LOCK TABLES `map_cpmk_cpl` WRITE;
 /*!40000 ALTER TABLE `map_cpmk_cpl` DISABLE KEYS */;
-INSERT INTO `map_cpmk_cpl` VALUES (1,1),(3,1),(4,1),(2,2),(5,3),(6,3),(7,4),(8,5);
+INSERT INTO `map_cpmk_cpl` VALUES (1,1),(3,1),(4,1),(2,2),(5,3),(6,3),(7,4);
 /*!40000 ALTER TABLE `map_cpmk_cpl` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -443,7 +441,7 @@ CREATE TABLE `map_cpmk_mk` (
 
 LOCK TABLES `map_cpmk_mk` WRITE;
 /*!40000 ALTER TABLE `map_cpmk_mk` DISABLE KEYS */;
-INSERT INTO `map_cpmk_mk` VALUES (1,1),(2,1),(3,2),(4,2),(5,3),(6,3),(7,4),(8,5);
+INSERT INTO `map_cpmk_mk` VALUES (1,1),(2,1),(3,2),(4,2),(5,3),(6,3),(7,4);
 /*!40000 ALTER TABLE `map_cpmk_mk` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -502,7 +500,7 @@ CREATE TABLE `pegawai` (
   KEY `idx_pegawai_jabatan` (`id_jabatan`),
   CONSTRAINT `fk_pegawai_jabatan` FOREIGN KEY (`id_jabatan`) REFERENCES `ref_jabatan_struktural` (`id_jabatan`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_pegawai_unit` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -511,7 +509,7 @@ CREATE TABLE `pegawai` (
 
 LOCK TABLES `pegawai` WRITE;
 /*!40000 ALTER TABLE `pegawai` DISABLE KEYS */;
-INSERT INTO `pegawai` VALUES (1,'Rachman Yulianto, M.Kom','19800401',1,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(2,'Yoyon Arie Budi, S.T., M.Kom','19800102',2,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(3,'Sulaibatul Aslamiyah, M.Kom','19800103',3,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(4,'Pelsri Ramadar N.S., M.Kom','19800201',4,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(5,'M. Taufiq, M.Kom','19800202',5,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(6,'M. Djuniharto, S.E., M.Kom','19800101',7,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(7,'Abdul Haris, M.Kom','19800104',8,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(8,'Pringgodani, S.Kom, M.Kom','19850101',6,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(9,'Kanda Mubarrag, M.Kom','19850102',13,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(10,'Agus Eko Musantono, M.Kom','19850103',12,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(11,'Arif Hadi Sumitro, M.Kom','19800301',11,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(12,'Faruk Alfiyan, M.Kom','19800302',10,1,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(13,'Nuzulul Fitria, S.Kom','19800303',9,1,'S1','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(14,'Khoirul Fajar, S.Kom','19900201',12,2,'S1','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(15,'Dr. H. Chairul Anam, S.E., M.Kom','19700101',4,2,'S3','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(16,'Dwi Puspitasari, M.Kom','19800402',4,2,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(17,'Eko Suryani, M.Kom','19800403',4,2,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(18,'Taufik Hidayat, M.Kom','19800404',5,2,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(19,'Alif Akbar, M.Kom','19800405',4,2,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(20,'Faizul Mubarok, M.Kom','19800406',4,2,'S2','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(21,'Rudi Setiadi, S.Kom','19850104',14,1,'S1','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(22,'Tintin Harlina, M.Kom','08976459',10,2,'S2','2025-12-09 08:51:27','2025-12-09 08:51:27',NULL,NULL);
+INSERT INTO `pegawai` VALUES (1,'Rachman Yulianto, M.Kom','20250001',1,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(2,'Yoyon Arie Budi Suprio, M.Kom','20250002',2,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(3,'Sulaibatul Aslamiyah, M.Kom','20250003',3,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(4,'Agus Eko Musantono, M.Kom','20250004',4,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(5,'Djuniharto, M.Kom','20250005',5,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(6,'Pelsri Ramadar Noor Saputra, M.Kom','20250006',6,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(7,'M. Taufiq, M.Kom','20250007',7,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(8,'Pringgodani, S.Kom','20250008',8,1,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(9,'Abdul Haris, M.Kom','20250009',9,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(10,'Tintin Harlina, M.Kom','20250010',10,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(11,'Nujulul Fitria, S.Kom','20250011',11,1,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(12,'Faruk Alfiyan, M.Kom','20250012',12,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(13,'Arif Hadi Sumitro, M.Kom','20250013',13,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(14,'Kanda Mubarag, M.','20250014',14,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(15,'Rudi Setiadi','20250015',15,1,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(16,'Nur Ahmadi Indartono, M.Kom','20250016',16,1,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(17,'Khairul Fajar, S.Kom','20250017',4,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(18,'Mirsa Khamilawati, S.Kom','20250018',5,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(19,'Rina Permata Sari, S.Kom','20250019',6,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(20,'Olivia Primastuti, S.M','20250020',8,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(21,'Krida Maharsi Draniswara, S.Kom','20250021',9,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(22,'Eko Setiawan, Amd.Kom','20250022',13,2,'D3','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(23,'Catur Sulastriono, Amd.Kom','20250023',13,2,'D3','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(24,'Iman Santoso, M.M','20250024',15,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(25,'Dwi Sanda Hermawan, S.Kom','20250025',15,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(26,'Natasya Yasmin Kinanti, S.Kom','20250026',14,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(27,'Amira Dhisa Fakhira, S.KM','20250027',12,2,'S1','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(28,'Chairul Anam, M.M','20250028',7,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(29,'Dwi Arraziqi, M.Kom','20250029',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(30,'Dwi Yulian Rachmanto Lingke, M.Kom','20250030',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(31,'Hadiq, M.Kom','20250038',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(32,'Ir. Moch. Najib, M.M','20250039',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(33,'Rudi Hartono, M.Kom','20250040',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(34,'Solehatin, M.Kom','20250041',7,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(35,'Sony Panca Budiarto, M.Kom','20250042',6,2,'S2','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(43,'Saibul Bahri','20250043',17,1,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(44,'Abdul Hadi','20250044',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(45,'Agus Wastu Hari W','20250045',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(46,'Subali','20250046',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(47,'Adi Saputra','20250047',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(48,'Ahmad Muizzun Nuha','20250048',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(49,'Dewa Adinantira Putra','20250049',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL),(50,'Ibnu Mas\'ud','20250050',17,2,'SMA','2025-12-17 21:36:57','2025-12-17 21:36:57',NULL,NULL);
 /*!40000 ALTER TABLE `pegawai` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -545,7 +543,7 @@ CREATE TABLE `penggunaan_dana` (
 
 LOCK TABLES `penggunaan_dana` WRITE;
 /*!40000 ALTER TABLE `penggunaan_dana` DISABLE KEYS */;
-INSERT INTO `penggunaan_dana` VALUES (1,2024,'Penelitian Dosen',120000000,'https://drive.example.com/penggunaan.pdf','2025-08-22 01:26:54','2025-09-30 10:29:28','2025-09-30 17:29:28',1),(2,2025,'Operasional',1000000,'link','2025-08-22 06:57:15','2025-09-30 10:29:31','2025-09-30 17:29:32',1),(3,2023,'Pengembangan',30000000,'link','2025-08-22 06:57:37','2025-09-30 10:29:34','2025-09-30 17:29:35',1),(4,2025,'Mangan Bakso',1000000,'link','2025-08-22 07:36:16','2025-09-29 06:32:39','2025-09-29 13:32:40',1),(5,2024,'Operasional',10000000,'link','2025-09-26 08:07:33','2025-09-30 10:29:38','2025-09-30 17:29:38',1),(6,2025,'Penelitian Dosen',1000000,'https://hduh.com','2025-09-30 10:30:22','2025-09-30 10:38:21','2025-09-30 17:38:22',1),(7,2025,'Penelitian Dosen',300000,'https://djkdd.com','2025-09-30 10:38:54','2025-09-30 10:51:22','2025-09-30 17:51:23',1),(8,2020,'Penelitian Bersama Dosen',1300000,'https://jsjsn.com','2025-09-30 10:51:46','2025-09-30 10:51:46',NULL,NULL),(9,2022,'Penelitian Bersama Dosen',1500000,'https://dhdj.com','2025-09-30 11:35:12','2025-09-30 11:35:12',NULL,NULL),(10,2021,'Penelitian Bersama Dosen',2000000,'https://jxhkjwxh.com','2025-09-30 11:37:33','2025-09-30 11:37:33',NULL,NULL);
+INSERT INTO `penggunaan_dana` VALUES (1,2024,'Penelitian Dosen',120000000,'https://drive.example.com/penggunaan.pdf','2025-08-22 01:26:54','2025-09-30 10:29:28','2025-09-30 17:29:28',1),(2,2025,'Operasional',1000000,'link','2025-08-22 06:57:15','2025-09-30 10:29:31','2025-09-30 17:29:32',1),(3,2023,'Pengembangan',30000000,'link','2025-08-22 06:57:37','2025-09-30 10:29:34','2025-09-30 17:29:35',1),(5,2024,'Operasional',10000000,'link','2025-09-26 08:07:33','2025-09-30 10:29:38','2025-09-30 17:29:38',1);
 /*!40000 ALTER TABLE `penggunaan_dana` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -573,7 +571,7 @@ CREATE TABLE `pimpinan_upps_ps` (
   KEY `deleted_at` (`deleted_at`),
   CONSTRAINT `pimpinan_upps_ps_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`),
   CONSTRAINT `pimpinan_upps_ps_ibfk_2` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -582,7 +580,6 @@ CREATE TABLE `pimpinan_upps_ps` (
 
 LOCK TABLES `pimpinan_upps_ps` WRITE;
 /*!40000 ALTER TABLE `pimpinan_upps_ps` DISABLE KEYS */;
-INSERT INTO `pimpinan_upps_ps` VALUES (1,1,1,'2024-10-20','2029-10-20','Memimpin STIKOM PGRI Banyuwangi','2025-12-09 08:43:41','2025-12-09 08:43:41',NULL,NULL);
 /*!40000 ALTER TABLE `pimpinan_upps_ps` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -812,7 +809,6 @@ CREATE TABLE `sumber_pendanaan` (
 
 LOCK TABLES `sumber_pendanaan` WRITE;
 /*!40000 ALTER TABLE `sumber_pendanaan` DISABLE KEYS */;
-INSERT INTO `sumber_pendanaan` VALUES (10,2025,'SLOT1',1000000,'link','2025-08-22 06:18:43','2025-08-22 06:18:43',NULL,NULL),(11,2024,'SLOT2',2000000,'LINK','2025-08-22 06:19:09','2025-08-22 06:19:09',NULL,NULL),(12,2023,'SLOT3',3000000,'LINK','2025-08-22 06:19:29','2025-08-22 06:19:29',NULL,NULL),(13,2022,'SLOT4',3000000,'LINK','2025-08-22 06:20:00','2025-08-22 06:20:00',NULL,NULL),(16,2025,'SLOT1',3000000,'HGJHGJH','2025-08-22 06:39:35','2025-09-30 10:03:15','2025-09-30 17:03:15',1),(17,2026,'SLOT1',3000000,'BVCBGFGF','2025-08-22 06:40:08','2025-09-30 10:03:19','2025-09-30 17:03:20',1),(19,2025,'Hibah Pemerintah (Revisi)',175000000,'https://drive.test/hibah2025_revisi.pdf','2025-09-19 03:46:52','2025-09-19 05:27:53','2025-09-19 12:27:53',4),(20,2024,'Hibah Penelitian',1000000,'https://hdhsh.com','2025-09-30 10:06:26','2025-09-30 10:06:26',NULL,NULL);
 /*!40000 ALTER TABLE `sumber_pendanaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -946,7 +942,7 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
   KEY `id_tahun` (`id_tahun`),
   CONSTRAINT `tabel_2a2_keragaman_asal_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`),
   CONSTRAINT `tabel_2a2_keragaman_asal_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -955,7 +951,7 @@ CREATE TABLE `tabel_2a2_keragaman_asal` (
 
 LOCK TABLES `tabel_2a2_keragaman_asal` WRITE;
 /*!40000 ALTER TABLE `tabel_2a2_keragaman_asal` DISABLE KEYS */;
-INSERT INTO `tabel_2a2_keragaman_asal` VALUES (2,2,2024,'KABUPATEN BANYUWANGI','Kota/Kab Lain',0,0,30,'https://drive.google.com/file/abc123','2025-10-06 06:37:18','2025-10-06 06:37:18',NULL,NULL),(3,2,2024,'KABUPATEN BANYUWANGI','Kota/Kab Lain',0,0,30,'https://drive.google.com/file/abc123','2025-10-06 09:12:19','2025-10-06 09:12:19',NULL,NULL);
+INSERT INTO `tabel_2a2_keragaman_asal` VALUES (15,2,2025,'KABUPATEN BULELENG','Kota/Kab Lain',0,0,1,'http://localhost:3001/tables#tab=2a2','2025-12-22 09:24:24','2025-12-22 09:24:24',NULL,NULL),(16,2,2025,'BALI','Provinsi Lain',0,0,1,'http://localhost:3001/tables#tab=2a2','2025-12-22 09:24:24','2025-12-22 09:24:24',NULL,NULL),(17,2,2025,'KABUPATEN BANYUWANGI','Sama Kota/Kab',0,0,1,'http://localhost:3001/tables#tab=2a2','2025-12-22 09:24:49','2025-12-22 09:24:49',NULL,NULL);
 /*!40000 ALTER TABLE `tabel_2a2_keragaman_asal` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1015,7 +1011,7 @@ CREATE TABLE `tabel_2b4_masa_tunggu` (
   KEY `id_tahun_lulus` (`id_tahun_lulus`),
   CONSTRAINT `tabel_2b4_masa_tunggu_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`),
   CONSTRAINT `tabel_2b4_masa_tunggu_ibfk_2` FOREIGN KEY (`id_tahun_lulus`) REFERENCES `tahun_akademik` (`id_tahun`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1024,7 +1020,7 @@ CREATE TABLE `tabel_2b4_masa_tunggu` (
 
 LOCK TABLES `tabel_2b4_masa_tunggu` WRITE;
 /*!40000 ALTER TABLE `tabel_2b4_masa_tunggu` DISABLE KEYS */;
-INSERT INTO `tabel_2b4_masa_tunggu` VALUES (1,4,2025,100,80,2.6,NULL,NULL);
+INSERT INTO `tabel_2b4_masa_tunggu` VALUES (1,4,2025,63,57,0,NULL,NULL),(2,4,2024,101,94,0,NULL,NULL),(3,4,2023,97,85,0,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_2b4_masa_tunggu` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1051,7 +1047,7 @@ CREATE TABLE `tabel_2b5_kesesuaian_kerja` (
   KEY `id_tahun_lulus` (`id_tahun_lulus`),
   CONSTRAINT `tabel_2b5_kesesuaian_kerja_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`),
   CONSTRAINT `tabel_2b5_kesesuaian_kerja_ibfk_2` FOREIGN KEY (`id_tahun_lulus`) REFERENCES `tahun_akademik` (`id_tahun`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1060,6 +1056,7 @@ CREATE TABLE `tabel_2b5_kesesuaian_kerja` (
 
 LOCK TABLES `tabel_2b5_kesesuaian_kerja` WRITE;
 /*!40000 ALTER TABLE `tabel_2b5_kesesuaian_kerja` DISABLE KEYS */;
+INSERT INTO `tabel_2b5_kesesuaian_kerja` VALUES (1,4,2025,45,12,3,54,9,NULL,NULL),(2,4,2024,30,64,5,89,11,NULL,NULL),(3,4,2023,41,44,0,85,6,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_2b5_kesesuaian_kerja` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1087,7 +1084,7 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
   KEY `id_tahun` (`id_tahun`),
   CONSTRAINT `tabel_2b6_kepuasan_pengguna_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`),
   CONSTRAINT `tabel_2b6_kepuasan_pengguna_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1096,7 +1093,7 @@ CREATE TABLE `tabel_2b6_kepuasan_pengguna` (
 
 LOCK TABLES `tabel_2b6_kepuasan_pengguna` WRITE;
 /*!40000 ALTER TABLE `tabel_2b6_kepuasan_pengguna` DISABLE KEYS */;
-INSERT INTO `tabel_2b6_kepuasan_pengguna` VALUES (3,4,2025,'Kerjasama Tim',25,25,25,25,'Pertahankan',NULL,NULL),(4,4,2025,'Keahlian di Bidang Prodi',30,20,30,20,'Pertahankan',NULL,NULL),(5,5,2025,'Keahlian di Bidang Prodi',30,20,30,20,'lkdfns',NULL,NULL);
+INSERT INTO `tabel_2b6_kepuasan_pengguna` VALUES (1,4,2025,'Kerjasama Tim',22,70,3,5,NULL,NULL,NULL),(2,4,2025,'Keahlian di Bidang Prodi',35,41,18,6,NULL,NULL,NULL),(3,4,2025,'Kemampuan Berbahasa Asing (Inggris)',2,16,64,18,NULL,NULL,NULL),(4,4,2025,'Kemampuan Berkomunikasi',50,25,13,12,NULL,NULL,NULL),(5,4,2025,'Pengembangan Diri',80,17,3,0,NULL,NULL,NULL),(6,4,2025,'Kepemimpinan',30,12,57,1,NULL,NULL,NULL),(7,4,2025,'Etos Kerja',93,5,2,0,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_2b6_kepuasan_pengguna` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1133,7 +1130,6 @@ CREATE TABLE `tabel_3a1_sarpras_penelitian` (
 
 LOCK TABLES `tabel_3a1_sarpras_penelitian` WRITE;
 /*!40000 ALTER TABLE `tabel_3a1_sarpras_penelitian` DISABLE KEYS */;
-INSERT INTO `tabel_3a1_sarpras_penelitian` VALUES (1,11,'Komputer',30,50,'M','L','Hardware, Software','https://youtube.com','2025-11-03 04:37:28','2025-11-03 05:04:44',NULL,NULL),(2,11,'Basis Data',20,100,'W','T','Komputer, Kursi','https://youtube.com','2025-11-03 05:05:24','2025-11-03 05:05:24',NULL,NULL);
 /*!40000 ALTER TABLE `tabel_3a1_sarpras_penelitian` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1157,7 +1153,7 @@ CREATE TABLE `tabel_3a2_pendanaan` (
   KEY `id_tahun` (`id_tahun`),
   CONSTRAINT `tabel_3a2_pendanaan_ibfk_1` FOREIGN KEY (`id_penelitian`) REFERENCES `tabel_3a2_penelitian` (`id`) ON DELETE CASCADE,
   CONSTRAINT `tabel_3a2_pendanaan_ibfk_2` FOREIGN KEY (`id_tahun`) REFERENCES `tahun_akademik` (`id_tahun`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1166,7 +1162,7 @@ CREATE TABLE `tabel_3a2_pendanaan` (
 
 LOCK TABLES `tabel_3a2_pendanaan` WRITE;
 /*!40000 ALTER TABLE `tabel_3a2_pendanaan` DISABLE KEYS */;
-INSERT INTO `tabel_3a2_pendanaan` VALUES (3,1,2024,10,'https://youtube.com1','2025-11-05 04:10:27','2025-11-05 04:10:27'),(4,2,2026,11,'https://youtube.com1','2025-11-05 04:15:38','2025-11-05 04:15:38'),(6,3,2031,1,'https://youtube.com1','2025-11-05 04:39:29','2025-11-05 04:39:29'),(7,4,2034,10,'https://youtube.com','2025-11-11 04:04:23','2025-11-11 04:04:23');
+INSERT INTO `tabel_3a2_pendanaan` VALUES (6,1,2018,5000000,'https://sinta.kemdiktisaintek.go.id/bukti/contract_2018_1.pdf','2025-12-18 00:28:01','2025-12-18 00:28:01'),(7,2,2020,15000000,'https://sinta.kemdiktisaintek.go.id/bukti/contract_2020_2.pdf','2025-12-18 00:28:01','2025-12-18 00:28:01'),(8,3,2019,7500000,'https://sinta.kemdiktisaintek.go.id/bukti/contract_2019_3.pdf','2025-12-18 00:28:01','2025-12-18 00:28:01'),(9,4,2021,5000000,'https://sinta.kemdiktisaintek.go.id/bukti/contract_2021_4.pdf','2025-12-18 00:28:01','2025-12-18 00:28:01'),(10,5,2024,3000000,'http://ojs.stikombanyuwangi.ac.id/bukti/mandiri_2024.pdf','2025-12-18 00:28:01','2025-12-18 00:28:01');
 /*!40000 ALTER TABLE `tabel_3a2_pendanaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1197,7 +1193,7 @@ CREATE TABLE `tabel_3a2_penelitian` (
   KEY `deleted_at` (`deleted_at`),
   CONSTRAINT `tabel_3a2_penelitian_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`) ON UPDATE CASCADE,
   CONSTRAINT `tabel_3a2_penelitian_ibfk_2` FOREIGN KEY (`id_dosen_ketua`) REFERENCES `dosen` (`id_dosen`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1206,7 +1202,7 @@ CREATE TABLE `tabel_3a2_penelitian` (
 
 LOCK TABLES `tabel_3a2_penelitian` WRITE;
 /*!40000 ALTER TABLE `tabel_3a2_penelitian` DISABLE KEYS */;
-INSERT INTO `tabel_3a2_penelitian` VALUES (1,2,'https://www.youtube.com/',12,'Testing',2,'Terapan','L',1,'2025-11-04 09:28:58','2025-11-05 04:06:18',NULL,NULL),(2,12,'https://www.youtube.com/',3,'Tes 2',1,'Hibah Dasar','N',2,'2025-11-05 04:15:38','2025-11-05 04:15:38',NULL,NULL),(3,12,'https://www.youtube1.com/',1,'Tes 3',0,'Hibah Dasar','I',3,'2025-11-05 04:28:57','2025-11-05 04:39:29',NULL,NULL),(4,2,'https://www.youtube2.com/',1,'Mancing',1,'Hibah Dasar','I',1,'2025-11-11 04:04:23','2025-11-11 04:04:23',NULL,NULL);
+INSERT INTO `tabel_3a2_penelitian` VALUES (1,7,'https://sinta.kemdiktisaintek.go.id/authors/profile/5974365',7,'Fuzzy Goal Programming Untuk Pembobotan Analytical Hierarchy Process Pada Penentuan Penerima Bantuan Siswa Miskin',2,'Penelitian Dosen Pemula','I',1,'2025-12-18 00:25:33','2025-12-18 00:25:33',NULL,NULL),(2,7,'https://sinta.kemdiktisaintek.go.id/authors/profile/6651072',8,'E-Deteksi Kematangan Buah Jeruk Banyuwangi Menggunakan Metode Pengolahan Citra Digital',3,'Hibah Bersaing','I',1,'2025-12-18 00:25:33','2025-12-18 00:25:33',NULL,NULL),(3,7,'https://sinta.kemdiktisaintek.go.id/authors/profile/6694463',14,'Aplikasi E-Quisioner Layanan Wi-Fi Studi Kasus Pada Sekolah Menengah Atas Di Kabupaten Banyuwangi',2,'Penelitian Terapan','I',1,'2025-12-18 00:25:33','2025-12-18 00:25:33',NULL,NULL),(4,6,'https://sinta.kemdiktisaintek.go.id/authors/profile/5974365',13,'Sistem Informasi Geografis Untuk Memonitoring Kegiatan Posyandu Di Kelurahan Tamanbaru',2,'Penelitian Dosen Pemula','N',1,'2025-12-18 00:25:33','2025-12-18 00:25:33',NULL,NULL),(5,7,'http://ojs.stikombanyuwangi.ac.id/index.php/jikom',3,'Perancangan Sistem Pendataan Santri Dan Pendataan Hafalan Berbasis Android Di Ma?had Tahfizhul Qur?an Ahlus Shuffah',3,'Mandiri','I',1,'2025-12-18 00:25:33','2025-12-18 00:25:33',NULL,NULL);
 /*!40000 ALTER TABLE `tabel_3a2_penelitian` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1458,7 +1454,6 @@ CREATE TABLE `tabel_4a1_sarpras_pkm` (
 
 LOCK TABLES `tabel_4a1_sarpras_pkm` WRITE;
 /*!40000 ALTER TABLE `tabel_4a1_sarpras_pkm` DISABLE KEYS */;
-INSERT INTO `tabel_4a1_sarpras_pkm` VALUES (1,2,'Basis Data',5,50,'M','L','Hardware, Software','https://youtube.com','2025-11-11 03:33:44',1,'2025-11-11 03:33:56',1,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_4a1_sarpras_pkm` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1690,7 +1685,7 @@ CREATE TABLE `tabel_5_1_sistem_tata_kelola` (
   KEY `id_unit_pengelola` (`id_unit_pengelola`),
   KEY `deleted_at` (`deleted_at`),
   CONSTRAINT `tabel_5_1_sistem_tata_kelola_ibfk_1` FOREIGN KEY (`id_unit_pengelola`) REFERENCES `unit_kerja` (`id_unit`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1699,7 +1694,6 @@ CREATE TABLE `tabel_5_1_sistem_tata_kelola` (
 
 LOCK TABLES `tabel_5_1_sistem_tata_kelola` WRITE;
 /*!40000 ALTER TABLE `tabel_5_1_sistem_tata_kelola` DISABLE KEYS */;
-INSERT INTO `tabel_5_1_sistem_tata_kelola` VALUES (1,'Pendidikan','Sistem Informasi Akademik','Internet',2,'https://example.com/bukti-siakad.pdf','2025-11-12 07:21:38','2025-11-12 07:21:38',NULL,NULL);
 /*!40000 ALTER TABLE `tabel_5_1_sistem_tata_kelola` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1730,7 +1724,7 @@ CREATE TABLE `tabel_5_2_sarpras_pendidikan` (
   KEY `id_unit` (`id_unit`),
   KEY `deleted_at` (`deleted_at`),
   CONSTRAINT `tabel_5_2_sarpras_pendidikan_ibfk_1` FOREIGN KEY (`id_unit`) REFERENCES `unit_kerja` (`id_unit`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1739,7 +1733,6 @@ CREATE TABLE `tabel_5_2_sarpras_pendidikan` (
 
 LOCK TABLES `tabel_5_2_sarpras_pendidikan` WRITE;
 /*!40000 ALTER TABLE `tabel_5_2_sarpras_pendidikan` DISABLE KEYS */;
-INSERT INTO `tabel_5_2_sarpras_pendidikan` VALUES (1,2,'Laboratorium Komputer Jaringan',40,80.5,'M','L','40 unit komputer, 1 server, switch 24 port, router, software Windows 10, Microsoft Office, Cisco Packet Tracer','https://drive.google.com/file/d/abc123/lab-komputer.pdf','2025-11-12 07:50:35',1,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_5_2_sarpras_pendidikan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1769,7 +1762,7 @@ CREATE TABLE `tabel_6_kesesuaian_visi_misi` (
   UNIQUE KEY `unik_prodi` (`id_unit_prodi`),
   KEY `deleted_at` (`deleted_at`),
   CONSTRAINT `tabel_6_kesesuaian_visi_misi_ibfk_1` FOREIGN KEY (`id_unit_prodi`) REFERENCES `unit_kerja` (`id_unit`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1778,7 +1771,6 @@ CREATE TABLE `tabel_6_kesesuaian_visi_misi` (
 
 LOCK TABLES `tabel_6_kesesuaian_visi_misi` WRITE;
 /*!40000 ALTER TABLE `tabel_6_kesesuaian_visi_misi` DISABLE KEYS */;
-INSERT INTO `tabel_6_kesesuaian_visi_misi` VALUES (1,4,'Menjadi perguruan tinggi yang unggul dalam bidang teknologi informasi','Menjadi unit yang terdepan dalam pengembangan teknologi informasi','Menjadi program studi yang menghasilkan lulusan kompeten di bidang teknologi informasi','1. Menyelenggarakan pendidikan berkualitas\n2. Melakukan penelitian yang bermanfaat\n3. Melakukan pengabdian kepada masyarakat','1. Mengembangkan kurikulum yang relevan\n2. Meningkatkan kualitas dosen\n3. Membangun kerjasama dengan industri','https://drive.google.com/file/d/abc123/vmts.pdf','2025-11-12 08:16:42',1,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `tabel_6_kesesuaian_visi_misi` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1804,7 +1796,7 @@ CREATE TABLE `tahun_akademik` (
 
 LOCK TABLES `tahun_akademik` WRITE;
 /*!40000 ALTER TABLE `tahun_akademik` DISABLE KEYS */;
-INSERT INTO `tahun_akademik` VALUES (2020,'2020/2021',NULL,NULL),(2021,'2021/2022',NULL,NULL),(2022,'2022/2023',NULL,NULL),(2023,'2023/2024',NULL,NULL),(2024,'2024/2025',NULL,NULL),(2025,'2025/2026',NULL,NULL),(2026,'2026/2027',NULL,NULL),(2027,'2027/2028',NULL,NULL),(2028,'2028/2029',NULL,NULL),(2029,'2029/2030',NULL,NULL),(2030,'2030/2031',NULL,NULL),(2031,'2031/2032',NULL,NULL),(2032,'2032/2033',NULL,NULL),(2033,'2033/2034',NULL,NULL),(2034,'2034/2035',NULL,NULL),(2035,'2035/2036',NULL,NULL),(2036,'2036/2037',NULL,NULL),(2037,'2037/2038',NULL,NULL),(2038,'2038/2039',NULL,NULL),(2039,'2039/2040',NULL,NULL),(2040,'2040/2041',NULL,NULL),(2041,'2041/2042',NULL,NULL),(2042,'2042/2043',NULL,NULL),(2043,'2043/2044',NULL,NULL),(2044,'2044/2045',NULL,NULL),(2045,'2045/2046',NULL,NULL),(2046,'2046/2047',NULL,NULL),(2047,'2047/2048',NULL,NULL),(2048,'2048/2049',NULL,NULL),(2049,'2049/2050',NULL,NULL),(2050,'2050/2051',NULL,NULL),(2051,'2051/2052',NULL,NULL),(2052,'2052/2053',NULL,NULL),(2053,'2053/2054',NULL,NULL),(2054,'2054/2055',NULL,NULL),(2055,'2055/2056',NULL,NULL),(2056,'2056/2057',NULL,NULL),(2057,'2057/2058',NULL,NULL),(2058,'2058/2059',NULL,NULL),(2059,'2059/2060',NULL,NULL),(2060,'2060/2061',NULL,NULL),(2061,'2061/2062',NULL,NULL),(2062,'2062/2063',NULL,NULL),(2063,'2063/2064',NULL,NULL),(2064,'2064/2065',NULL,NULL),(2065,'2065/2066',NULL,NULL),(2066,'2066/2067',NULL,NULL),(2067,'2067/2068',NULL,NULL),(2068,'2068/2069',NULL,NULL),(2069,'2069/2070',NULL,NULL),(2070,'2070/2071',NULL,NULL),(2071,'2071/2072',NULL,NULL),(2072,'2072/2073',NULL,NULL),(2073,'2073/2074',NULL,NULL),(2074,'2074/2075',NULL,NULL),(2075,'2075/2076',NULL,NULL),(2076,'2076/2077',NULL,NULL),(2077,'2077/2078',NULL,NULL),(2078,'2078/2079',NULL,NULL),(2079,'2079/2080',NULL,NULL),(2080,'2080/2081',NULL,NULL),(2081,'2081/2082',NULL,NULL),(2082,'2082/2083',NULL,NULL),(2083,'2083/2084',NULL,NULL),(2084,'2084/2085',NULL,NULL),(2085,'2085/2086',NULL,NULL),(2086,'2086/2087',NULL,NULL),(2087,'2087/2088',NULL,NULL),(2088,'2088/2089',NULL,NULL),(2089,'2089/2090',NULL,NULL),(2090,'2090/2091',NULL,NULL),(2091,'2091/2092',NULL,NULL),(2092,'2092/2093',NULL,NULL),(2093,'2093/2094',NULL,NULL),(2094,'2094/2095',NULL,NULL),(2095,'2095/2096',NULL,NULL),(2096,'2096/2097',NULL,NULL),(2097,'2097/2098',NULL,NULL),(2098,'2098/2099',NULL,NULL),(2099,'2099/2100',NULL,NULL),(2100,'2100/2101',NULL,NULL);
+INSERT INTO `tahun_akademik` VALUES (2018,'2018/2019',NULL,NULL),(2019,'2019/2020',NULL,NULL),(2020,'2020/2021',NULL,NULL),(2021,'2021/2022',NULL,NULL),(2022,'2022/2023',NULL,NULL),(2023,'2023/2024',NULL,NULL),(2024,'2024/2025',NULL,NULL),(2025,'2025/2026',NULL,NULL),(2026,'2026/2027',NULL,NULL),(2027,'2027/2028',NULL,NULL),(2028,'2028/2029',NULL,NULL),(2029,'2029/2030',NULL,NULL),(2030,'2030/2031',NULL,NULL),(2031,'2031/2032',NULL,NULL),(2032,'2032/2033',NULL,NULL),(2033,'2033/2034',NULL,NULL),(2034,'2034/2035',NULL,NULL),(2035,'2035/2036',NULL,NULL),(2036,'2036/2037',NULL,NULL),(2037,'2037/2038',NULL,NULL),(2038,'2038/2039',NULL,NULL),(2039,'2039/2040',NULL,NULL),(2040,'2040/2041',NULL,NULL),(2041,'2041/2042',NULL,NULL),(2042,'2042/2043',NULL,NULL),(2043,'2043/2044',NULL,NULL),(2044,'2044/2045',NULL,NULL),(2045,'2045/2046',NULL,NULL),(2046,'2046/2047',NULL,NULL),(2047,'2047/2048',NULL,NULL),(2048,'2048/2049',NULL,NULL),(2049,'2049/2050',NULL,NULL),(2050,'2050/2051',NULL,NULL),(2051,'2051/2052',NULL,NULL),(2052,'2052/2053',NULL,NULL),(2053,'2053/2054',NULL,NULL),(2054,'2054/2055',NULL,NULL),(2055,'2055/2056',NULL,NULL),(2056,'2056/2057',NULL,NULL),(2057,'2057/2058',NULL,NULL),(2058,'2058/2059',NULL,NULL),(2059,'2059/2060',NULL,NULL),(2060,'2060/2061',NULL,NULL),(2061,'2061/2062',NULL,NULL),(2062,'2062/2063',NULL,NULL),(2063,'2063/2064',NULL,NULL),(2064,'2064/2065',NULL,NULL),(2065,'2065/2066',NULL,NULL),(2066,'2066/2067',NULL,NULL),(2067,'2067/2068',NULL,NULL),(2068,'2068/2069',NULL,NULL),(2069,'2069/2070',NULL,NULL),(2070,'2070/2071',NULL,NULL),(2071,'2071/2072',NULL,NULL),(2072,'2072/2073',NULL,NULL),(2073,'2073/2074',NULL,NULL),(2074,'2074/2075',NULL,NULL),(2075,'2075/2076',NULL,NULL),(2076,'2076/2077',NULL,NULL),(2077,'2077/2078',NULL,NULL),(2078,'2078/2079',NULL,NULL),(2079,'2079/2080',NULL,NULL),(2080,'2080/2081',NULL,NULL),(2081,'2081/2082',NULL,NULL),(2082,'2082/2083',NULL,NULL),(2083,'2083/2084',NULL,NULL),(2084,'2084/2085',NULL,NULL),(2085,'2085/2086',NULL,NULL),(2086,'2086/2087',NULL,NULL),(2087,'2087/2088',NULL,NULL),(2088,'2088/2089',NULL,NULL),(2089,'2089/2090',NULL,NULL),(2090,'2090/2091',NULL,NULL),(2091,'2091/2092',NULL,NULL),(2092,'2092/2093',NULL,NULL),(2093,'2093/2094',NULL,NULL),(2094,'2094/2095',NULL,NULL),(2095,'2095/2096',NULL,NULL),(2096,'2096/2097',NULL,NULL),(2097,'2097/2098',NULL,NULL),(2098,'2098/2099',NULL,NULL),(2099,'2099/2100',NULL,NULL),(2100,'2100/2101',NULL,NULL);
 /*!40000 ALTER TABLE `tahun_akademik` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1826,7 +1818,7 @@ CREATE TABLE `tenaga_kependidikan` (
   PRIMARY KEY (`id_tendik`),
   KEY `id_pegawai` (`id_pegawai`),
   CONSTRAINT `tenaga_kependidikan_ibfk_1` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1835,7 +1827,7 @@ CREATE TABLE `tenaga_kependidikan` (
 
 LOCK TABLES `tenaga_kependidikan` WRITE;
 /*!40000 ALTER TABLE `tenaga_kependidikan` DISABLE KEYS */;
-INSERT INTO `tenaga_kependidikan` VALUES (1,8,'Administrasi','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(2,13,'Administrasi','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(3,14,'Administrasi','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(4,21,'Administrasi','2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(5,22,'Pustakawan','2025-12-09 08:52:02','2025-12-09 08:52:02',NULL,NULL);
+INSERT INTO `tenaga_kependidikan` VALUES (1,8,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(2,9,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(3,10,'Pustakawan','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(4,11,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(5,12,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(6,13,'Pranata Komputer','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(7,14,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(8,15,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(9,16,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(10,17,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(11,18,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(12,19,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(13,20,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(14,21,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(15,22,'Teknisi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(16,23,'Teknisi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(17,24,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(18,25,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(19,26,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(20,27,'Administrasi','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(21,43,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(22,44,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(23,45,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(24,46,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(25,47,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(26,48,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(27,49,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL),(28,50,'Lainnya','2025-12-17 21:37:35','2025-12-17 21:37:35',NULL,NULL);
 /*!40000 ALTER TABLE `tenaga_kependidikan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1853,7 +1845,7 @@ CREATE TABLE `unit_kerja` (
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL,
   PRIMARY KEY (`id_unit`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1862,7 +1854,7 @@ CREATE TABLE `unit_kerja` (
 
 LOCK TABLES `unit_kerja` WRITE;
 /*!40000 ALTER TABLE `unit_kerja` DISABLE KEYS */;
-INSERT INTO `unit_kerja` VALUES (1,'Ketua STIKOM','ketua',NULL,NULL),(2,'Wakil Ketua I (Akademik)','waket1',NULL,NULL),(3,'Wakil Ketua II (Keuangan & SDM)','waket2',NULL,NULL),(4,'Program Studi Teknik Informatika','prodi',NULL,NULL),(5,'Program Studi Manajemen Informatika','prodi',NULL,NULL),(6,'Bagian Administrasi & Layanan Akademik (ALA)','ala',NULL,NULL),(7,'LPPM','lppm',NULL,NULL),(8,'Bagian Kemahasiswaan','kemahasiswaan',NULL,NULL),(9,'Bagian Keuangan','keuangan',NULL,NULL),(10,'Bagian Sarana Prasarana & Kepegawaian','sarpras',NULL,NULL),(11,'UPT Sistem Informasi (SISFO)','sisfo',NULL,NULL),(12,'Unit Penjaminan Mutu (TPM)','tpm',NULL,NULL),(13,'Bagian Kerjasama','kerjasama',NULL,NULL),(14,'PMB (Penerimaan Mahasiswa Baru)','pmb',NULL,NULL);
+INSERT INTO `unit_kerja` VALUES (1,'Ketua STIKOM','ketua',NULL,NULL),(2,'Wakil Ketua I','waket1',NULL,NULL),(3,'Wakil Ketua II','waket2',NULL,NULL),(4,'TPM','tpm',NULL,NULL),(5,'LPPM','lppm',NULL,NULL),(6,'Prodi Teknik Informatika','prodi',NULL,NULL),(7,'Prodi Manajemen Informatika','prodi',NULL,NULL),(8,'Administrasi Akademik','ala',NULL,NULL),(9,'Kemahasiswaan & Alumni','kemahasiswaan',NULL,NULL),(10,'Perpustakaan','perpustakaan',NULL,NULL),(11,'Administrasi Umum & Keuangan','keuangan',NULL,NULL),(12,'Kepegawaian & Sarpras','sarpras',NULL,NULL),(13,'Sisfo & Maintenance','sisfo',NULL,NULL),(14,'Humas & Kerjasama','kerjasama',NULL,NULL),(15,'UPT Promosi & Publikasi','promosi',NULL,NULL),(16,'UPT Unit Usaha','unit_usaha',NULL,NULL),(17,'Keamanan & Kebersihan','umum',NULL,NULL);
 /*!40000 ALTER TABLE `unit_kerja` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1887,7 +1879,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `username` (`username`),
   KEY `id_pegawai` (`id_pegawai`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`id_pegawai`) REFERENCES `pegawai` (`id_pegawai`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1896,7 +1888,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,1,'ketua','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(2,2,'waket1','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(3,3,'waket2','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(4,4,'kaprodi_ti','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(5,5,'kaprodi_mi','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(6,6,'lppm','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(7,7,'kemahasiswaan','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(8,8,'ala','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(9,9,'kerjasama','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(10,10,'tpm','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(11,11,'sisfo','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(12,12,'sarpras','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(13,13,'keuangan','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL),(14,21,'pmb','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-07 12:54:28','2025-12-07 12:54:28',NULL,NULL);
+INSERT INTO `users` VALUES (1,1,'ketua','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(2,2,'waket1','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(3,3,'waket2','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(4,4,'tpm','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(5,5,'lppm','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(6,6,'kaprodi_ti','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(7,7,'kaprodi_mi','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(8,8,'ala','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(9,9,'kemahasiswaan','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(10,11,'keuangan','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(11,12,'sarpras','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(12,13,'sisfo','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(13,14,'kerjasama','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(14,15,'promosi','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL),(15,16,'unit_usaha','$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG',1,'2025-12-17 21:38:35','2025-12-17 21:38:35',NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -1909,4 +1901,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-09 16:12:30
+-- Dump completed on 2025-12-22 16:40:01
