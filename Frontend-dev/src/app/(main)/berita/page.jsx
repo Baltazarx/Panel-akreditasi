@@ -85,183 +85,110 @@ const tpmNewsData = [
   }
 ];
 
-// Komponen Kartu Berita dengan Error Boundary
+// Komponen Kartu Berita Modern
 const NewsCard = ({ post, onEdit, onDelete, onReadMore }) => {
   const categoryStyles = {
-    blue: "from-blue-500 to-blue-600",
-    emerald: "from-emerald-500 to-emerald-600",
-    amber: "from-amber-500 to-amber-600",
-    indigo: "from-indigo-500 to-indigo-600",
+    blue: "text-blue-600 bg-blue-50 border-blue-100",
+    emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    amber: "text-amber-600 bg-amber-50 border-amber-100",
+    indigo: "text-indigo-600 bg-indigo-50 border-indigo-100",
   };
 
-  // Default icon dan color jika tidak ada
   const IconComponent = post.icon || FileText;
   const color = post.color || 'blue';
+  const colorStyle = categoryStyles[color] || categoryStyles.blue;
 
-  // Format tanggal untuk display
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric'
     });
   };
 
-  // Handle click untuk membuka detail berita
   const handleReadMore = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onReadMore) {
-      onReadMore(post);
-    }
+    if (onReadMore) onReadMore(post);
   };
-  
+
   return (
-    <motion.article 
+    <motion.article
       variants={itemVariants}
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-[#0384d6]/20 focus-within:ring-2 focus-within:ring-[#0384d6]/20"
-      role="article"
-      aria-labelledby={`news-title-${post.id}`}
+      className="group flex flex-col h-full bg-white rounded-2xl border border-slate-200 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 overflow-hidden relative"
     >
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="p-6 flex flex-col flex-1 h-full">
+        {/* Header: Icon & Date */}
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-2.5 rounded-xl ${colorStyle} transition-colors duration-300`}>
+            <IconComponent className="w-5 h-5" strokeWidth={1.5} />
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{formatDate(post.date)}</span>
+          </div>
+        </div>
+
+        {/* Title & Excerpt */}
+        <div className="flex-1 mb-4">
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <h3 className="text-lg font-bold text-slate-800 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+              {post.title}
+            </h3>
+          </div>
+          <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-4">
+            {post.excerpt}
+          </p>
+
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1.5 mt-auto">
+            {/* Priority Badge */}
             {post.priority === 'high' && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700" aria-label="Berita prioritas tinggi">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full" aria-hidden="true"></div>
+              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-red-50 text-red-600 border border-red-100">
                 Prioritas Tinggi
               </span>
             )}
-            {post.priority === 'medium' && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700" aria-label="Berita prioritas sedang">
-                <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full" aria-hidden="true"></div>
-                Prioritas Sedang
+            {post.tags && post.tags.slice(0, 2).map((tag, idx) => (
+              <span key={idx} className="inline-block px-2 py-0.5 text-[11px] font-medium text-slate-500 bg-slate-100 rounded-md">
+                #{tag}
               </span>
-            )}
-            {post.priority === 'low' && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700" aria-label="Berita prioritas rendah">
-                <div className="w-1.5 h-1.5 bg-gray-500 rounded-full" aria-hidden="true"></div>
-                Prioritas Rendah
-              </span>
-            )}
-            {post.status && (
-              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
-                post.status === 'published' 
-                  ? 'bg-green-100 text-green-700' 
-                  : post.status === 'draft' 
-                  ? 'bg-gray-100 text-gray-700' 
-                  : 'bg-orange-100 text-orange-700'
-              }`} aria-label={`Status: ${post.status}`}>
-                {post.status === 'published' ? 'Diterbitkan' : post.status === 'draft' ? 'Draft' : 'Diarsipkan'}
-              </span>
-            )}
-          </div>
-          <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryStyles[color]} shadow-md group-hover:scale-110 transition-transform duration-300`} aria-hidden="true">
-            <IconComponent className="h-5 w-5 text-white" />
+            ))}
           </div>
         </div>
 
-        {/* Content */}
-        <h3 id={`news-title-${post.id}`} className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#043975] transition-colors duration-300">
-          {post.title}
-        </h3>
-
-        <p className="text-gray-600 mb-4 leading-relaxed text-sm">
-          {post.excerpt}
-        </p>
-
-        {/* Author & User Info */}
-        <div className="mb-4 space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500">Oleh: <span className="font-medium">{post.author}</span></span>
-            {post.nama_user && (
-              <span className="text-xs text-gray-400">({post.nama_user})</span>
-            )}
-          </div>
-          {post.created_at && (
-            <div className="text-xs text-gray-400">
-              Dibuat: {new Date(post.created_at).toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Tags - hanya tampilkan jika ada tags */}
-        {post.tags && post.tags.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-1">
-          {post.tags.slice(0, 3).map((tag, index) => (
-            <span key={index} className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-              #{tag}
-            </span>
-          ))}
-          {post.tags.length > 3 && (
-            <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
-              +{post.tags.length - 3}
-            </span>
-          )}
-        </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <div className="flex items-center gap-1" aria-label={`Tanggal: ${formatDate(post.date)}`}>
-              <Calendar className="w-3 h-3" aria-hidden="true" />
-              <time dateTime={post.date}>{formatDate(post.date)}</time>
-            </div>
-            <div className="flex items-center gap-1" aria-label={`Waktu baca: ${post.readTime}`}>
-              <Clock className="w-3 h-3" aria-hidden="true" />
-              <span>{post.readTime}</span>
-            </div>
-          </div>
-          
+        {/* Footer: User & Action */}
+        <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {onEdit && (
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEdit(post);
-                }}
-                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-xs transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2 rounded-md px-2 py-1 hover:bg-blue-50"
-                aria-label={`Edit berita: ${post.title}`}
-                title="Edit Berita"
-              >
-                <Edit2 className="w-3 h-3" aria-hidden="true" />
-                Edit
-              </button>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs ring-2 ring-white">
+              {post.author ? post.author.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-slate-700 truncate max-w-[100px]">{post.author}</span>
+              <span className="text-[10px] text-slate-400">{post.readTime || '3 min'} baca</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {(onEdit || onDelete) && (
+              <div className="flex items-center gap-1 mr-2 border-r border-slate-100 pr-2">
+                {onEdit && (
+                  <button onClick={(e) => { e.stopPropagation(); onEdit(post); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {onDelete && (
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(post.id); }} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             )}
-            {onDelete && (
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete(post.id);
-                }}
-                className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 font-medium text-xs transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:ring-offset-2 rounded-md px-2 py-1 hover:bg-red-50"
-                aria-label={`Hapus berita: ${post.title}`}
-                title="Hapus Berita"
-              >
-                <Trash2 className="w-3 h-3" aria-hidden="true" />
-                Hapus
-              </button>
-            )}
-          <button 
-            onClick={handleReadMore}
-            className="inline-flex items-center gap-1 text-[#0384d6] hover:text-[#043975] font-medium text-xs transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:ring-offset-2 rounded-md px-2 py-1"
-            aria-label={`Baca lebih lanjut: ${post.title}`}
-          >
-            Baca
-            <ArrowRight className="w-3 h-3" aria-hidden="true" />
-          </button>
+            <button
+              onClick={handleReadMore}
+              className="flex items-center gap-1.5 pl-2 text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform"
+            >
+              Baca
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -340,6 +267,20 @@ export default function TpmNewsPage() {
     priority: 'medium'
   });
 
+  // State untuk Search dan Filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPriority, setFilterPriority] = useState('all'); // all, high, medium, low
+
+  // Filter Data
+  const filteredNews = useMemo(() => {
+    return newsData.filter(item => {
+      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPriority = filterPriority === 'all' || item.priority === filterPriority;
+      return matchesSearch && matchesPriority;
+    });
+  }, [newsData, searchQuery, filterPriority]);
+
   // Dropdown state untuk prioritas
   const [openPriorityDropdown, setOpenPriorityDropdown] = useState(false);
   const [priorityDropdownPosition, setPriorityDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -355,11 +296,11 @@ export default function TpmNewsPage() {
   // Generate icon dan color otomatis berdasarkan judul dan prioritas
   const generateIconAndColor = (judul, prioritas) => {
     const judulLower = judul?.toLowerCase() || '';
-    
+
     // Tentukan icon berdasarkan kata kunci di judul
     let icon = FileText;
     let color = 'blue';
-    
+
     if (judulLower.includes('audit') || judulLower.includes('ami') || judulLower.includes('mutu')) {
       icon = ShieldCheck;
       color = 'indigo';
@@ -394,7 +335,7 @@ export default function TpmNewsPage() {
         color = 'blue';
       }
     }
-    
+
     return { icon, color };
   };
 
@@ -403,7 +344,7 @@ export default function TpmNewsPage() {
     return backendData.map(item => {
       // Generate icon dan color otomatis
       const { icon, color } = generateIconAndColor(item.judul, item.prioritas);
-      
+
       return {
         id: item.id_berita,
         title: item.judul,
@@ -433,15 +374,15 @@ export default function TpmNewsPage() {
     try {
       // Fetch semua berita yang tidak dihapus (buildWhere otomatis filter deleted_at IS NULL)
       // Tambahkan timestamp untuk force refresh cache
-      const url = forceRefresh 
-        ? `/berita?t=${Date.now()}` 
+      const url = forceRefresh
+        ? `/berita?t=${Date.now()}`
         : '/berita';
-      
+
       const data = await apiFetch(url);
       console.log('Raw API response:', data);
       console.log('Response type:', typeof data);
       console.log('Is array?', Array.isArray(data));
-      
+
       // Pastikan data adalah array
       let dataArray = [];
       if (Array.isArray(data)) {
@@ -450,48 +391,48 @@ export default function TpmNewsPage() {
         // Coba berbagai kemungkinan struktur response
         dataArray = data.data || data.items || data.results || Object.values(data);
       }
-      
+
       console.log('Data array length:', dataArray.length);
       console.log('Data array:', dataArray);
-      
+
       if (dataArray.length === 0) {
         console.warn('Tidak ada data berita yang ditemukan');
         setNewsData([]);
         setIsLoading(false);
         return;
       }
-      
+
       // Map data ke format frontend
       const mappedData = mapBackendToFrontend(dataArray);
       console.log('Mapped data length:', mappedData.length);
       console.log('Mapped data:', mappedData);
-      
+
       // Filter out deleted items (jika ada yang terlewat)
       const activeData = mappedData.filter(item => !item.deleted_at);
       console.log('Active data length (after filter):', activeData.length);
       console.log('Active data:', activeData);
-      
+
       // Sort: Pinned berita di atas, lalu berdasarkan updated_at (terbaru di atas), lalu created_at
       activeData.sort((a, b) => {
         // Pinned berita selalu di atas
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
-        
+
         // Jika keduanya pinned atau tidak pinned, sort berdasarkan updated_at terlebih dahulu
         const updatedA = new Date(a.updated_at || a.created_at || 0);
         const updatedB = new Date(b.updated_at || b.created_at || 0);
-        
+
         // Jika updated_at berbeda, sort berdasarkan updated_at (terbaru di atas)
         if (updatedA.getTime() !== updatedB.getTime()) {
           return updatedB - updatedA; // Descending (terbaru di atas)
         }
-        
+
         // Jika updated_at sama, sort berdasarkan created_at atau tanggal publikasi
         const dateA = new Date(a.date || a.created_at || 0);
         const dateB = new Date(b.date || b.created_at || 0);
         return dateB - dateA; // Descending (terbaru di atas)
       });
-      
+
       console.log('Setting newsData with', activeData.length, 'items');
       console.log('Setting newsData with', activeData.length, 'items');
       setNewsData(activeData);
@@ -536,7 +477,7 @@ export default function TpmNewsPage() {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -649,7 +590,7 @@ export default function TpmNewsPage() {
           console.error('Error refreshing data:', refreshError);
         }
       }, 200);
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -763,7 +704,7 @@ export default function TpmNewsPage() {
           console.error('Error refreshing data:', refreshError);
         }
       }, 200);
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -792,7 +733,7 @@ export default function TpmNewsPage() {
   // Handle Delete Berita (Hard Delete)
   const handleDelete = async (id) => {
     if (!id) return;
-    
+
     const result = await Swal.fire({
       icon: 'warning',
       title: 'Hapus Berita?',
@@ -827,7 +768,7 @@ export default function TpmNewsPage() {
           console.error('Error refreshing data:', refreshError);
         }
       }, 200);
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Terhapus!',
@@ -847,70 +788,125 @@ export default function TpmNewsPage() {
 
   return (
     <ErrorBoundary>
-      <main className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          
-          {/* Hero Section */}
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={fadeInUp}
-            className="text-center mb-16"
-          >
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-[#043975] to-[#0384d6] rounded-2xl mb-6 shadow-lg">
-              <ShieldCheck className="w-10 h-10 text-white" />
+      <main className="min-h-screen bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-3 mb-2"
+              >
+                <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/20">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Pusat Informasi
+                </h1>
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-slate-600 max-w-2xl text-lg leading-relaxed"
+              >
+                Berita terkini dan pengumuman resmi seputar penjaminan mutu dan akreditasi STIKOM.
+              </motion.p>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Berita & <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#043975] to-[#0384d6]">Pengumuman</span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-6">
-              Informasi resmi dan terkini terkait siklus penjaminan mutu di lingkungan STIKOM. 
-              Dapatkan update terbaru tentang akreditasi, audit, dan pengembangan kualitas pendidikan.
-            </p>
+
             <motion.button
-              onClick={() => setShowUploadModal(true)}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setShowUploadModal(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 hover:shadow-xl transition-all duration-300"
             >
               <Upload className="w-5 h-5" />
-              <span>Upload Berita</span>
+              <span>Berita Baru</span>
             </motion.button>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-10 bg-white p-2 rounded-2xl shadow-sm border border-slate-200"
+          >
+            <div className="md:col-span-9 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+                </div>
+              </div>
+              <input
+                type="text"
+                placeholder="Cari berita atau pengumuman..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-3 border-none rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 bg-transparent"
+              />
+            </div>
+            <div className="md:col-span-3">
+              <select
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value)}
+                className="block w-full py-3 px-4 rounded-xl border-l border-slate-100 bg-slate-50 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer hover:bg-slate-100 transition-colors"
+              >
+                <option value="all">Semua Prioritas</option>
+                <option value="high">Prioritas Tinggi</option>
+                <option value="medium">Prioritas Sedang</option>
+                <option value="low">Prioritas Rendah</option>
+              </select>
+            </div>
           </motion.div>
 
-
           {/* Grid Kartu Berita */}
-          <motion.div 
+          <motion.div
             variants={staggerChildren}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-              {isLoading ? (
-                // Loading skeletons
-                Array.from({ length: 4 }).map((_, index) => (
-                  <NewsCardSkeleton key={`skeleton-${index}`} />
-                ))
-            ) : newsData.length > 0 ? (
-              <AnimatePresence>
-                {newsData.map((post, index) => {
-                  console.log(`Rendering NewsCard ${index}:`, post);
-                  return (
-                    <NewsCard 
-                      key={post.id || `news-${index}`} 
-                      post={post}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onReadMore={handleReadMore}
-                    />
-                  );
-                })}
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 6 }).map((_, index) => (
+                <NewsCardSkeleton key={`skeleton-${index}`} />
+              ))
+            ) : filteredNews.length > 0 ? (
+              <AnimatePresence mode="popLayout">
+                {filteredNews.map((post, index) => (
+                  <NewsCard
+                    key={post.id || `news-${index}`}
+                    post={post}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onReadMore={handleReadMore}
+                  />
+                ))}
               </AnimatePresence>
             ) : (
-              <div className="col-span-full text-center py-12">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Belum Ada Berita</h3>
-                <p className="text-gray-500 mb-6">Belum ada berita yang dipublikasikan. Klik tombol "Upload Berita" untuk menambahkan berita pertama.</p>
+              <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-50 rounded-full mb-4">
+                  <FileText className="w-8 h-8 text-slate-300" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Tidak ada berita ditemukan</h3>
+                <p className="text-slate-500 max-w-md mx-auto">
+                  {searchQuery ? `Tidak ada hasil untuk pencarian "${searchQuery}"` : "Belum ada berita yang dipublikasikan saat ini."}
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mt-6 text-blue-600 font-medium hover:underline"
+                  >
+                    Hapus pencarian
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
@@ -920,7 +916,7 @@ export default function TpmNewsPage() {
         {/* Upload Modal */}
         <AnimatePresence>
           {showUploadModal && (
-            <div 
+            <div
               className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
               style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
               onClick={(e) => {
@@ -942,7 +938,7 @@ export default function TpmNewsPage() {
                   <p className="text-white/80 mt-1 text-sm">Lengkapi informasi berita untuk dipublikasikan.</p>
                 </div>
                 <div className="p-8">
-                  <form 
+                  <form
                     className="space-y-6"
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -1037,11 +1033,10 @@ export default function TpmNewsPage() {
                               setOpenPriorityDropdown(!openPriorityDropdown);
                             }}
                             disabled={uploading}
-                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                              uploadForm.priority 
-                                ? 'border-[#0384d6] bg-white' 
+                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${uploadForm.priority
+                                ? 'border-[#0384d6] bg-white'
                                 : 'border-gray-300 bg-white hover:border-gray-400'
-                            } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             aria-label="Pilih prioritas"
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1049,15 +1044,14 @@ export default function TpmNewsPage() {
                                 {uploadForm.priority === 'low' ? 'Rendah' : uploadForm.priority === 'medium' ? 'Sedang' : uploadForm.priority === 'high' ? 'Tinggi' : 'Pilih prioritas...'}
                               </span>
                             </div>
-                            <ChevronDown 
-                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                                openPriorityDropdown ? 'rotate-180' : ''
-                              }`} 
-                              size={18} 
+                            <ChevronDown
+                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openPriorityDropdown ? 'rotate-180' : ''
+                                }`}
+                              size={18}
                             />
                           </button>
                           {openPriorityDropdown && (
-                            <div 
+                            <div
                               className="fixed z-[100] bg-white rounded-lg shadow-xl border border-gray-200 priority-dropdown-menu"
                               style={{
                                 top: `${priorityDropdownPosition.top}px`,
@@ -1074,11 +1068,10 @@ export default function TpmNewsPage() {
                                     setUploadForm(prev => ({ ...prev, priority }));
                                     setOpenPriorityDropdown(false);
                                   }}
-                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                    uploadForm.priority === priority
+                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${uploadForm.priority === priority
                                       ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                       : 'text-gray-700'
-                                  }`}
+                                    }`}
                                 >
                                   <span className="truncate">
                                     {priority === 'low' ? 'Rendah' : priority === 'medium' ? 'Sedang' : 'Tinggi'}
@@ -1093,9 +1086,9 @@ export default function TpmNewsPage() {
 
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                      <button 
-                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
-                        type="button" 
+                      <button
+                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white text-sm font-medium overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        type="button"
                         onClick={() => {
                           if (!uploading) {
                             setShowUploadModal(false);
@@ -1114,9 +1107,9 @@ export default function TpmNewsPage() {
                         <span className="relative z-10">Batal</span>
                         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
                       </button>
-                      <button 
-                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 flex items-center justify-center gap-2" 
-                        disabled={uploading || !uploadForm.title.trim() || !uploadForm.excerpt.trim() || !uploadForm.content.trim() || !uploadForm.author.trim()} 
+                      <button
+                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 flex items-center justify-center gap-2"
+                        disabled={uploading || !uploadForm.title.trim() || !uploadForm.excerpt.trim() || !uploadForm.content.trim() || !uploadForm.author.trim()}
                         type="submit"
                       >
                         {uploading ? (
@@ -1137,13 +1130,13 @@ export default function TpmNewsPage() {
                 </div>
               </motion.div>
             </div>
-              )}
-            </AnimatePresence>
+          )}
+        </AnimatePresence>
 
         {/* Edit Modal */}
         <AnimatePresence>
           {showEditModal && editingNews && (
-            <div 
+            <div
               className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
               style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
               onClick={(e) => {
@@ -1166,7 +1159,7 @@ export default function TpmNewsPage() {
                   <p className="text-white/80 mt-1 text-sm">Perbarui informasi berita.</p>
                 </div>
                 <div className="p-8">
-                  <form 
+                  <form
                     className="space-y-6"
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -1261,20 +1254,18 @@ export default function TpmNewsPage() {
                               setOpenPriorityDropdown(!openPriorityDropdown);
                             }}
                             disabled={uploading}
-                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                              uploadForm.priority
+                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${uploadForm.priority
                                 ? 'border-[#0384d6] bg-white'
                                 : 'border-gray-300 bg-white hover:border-gray-400'
-                            } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             aria-label="Pilih prioritas"
                           >
                             <span className={`truncate ${uploadForm.priority ? 'text-gray-900' : 'text-gray-500'}`}>
                               {uploadForm.priority === 'high' ? 'Tinggi' : uploadForm.priority === 'medium' ? 'Sedang' : 'Rendah'}
                             </span>
                             <ChevronDown
-                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                                openPriorityDropdown ? 'rotate-180' : ''
-                              }`}
+                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openPriorityDropdown ? 'rotate-180' : ''
+                                }`}
                               size={18}
                             />
                           </button>
@@ -1300,11 +1291,10 @@ export default function TpmNewsPage() {
                                     setUploadForm(prev => ({ ...prev, priority: option.value }));
                                     setOpenPriorityDropdown(false);
                                   }}
-                                  className={`w-full px-4 py-3 text-left hover:bg-[#eaf4ff] transition-colors ${
-                                    uploadForm.priority === option.value
+                                  className={`w-full px-4 py-3 text-left hover:bg-[#eaf4ff] transition-colors ${uploadForm.priority === option.value
                                       ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                       : 'text-gray-700'
-                                  }`}
+                                    }`}
                                 >
                                   {option.label}
                                 </button>
@@ -1317,7 +1307,7 @@ export default function TpmNewsPage() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
-                      <button 
+                      <button
                         type="button"
                         className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         onClick={() => {
@@ -1337,9 +1327,9 @@ export default function TpmNewsPage() {
                         <span className="relative z-10">Batal</span>
                         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
                       </button>
-                      <button 
-                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 flex items-center justify-center gap-2" 
-                        disabled={uploading || !uploadForm.title.trim() || !uploadForm.excerpt.trim() || !uploadForm.content.trim() || !uploadForm.author.trim()} 
+                      <button
+                        className="relative px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0384d6] via-[#043975] to-[#0384d6] text-white text-sm font-semibold overflow-hidden group shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2 flex items-center justify-center gap-2"
+                        disabled={uploading || !uploadForm.title.trim() || !uploadForm.excerpt.trim() || !uploadForm.content.trim() || !uploadForm.author.trim()}
                         type="submit"
                       >
                         {uploading ? (
@@ -1358,7 +1348,7 @@ export default function TpmNewsPage() {
                     </div>
                   </form>
                 </div>
-          </motion.div>
+              </motion.div>
             </div>
           )}
         </AnimatePresence>
@@ -1374,175 +1364,174 @@ export default function TpmNewsPage() {
             };
             const IconComponent = selectedNews.icon || FileText;
             const color = selectedNews.color || 'blue';
-            
+
             return (
-            <div 
-              className="fixed inset-0 bg-black/50 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
-              style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowDetailModal(false);
-                  setSelectedNews(null);
-                }
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden relative z-[10000] pointer-events-auto flex flex-col"
-                style={{ zIndex: 10000 }}
-                onClick={(e) => e.stopPropagation()}
+              <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
+                style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setShowDetailModal(false);
+                    setSelectedNews(null);
+                  }
+                }}
               >
-                {/* Header */}
-                <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryStyles[color]} shadow-md`}>
-                        <IconComponent className="h-5 w-5 text-white" />
-        </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {selectedNews.priority === 'high' && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
-                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                            Prioritas Tinggi
-                          </span>
-                        )}
-                        {selectedNews.priority === 'medium' && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                            <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                            Prioritas Sedang
-                          </span>
-                        )}
-                        {selectedNews.priority === 'low' && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                            <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
-                            Prioritas Rendah
-                          </span>
-                        )}
-                        {selectedNews.status && (
-                          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
-                            selectedNews.status === 'published' || selectedNews.status === 'diterbitkan'
-                              ? 'bg-green-100 text-green-700'
-                              : selectedNews.status === 'draft'
-                              ? 'bg-gray-100 text-gray-700'
-                              : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {selectedNews.status === 'published' || selectedNews.status === 'diterbitkan' ? 'Diterbitkan' : selectedNews.status === 'draft' ? 'Draft' : 'Diarsipkan'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <h2 className="text-2xl font-bold">{selectedNews.title}</h2>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setSelectedNews(null);
-                    }}
-                    className="ml-4 p-2 rounded-lg hover:bg-white/20 transition-colors"
-                    aria-label="Tutup modal"
-                  >
-                    <X className="w-6 h-6 text-white" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="px-8 py-6 overflow-y-auto flex-1">
-                  {/* Meta Info */}
-                  <div className="mb-6 pb-6 border-b border-gray-200">
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      {selectedNews.date && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            {new Date(selectedNews.date).toLocaleDateString('id-ID', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </span>
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                  className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden relative z-[10000] pointer-events-auto flex flex-col"
+                  style={{ zIndex: 10000 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${categoryStyles[color]} shadow-md`}>
+                          <IconComponent className="h-5 w-5 text-white" />
                         </div>
-                      )}
-                      {selectedNews.readTime && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{selectedNews.readTime}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-500">
-                          Oleh: <span className="font-medium text-gray-700">{selectedNews.author}</span>
-                        </span>
-                        {selectedNews.nama_user && (
-                          <span className="text-sm text-gray-400">
-                            ({selectedNews.nama_user})
-                          </span>
-                        )}
-                      </div>
-                      {selectedNews.created_at && (() => {
-                        const date = new Date(selectedNews.created_at);
-                        const day = date.getDate();
-                        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                        const month = monthNames[date.getMonth()];
-                        const year = date.getFullYear();
-                        const hours = String(date.getHours()).padStart(2, '0');
-                        const minutes = String(date.getMinutes()).padStart(2, '0');
-                        return (
-                          <div className="text-sm text-gray-400">
-                            Dibuat: {day} {month} {year} pukul {hours}.{minutes}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Excerpt */}
-                  {selectedNews.excerpt && (
-                    <div className="mb-6">
-                      <p className="text-lg text-gray-700 leading-relaxed font-medium italic border-l-4 border-[#0384d6] pl-4">
-                        {selectedNews.excerpt}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div className="prose prose-lg max-w-none">
-                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {selectedNews.content || selectedNews.excerpt || 'Konten tidak tersedia.'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      {selectedNews.tags && selectedNews.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {selectedNews.tags.slice(0, 5).map((tag, index) => (
-                            <span key={index} className="inline-block px-3 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
-                              #{tag}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {selectedNews.priority === 'high' && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                              Prioritas Tinggi
                             </span>
-                          ))}
+                          )}
+                          {selectedNews.priority === 'medium' && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                              <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                              Prioritas Sedang
+                            </span>
+                          )}
+                          {selectedNews.priority === 'low' && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                              <div className="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+                              Prioritas Rendah
+                            </span>
+                          )}
+                          {selectedNews.status && (
+                            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${selectedNews.status === 'published' || selectedNews.status === 'diterbitkan'
+                                ? 'bg-green-100 text-green-700'
+                                : selectedNews.status === 'draft'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : 'bg-orange-100 text-orange-700'
+                              }`}>
+                              {selectedNews.status === 'published' || selectedNews.status === 'diterbitkan' ? 'Diterbitkan' : selectedNews.status === 'draft' ? 'Draft' : 'Diarsipkan'}
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
+                      <h2 className="text-2xl font-bold">{selectedNews.title}</h2>
                     </div>
                     <button
                       onClick={() => {
                         setShowDetailModal(false);
                         setSelectedNews(null);
                       }}
-                      className="px-6 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
+                      className="ml-4 p-2 rounded-lg hover:bg-white/20 transition-colors"
+                      aria-label="Tutup modal"
                     >
-                      Tutup
+                      <X className="w-6 h-6 text-white" />
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            </div>
+
+                  {/* Content */}
+                  <div className="px-8 py-6 overflow-y-auto flex-1">
+                    {/* Meta Info */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        {selectedNews.date && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              {new Date(selectedNews.date).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        {selectedNews.readTime && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>{selectedNews.readTime}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-gray-500">
+                            Oleh: <span className="font-medium text-gray-700">{selectedNews.author}</span>
+                          </span>
+                          {selectedNews.nama_user && (
+                            <span className="text-sm text-gray-400">
+                              ({selectedNews.nama_user})
+                            </span>
+                          )}
+                        </div>
+                        {selectedNews.created_at && (() => {
+                          const date = new Date(selectedNews.created_at);
+                          const day = date.getDate();
+                          const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                          const month = monthNames[date.getMonth()];
+                          const year = date.getFullYear();
+                          const hours = String(date.getHours()).padStart(2, '0');
+                          const minutes = String(date.getMinutes()).padStart(2, '0');
+                          return (
+                            <div className="text-sm text-gray-400">
+                              Dibuat: {day} {month} {year} pukul {hours}.{minutes}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Excerpt */}
+                    {selectedNews.excerpt && (
+                      <div className="mb-6">
+                        <p className="text-lg text-gray-700 leading-relaxed font-medium italic border-l-4 border-[#0384d6] pl-4">
+                          {selectedNews.excerpt}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Content */}
+                    <div className="prose prose-lg max-w-none">
+                      <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        {selectedNews.content || selectedNews.excerpt || 'Konten tidak tersedia.'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        {selectedNews.tags && selectedNews.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {selectedNews.tags.slice(0, 5).map((tag, index) => (
+                              <span key={index} className="inline-block px-3 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowDetailModal(false);
+                          setSelectedNews(null);
+                        }}
+                        className="px-6 py-2 bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
             );
           })()}
         </AnimatePresence>

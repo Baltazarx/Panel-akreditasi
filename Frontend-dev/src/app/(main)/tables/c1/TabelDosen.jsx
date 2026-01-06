@@ -7,9 +7,9 @@ import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiBook, FiAward, FiUser } from 'react-icons/fi';
 
-export default function TabelDosen({ role }) {
+export default function TabelDosen({ role, search }) {
   const table = { key: "dosen", label: "Manajemen Data Dosen", path: "/dosen" };
-  
+
   // State management
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,13 +20,13 @@ export default function TabelDosen({ role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const { maps } = useMaps(true);
   const [formState, setFormState] = useState({});
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [ptCustom, setPtCustom] = useState("");
   const [showPtInput, setShowPtInput] = useState(false);
-  
+
   // Form dropdown states
   const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
   const [openFormHomebaseDropdown, setOpenFormHomebaseDropdown] = useState(false);
@@ -112,7 +112,7 @@ export default function TabelDosen({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -130,7 +130,7 @@ export default function TabelDosen({ role }) {
   const canDelete = roleCan(role, table.key, "D");
 
   const canRestore = roleCan(role, table.key, "H");
-  
+
   // Debug permissions
   console.log('TabelDosen permissions:', {
     role,
@@ -143,7 +143,7 @@ export default function TabelDosen({ role }) {
     showModal,
     editing
   });
-  
+
 
   // Fungsi fetchRows
   const fetchRows = async (isToggle = false) => {
@@ -157,7 +157,7 @@ export default function TabelDosen({ role }) {
       console.log('Fetching dosen data from:', url);
       const result = await apiFetch(url);
       console.log('Received dosen data:', result);
-      
+
       // Pastikan tidak ada duplikasi data berdasarkan id_dosen
       const uniqueRows = Array.isArray(result) ? result.filter((row, index, self) => {
         const idField = getIdField(row);
@@ -169,13 +169,13 @@ export default function TabelDosen({ role }) {
           return rIdField && r[rIdField] === idValue;
         });
       }) : [];
-      
+
       // Urutkan berdasarkan nama_lengkap secara alfabetis (case-insensitive)
       // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
       const sortedRows = [...uniqueRows].sort((a, b) => {
         const namaA = (a.nama_lengkap || '').trim().toLowerCase();
         const namaB = (b.nama_lengkap || '').trim().toLowerCase();
-        
+
         // Jika nama sama, urutkan berdasarkan id_dosen sebagai secondary sort
         if (namaA === namaB) {
           const idFieldA = getIdField(a);
@@ -184,13 +184,13 @@ export default function TabelDosen({ role }) {
           const idB = idFieldB && b[idFieldB] !== undefined && b[idFieldB] !== null ? b[idFieldB] : 0;
           return idA - idB;
         }
-        
-        return namaA.localeCompare(namaB, 'id', { 
+
+        return namaA.localeCompare(namaB, 'id', {
           sensitivity: 'base',
-          numeric: true 
+          numeric: true
         });
       });
-      
+
       console.log('Processed unique rows:', sortedRows.length);
       setRows(sortedRows);
     } catch (err) {
@@ -205,7 +205,7 @@ export default function TabelDosen({ role }) {
       };
       console.error('Error fetching dosen data:', errorDetails);
       console.error('Full error object:', err);
-      
+
       // Show user-friendly error message
       let errorMessage = 'Gagal memuat data dosen.';
       if (err.isNetworkError) {
@@ -221,9 +221,9 @@ export default function TabelDosen({ role }) {
       } else {
         errorMessage = err.message || 'Gagal memuat data dosen. Silakan coba lagi.';
       }
-      
+
       setError(errorMessage);
-      
+
       // Show alert for critical errors
       if (err.isNetworkError || err.status >= 500) {
         Swal.fire({
@@ -238,14 +238,14 @@ export default function TabelDosen({ role }) {
       setInitialLoading(false);
     }
   };
-  
+
   // useEffects
   // Initial load
   useEffect(() => { fetchRows(false); }, []);
   // Toggle between active and deleted data
-  useEffect(() => { 
+  useEffect(() => {
     if (!initialLoading) {
-      fetchRows(true); 
+      fetchRows(true);
     }
   }, [showDeleted]);
   useEffect(() => {
@@ -288,10 +288,10 @@ export default function TabelDosen({ role }) {
     setOpenFormHomebaseDropdown(false);
     setOpenFormPtDropdown(false);
     setOpenFormJabatanDropdown(false);
-    
+
     // Validasi semua field wajib diisi
-    if (!formState.id_pegawai || !formState.nidn || !formState.nuptk || !formState.homebase || 
-        !formState.id_jafung || formState.beban_sks === "" || formState.beban_sks === null || formState.beban_sks === undefined) {
+    if (!formState.id_pegawai || !formState.nidn || !formState.nuptk || !formState.homebase ||
+      !formState.id_jafung || formState.beban_sks === "" || formState.beban_sks === null || formState.beban_sks === undefined) {
       Swal.fire({
         icon: 'warning',
         title: 'Data Belum Lengkap',
@@ -325,7 +325,7 @@ export default function TabelDosen({ role }) {
       const idField = getIdField(editing);
       const url = editing ? `${table.path}/${editing[idField]}` : table.path;
       const method = editing ? "PUT" : "POST";
-      
+
       // Prepare payload dengan konversi id_pegawai ke integer
       const payload = {
         ...formState,
@@ -333,7 +333,7 @@ export default function TabelDosen({ role }) {
         id_jafung: formState.id_jafung ? parseInt(formState.id_jafung) : null,
         beban_sks: formState.beban_sks ? parseFloat(formState.beban_sks) : null,
       };
-      
+
       console.log('Edit data:', {
         url,
         method,
@@ -341,19 +341,19 @@ export default function TabelDosen({ role }) {
         editingId: editing ? editing[idField] : null,
         payload
       });
-      
+
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      
+
       setShowModal(false);
       setEditing(null);
       setPtCustom("");
       setShowPtInput(false);
       fetchRows();
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -373,7 +373,7 @@ export default function TabelDosen({ role }) {
       setLoading(false);
     }
   };
-  
+
   const doDelete = async (row) => {
     const idField = getIdField(row);
     const result = await Swal.fire({
@@ -459,6 +459,22 @@ export default function TabelDosen({ role }) {
     );
   }
 
+  // Filter Data Logic
+  const filteredRows = rows
+    .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
+    .filter(row => {
+      if (!search) return true;
+      const lowerSearch = search.toLowerCase();
+      return (
+        (row.nidn || "").toLowerCase().includes(lowerSearch) ||
+        (row.nuptk || "").toLowerCase().includes(lowerSearch) ||
+        (row.nama_lengkap || "").toLowerCase().includes(lowerSearch) ||
+        (row.pt || "").toLowerCase().includes(lowerSearch) ||
+        (row.jabatan_fungsional || "").toLowerCase().includes(lowerSearch) ||
+        (row.homebase || "").toLowerCase().includes(lowerSearch)
+      );
+    });
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       {/* Header */}
@@ -470,7 +486,10 @@ export default function TabelDosen({ role }) {
           </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
-              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.length}</span>
+              Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{filteredRows.length}</span>
+              {search && rows.length !== filteredRows.length && (
+                <span className="ml-1 text-xs text-slate-400">(dari {rows.length})</span>
+              )}
             </span>
           )}
         </div>
@@ -482,11 +501,10 @@ export default function TabelDosen({ role }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -494,11 +512,10 @@ export default function TabelDosen({ role }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -521,96 +538,97 @@ export default function TabelDosen({ role }) {
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <div className="relative transition-opacity duration-200 ease-in-out">
           <table className="w-full text-sm text-left">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <tr className="sticky top-0">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIDN</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NUPTK</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT (Perguruan Tinggi)</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Fungsional</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Homebase</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Beban SKS</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-            {rows
-              .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
-              .map((row, index) => {
-                const idField = getIdField(row);
-                // Pastikan key selalu unik dengan menggabungkan ID, showDeleted state, dan index
-                // Menggunakan index untuk memastikan unik meskipun ada duplikasi ID
-                const uniqueKey = idField && row[idField] !== undefined && row[idField] !== null 
-                  ? `${showDeleted ? 'deleted' : 'active'}-dosen-${row[idField]}-${index}` 
-                  : `${showDeleted ? 'deleted' : 'active'}-dosen-no-id-${index}`;
-                const rowId = idField && row[idField] !== undefined && row[idField] !== null 
-                  ? row[idField] 
-                  : `dosen-no-id-${index}`;
-                return (
-              <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nidn || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nuptk || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.pt || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_fungsional || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.homebase || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{(row.beban_sks !== null && row.beban_sks !== undefined) ? row.beban_sks : '-'}</td>
-                <td className="px-6 py-4 border border-slate-200">
-                  <div className="flex items-center justify-center dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (openDropdownId !== rowId) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(rowId);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === rowId}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  </div>
-                </td>
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr className="sticky top-0">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NIDN</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">NUPTK</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT (Perguruan Tinggi)</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jabatan Fungsional</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Homebase</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Beban SKS</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
               </tr>
-            )})}
-            {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+              {filteredRows
+                .map((row, index) => {
+                  const idField = getIdField(row);
+                  // Pastikan key selalu unik dengan menggabungkan ID, showDeleted state, dan index
+                  // Menggunakan index untuk memastikan unik meskipun ada duplikasi ID
+                  const uniqueKey = idField && row[idField] !== undefined && row[idField] !== null
+                    ? `${showDeleted ? 'deleted' : 'active'}-dosen-${row[idField]}-${index}`
+                    : `${showDeleted ? 'deleted' : 'active'}-dosen-no-id-${index}`;
+                  const rowId = idField && row[idField] !== undefined && row[idField] !== null
+                    ? row[idField]
+                    : `dosen-no-id-${index}`;
+                  return (
+                    <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                      <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nidn || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nuptk || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.pt || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jabatan_fungsional || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.homebase || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{(row.beban_sks !== null && row.beban_sks !== undefined) ? row.beban_sks : '-'}</td>
+                      <td className="px-6 py-4 border border-slate-200">
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownId !== rowId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownId(rowId);
+                              } else {
+                                setOpenDropdownId(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi"
+                            aria-expanded={openDropdownId === rowId}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              {filteredRows.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">
+                      {search ? `Tidak ada data yang cocok dengan "${search}"` : "Belum ada data yang ditambahkan."}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
-        const filteredRows = rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at);
-        const currentRow = filteredRows.find((row, idx) => {
-          const idField = getIdField(row);
-          const rowId = idField && row[idField] !== undefined && row[idField] !== null 
-            ? row[idField] 
+        const currentRow = filteredRows.find((r, idx) => {
+          const idField = getIdField(r);
+          const rowId = idField && r[idField] !== undefined && r[idField] !== null
+            ? r[idField]
             : `dosen-no-id-${idx}`;
           return rowId === openDropdownId;
         });
+
         if (!currentRow) return null;
-        
+
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -680,7 +698,7 @@ export default function TabelDosen({ role }) {
 
       {/* Modal */}
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -710,33 +728,31 @@ export default function TabelDosen({ role }) {
                           e.preventDefault();
                           setOpenFormPegawaiDropdown(!openFormPegawaiDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_pegawai
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.id_pegawai
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih pegawai"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formState.id_pegawai ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_pegawai 
+                            {formState.id_pegawai
                               ? (() => {
-                                  const found = maps?.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
-                                  return found ? (found.nama_lengkap || found.nama || formState.id_pegawai) : formState.id_pegawai;
-                                })()
+                                const found = maps?.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
+                                return found ? (found.nama_lengkap || found.nama || formState.id_pegawai) : formState.id_pegawai;
+                              })()
                               : '-- Pilih Pegawai --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormPegawaiDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormPegawaiDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormPegawaiDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pegawai-dropdown-menu mt-1 w-full"
                         >
                           {maps?.pegawai && Object.values(maps.pegawai).length > 0 ? (
@@ -752,14 +768,13 @@ export default function TabelDosen({ role }) {
                                   key={p.id_pegawai}
                                   type="button"
                                   onClick={() => {
-                                    setFormState({...formState, id_pegawai: String(p.id_pegawai)});
+                                    setFormState({ ...formState, id_pegawai: String(p.id_pegawai) });
                                     setOpenFormPegawaiDropdown(false);
                                   }}
-                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                    formState.id_pegawai === String(p.id_pegawai)
-                                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                      : 'text-gray-700'
-                                  }`}
+                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_pegawai === String(p.id_pegawai)
+                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                    : 'text-gray-700'
+                                    }`}
                                 >
                                   <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
                                   <span className="truncate">{p.nama_lengkap || p.nama || `Pegawai ${p.id_pegawai}`}</span>
@@ -780,19 +795,19 @@ export default function TabelDosen({ role }) {
                     <input
                       type="text"
                       value={formState.nidn || ""}
-                      onChange={(e) => setFormState({...formState, nidn: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, nidn: e.target.value })}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan NIDN"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">NUPTK <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formState.nuptk || ""}
-                      onChange={(e) => setFormState({...formState, nuptk: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, nuptk: e.target.value })}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan NUPTK"
@@ -808,11 +823,10 @@ export default function TabelDosen({ role }) {
                           e.preventDefault();
                           setOpenFormHomebaseDropdown(!openFormHomebaseDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.homebase
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.homebase
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih homebase"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -821,15 +835,14 @@ export default function TabelDosen({ role }) {
                             {formState.homebase || '-- Pilih Homebase --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormHomebaseDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormHomebaseDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormHomebaseDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-homebase-dropdown-menu mt-1 w-full"
                         >
                           {['Manajemen Informatika', 'Teknik Informatika'].map(homebase => (
@@ -837,14 +850,13 @@ export default function TabelDosen({ role }) {
                               key={homebase}
                               type="button"
                               onClick={() => {
-                                setFormState({...formState, homebase});
+                                setFormState({ ...formState, homebase });
                                 setOpenFormHomebaseDropdown(false);
                               }}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                formState.homebase === homebase
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
-                              }`}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.homebase === homebase
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                                }`}
                             >
                               <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                               <span>{homebase}</span>
@@ -864,47 +876,44 @@ export default function TabelDosen({ role }) {
                           e.preventDefault();
                           setOpenFormPtDropdown(!openFormPtDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.pt
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.pt
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih perguruan tinggi"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiBook className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formState.pt ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.pt === "STIKOM PGRI Banyuwangi" 
+                            {formState.pt === "STIKOM PGRI Banyuwangi"
                               ? "STIKOM PGRI Banyuwangi"
-                              : formState.pt 
-                                ? formState.pt 
+                              : formState.pt
+                                ? formState.pt
                                 : '-- Pilih Perguruan Tinggi --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormPtDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormPtDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormPtDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pt-dropdown-menu mt-1 w-full"
                         >
                           <button
                             type="button"
                             onClick={() => {
-                              setFormState({...formState, pt: "STIKOM PGRI Banyuwangi"});
+                              setFormState({ ...formState, pt: "STIKOM PGRI Banyuwangi" });
                               setPtCustom("");
                               setShowPtInput(false);
                               setOpenFormPtDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formState.pt === "STIKOM PGRI Banyuwangi"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.pt === "STIKOM PGRI Banyuwangi"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBook className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>STIKOM PGRI Banyuwangi</span>
@@ -913,14 +922,13 @@ export default function TabelDosen({ role }) {
                             type="button"
                             onClick={() => {
                               setShowPtInput(true);
-                              setFormState({...formState, pt: ptCustom || ""});
+                              setFormState({ ...formState, pt: ptCustom || "" });
                               setOpenFormPtDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              showPtInput && formState.pt !== "STIKOM PGRI Banyuwangi"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${showPtInput && formState.pt !== "STIKOM PGRI Banyuwangi"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBook className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Lainnya</span>
@@ -933,7 +941,7 @@ export default function TabelDosen({ role }) {
                           value={ptCustom}
                           onChange={(e) => {
                             setPtCustom(e.target.value);
-                            setFormState({...formState, pt: e.target.value});
+                            setFormState({ ...formState, pt: e.target.value });
                           }}
                           required={showPtInput}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white mt-2"
@@ -952,33 +960,31 @@ export default function TabelDosen({ role }) {
                           e.preventDefault();
                           setOpenFormJabatanDropdown(!openFormJabatanDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_jafung
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.id_jafung
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih jabatan fungsional"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiAward className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formState.id_jafung ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_jafung 
+                            {formState.id_jafung
                               ? (() => {
-                                  const found = maps?.ref_jabatan_fungsional ? Object.values(maps.ref_jabatan_fungsional).find(jf => String(jf.id_jafung) === String(formState.id_jafung)) : null;
-                                  return found ? found.nama_jafung : formState.id_jafung;
-                                })()
+                                const found = maps?.ref_jabatan_fungsional ? Object.values(maps.ref_jabatan_fungsional).find(jf => String(jf.id_jafung) === String(formState.id_jafung)) : null;
+                                return found ? found.nama_jafung : formState.id_jafung;
+                              })()
                               : '-- Pilih Jabatan Fungsional --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormJabatanDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormJabatanDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormJabatanDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-jabatan-dropdown-menu mt-1 w-full"
                         >
                           {maps?.ref_jabatan_fungsional && Object.values(maps.ref_jabatan_fungsional).length > 0 ? (
@@ -987,14 +993,13 @@ export default function TabelDosen({ role }) {
                                 key={jf.id_jafung}
                                 type="button"
                                 onClick={() => {
-                                  setFormState({...formState, id_jafung: String(jf.id_jafung)});
+                                  setFormState({ ...formState, id_jafung: String(jf.id_jafung) });
                                   setOpenFormJabatanDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formState.id_jafung === String(jf.id_jafung)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_jafung === String(jf.id_jafung)
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                  }`}
                               >
                                 <FiAward className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span className="truncate">{jf.nama_jafung}</span>
@@ -1017,7 +1022,7 @@ export default function TabelDosen({ role }) {
                       step="0.1"
                       min="0"
                       value={formState.beban_sks || ""}
-                      onChange={(e) => setFormState({...formState, beban_sks: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, beban_sks: e.target.value })}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan Beban SKS"
@@ -1025,35 +1030,35 @@ export default function TabelDosen({ role }) {
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                  <button 
-                      type="button" 
-                      onClick={() => {
-                        setOpenFormPegawaiDropdown(false);
-                        setOpenFormHomebaseDropdown(false);
-                        setOpenFormPtDropdown(false);
-                        setOpenFormJabatanDropdown(false);
-                        setShowModal(false); 
-                        setEditing(null);
-                        setPtCustom("");
-                        setShowPtInput(false);
-                      }} 
-                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenFormPegawaiDropdown(false);
+                      setOpenFormHomebaseDropdown(false);
+                      setOpenFormPtDropdown(false);
+                      setOpenFormJabatanDropdown(false);
+                      setShowModal(false);
+                      setEditing(null);
+                      setPtCustom("");
+                      setShowPtInput(false);
+                    }}
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      Batal
+                    Batal
                   </button>
-                  <button 
-                      type="submit" 
-                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-                      disabled={loading}
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                      {loading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                          <span>Menyimpan...</span>
-                        </div>
-                      ) : (
-                        'Simpan'
-                      )}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      'Simpan'
+                    )}
                   </button>
                 </div>
               </form>
