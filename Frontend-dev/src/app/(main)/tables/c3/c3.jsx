@@ -93,8 +93,8 @@ export default function C3WithTopNav() {
     };
 
     // Check hash on mount (jika belum diinisialisasi, biarkan useEffect init yg bekerja)
-    if(initializedRef.current) {
-        checkHash();
+    if (initializedRef.current) {
+      checkHash();
     }
 
     window.addEventListener('hashchange', checkHash);
@@ -107,7 +107,7 @@ export default function C3WithTopNav() {
   const ActiveComponent = useMemo(() => {
     // 1. Pastikan activeKey sudah terisi DAN ada di daftar tabs yang visible
     if (activeKey && tabs.some(t => t.key === activeKey)) {
-       // 2. Cari komponen yang cocok
+      // 2. Cari komponen yang cocok
       return tabs.find(t => t.key === activeKey)?.Component;
     }
     // 3. JIKA TIDAK MEMENUHI SYARAT, return null. Jangan fallback apapun di sini.
@@ -120,57 +120,55 @@ export default function C3WithTopNav() {
   // Tampilkan loading JIKA:
   // 1. Belum diinisialisasi (initializedRef.current === false) DAN ada tabs yang mungkin muncul
   // 2. ATAU SUDAH inisialisasi TAPI activeKey belum valid (ActiveComponent masih null) DAN ada tabs yang mungkin muncul
-  const isLoading = (!initializedRef.current && tabs.length > 0) || (initializedRef.current && !ActiveComponent && tabs.length > 0) ;
+  const isLoading = (!initializedRef.current && tabs.length > 0) || (initializedRef.current && !ActiveComponent && tabs.length > 0);
 
 
   // Jika tidak ada tab yang visible sama sekali untuk role ini
   if (tabs.length === 0 && role && initializedRef.current) { // Tambah initializedRef.current agar tdk flash
-      return <div className="p-4 text-center text-slate-600">Tidak ada tabel C3 yang tersedia untuk peran Anda ({role}).</div>;
+    return <div className="p-4 text-center text-slate-600">Tidak ada tabel C3 yang tersedia untuk peran Anda ({role}).</div>;
   }
 
   return (
     <div className="space-y-6">
-     {/* Top navigation (tabs) */}
-     <div className="w-full rounded-2xl shadow-md px-3 sm:px-4 py-3 bg-white pt-2">
-       <div className="flex items-center gap-2 mb-3">
-         <h3 className="text-sm font-semibold text-slate-700">Navigasi C3</h3>
-       </div>
-       <div className="relative">
-         <div className="inline-flex max-w-full overflow-x-auto no-scrollbar gap-2 bg-white rounded-2xl p-2 relative">
-           {/* Render tombol HANYA untuk tab yang visible */}
-           {tabs.map((t) => {
-             const isActive = t.key === activeKey;
-             return (
-               <button
-                 key={t.key}
-                 onClick={() => setActiveKey(t.key)}
-                 className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                   isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                 }`}
-               >
-                 {isActive && (
-                   <>
-                     <motion.div
-                       layoutId="c3-tab-pill" // Pastikan layoutId unik untuk grup tab ini
-                       className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200"
-                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                     />
-                     <motion.div
-                       initial={{ scale: 0 }}
-                       animate={{ scale: 1 }}
-                       className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full"
-                     />
-                   </>
-                 )}
-                 <span className={`relative z-10 transition-colors duration-200 ${
-                   isActive ? "text-blue-700 font-semibold" : "text-gray-700"
-                 }`}>{t.label}</span>
-               </button>
-             );
-           })}
-         </div>
-       </div>
-     </div>
+      {/* Top navigation (tabs) */}
+      <div className="w-full rounded-2xl shadow-md px-3 sm:px-4 py-3 bg-white pt-2">
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="text-sm font-semibold text-slate-700">Relevansi Penelitian</h3>
+        </div>
+        <div className="relative">
+          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar gap-2 bg-white rounded-2xl p-2 relative">
+            {/* Render tombol HANYA untuk tab yang visible */}
+            {tabs.map((t) => {
+              const isActive = t.key === activeKey;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveKey(t.key)}
+                  className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                >
+                  {isActive && (
+                    <>
+                      <motion.div
+                        layoutId="c3-tab-pill" // Pastikan layoutId unik untuk grup tab ini
+                        className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200"
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      />
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full"
+                      />
+                    </>
+                  )}
+                  <span className={`relative z-10 transition-colors duration-200 ${isActive ? "text-blue-700 font-semibold" : "text-gray-700"
+                    }`}>{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* Active table content */}
       <AnimatePresence mode="wait">
@@ -183,12 +181,12 @@ export default function C3WithTopNav() {
         >
           {/* === PERBAIKAN FINAL: Render Komponen atau Loading === */}
           {isLoading ? (
-             <div className="text-center py-10">Memuat tabel C3...</div>
+            <div className="text-center py-10">Memuat tabel C3...</div>
           ) : ActiveComponent ? (
-             <ActiveComponent role={role} auth={authUser} />
+            <ActiveComponent role={role} auth={authUser} />
           ) : (
-             // Ini seharusnya jarang terjadi jika tabs.length > 0, tapi sebagai fallback
-             <div className="text-center py-10 text-red-600">Tidak dapat menampilkan tabel yang dipilih.</div>
+            // Ini seharusnya jarang terjadi jika tabs.length > 0, tapi sebagai fallback
+            <div className="text-center py-10 text-red-600">Tidak dapat menampilkan tabel yang dipilih.</div>
           )}
           {/* ================================================== */}
         </motion.div>

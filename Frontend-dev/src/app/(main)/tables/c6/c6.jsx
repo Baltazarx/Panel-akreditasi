@@ -31,7 +31,7 @@ export default function C6WithTopNav() {
     });
     return filteredTabs;
   }, [role]);
-  
+
   const [activeKey, setActiveKey] = useState("6"); // default ke 6
 
   // Baca tab dari hash / localStorage jika ada (#tab=6a1)
@@ -41,7 +41,7 @@ export default function C6WithTopNav() {
       const fromHash = url.hash.replace("#tab=", "");
       const fromStore = localStorage.getItem("c6_active_tab") || "";
       const candidate = fromHash || fromStore;
-      
+
       // Jika ada tab yang valid, gunakan itu, jika tidak gunakan tab pertama yang tersedia
       if (tabs.some(t => t.key === candidate)) {
         setActiveKey(candidate);
@@ -73,7 +73,7 @@ export default function C6WithTopNav() {
       {/* Top navigation (tabs) dengan pill bergeser dan mobile scrollable */}
       <div className="w-full bg-white rounded-2xl shadow-md px-3 sm:px-4 py-3 pt-2">
         <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-sm font-semibold text-slate-700">Navigasi C6</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Diferensiasi Misi</h3>
         </div>
         <div className="relative">
           <div className="inline-flex max-w-full overflow-x-auto no-scrollbar gap-2 bg-white rounded-2xl p-2 relative">
@@ -83,9 +83,8 @@ export default function C6WithTopNav() {
                 <button
                   key={t.key}
                   onClick={() => setActiveKey(t.key)}
-                  className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                    isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                  className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
                 >
                   {isActive && (
                     <>
@@ -101,9 +100,8 @@ export default function C6WithTopNav() {
                       />
                     </>
                   )}
-                  <span className={`relative z-10 transition-colors duration-200 ${
-                    isActive ? "text-blue-700 font-semibold" : "text-gray-700"
-                  }`}>{t.label}</span>
+                  <span className={`relative z-10 transition-colors duration-200 ${isActive ? "text-blue-700 font-semibold" : "text-gray-700"
+                    }`}>{t.label}</span>
                 </button>
               );
             })}
