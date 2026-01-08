@@ -1,12 +1,12 @@
-// src/app/profile/page.jsx
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
-import { FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiUnlock } from "react-icons/fi";
+import {
+  FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiSettings
+} from "react-icons/fi";
 import { apiFetch } from "../../../lib/api";
 import Swal from "sweetalert2";
 
@@ -19,19 +19,13 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  
+
   // State for password visibility
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  // State for show password card
-  const [verifyPassword, setVerifyPassword] = useState("");
-  const [showVerifyPassword, setShowVerifyPassword] = useState(false);
-  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [passwordVerified, setPasswordVerified] = useState(null);
-  const [showVerifiedPassword, setShowVerifiedPassword] = useState(false);
+
+
 
   // Logic for redirection
   useEffect(() => {
@@ -40,582 +34,278 @@ export default function ProfilePage() {
     }
   }, [authUser, isLoading, router]);
 
-  // Handler untuk verifikasi password (untuk show password card)
-  const handleVerifyPassword = async () => {
-    if (!verifyPassword) {
-      toast.error("Masukkan password untuk verifikasi!");
-      return;
-    }
 
-    setIsVerifying(true);
-    
-    try {
-      // Verifikasi password dengan mencoba login atau endpoint khusus
-      // Kita bisa menggunakan endpoint change-password dengan password yang sama untuk verifikasi
-      // Atau membuat endpoint khusus untuk verifikasi
-      
-      // Untuk sementara, kita akan menggunakan pendekatan: coba change password dengan password yang sama
-      // Tapi lebih baik buat endpoint khusus untuk verifikasi
-      // Saya akan menggunakan endpoint yang sudah ada dengan cara yang aman
-      
-      // Verifikasi dengan mencoba login (tapi tidak perlu login ulang)
-      // Atau kita bisa buat endpoint khusus /users/verify-password
-      
-      // Untuk sekarang, saya akan menggunakan endpoint change-password dengan validasi
-      // Tapi lebih baik buat endpoint khusus
-      
-      // Sementara kita akan verifikasi dengan cara memanggil API yang memvalidasi password
-      // Karena tidak ada endpoint khusus, kita akan menggunakan pendekatan yang berbeda
-      // Kita akan membuat request ke endpoint yang memvalidasi password
-      
-      // Alternatif: Buat endpoint baru di backend untuk verify password
-      // Atau gunakan endpoint yang sudah ada dengan cara yang berbeda
-      
-      // Untuk sekarang, saya akan membuat request ke endpoint yang memvalidasi
-      // Kita bisa menggunakan endpoint /users/change-password dengan password yang sama
-      // Tapi itu tidak ideal, lebih baik buat endpoint khusus
-      
-      // Saya akan membuat endpoint khusus di backend untuk verify password
-      // Tapi untuk sekarang, saya akan menggunakan pendekatan yang lebih sederhana:
-      // Coba change password dengan password yang sama, jika berhasil berarti password benar
-      // Tapi itu tidak ideal karena akan mengubah password
-      
-      // Lebih baik: Buat endpoint khusus /users/verify-password di backend
-      // Tapi karena user minta fitur ini sekarang, saya akan membuat endpoint di backend dulu
-      
-      // Untuk sementara, saya akan membuat handler yang memanggil endpoint verify
-      // Kita akan buat endpoint baru di backend
-      
-      // Verifikasi password dengan endpoint khusus
-      await apiFetch('/users/verify-password', {
-        method: 'POST',
-        body: JSON.stringify({
-          password: verifyPassword
-        })
-      });
 
-      setIsPasswordVerified(true);
-      setPasswordVerified(verifyPassword);
-      setVerifyPassword("");
-      toast.success("Password berhasil diverifikasi!", {
-        duration: 3000,
-        position: 'top-center',
-        style: {
-          background: '#d1fae5',
-          color: '#065f46',
-          border: '1px solid #a7f3d0',
-          borderRadius: '12px',
-          padding: '16px',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-        iconTheme: {
-          primary: '#10b981',
-          secondary: '#fff',
-        },
-      });
-    } catch (error) {
-      console.error("Error verifying password:", error);
-      
-      // Extract error message dengan lebih baik
-      let errorMessage = "Password salah atau gagal verifikasi.";
-      if (error?.response) {
-        if (typeof error.response === 'string') {
-          try {
-            const parsed = JSON.parse(error.response);
-            errorMessage = parsed.error || parsed.message || errorMessage;
-          } catch {
-            errorMessage = error.response;
-          }
-        } else if (error.response.error) {
-          errorMessage = error.response.error;
-        } else if (error.response.message) {
-          errorMessage = error.response.message;
-        }
-      } else if (error?.message) {
-        // Jika error.message adalah JSON string, parse dulu
-        if (typeof error.message === 'string' && error.message.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(error.message);
-            errorMessage = parsed.error || parsed.message || errorMessage;
-          } catch {
-            errorMessage = error.message;
-          }
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      // Tampilkan error dengan toast notification yang lebih baik
-      toast.error(errorMessage, {
-        duration: 4000,
-        position: 'top-center',
-        style: {
-          background: '#fee2e2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
-          borderRadius: '12px',
-          padding: '16px',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-        iconTheme: {
-          primary: '#dc2626',
-          secondary: '#fff',
-        },
-      });
-      
-      setIsPasswordVerified(false);
-      setPasswordVerified(null);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  // Password change handler dengan konfirmasi
+  // Password change handler
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
-    // Validasi input
-    if (!currentPassword) {
-      toast.error("Kata sandi saat ini wajib diisi!");
-      return;
-    }
-    
-    if (!newPassword) {
-      toast.error("Kata sandi baru wajib diisi!");
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      toast.error("Kata sandi baru minimal 6 karakter!");
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      toast.error("Kata sandi baru dan konfirmasi tidak cocok!");
-      return;
-    }
-    
-    if (currentPassword === newPassword) {
-      toast.error("Kata sandi baru harus berbeda dengan kata sandi saat ini!");
-      return;
-    }
 
-    // Konfirmasi sebelum mengubah password
+    if (!currentPassword) { toast.error("Kata sandi saat ini wajib diisi!"); return; }
+    if (!newPassword) { toast.error("Kata sandi baru wajib diisi!"); return; }
+    if (newPassword.length < 6) { toast.error("Kata sandi baru minimal 6 karakter!"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Kata sandi baru dan konfirmasi tidak cocok!"); return; }
+    if (currentPassword === newPassword) { toast.error("Kata sandi baru harus berbeda!"); return; }
+
     const result = await Swal.fire({
       title: 'Ubah Kata Sandi?',
-      html: `
-        <p class="text-sm text-gray-600 mb-3">Anda yakin ingin mengubah kata sandi akun Anda?</p>
-        <p class="text-xs text-gray-500">Pastikan Anda mengingat kata sandi baru Anda.</p>
-      `,
+      text: "Pastikan Anda mengingat kata sandi baru Anda.",
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#0384d6',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Ya, Ubah Kata Sandi',
+      confirmButtonColor: '#2563eb', // blue-600
+      cancelButtonColor: '#94a3b8',  // slate-400
+      confirmButtonText: 'Ya, Ubah',
       cancelButtonText: 'Batal',
-      reverseButtons: true
+      reverseButtons: true,
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'rounded-xl px-6 py-2.5 font-medium',
+        cancelButton: 'rounded-xl px-6 py-2.5 font-medium'
+      }
     });
 
-    if (!result.isConfirmed) {
-      return;
-    }
+    if (!result.isConfirmed) return;
 
     setIsChangingPassword(true);
-    
+
     try {
-      // Panggil API change password
       await apiFetch('/users/change-password', {
         method: 'POST',
-        body: JSON.stringify({
-          currentPassword,
-          newPassword
-        })
+        body: JSON.stringify({ currentPassword, newPassword })
       });
 
-      // Reset form
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
 
-      // Tampilkan success message
-      await Swal.fire({
+      Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
         text: 'Kata sandi Anda berhasil diubah.',
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
+        customClass: { popup: 'rounded-2xl' }
       });
 
-      toast.success("Kata sandi berhasil diubah!");
     } catch (error) {
       console.error("Error changing password:", error);
-      
-      // Extract error message dengan lebih baik
-      let errorMessage = "Gagal mengubah kata sandi. Silakan coba lagi.";
+      let errorMessage = "Gagal mengubah kata sandi.";
+      // Simple error parsing
       if (error?.response) {
-        if (typeof error.response === 'string') {
-          try {
-            const parsed = JSON.parse(error.response);
-            errorMessage = parsed.error || parsed.message || errorMessage;
-          } catch {
-            errorMessage = error.response;
-          }
-        } else if (error.response.error) {
-          errorMessage = error.response.error;
-        } else if (error.response.message) {
-          errorMessage = error.response.message;
-        }
-      } else if (error?.message) {
-        // Jika error.message adalah JSON string, parse dulu
-        if (typeof error.message === 'string' && error.message.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(error.message);
-            errorMessage = parsed.error || parsed.message || errorMessage;
-          } catch {
-            errorMessage = error.message;
-          }
-        } else {
-          errorMessage = error.message;
-        }
+        try {
+          const parsed = typeof error.response === 'string' ? JSON.parse(error.response) : error.response;
+          errorMessage = parsed.error || parsed.message || errorMessage;
+        } catch (e) { errorMessage = String(error.response); }
       }
-      
-      // Tampilkan error dengan toast notification yang lebih baik
-      toast.error(errorMessage, {
-        duration: 4000,
-        position: 'top-center',
-        style: {
-          background: '#fee2e2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
-          borderRadius: '12px',
-          padding: '16px',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-        iconTheme: {
-          primary: '#dc2626',
-          secondary: '#fff',
-        },
-      });
+      toast.error(errorMessage);
     } finally {
       setIsChangingPassword(false);
     }
   };
 
-  // Improved loading state
   if (isLoading || !authUser) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#f5f9ff] via-white to-white">
-        <div className="flex items-center space-x-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-          <span className="text-slate-600 font-medium">Loading Profile...</span>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="text-slate-500 font-medium text-sm">Memuat profil...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-white font-sans">
-      <Toaster position="top-center" reverseOrder={false} />
+    <div className="min-h-screen bg-slate-50 font-sans pb-20">
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            borderRadius: '12px',
+            background: '#fff',
+            color: '#334155',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            fontSize: '14px'
+          }
+        }}
+      />
 
-      <main className="max-w-6xl mx-auto p-4 md:p-8">
-        {/* -- Modern Page Header -- */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-gradient-to-br from-[#0384d6] to-[#043975] rounded-xl shadow-lg">
-              <FiUser className="text-white" size={24} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">Profile Settings</h1>
-              <p className="text-slate-500 mt-1">Kelola informasi akun dan keamanan Anda</p>
-            </div>
+      <main className="max-w-6xl mx-auto p-6 md:p-8">
+
+        {/* -- Page Header -- */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pengaturan Profil</h1>
+            <p className="text-slate-500 text-sm mt-1">Kelola informasi akun dan keamanan Anda.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-          {/* -- Left Column: User Info & Photo Card -- */}
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col">
-              {/* Gradient Header */}
-              <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-6 text-white">
-                <div className="flex flex-col items-center text-center">
-                  <h2 className="text-2xl font-bold mb-1">
-                    {authUser.name}
-                  </h2>
-                  <div className="flex items-center gap-2 text-white/90 text-sm mt-1">
-                    <FiMail size={14} />
-                    <span>{authUser.email}</span>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+          {/* -- Left Column: User Card (4 cols) -- */}
+          <div className="lg:col-span-4 flex flex-col">
+
+            {/* Profile Info Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
+              <div className="p-6 flex flex-col items-center text-center flex-1 justify-center">
+                <div className="h-24 w-24 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 ring-4 ring-white shadow-sm border border-blue-100">
+                  <FiUser size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {authUser.name}
+                </h2>
+                <div className="flex items-center gap-1.5 text-slate-500 text-sm mt-1 mb-4">
+                  <FiMail size={14} />
+                  <span>{authUser.email}</span>
+                </div>
+
+                <div className="px-4 py-1.5 bg-slate-100/80 rounded-full text-xs font-semibold text-slate-600 uppercase tracking-wide border border-slate-200">
+                  {authUser.role}
                 </div>
               </div>
 
-              {/* User Details */}
-              <div className="p-6 space-y-4 flex-1">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                  <div className="p-2 bg-gradient-to-br from-[#0384d6] to-[#043975] rounded-lg">
-                    <FiShield className="text-white" size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Role</p>
-                    <p className="text-sm font-semibold text-slate-800 capitalize">{authUser.role}</p>
-                  </div>
+              <div className="border-t border-slate-100 p-4 bg-slate-50/50">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Status Akun</span>
+                  <span className="text-emerald-600 font-medium flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Aktif
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* -- Show Password Card (Di bawah Profile Card) -- */}
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col flex-1">
-              {/* Card Header */}
-              <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-4 text-white">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                    <FiUnlock size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Tampilkan Password</h3>
-                    <p className="text-white/80 text-xs mt-0.5">Verifikasi password untuk melihat informasi akun</p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="p-6 flex-1 flex flex-col">
-                {!isPasswordVerified ? (
-                  <div className="space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <FiLock className="text-[#0384d6]" size={16} />
-                        Masukkan Password untuk Verifikasi
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showVerifyPassword ? "text" : "password"}
-                          value={verifyPassword}
-                          onChange={(e) => setVerifyPassword(e.target.value)}
-                          className="w-full border-2 border-slate-200 rounded-xl p-3.5 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-all"
-                          placeholder="Masukkan password Anda"
-                          disabled={isVerifying}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowVerifyPassword(!showVerifyPassword)}
-                          disabled={isVerifying}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                          aria-label={showVerifyPassword ? "Sembunyikan password" : "Tampilkan password"}
-                        >
-                          {showVerifyPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleVerifyPassword}
-                      disabled={isVerifying || !verifyPassword}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-[#0384d6] to-[#043975] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0384d6] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg flex items-center justify-center gap-2"
-                    >
-                      {isVerifying ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Memverifikasi...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FiUnlock size={16} />
-                          <span>Verifikasi Password</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500 rounded-lg">
-                          <FiCheck className="text-white" size={20} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-green-800">Password Berhasil Diverifikasi</p>
-                          <p className="text-xs text-green-600 mt-1">Password Anda telah diverifikasi dengan benar.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-600">Username:</span>
-                          <span className="text-sm font-semibold text-slate-800">{authUser.username || authUser.name || "-"}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-600">Password:</span>
-                          <span className="text-sm font-semibold text-slate-800 font-mono">
-                            {passwordVerified || "-"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-600">Role:</span>
-                          <span className="text-sm font-semibold text-slate-800 capitalize">{authUser.role || "-"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPasswordVerified(false);
-                        setPasswordVerified(null);
-                        setVerifyPassword("");
-                        setShowVerifyPassword(false);
-                        setShowVerifiedPassword(false);
-                      }}
-                      className="w-full px-4 py-2.5 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 border border-slate-200"
-                    >
-                      Verifikasi Ulang
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* -- Right Column: Change Password Form -- */}
-          <div className="lg:col-span-2 flex">
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col w-full">
-              {/* Form Header */}
-              <div className="bg-gradient-to-r from-[#043975] to-[#0384d6] p-6 text-white">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                    <FiLock size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">Ubah Kata Sandi</h3>
-                    <p className="text-white/80 text-sm mt-1">Perbarui kata sandi Anda untuk menjaga keamanan akun</p>
-                  </div>
+          {/* -- Right Column: Security (8 cols) -- */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Keamanan Akun</h3>
+                  <p className="text-slate-500 text-sm mt-1">Perbarui kata sandi Anda secara berkala.</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <FiShield size={20} />
                 </div>
               </div>
 
-              <form onSubmit={handlePasswordChange} className="flex flex-col flex-1">
-                <div className="p-6 space-y-6 flex-1">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <FiKey className="text-[#0384d6]" size={16} />
-                      Kata Sandi Saat Ini
-                    </label>
+              <div className="p-6 md:p-8">
+                <form onSubmit={handlePasswordChange} className="max-w-2xl space-y-6">
+
+                  {/* Current Password */}
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Kata Sandi Saat Ini</label>
                     <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        <FiKey size={18} />
+                      </div>
                       <input
                         type={showCurrentPassword ? "text" : "password"}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full border-2 border-slate-200 rounded-xl p-3.5 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-all"
-                        placeholder="Masukkan kata sandi saat ini"
+                        className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+                        placeholder="••••••••"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1.5"
-                        aria-label={showCurrentPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
                       >
-                        {showCurrentPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                        {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <FiLock className="text-[#0384d6]" size={16} />
-                      Kata Sandi Baru
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showNewPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full border-2 border-slate-200 rounded-xl p-3.5 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-all"
-                        placeholder="Masukkan kata sandi baru"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1.5"
-                        aria-label={showNewPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                      >
-                        {showNewPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-                      </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* New Password */}
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Kata Sandi Baru</label>
+                      <div className="relative">
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                          <FiLock size={18} />
+                        </div>
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
+                        >
+                          {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Konfirmasi Sandi Baru</label>
+                      <div className="relative">
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                          <FiCheck size={18} />
+                        </div>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
+                        >
+                          {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      <FiCheck className="text-[#0384d6]" size={16} />
-                      Konfirmasi Kata Sandi Baru
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full border-2 border-slate-200 rounded-xl p-3.5 pr-12 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-all"
-                        placeholder="Konfirmasi kata sandi baru"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0384d6] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] rounded-lg p-1.5"
-                        aria-label={showConfirmPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                      >
-                        {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-                      </button>
-                    </div>
+                  {/* Actions */}
+                  <div className="pt-6 flex items-center justify-end gap-3 border-t border-slate-100 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentPassword("");
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      }}
+                      className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isChangingPassword}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm shadow-blue-200 hover:shadow-md hover:shadow-blue-300 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isChangingPassword ? (
+                        <>
+                          <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>Menyimpan...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Simpan Perubahan</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                </div>
 
-                {/* Form Footer */}
-                <div className="p-6 bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentPassword("");
-                      setNewPassword("");
-                      setConfirmPassword("");
-                      setShowCurrentPassword(false);
-                      setShowNewPassword(false);
-                      setShowConfirmPassword(false);
-                    }}
-                    className="px-6 py-3 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isChangingPassword}
-                    className="relative px-6 py-3 bg-gradient-to-r from-[#0384d6] to-[#043975] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0384d6] overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
-                  >
-                    {isChangingPassword ? (
-                      <span className="relative z-10 flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Mengubah...</span>
-                      </span>
-                    ) : (
-                      <>
-                        <span className="relative z-10 flex items-center gap-2">
-                          <FiLock size={16} />
-                          Perbarui Kata Sandi
-                        </span>
-                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
+
         </div>
       </main>
     </div>
