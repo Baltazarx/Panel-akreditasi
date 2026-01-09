@@ -6,11 +6,13 @@ import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
 import { FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import CplCRUD from './CplCRUD';
+import ProfilLulusanCRUD from './ProfilLulusanCRUD';
 
 // ============================================================
 // 2B.2 PEMETAAN CPL vs PL (MATRIX EDITABLE)
 // ============================================================
-export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
+export default function Pemetaan2B2({ role, refreshTrigger, onDataChange, maps }) {
   const { authUser } = useAuth();
   const [data, setData] = useState({ columns: [], rows: [] });
   const [loading, setLoading] = useState(false);
@@ -331,8 +333,6 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
   };
 
   useEffect(() => {
-    // Fetch data ketika selectedProdi berubah atau refreshTrigger berubah
-    // Untuk superadmin, fetch data jika selectedProdi sudah di-set (termasuk empty string untuk "Semua Prodi")
     if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
       fetchData();
     }
@@ -527,6 +527,29 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange }) {
           </div>
         </div>
       )}
+
+      <div className="border-t border-slate-200 my-10"></div>
+
+      <h2 className="text-lg font-semibold text-slate-800 mb-6">Referensi Data (Read Only)</h2>
+
+      {/* === REFERENCE TABLES (READ ONLY) === */}
+      <div className="mb-8 space-y-8">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-bold text-slate-700 uppercase tracking-wider">Data CPL</h3>
+            <span className="text-xs px-2 py-1 bg-slate-100 text-slate-500 rounded border border-slate-200">Read Only</span>
+          </div>
+          <CplCRUD role={role} maps={maps} onDataChange={() => { }} readOnly={true} refreshTrigger={refreshTrigger} />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-bold text-slate-700 uppercase tracking-wider">Data Profil Lulusan</h3>
+            <span className="text-xs px-2 py-1 bg-slate-100 text-slate-500 rounded border border-slate-200">Read Only</span>
+          </div>
+          <ProfilLulusanCRUD role={role} maps={maps} onDataChange={() => { }} readOnly={true} refreshTrigger={refreshTrigger} />
+        </div>
+      </div>
     </div>
   );
 }

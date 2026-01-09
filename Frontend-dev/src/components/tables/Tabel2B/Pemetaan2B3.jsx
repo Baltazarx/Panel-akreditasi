@@ -6,11 +6,12 @@ import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
 import { FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import CplCRUD from './CplCRUD';
 
 // ============================================================
 // 2B.3 PETA PEMENUHAN CPL (LAPORAN)
 // ============================================================
-export default function Pemetaan2B3({ role, refreshTrigger }) {
+export default function Pemetaan2B3({ role, refreshTrigger, maps }) {
   const { authUser } = useAuth();
   const [data, setData] = useState({ semesters: [], rows: [] });
   const [loading, setLoading] = useState(false);
@@ -376,6 +377,21 @@ export default function Pemetaan2B3({ role, refreshTrigger }) {
           </table>
         </div>
       )}
+
+      <div className="border-t border-slate-200 my-10"></div>
+
+      <h2 className="text-lg font-semibold text-slate-800 mb-6">Referensi Data (Read Only)</h2>
+
+      {/* === REFERENCE TABLES (READ ONLY) === */}
+      <div className="mb-8 space-y-8">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-bold text-slate-700 uppercase tracking-wider">Data CPL</h3>
+            <span className="text-xs px-2 py-1 bg-slate-100 text-slate-500 rounded border border-slate-200">Read Only</span>
+          </div>
+          <CplCRUD role={role} maps={maps} onDataChange={() => { }} readOnly={true} refreshTrigger={refreshTrigger} />
+        </div>
+      </div>
     </div>
   );
 }

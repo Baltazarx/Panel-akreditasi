@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 // ============================================================
 // CPMK CRUD
 // ============================================================
-export default function CpmkCRUD({ role, maps, onDataChange }) {
+export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 }) {
   const { authUser } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -113,7 +113,7 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
     if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
       fetchRows();
     }
-  }, [selectedProdi, isSuperAdmin, userProdiId]); // Fetch ulang ketika filter berubah
+  }, [selectedProdi, isSuperAdmin, userProdiId, refreshTrigger]); // Fetch ulang ketika filter berubah atau trigger refresh
 
   // Ekstrak Prodi dari maps untuk filter - HANYA Prodi TI (6) dan MI (7)
   const prodiList = Object.values(maps?.units || {})
@@ -125,11 +125,17 @@ export default function CpmkCRUD({ role, maps, onDataChange }) {
     }));
 
   // Helper function untuk mendapatkan nama prodi yang benar berdasarkan id_unit_prodi
+  // Helper function untuk mendapatkan nama prodi yang benar berdasarkan id_unit_prodi
   const getProdiName = (id_unit_prodi) => {
     if (!id_unit_prodi) return '-';
+    // Mapping ID backend (4, 5) dan frontend (6, 7)
+    // 4 & 6 -> TI
+    // 5 & 7 -> MI
     const id = parseInt(id_unit_prodi);
-    if (id === 6) return 'Prodi Teknik Informatika';
-    if (id === 7) return 'Prodi Manajemen Informatika';
+
+    if (id === 4 || id === 6) return 'Teknik Informatika ( TI )';
+    if (id === 5 || id === 7) return 'Manajemen Informatika ( MI )';
+
     // Fallback ke nama dari prodiList jika ada
     const found = prodiList.find(p => p.id_unit === id);
     return found ? found.nama_unit : `Unit ${id}`;

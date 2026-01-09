@@ -5,7 +5,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "react-hot-toast";
 import {
-  FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiSettings
+  FiUser, FiMail, FiShield, FiLock, FiKey, FiCheck, FiEye, FiEyeOff, FiEdit2
 } from "react-icons/fi";
 import { apiFetch } from "../../../lib/api";
 import Swal from "sweetalert2";
@@ -14,32 +14,22 @@ export default function ProfilePage() {
   const { authUser, isLoading } = useAuth();
   const router = useRouter();
 
-  // State for password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  // State for password visibility
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-
-
-  // Logic for redirection
   useEffect(() => {
     if (!isLoading && !authUser) {
       router.push("/login");
     }
   }, [authUser, isLoading, router]);
 
-
-
-  // Password change handler
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-
     if (!currentPassword) { toast.error("Kata sandi saat ini wajib diisi!"); return; }
     if (!newPassword) { toast.error("Kata sandi baru wajib diisi!"); return; }
     if (newPassword.length < 6) { toast.error("Kata sandi baru minimal 6 karakter!"); return; }
@@ -51,8 +41,8 @@ export default function ProfilePage() {
       text: "Pastikan Anda mengingat kata sandi baru Anda.",
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#2563eb', // blue-600
-      cancelButtonColor: '#94a3b8',  // slate-400
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#94a3b8',
       confirmButtonText: 'Ya, Ubah',
       cancelButtonText: 'Batal',
       reverseButtons: true,
@@ -66,17 +56,14 @@ export default function ProfilePage() {
     if (!result.isConfirmed) return;
 
     setIsChangingPassword(true);
-
     try {
       await apiFetch('/users/change-password', {
         method: 'POST',
         body: JSON.stringify({ currentPassword, newPassword })
       });
-
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -85,11 +72,9 @@ export default function ProfilePage() {
         showConfirmButton: false,
         customClass: { popup: 'rounded-2xl' }
       });
-
     } catch (error) {
       console.error("Error changing password:", error);
       let errorMessage = "Gagal mengubah kata sandi.";
-      // Simple error parsing
       if (error?.response) {
         try {
           const parsed = typeof error.response === 'string' ? JSON.parse(error.response) : error.response;
@@ -106,172 +91,179 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
           <span className="text-slate-500 font-medium text-sm">Memuat profil...</span>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20">
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          style: {
-            borderRadius: '12px',
-            background: '#fff',
-            color: '#334155',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            fontSize: '14px'
-          }
-        }}
-      />
+  // --- Reusable Modern Input Component ---
+  const ModernInput = ({ label, type, value, onChange, placeholder, icon: Icon, showToggle, onToggle, showPassword }) => (
+    <div className="group">
+      <label className="block text-sm font-semibold text-slate-700 mb-2 ml-1">{label}</label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors duration-200">
+          <Icon size={18} />
+        </div>
+        <input
+          type={showToggle ? (showPassword ? "text" : "password") : type}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-12 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200"
+          placeholder={placeholder}
+          required
+        />
+        {showToggle && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
+          >
+            {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
-      <main className="max-w-6xl mx-auto p-6 md:p-8">
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-20 relative overflow-hidden">
+      {/* Background Decorative Blob */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/40 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100/40 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <Toaster position="top-center" reverseOrder={false} />
+
+      <main className="max-w-6xl mx-auto p-6 md:p-10 relative z-10">
 
         {/* -- Page Header -- */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pengaturan Profil</h1>
-            <p className="text-slate-500 text-sm mt-1">Kelola informasi akun dan keamanan Anda.</p>
-          </div>
+        <div className="mb-10">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Akun Saya</h1>
+          <p className="text-slate-500 text-base mt-2">Kelola informasi profil dan keamanan akun Anda.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
 
-          {/* -- Left Column: User Card (4 cols) -- */}
+          {/* -- Left Column: Profile Card (4 cols) -- */}
           <div className="lg:col-span-4 flex flex-col">
+            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 overflow-hidden h-full flex flex-col relative group">
 
-            {/* Profile Info Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
-              <div className="p-6 flex flex-col items-center text-center flex-1 justify-center">
-                <div className="h-24 w-24 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 ring-4 ring-white shadow-sm border border-blue-100">
-                  <FiUser size={40} />
-                </div>
-                <h2 className="text-xl font-bold text-slate-800">
-                  {authUser.name}
-                </h2>
-                <div className="flex items-center gap-1.5 text-slate-500 text-sm mt-1 mb-4">
-                  <FiMail size={14} />
-                  <span>{authUser.email}</span>
-                </div>
-
-                <div className="px-4 py-1.5 bg-slate-100/80 rounded-full text-xs font-semibold text-slate-600 uppercase tracking-wide border border-slate-200">
-                  {authUser.role}
-                </div>
+              {/* Banner Area */}
+              <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/10"></div>
               </div>
 
-              <div className="border-t border-slate-100 p-4 bg-slate-50/50">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Status Akun</span>
-                  <span className="text-emerald-600 font-medium flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    Aktif
-                  </span>
+              <div className="px-8 pb-8 flex flex-col items-center flex-1 relative">
+                {/* Avatar Floating */}
+                <div className="-mt-14 mb-5 relative">
+                  <div className="h-28 w-28 rounded-full bg-white p-1.5 shadow-xl ring-1 ring-slate-100">
+                    <div className="h-full w-full rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center text-indigo-600 text-3xl font-bold ring-1 ring-indigo-100/50">
+                      {authUser.name ? authUser.name.charAt(0).toUpperCase() : <FiUser />}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-col items-center justify-center w-full">
+                  <h2 className="text-2xl font-bold text-slate-800 text-center leading-tight mb-1">
+                    {authUser.name}
+                  </h2>
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium mb-6">
+                    <FiMail size={14} className="text-indigo-500" />
+                    {authUser.email}
+                  </div>
+
+                  <div className="w-full space-y-3">
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                          <FiShield size={18} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Role</p>
+                          <p className="text-sm font-bold text-slate-700 capitalize">{authUser.role}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+                          <FiCheck size={18} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Status</p>
+                          <p className="text-sm font-bold text-slate-700">Aktif</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100 w-full text-center">
+                  <p className="text-xs text-slate-400 font-medium">Bergabung sejak 2024</p>
                 </div>
               </div>
             </div>
-
-
           </div>
 
           {/* -- Right Column: Security (8 cols) -- */}
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-100 overflow-hidden h-full flex flex-col">
+              <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Keamanan Akun</h3>
-                  <p className="text-slate-500 text-sm mt-1">Perbarui kata sandi Anda secara berkala.</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <FiShield size={20} />
+                  <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <FiLock className="text-indigo-500" />
+                    Keamanan & Kata Sandi
+                  </h3>
+                  <p className="text-slate-500 text-sm mt-1.5 leading-relaxed max-w-md">
+                    Demi keamanan akun Anda, kami sarankan untuk memperbarui kata sandi secara berkala.
+                  </p>
                 </div>
               </div>
 
-              <div className="p-6 md:p-8">
-                <form onSubmit={handlePasswordChange} className="max-w-2xl space-y-6">
+              <div className="p-8 flex-1">
+                <form onSubmit={handlePasswordChange} className="space-y-6 max-w-3xl">
 
-                  {/* Current Password */}
-                  <div className="group">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Kata Sandi Saat Ini</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                        <FiKey size={18} />
-                      </div>
-                      <input
-                        type={showCurrentPassword ? "text" : "password"}
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
-                        placeholder="••••••••"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
-                      >
-                        {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                      </button>
-                    </div>
-                  </div>
+                  <ModernInput
+                    label="Kata Sandi Saat Ini"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Masukkan kata sandi lama Anda"
+                    icon={FiKey}
+                    showToggle={true}
+                    showPassword={showCurrentPassword}
+                    onToggle={() => setShowCurrentPassword(!showCurrentPassword)}
+                  />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* New Password */}
-                    <div className="group">
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Kata Sandi Baru</label>
-                      <div className="relative">
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                          <FiLock size={18} />
-                        </div>
-                        <input
-                          type={showNewPassword ? "text" : "password"}
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
-                        >
-                          {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                        </button>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <ModernInput
+                      label="Kata Sandi Baru"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Minimal 6 karakter"
+                      icon={FiLock}
+                      showToggle={true}
+                      showPassword={showNewPassword}
+                      onToggle={() => setShowNewPassword(!showNewPassword)}
+                    />
 
-                    {/* Confirm Password */}
-                    <div className="group">
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Konfirmasi Sandi Baru</label>
-                      <div className="relative">
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                          <FiCheck size={18} />
-                        </div>
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-12 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-400"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-all"
-                        >
-                          {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                        </button>
-                      </div>
-                    </div>
+                    <ModernInput
+                      label="Konfirmasi Kata Sandi"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Ulangi kata sandi baru"
+                      icon={FiCheck}
+                      showToggle={true}
+                      showPassword={showConfirmPassword}
+                      onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                    />
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-6 flex items-center justify-end gap-3 border-t border-slate-100 mt-2">
+                  <div className="pt-8 flex items-center justify-end gap-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -279,14 +271,14 @@ export default function ProfilePage() {
                         setNewPassword("");
                         setConfirmPassword("");
                       }}
-                      className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+                      className="px-6 py-3 text-sm font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-all"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
                       disabled={isChangingPassword}
-                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm shadow-blue-200 hover:shadow-md hover:shadow-blue-300 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2"
                     >
                       {isChangingPassword ? (
                         <>

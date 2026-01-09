@@ -25,7 +25,7 @@ export default function Tabel2B({ role }) {
 
   // Pastikan role adalah string
   const userRole = typeof role === 'string' ? role : role?.role || '';
-  
+
   // Fungsi untuk memicu refresh
   const handleDataChange = () => setRefreshTrigger(prev => prev + 1);
 
@@ -64,9 +64,8 @@ export default function Tabel2B({ role }) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                      isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
+                    className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap ${isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
                   >
                     {isActive && (
                       <>
@@ -82,9 +81,8 @@ export default function Tabel2B({ role }) {
                         />
                       </>
                     )}
-                    <span className={`relative z-10 transition-colors duration-200 ${
-                      isActive ? "text-blue-700 font-semibold" : "text-gray-700"
-                    }`}>
+                    <span className={`relative z-10 transition-colors duration-200 ${isActive ? "text-blue-700 font-semibold" : "text-gray-700"
+                      }`}>
                       {tab.label}
                     </span>
                   </button>
@@ -97,9 +95,9 @@ export default function Tabel2B({ role }) {
 
       {/* Konten Tab */}
       <div className="min-h-[400px] sm:min-h-[500px]">
-        {activeTab === "pemetaan2b1" && <Pemetaan2B1 role={userRole} refreshTrigger={refreshTrigger} />}
+        {activeTab === "pemetaan2b1" && <Pemetaan2B1 role={userRole} maps={maps} refreshTrigger={refreshTrigger} />}
         {activeTab === "pemetaan2b2" && <Pemetaan2B2 role={userRole} maps={maps} refreshTrigger={refreshTrigger} onDataChange={handleDataChange} />}
-        {activeTab === "pemetaan2b3" && <Pemetaan2B3 role={userRole} refreshTrigger={refreshTrigger} />}
+        {activeTab === "pemetaan2b3" && <Pemetaan2B3 role={userRole} maps={maps} refreshTrigger={refreshTrigger} />}
         {activeTab === "pemetaanCpmkCpl" && <PemetaanCpmkCpl role={userRole} maps={maps} refreshTrigger={refreshTrigger} onDataChange={handleDataChange} />}
         {activeTab === "cpmk" && <CpmkCRUD role={userRole} maps={maps} onDataChange={handleDataChange} />}
         {activeTab === "cpl" && <CplCRUD role={userRole} maps={maps} onDataChange={handleDataChange} />}

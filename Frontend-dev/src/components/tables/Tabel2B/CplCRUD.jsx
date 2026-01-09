@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 // ============================================================
 // CPL CRUD
 // ============================================================
-export default function CplCRUD({ role, maps, onDataChange }) {
+export default function CplCRUD({ role, maps, onDataChange, readOnly = false, refreshTrigger = 0 }) {
   const { authUser } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,9 +42,9 @@ export default function CplCRUD({ role, maps, onDataChange }) {
     id_unit_prodi: ""
   });
 
-  const canCreate = roleCan(role, "cpl", "C");
-  const canUpdate = roleCan(role, "cpl", "U");
-  const canDelete = roleCan(role, "cpl", "D");
+  const canCreate = !readOnly && roleCan(role, "cpl", "C");
+  const canUpdate = !readOnly && roleCan(role, "cpl", "U");
+  const canDelete = !readOnly && roleCan(role, "cpl", "D");
 
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
@@ -194,7 +194,7 @@ export default function CplCRUD({ role, maps, onDataChange }) {
     if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
       fetchRows();
     }
-  }, [selectedProdi, isSuperAdmin, userProdiId]); // Fetch ulang ketika filter berubah
+  }, [selectedProdi, isSuperAdmin, userProdiId, refreshTrigger]); // Fetch ulang ketika filter berubah atau trigger refresh
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -314,9 +314,14 @@ export default function CplCRUD({ role, maps, onDataChange }) {
   // Helper function untuk mendapatkan nama prodi yang benar berdasarkan id_unit_prodi
   const getProdiName = (id_unit_prodi) => {
     if (!id_unit_prodi) return '-';
+    // Mapping ID backend (4, 5) dan frontend (6, 7)
+    // 4 & 6 -> TI
+    // 5 & 7 -> MI
     const id = parseInt(id_unit_prodi);
-    if (id === 6) return 'Prodi Teknik Informatika';
-    if (id === 7) return 'Prodi Manajemen Informatika';
+
+    if (id === 4 || id === 6) return 'Teknik Informatika ( TI )';
+    if (id === 5 || id === 7) return 'Manajemen Informatika ( MI )';
+
     // Fallback ke nama dari prodiList jika ada
     const found = prodiList.find(p => p.id_unit === id);
     return found ? found.nama_unit : `Unit ${id}`;
@@ -544,7 +549,9 @@ export default function CplCRUD({ role, maps, onDataChange }) {
               <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Kode CPL</th>
               <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Deskripsi</th>
               <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">Unit Prodi</th>
-              <th className="px-2 py-3 text-xs font-semibold uppercase border border-white w-20 text-center">Aksi</th>
+              {(canUpdate || canDelete) && (
+                <th className="px-2 py-3 text-xs font-semibold uppercase border border-white w-20 text-center">Aksi</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -554,32 +561,34 @@ export default function CplCRUD({ role, maps, onDataChange }) {
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_cpl}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.deskripsi_cpl}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{getProdiName(row.id_unit_prodi)}</td>
-                <td className="px-2 py-3 border border-slate-200 w-20">
-                  <div className="flex items-center justify-center dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const rowId = getIdField(row) ? row[getIdField(row)] : idx;
-                        if (openDropdownId !== rowId) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(rowId);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : idx)}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  </div>
-                </td>
+                {(canUpdate || canDelete) && (
+                  <td className="px-2 py-3 border border-slate-200 w-20">
+                    <div className="flex items-center justify-center dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rowId = getIdField(row) ? row[getIdField(row)] : idx;
+                          if (openDropdownId !== rowId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192;
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth)
+                            });
+                            setOpenDropdownId(rowId);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === (getIdField(row) ? row[getIdField(row)] : idx)}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

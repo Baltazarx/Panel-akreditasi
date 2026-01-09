@@ -78,13 +78,13 @@ export default function LoginPage() {
         <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/30 p-6 md:p-8 space-y-8 relative">
           {/* Logo Maskot di pojok kanan atas */}
           <div className="absolute top-4 right-4 z-10">
-            <img 
-              src="/maskot.png" 
-              alt="Maskot STIKOM" 
+            <img
+              src="/maskot.png"
+              alt="Maskot STIKOM"
               className="h-12 w-12 md:h-14 md:w-14 object-contain drop-shadow-md"
             />
           </div>
-          
+
           {/* Header - minimal style like reference */}
           <div className="flex items-start justify-between">
             <div>
@@ -147,6 +147,24 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Forgot Password Link */}
+            <div className="flex justify-start">
+              <button
+                type="button"
+                onClick={() => Swal.fire({
+                  icon: 'info',
+                  title: 'Lupa Password?',
+                  html: 'Silakan hubungi <b>Waket 1</b>, <b>Waket 2</b>, atau <b>TPM</b> untuk mereset password Anda.',
+                  confirmButtonText: 'Mengerti',
+                  confirmButtonColor: '#0384d6'
+                })}
+                className="text-sm font-medium text-[#0384d6] hover:text-[#0270b8] transition-colors focus:outline-none focus:underline"
+              >
+                Lupa Password?
+              </button>
+            </div>
+
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
@@ -187,7 +205,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
