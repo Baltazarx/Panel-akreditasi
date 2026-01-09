@@ -47,85 +47,85 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-            {rows.map((r, i) => {
-              const pengajaranTotal = n(r.sks_pengajaran);
-              const pengajaranPsSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
-              const pengajaranPsLainPtSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
-              const pengajaranPtLain = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
+          {rows.map((r, i) => {
+            const pengajaranTotal = n(r.sks_pengajaran);
+            const pengajaranPsSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
+            const pengajaranPsLainPtSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
+            const pengajaranPtLain = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
 
-              const penelitian = n(r.sks_penelitian);
-              const pkm = n(r.sks_pkm);
+            const penelitian = n(r.sks_penelitian);
+            const pkm = n(r.sks_pkm);
 
-              const manajemenTotal = n(r.sks_manajemen);
-              const manajemenPtSendiri = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
-              const manajemenPtLain = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
+            const manajemenTotal = n(r.sks_manajemen);
+            const manajemenPtSendiri = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
+            const manajemenPtLain = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
 
-              const total = (
-                n(pengajaranPsSendiri) +
-                n(pengajaranPsLainPtSendiri) +
-                n(pengajaranPtLain) +
-                n(penelitian) +
-                n(pkm) +
-                n(manajemenPtSendiri) +
-                n(manajemenPtLain)
-              ).toFixed(2);
+            const total = (
+              n(pengajaranPsSendiri) +
+              n(pengajaranPsLainPtSendiri) +
+              n(pengajaranPtLain) +
+              n(penelitian) +
+              n(pkm) +
+              n(manajemenPtSendiri) +
+              n(manajemenPtLain)
+            ).toFixed(2);
 
-              const idField = getIdField(r);
-              const rowId = idField && r[idField] ? r[idField] : i;
-              // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
-              const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+            const idField = getIdField(r);
+            const rowId = idField && r[idField] ? r[idField] : i;
+            // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
+            const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
 
-              return (
-                <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
-                  <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsLainPtSendiri}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPtLain}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{penelitian}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pkm}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtSendiri}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtLain}</td>
-                  <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">{total}</td>
-                  <td className="px-6 py-4 border border-slate-200">
-                    <div className="flex items-center justify-center dropdown-container">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
-                          const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                          const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
-                          if (openDropdownId !== uniqueRowId) {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const dropdownWidth = 192;
-                            setDropdownPosition({
-                              top: rect.bottom + 4,
-                              left: Math.max(8, rect.right - dropdownWidth)
-                            });
-                            setOpenDropdownId(uniqueRowId);
-                          } else {
-                            setOpenDropdownId(null);
-                          }
-                        }}
-                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                        aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
-                      >
-                        <FiMoreVertical size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={10} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+            return (
+              <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
+                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsLainPtSendiri}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPtLain}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{penelitian}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pkm}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtSendiri}</td>
+                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtLain}</td>
+                <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">{total}</td>
+                <td className="px-6 py-4 border border-slate-200">
+                  <div className="flex items-center justify-center dropdown-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
+                        const rowId = getIdField(r) ? r[getIdField(r)] : i;
+                        const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+                        if (openDropdownId !== uniqueRowId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(uniqueRowId);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
+                    >
+                      <FiMoreVertical size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
-            )}
+            );
+          })}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={10} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                <p className="font-medium">Data tidak ditemukan</p>
+                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -144,16 +144,16 @@ export default function Tabel1A4({ role }) {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedYear, setSelectedYear] = useState('');
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Tahun dropdown state (for filter and form)
   const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
   const [openNewTahunDropdown, setOpenNewTahunDropdown] = useState(false);
   const [openEditTahunDropdown, setOpenEditTahunDropdown] = useState(false);
-  
+
   // Dosen dropdown state (for form)
   const [openNewDosenDropdown, setOpenNewDosenDropdown] = useState(false);
   const [openEditDosenDropdown, setOpenEditDosenDropdown] = useState(false);
@@ -243,7 +243,7 @@ export default function Tabel1A4({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -267,7 +267,7 @@ export default function Tabel1A4({ role }) {
 
   const [editIdTahun, setEditIdTahun] = useState("");
   const [editIdDosen, setEditIdDosen] = useState("");
-  
+
   // State untuk data dosen (untuk dropdown)
   const [dosenList, setDosenList] = useState([]);
   const [editPengajaranPsSendiri, setEditPengajaranPsSendiri] = useState("");
@@ -293,7 +293,7 @@ export default function Tabel1A4({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -302,7 +302,7 @@ export default function Tabel1A4({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idField = getIdField(a) || getIdField(b);
       if (idField) {
@@ -310,7 +310,7 @@ export default function Tabel1A4({ role }) {
         const idB = b[idField] || 0;
         return idB - idA; // ID terbesar di atas
       }
-      
+
       return 0;
     });
   };
@@ -342,6 +342,12 @@ export default function Tabel1A4({ role }) {
   // Fetch data dosen untuk dropdown
   useEffect(() => {
     const fetchDosen = async () => {
+      // Cek apakah role memiliki akses untuk membaca tabel dosen
+      if (!roleCan(role, 'dosen', 'r')) {
+        console.log("Role tidak memiliki akses baca dosen, skip fetchDosen.");
+        return;
+      }
+
       try {
         const data = await apiFetch("/dosen");
         const list = Array.isArray(data) ? data : [];
@@ -356,7 +362,7 @@ export default function Tabel1A4({ role }) {
             });
           }
         });
-        setDosenList(Array.from(dosenMap.values()).sort((a, b) => 
+        setDosenList(Array.from(dosenMap.values()).sort((a, b) =>
           (a.nama_lengkap || '').localeCompare(b.nama_lengkap || '')
         ));
       } catch (err) {
@@ -365,7 +371,7 @@ export default function Tabel1A4({ role }) {
       }
     };
     fetchDosen();
-  }, []);
+  }, [role]); // Add role dependency
 
   // Initial load
   useEffect(() => {
@@ -415,9 +421,9 @@ export default function Tabel1A4({ role }) {
         setLoading(true);
         try {
           const idField = getIdField(row);
-          await apiFetch(`${ENDPOINT}/${row?.[idField]}`, { 
+          await apiFetch(`${ENDPOINT}/${row?.[idField]}`, {
             method: "DELETE",
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               deleted_by: role?.user?.name || role?.user?.username || "Unknown User",
               deleted_at: new Date().toISOString()
             })
@@ -472,7 +478,7 @@ export default function Tabel1A4({ role }) {
         setLoading(true);
         try {
           const idField = getIdField(row);
-          await apiFetch(`${ENDPOINT}/${row?.[idField]}/restore`, { 
+          await apiFetch(`${ENDPOINT}/${row?.[idField]}/restore`, {
             method: "POST",
             body: JSON.stringify({
               restored_by: role?.user?.name || role?.user?.username || "Unknown User",
@@ -496,21 +502,21 @@ export default function Tabel1A4({ role }) {
       return;
     }
     Swal.fire({
-        title: `Pulihkan ${selectedRows.length} Data?`,
-        text: "Semua data yang dipilih akan dikembalikan ke daftar aktif.",
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, pulihkan!',
-        cancelButtonText: 'Batal'
+      title: `Pulihkan ${selectedRows.length} Data?`,
+      text: "Semua data yang dipilih akan dikembalikan ke daftar aktif.",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
     }).then(async (result) => {
       if (result.isConfirmed) {
         setLoading(true);
         try {
           await apiFetch(`${ENDPOINT}/restore-multiple`, {
             method: "POST",
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               ids: selectedRows,
               restored_by: role?.user?.name || role?.user?.username || "Unknown User",
               restored_at: new Date().toISOString()
@@ -547,7 +553,7 @@ export default function Tabel1A4({ role }) {
     n(editManajemenPtSendiri) +
     n(editManajemenPtLain)
   ).toFixed(2);
-  
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -576,33 +582,31 @@ export default function Tabel1A4({ role }) {
                   setOpenYearFilterDropdown(!openYearFilterDropdown);
                 }}
                 disabled={loading}
-                className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  selectedYear 
-                    ? 'border-[#0384d6] bg-white' 
+                className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedYear
+                    ? 'border-[#0384d6] bg-white'
                     : 'border-slate-300 bg-white hover:border-gray-400'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 aria-label="Pilih tahun"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                   <span className={`truncate ${selectedYear ? 'text-slate-700' : 'text-slate-500'}`}>
-                    {selectedYear 
+                    {selectedYear
                       ? (() => {
-                          const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(selectedYear));
-                          return found ? (found.tahun || found.nama || selectedYear) : selectedYear;
-                        })()
+                        const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(selectedYear));
+                        return found ? (found.tahun || found.nama || selectedYear) : selectedYear;
+                      })()
                       : "Pilih Tahun"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openYearFilterDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={16} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openYearFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
                 />
               </button>
               {openYearFilterDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
                 >
                   <button
@@ -611,11 +615,10 @@ export default function Tabel1A4({ role }) {
                       setSelectedYear("");
                       setOpenYearFilterDropdown(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      !selectedYear
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedYear
                         ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                         : 'text-gray-700'
-                    }`}
+                      }`}
                   >
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>Pilih Tahun</span>
@@ -633,11 +636,10 @@ export default function Tabel1A4({ role }) {
                           setSelectedYear(y.id_tahun.toString());
                           setOpenYearFilterDropdown(false);
                         }}
-                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                          selectedYear === y.id_tahun.toString()
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedYear === y.id_tahun.toString()
                             ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                             : 'text-gray-700'
-                        }`}
+                          }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                         <span className="truncate">{y.tahun || y.nama}</span>
@@ -654,11 +656,10 @@ export default function Tabel1A4({ role }) {
               <button
                 onClick={() => setShowDeleted(false)}
                 disabled={loading}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  !showDeleted
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                     ? "bg-white text-[#0384d6] shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
-                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data aktif"
               >
                 Data
@@ -666,11 +667,10 @@ export default function Tabel1A4({ role }) {
               <button
                 onClick={() => setShowDeleted(true)}
                 disabled={loading}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  showDeleted
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                     ? "bg-white text-[#0384d6] shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
-                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data terhapus"
               >
                 Data Terhapus
@@ -693,20 +693,20 @@ export default function Tabel1A4({ role }) {
               onClick={async () => {
                 try {
                   setLoading(true);
-                  
+
                   // Helper function untuk get dosen name
                   const getDosenName = (id) => maps.pegawai[id]?.nama_lengkap || id;
-                  
+
                   // Helper function untuk get year name
                   const getYearName = (id) => maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
-                  
+
                   // Prepare data untuk export (hanya data yang aktif, tidak yang dihapus)
                   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-                  
+
                   if (filteredRows.length === 0) {
                     throw new Error('Tidak ada data untuk diekspor.');
                   }
-                  
+
                   const exportData = filteredRows.map((row, index) => {
                     const pengajaranTotal = n(row.sks_pengajaran);
                     const pengajaranPsSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
@@ -726,7 +726,7 @@ export default function Tabel1A4({ role }) {
                       n(manajemenPtSendiri) +
                       n(manajemenPtLain)
                     ).toFixed(2);
-                    
+
                     return {
                       'No': index + 1,
                       'Tahun': getYearName(row.id_tahun),
@@ -741,7 +741,7 @@ export default function Tabel1A4({ role }) {
                       'Total SKS': Number(total)
                     };
                   });
-                  
+
                   // Coba import xlsx library
                   let XLSX;
                   try {
@@ -757,7 +757,7 @@ export default function Tabel1A4({ role }) {
                       }
                       return strValue;
                     };
-                    
+
                     const headers = ['No', 'Tahun', 'Nama DTPR', 'SKS Pengajaran PS Sendiri', 'SKS Pengajaran PS Lain PT Sendiri', 'SKS Pengajaran PT Lain', 'SKS Penelitian', 'SKS Pengabdian kepada Masyarakat', 'SKS Manajemen PT Sendiri', 'SKS Manajemen PT Lain', 'Total SKS'];
                     const csvRows = [
                       headers.map(escapeCsv).join(','),
@@ -776,7 +776,7 @@ export default function Tabel1A4({ role }) {
                       ].map(escapeCsv).join(','))
                     ];
                     const csvContent = '\ufeff' + csvRows.join('\n');
-                    
+
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -786,7 +786,7 @@ export default function Tabel1A4({ role }) {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-                    
+
                     Swal.fire({
                       icon: 'success',
                       title: 'Berhasil!',
@@ -796,13 +796,13 @@ export default function Tabel1A4({ role }) {
                     });
                     return;
                   }
-                  
+
                   // Buat workbook baru
                   const wb = XLSX.utils.book_new();
-                  
+
                   // Buat worksheet dari data
                   const ws = XLSX.utils.json_to_sheet(exportData);
-                  
+
                   // Set column widths
                   ws['!cols'] = [
                     { wch: 5 },   // No
@@ -817,10 +817,10 @@ export default function Tabel1A4({ role }) {
                     { wch: 20 },  // SKS Manajemen PT Lain
                     { wch: 12 }   // Total SKS
                   ];
-                  
+
                   // Tambahkan worksheet ke workbook
                   XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1A4');
-                  
+
                   // Generate file dan download
                   const fileName = `Tabel_1A4_Beban_Kerja_Dosen_${new Date().toISOString().split('T')[0]}.xlsx`;
                   XLSX.writeFile(wb, fileName);
@@ -900,9 +900,9 @@ export default function Tabel1A4({ role }) {
           return uniqueRowId === openDropdownId;
         });
         if (!currentRow) return null;
-        
+
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -977,259 +977,253 @@ export default function Tabel1A4({ role }) {
               <p className="text-white/80 mt-1 text-sm">Lengkapi data beban kerja dosen dan distribusi SKS.</p>
             </div>
             <div className="p-8 overflow-y-auto flex-1">
-            <form
-              className="space-y-4"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                
-                // Validasi tahun dan dosen harus dipilih
-                if (!newIdTahun || newIdTahun === "") {
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Data Belum Lengkap',
-                    text: 'Silakan pilih Tahun terlebih dahulu.'
-                  });
-                  return;
-                }
-                if (!newIdDosen || newIdDosen === "") {
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Data Belum Lengkap',
-                    text: 'Silakan pilih Nama Dosen terlebih dahulu.'
-                  });
-                  return;
-                }
-                
-                try {
-                  setLoading(true);
-                  setOpenNewTahunDropdown(false);
-                  setOpenNewDosenDropdown(false);
-                  const body = { 
-                    id_tahun: parseInt(newIdTahun), 
-                    id_dosen: parseInt(newIdDosen), 
-                    sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain), 
-                    sks_penelitian: n(newPenelitian), 
-                    sks_pkm: n(newPkm), 
-                    sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain)
-                  };
-                  await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
-                  setShowCreateModal(false);
-                  setNewIdTahun(""); setNewIdDosen(""); setNewPengajaranPsSendiri(""); setNewPengajaranPsLainPtSendiri(""); setNewPengajaranPtLain(""); setNewPenelitian(""); setNewPkm(""); setNewManajemenPtSendiri(""); setNewManajemenPtLain("");
-                  fetchRows();
-                  Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil ditambahkan.', timer: 1500, showConfirmButton: false });
-                } catch (e) {
-                  Swal.fire({ icon: 'error', title: 'Gagal Menambah Data', text: e.message });
-                } finally { setLoading(false); }
-              }}
-            >
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
-                <div className="relative new-tahun-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenNewTahunDropdown(!openNewTahunDropdown);
-                      setOpenNewDosenDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      newIdTahun 
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih tahun"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${newIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {newIdTahun 
-                          ? (() => {
+              <form
+                className="space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+
+                  // Validasi tahun dan dosen harus dipilih
+                  if (!newIdTahun || newIdTahun === "") {
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'Data Belum Lengkap',
+                      text: 'Silakan pilih Tahun terlebih dahulu.'
+                    });
+                    return;
+                  }
+                  if (!newIdDosen || newIdDosen === "") {
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'Data Belum Lengkap',
+                      text: 'Silakan pilih Nama Dosen terlebih dahulu.'
+                    });
+                    return;
+                  }
+
+                  try {
+                    setLoading(true);
+                    setOpenNewTahunDropdown(false);
+                    setOpenNewDosenDropdown(false);
+                    const body = {
+                      id_tahun: parseInt(newIdTahun),
+                      id_dosen: parseInt(newIdDosen),
+                      sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain),
+                      sks_penelitian: n(newPenelitian),
+                      sks_pkm: n(newPkm),
+                      sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain)
+                    };
+                    await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
+                    setShowCreateModal(false);
+                    setNewIdTahun(""); setNewIdDosen(""); setNewPengajaranPsSendiri(""); setNewPengajaranPsLainPtSendiri(""); setNewPengajaranPtLain(""); setNewPenelitian(""); setNewPkm(""); setNewManajemenPtSendiri(""); setNewManajemenPtLain("");
+                    fetchRows();
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil ditambahkan.', timer: 1500, showConfirmButton: false });
+                  } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'Gagal Menambah Data', text: e.message });
+                  } finally { setLoading(false); }
+                }}
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
+                  <div className="relative new-tahun-dropdown-container">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpenNewTahunDropdown(!openNewTahunDropdown);
+                        setOpenNewDosenDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdTahun
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                      aria-label="Pilih tahun"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                        <span className={`truncate ${newIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {newIdTahun
+                            ? (() => {
                               const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(newIdTahun));
                               return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
                             })()
-                          : "Pilih tahun..."}
-                      </span>
-                    </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openNewTahunDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openNewTahunDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-tahun-dropdown-menu mt-1 w-full"
-                    >
-                      {Object.values(maps.tahun || {}).length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Tidak ada data tahun
-                        </div>
-                      ) : (
-                        Object.values(maps.tahun || {}).map((y) => (
-                          <button
-                            key={y.id_tahun}
-                            type="button"
-                            onClick={() => {
-                              setNewIdTahun(y.id_tahun.toString());
-                              setOpenNewTahunDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              newIdTahun === y.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{y.tahun || y.nama}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                            : "Pilih tahun..."}
+                        </span>
+                      </div>
+                      <FiChevronDown
+                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openNewTahunDropdown ? 'rotate-180' : ''
+                          }`}
+                        size={18}
+                      />
+                    </button>
+                    {openNewTahunDropdown && (
+                      <div
+                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-tahun-dropdown-menu mt-1 w-full"
+                      >
+                        {Object.values(maps.tahun || {}).length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            Tidak ada data tahun
+                          </div>
+                        ) : (
+                          Object.values(maps.tahun || {}).map((y) => (
+                            <button
+                              key={y.id_tahun}
+                              type="button"
+                              onClick={() => {
+                                setNewIdTahun(y.id_tahun.toString());
+                                setOpenNewTahunDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdTahun === y.id_tahun.toString()
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                }`}
+                            >
+                              <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span className="truncate">{y.tahun || y.nama}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
-                <div className="relative new-dosen-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenNewDosenDropdown(!openNewDosenDropdown);
-                      setOpenNewTahunDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      newIdDosen 
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih dosen"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${newIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {newIdDosen 
-                          ? (() => {
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
+                  <div className="relative new-dosen-dropdown-container">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpenNewDosenDropdown(!openNewDosenDropdown);
+                        setOpenNewTahunDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdDosen
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                      aria-label="Pilih dosen"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                        <span className={`truncate ${newIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {newIdDosen
+                            ? (() => {
                               const found = dosenList.find((d) => String(d.id_dosen) === String(newIdDosen));
                               return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
-                          : "Pilih dosen..."}
-                      </span>
-                    </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openNewDosenDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openNewDosenDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-dosen-dropdown-menu mt-1 w-full"
-                    >
-                      {dosenList.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Tidak ada data dosen
-                        </div>
-                      ) : (
-                        dosenList.map((d) => (
-                          <button
-                            key={d.id_dosen}
-                            type="button"
-                            onClick={() => {
-                              setNewIdDosen(d.id_dosen.toString());
-                              setOpenNewDosenDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              newIdDosen === d.id_dosen.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{d.nama_lengkap}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                            : "Pilih dosen..."}
+                        </span>
+                      </div>
+                      <FiChevronDown
+                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openNewDosenDropdown ? 'rotate-180' : ''
+                          }`}
+                        size={18}
+                      />
+                    </button>
+                    {openNewDosenDropdown && (
+                      <div
+                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-dosen-dropdown-menu mt-1 w-full"
+                      >
+                        {dosenList.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            Tidak ada data dosen
+                          </div>
+                        ) : (
+                          dosenList.map((d) => (
+                            <button
+                              key={d.id_dosen}
+                              type="button"
+                              onClick={() => {
+                                setNewIdDosen(d.id_dosen.toString());
+                                setOpenNewDosenDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdDosen === d.id_dosen.toString()
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                }`}
+                            >
+                              <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span className="truncate">{d.nama_lengkap}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="mb-4">
-                <p className="font-semibold text-slate-700 mb-3">SKS Pengajaran<sup>1)</sup> Pada</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <div className="mb-4">
+                  <p className="font-semibold text-slate-700 mb-3">SKS Pengajaran<sup>1)</sup> Pada</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PS Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={newPengajaranPsSendiri} onChange={(e)=>setNewPengajaranPsSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PS Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={newPengajaranPsSendiri} onChange={(e) => setNewPengajaranPsSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PS Lain, PT Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={newPengajaranPsLainPtSendiri} onChange={(e)=>setNewPengajaranPsLainPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PS Lain, PT Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={newPengajaranPsLainPtSendiri} onChange={(e) => setNewPengajaranPsLainPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
-                        <input type="number" step="0.01" min="0" value={newPengajaranPtLain} onChange={(e)=>setNewPengajaranPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
+                      <input type="number" step="0.01" min="0" value={newPengajaranPtLain} onChange={(e) => setNewPengajaranPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Penelitian</label>
-                        <input type="number" step="0.01" min="0" value={newPenelitian} onChange={(e)=>setNewPenelitian(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Pengabdian kepada Masyarakat</label>
-                        <input type="number" step="0.01" min="0" value={newPkm} onChange={(e)=>setNewPkm(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
-                    </div>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Penelitian</label>
+                    <input type="number" step="0.01" min="0" value={newPenelitian} onChange={(e) => setNewPenelitian(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Pengabdian kepada Masyarakat</label>
+                    <input type="number" step="0.01" min="0" value={newPkm} onChange={(e) => setNewPkm(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                  </div>
+                </div>
 
-              <div className="mb-4">
-                <p className="font-semibold text-slate-700 mb-3">SKS Manajemen<sup>3)</sup></p>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <p className="font-semibold text-slate-700 mb-3">SKS Manajemen<sup>3)</sup></p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={newManajemenPtSendiri} onChange={(e)=>setNewManajemenPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={newManajemenPtSendiri} onChange={(e) => setNewManajemenPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
-                        <input type="number" step="0.01" min="0" value={newManajemenPtLain} onChange={(e)=>setNewManajemenPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
+                      <input type="number" step="0.01" min="0" value={newManajemenPtLain} onChange={(e) => setNewManajemenPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
-                   </div>
-              </div>
-              
-              <div className="text-right font-semibold text-black">Total SKS: {newTotal}</div>
+                  </div>
+                </div>
 
-              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                <button 
-                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
-                    type="button" 
+                <div className="text-right font-semibold text-black">Total SKS: {newTotal}</div>
+
+                <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+                  <button
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    type="button"
                     onClick={() => {
                       setShowCreateModal(false);
                       setOpenNewTahunDropdown(false);
                       setOpenNewDosenDropdown(false);
                     }}
-                >
+                  >
                     Batal
-                </button>
-                <button 
-                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
-                    disabled={loading} 
+                  </button>
+                  <button
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                     type="submit"
-                >
+                  >
                     {loading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                            <span>Menyimpan...</span>
-                        </div>
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
                     ) : (
-                        'Simpan'
+                      'Simpan'
                     )}
-                </button>
-              </div>
-            </form>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1244,260 +1238,254 @@ export default function Tabel1A4({ role }) {
             </div>
             <div className="p-8 overflow-y-auto flex-1">
               <form
-              className="space-y-4"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                
-                // Validasi tahun dan dosen harus dipilih
-                if (!editIdTahun || editIdTahun === "") {
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Data Belum Lengkap',
-                    text: 'Silakan pilih Tahun terlebih dahulu.'
-                  });
-                  return;
-                }
-                if (!editIdDosen || editIdDosen === "") {
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Data Belum Lengkap',
-                    text: 'Silakan pilih Nama Dosen terlebih dahulu.'
-                  });
-                  return;
-                }
-                
-                try {
-                  setLoading(true);
-                  setOpenEditTahunDropdown(false);
-                  setOpenEditDosenDropdown(false);
-                  const idField = getIdField(editing);
-                  const body = { 
-                    id_tahun: parseInt(editIdTahun), 
-                    id_dosen: parseInt(editIdDosen), 
-                    sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain), 
-                    sks_penelitian: n(editPenelitian), 
-                    sks_pkm: n(editPkm), 
-                    sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain)
-                  };
-                  await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
-                  setShowEditModal(false);
-                  setEditing(null);
-                  fetchRows();
-                  Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil diperbarui.', timer: 1500, showConfirmButton: false });
-                } catch (e) {
-                  Swal.fire({ icon: 'error', title: 'Gagal Memperbarui Data', text: e.message });
-                } finally { setLoading(false); }
-              }}
-            >
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
-                <div className="relative edit-tahun-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenEditTahunDropdown(!openEditTahunDropdown);
-                      setOpenEditDosenDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      editIdTahun 
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih tahun"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${editIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {editIdTahun 
-                          ? (() => {
+                className="space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+
+                  // Validasi tahun dan dosen harus dipilih
+                  if (!editIdTahun || editIdTahun === "") {
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'Data Belum Lengkap',
+                      text: 'Silakan pilih Tahun terlebih dahulu.'
+                    });
+                    return;
+                  }
+                  if (!editIdDosen || editIdDosen === "") {
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'Data Belum Lengkap',
+                      text: 'Silakan pilih Nama Dosen terlebih dahulu.'
+                    });
+                    return;
+                  }
+
+                  try {
+                    setLoading(true);
+                    setOpenEditTahunDropdown(false);
+                    setOpenEditDosenDropdown(false);
+                    const idField = getIdField(editing);
+                    const body = {
+                      id_tahun: parseInt(editIdTahun),
+                      id_dosen: parseInt(editIdDosen),
+                      sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain),
+                      sks_penelitian: n(editPenelitian),
+                      sks_pkm: n(editPkm),
+                      sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain)
+                    };
+                    await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
+                    setShowEditModal(false);
+                    setEditing(null);
+                    fetchRows();
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data berhasil diperbarui.', timer: 1500, showConfirmButton: false });
+                  } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'Gagal Memperbarui Data', text: e.message });
+                  } finally { setLoading(false); }
+                }}
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun <span className="text-red-500">*</span></label>
+                  <div className="relative edit-tahun-dropdown-container">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpenEditTahunDropdown(!openEditTahunDropdown);
+                        setOpenEditDosenDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdTahun
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                      aria-label="Pilih tahun"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                        <span className={`truncate ${editIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {editIdTahun
+                            ? (() => {
                               const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(editIdTahun));
                               return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
                             })()
-                          : "Pilih tahun..."}
-                      </span>
-                    </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openEditTahunDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openEditTahunDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-tahun-dropdown-menu mt-1 w-full"
-                    >
-                      {Object.values(maps.tahun || {}).length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Tidak ada data tahun
-                        </div>
-                      ) : (
-                        Object.values(maps.tahun || {}).map((y) => (
-                          <button
-                            key={y.id_tahun}
-                            type="button"
-                            onClick={() => {
-                              setEditIdTahun(y.id_tahun.toString());
-                              setOpenEditTahunDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              editIdTahun === y.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{y.tahun || y.nama}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                            : "Pilih tahun..."}
+                        </span>
+                      </div>
+                      <FiChevronDown
+                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openEditTahunDropdown ? 'rotate-180' : ''
+                          }`}
+                        size={18}
+                      />
+                    </button>
+                    {openEditTahunDropdown && (
+                      <div
+                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-tahun-dropdown-menu mt-1 w-full"
+                      >
+                        {Object.values(maps.tahun || {}).length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            Tidak ada data tahun
+                          </div>
+                        ) : (
+                          Object.values(maps.tahun || {}).map((y) => (
+                            <button
+                              key={y.id_tahun}
+                              type="button"
+                              onClick={() => {
+                                setEditIdTahun(y.id_tahun.toString());
+                                setOpenEditTahunDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdTahun === y.id_tahun.toString()
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                }`}
+                            >
+                              <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span className="truncate">{y.tahun || y.nama}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
-                <div className="relative edit-dosen-dropdown-container">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpenEditDosenDropdown(!openEditDosenDropdown);
-                      setOpenEditTahunDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      editIdDosen 
-                        ? 'border-[#0384d6] bg-white' 
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                    aria-label="Pilih dosen"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
-                      <span className={`truncate ${editIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {editIdDosen 
-                          ? (() => {
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Dosen <span className="text-red-500">*</span></label>
+                  <div className="relative edit-dosen-dropdown-container">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setOpenEditDosenDropdown(!openEditDosenDropdown);
+                        setOpenEditTahunDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdDosen
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        }`}
+                      aria-label="Pilih dosen"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                        <span className={`truncate ${editIdDosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                          {editIdDosen
+                            ? (() => {
                               const found = dosenList.find((d) => String(d.id_dosen) === String(editIdDosen));
                               return found ? (found.nama_lengkap || "Pilih...") : "Pilih dosen...";
                             })()
-                          : "Pilih dosen..."}
-                      </span>
-                    </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openEditDosenDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
-                    />
-                  </button>
-                  {openEditDosenDropdown && (
-                    <div 
-                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-dosen-dropdown-menu mt-1 w-full"
-                    >
-                      {dosenList.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Tidak ada data dosen
-                        </div>
-                      ) : (
-                        dosenList.map((d) => (
-                          <button
-                            key={d.id_dosen}
-                            type="button"
-                            onClick={() => {
-                              setEditIdDosen(d.id_dosen.toString());
-                              setOpenEditDosenDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              editIdDosen === d.id_dosen.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{d.nama_lengkap}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+                            : "Pilih dosen..."}
+                        </span>
+                      </div>
+                      <FiChevronDown
+                        className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openEditDosenDropdown ? 'rotate-180' : ''
+                          }`}
+                        size={18}
+                      />
+                    </button>
+                    {openEditDosenDropdown && (
+                      <div
+                        className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-dosen-dropdown-menu mt-1 w-full"
+                      >
+                        {dosenList.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            Tidak ada data dosen
+                          </div>
+                        ) : (
+                          dosenList.map((d) => (
+                            <button
+                              key={d.id_dosen}
+                              type="button"
+                              onClick={() => {
+                                setEditIdDosen(d.id_dosen.toString());
+                                setOpenEditDosenDropdown(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdDosen === d.id_dosen.toString()
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                }`}
+                            >
+                              <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                              <span className="truncate">{d.nama_lengkap}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-4">
-                   <p className="font-semibold text-slate-700 mb-3">SKS Pengajaran<sup>1)</sup> Pada</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mb-4">
+                  <p className="font-semibold text-slate-700 mb-3">SKS Pengajaran<sup>1)</sup> Pada</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PS Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={editPengajaranPsSendiri} onChange={(e)=>setEditPengajaranPsSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PS Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={editPengajaranPsSendiri} onChange={(e) => setEditPengajaranPsSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PS Lain, PT Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={editPengajaranPsLainPtSendiri} onChange={(e)=>setEditPengajaranPsLainPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PS Lain, PT Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={editPengajaranPsLainPtSendiri} onChange={(e) => setEditPengajaranPsLainPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
-                        <input type="number" step="0.01" min="0" value={editPengajaranPtLain} onChange={(e)=>setEditPengajaranPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
+                      <input type="number" step="0.01" min="0" value={editPengajaranPtLain} onChange={(e) => setEditPengajaranPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Penelitian</label>
+                    <input type="number" step="0.01" min="0" value={editPenelitian} onChange={(e) => setEditPenelitian(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Pengabdian kepada Masyarakat</label>
+                    <input type="number" step="0.01" min="0" value={editPkm} onChange={(e) => setEditPkm(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className="font-semibold text-slate-700 mb-3">SKS Manajemen<sup>3)</sup></p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Penelitian</label>
-                        <input type="number" step="0.01" min="0" value={editPenelitian} onChange={(e)=>setEditPenelitian(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Sendiri</label>
+                      <input type="number" step="0.01" min="0" value={editManajemenPtSendiri} onChange={(e) => setEditManajemenPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">SKS Pengabdian kepada Masyarakat</label>
-                        <input type="number" step="0.01" min="0" value={editPkm} onChange={(e)=>setEditPkm(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
+                      <input type="number" step="0.01" min="0" value={editManajemenPtLain} onChange={(e) => setEditManajemenPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
                     </div>
-              </div>
+                  </div>
+                </div>
 
-              <div className="mb-4">
-                <p className="font-semibold text-slate-700 mb-3">SKS Manajemen<sup>3)</sup></p>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Sendiri</label>
-                        <input type="number" step="0.01" min="0" value={editManajemenPtSendiri} onChange={(e)=>setEditManajemenPtSendiri(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">PT Lain</label>
-                        <input type="number" step="0.01" min="0" value={editManajemenPtLain} onChange={(e)=>setEditManajemenPtLain(e.target.value)} required className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-[#0384d6] focus:border-[#0384d6] text-black" />
-                    </div>
-                   </div>
-              </div>
+                <div className="text-right font-semibold text-black">Total SKS: {editTotal}</div>
 
-              <div className="text-right font-semibold text-black">Total SKS: {editTotal}</div>
-
-              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                <button 
-                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
-                    type="button" 
+                <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+                  <button
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    type="button"
                     onClick={() => {
                       setShowEditModal(false);
                       setEditing(null);
                       setOpenEditTahunDropdown(false);
                       setOpenEditDosenDropdown(false);
                     }}
-                >
+                  >
                     Batal
-                </button>
-                <button 
-                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2" 
-                    disabled={loading} 
+                  </button>
+                  <button
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                     type="submit"
-                >
+                  >
                     {loading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                            <span>Menyimpan...</span>
-                        </div>
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
                     ) : (
-                        'Simpan'
+                      'Simpan'
                     )}
-                </button>
-              </div>
-            </form>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

@@ -176,7 +176,7 @@ const sidebarStructure = [
     type: "folder",
     children: [
       { key: "4a1", name: "Tabel 4A-1", icon: FaFile, Component: Tabel4A1, accessKey: "tabel_4a1_sarpras_pkm", description: "Sarpras PkM" },
-      { key: "4a2", name: "Tabel 4A-2", icon: FaFile, Component: Tabel4A2, accessKey: "tabel_4a2", description: "Data PkM" },
+      { key: "4a2", name: "Tabel 4A-2", icon: FaFile, Component: Tabel4A2, accessKey: "tabel_4a2_pkm", description: "Data PkM" },
       { key: "4c1", name: "Tabel 4C-1", icon: FaFile, Component: Tabel4C1, accessKey: "tabel_4c1_kerjasama_pkm", description: "Kerjasama PkM" },
       { key: "4c2", name: "Tabel 4C-2", icon: FaFile, Component: Tabel4C2, accessKey: "tabel_4c2_diseminasi_pkm", description: "Diseminasi PkM" },
       { key: "4c3", name: "Tabel 4C-3", icon: FaFile, Component: Tabel4C3, accessKey: "tabel_4c3_hki_pkm", description: "HKI PkM" },
@@ -715,9 +715,20 @@ export default function TablesPage() {
   // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
   // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
   // KECUALI role kemahasiswaan, ALA, PMB, dan SARPRAS yang tidak boleh akses C1
-  const loweredRole = (authUser?.role || "").toLowerCase();
+  // Tentukan akses C1 berdasarkan minimal satu tabel di dalam C1 yang bisa dibaca
+  // Mapping kunci sesuai dengan ACCESS_MATRIX (huruf kecil)
+  // KECUALI role kemahasiswaan, ALA, PMB, dan SARPRAS yang tidak boleh akses C1
+  let role = authUser?.role;
+  const lowerRoleRaw = (role || "").toLowerCase();
+
+  // Normalisasi: perlakukan 'kaprodi' sebagai 'prodi'
+  if (lowerRoleRaw.includes('kaprodi') || lowerRoleRaw === 'kaprodi_ti' || lowerRoleRaw === 'kaprodi_mi') {
+    role = 'prodi';
+  }
+
+  const loweredRole = (role || "").toLowerCase();
   const c1AccessKeys = ["dosen", "pegawai", "tabel_1a1", "tabel_1a2", "tabel_1a3", "tabel_1a4", "tabel_1a5", "tabel_1b", "beban_kerja_dosen", "tenaga_kependidikan"];
-  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && loweredRole !== "sarpras" && c1AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC1Access = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "pmb" && loweredRole !== "sarpras" && c1AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Akses C2: jika ada akses ke tabel C2 (sesuaikan dengan ACCESS_MATRIX)
   const c2AccessKeys = [
@@ -729,7 +740,7 @@ export default function TablesPage() {
     "tabel_2b5_kesesuaian_kerja",
     "tabel_2b6_kepuasan_pengguna"
   ]; // tabel-tabel yang ada di C2
-  const hasC2Access = c2AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC2Access = c2AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Akses C3: jika ada akses ke tabel C3
   const c3AccessKeys = [
@@ -740,7 +751,7 @@ export default function TablesPage() {
     "tabel_3c2_publikasi_penelitian",
     "tabel_3c3_hki"
   ]; // tabel-tabel yang ada di C3
-  const hasC3Access = c3AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC3Access = c3AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Akses C4: jika ada akses ke tabel C4
   const c4AccessKeys = [
@@ -751,7 +762,7 @@ export default function TablesPage() {
     "tabel_4c2_diseminasi_pkm",
     "tabel_4c3_hki_pkm"
   ]; // tabel-tabel yang ada di C4
-  const hasC4Access = c4AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC4Access = c4AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Akses C5: jika ada akses ke tabel C5
   const c5AccessKeys = [
@@ -759,38 +770,85 @@ export default function TablesPage() {
     "tabel_5a2",
     "tabel_5_2_sarpras_pendidikan"
   ]; // tabel-tabel yang ada di C5
-  const hasC5Access = c5AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC5Access = c5AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Akses C6: jika ada akses ke tabel C6
   const c6AccessKeys = [
     "tabel_6_kesesuaian_visi_misi"
   ]; // tabel-tabel yang ada di C6
-  const hasC6Access = c6AccessKeys.some((k) => roleCan(authUser?.role, k, "r"));
+  const hasC6Access = c6AccessKeys.some((k) => roleCan(role, k, "r"));
 
   // Panel Admin tampil jika role admin tertentu ATAU punya akses minimal ke dosen/pegawai/tenaga_kependidikan
   // KECUALI role kemahasiswaan, ALA, LPPM, dan SARPRAS yang tidak boleh akses Panel Admin
   // KEPEGAWAIAN diperbolehkan karena memiliki akses CRUD untuk dosen, pegawai, dan tenaga_kependidikan
   const canSeeUserMgmt = loweredRole !== "kemahasiswaan" && loweredRole !== "ala" && loweredRole !== "lppm" && loweredRole !== "sarpras" && (
     ["waket-1", "waket-2", "admin", "tpm"].includes(loweredRole)
-    || roleCan(authUser?.role, "dosen", "r")
-    || roleCan(authUser?.role, "pegawai", "r")
-    || roleCan(authUser?.role, "tenaga_kependidikan", "r")
+    || roleCan(role, "dosen", "r")
+    || roleCan(role, "pegawai", "r")
+    || roleCan(role, "tenaga_kependidikan", "r")
   );
 
   // Susun item sidebar sesuai akses - Memoized untuk performance
   const sidebarItems = useMemo(() => {
-    return sidebarStructure.filter(item => {
-      // C1
-      if (item.key === 'C1') return hasC1Access;
-      // C2 - C6
-      if (item.key === 'C2') return hasC2Access;
-      if (item.key === 'C3') return hasC3Access;
-      if (item.key === 'C4') return hasC4Access;
-      if (item.key === 'C5') return hasC5Access;
-      if (item.key === 'C6') return hasC6Access;
-      return false;
-    });
-  }, [hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access]);
+    // Fungsi rekursif untuk filter item berdasarkan akses
+    const filterItemsRecursive = (items) => {
+      return items.reduce((acc, item) => {
+        // Cek akses untuk item saat ini
+        let hasAccess = false;
+
+        // Jika ada accessKey, cek permission
+        if (item.accessKey) {
+          hasAccess = roleCan(role, item.accessKey, "r");
+        }
+        // Logic khusus untuk folder top-level (C1-C6) tetap dipertahankan sebagai fallback/grouping logic
+        else if (item.key === 'C1') hasAccess = hasC1Access;
+        else if (item.key === 'C2') hasAccess = hasC2Access;
+        else if (item.key === 'C3') hasAccess = hasC3Access;
+        else if (item.key === 'C4') hasAccess = hasC4Access;
+        else if (item.key === 'C5') hasAccess = hasC5Access;
+        else if (item.key === 'C6') hasAccess = hasC6Access;
+        // Jika tidak ada key spesifik (folder murni), anggap true dulu, nanti dicek children-nya
+        else {
+          hasAccess = true;
+        }
+
+        // Jika item punya children, filter children-nya
+        let validChildren = [];
+        if (item.children && item.children.length > 0) {
+          validChildren = filterItemsRecursive(item.children);
+
+          // Jika item adalah folder (tidak punya accessKey sendiri), tapi punya children valid, maka item ini valid
+          if (!item.accessKey && validChildren.length > 0) {
+            hasAccess = true;
+          } else if (!item.accessKey && validChildren.length === 0) {
+            // Folder tanpa children valid -> hide
+            hasAccess = false;
+          }
+        }
+
+        if (hasAccess) {
+          // Clone item untuk memasukkan filtered children
+          const newItem = { ...item };
+          if (validChildren.length > 0) {
+            newItem.children = validChildren;
+          } else if (item.children) {
+            // Jika punya children property tapi kosong setelah filter, hapus property children agar tidak dianggap folder kosong
+            // KECUALI jika accessKey-nya valid (item leaf yang valid tapi kebetulan punya children empty - rare case, usually leaf nodes dont have children)
+            // Tapi untuk folder, kita ingin hide jika kosong.
+            // Structure data kita: type="folder" usually means it relies on children.
+            if (item.type === 'folder') {
+              return acc; // Skip folder kosong
+            }
+            newItem.children = [];
+          }
+          acc.push(newItem);
+        }
+        return acc;
+      }, []);
+    };
+
+    return filterItemsRecursive(sidebarStructure);
+  }, [authUser, role, hasC1Access, hasC2Access, hasC3Access, hasC4Access, hasC5Access, hasC6Access]);
 
   // Initialize component state after mount to prevent hydration mismatch
   useEffect(() => {

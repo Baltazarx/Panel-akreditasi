@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
+import { useAuth } from "../../../../context/AuthContext";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown } from 'react-icons/fi';
 
@@ -21,7 +22,7 @@ const formatRupiah = (value) => {
 function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTahun }) {
   // Gunakan maps.tahun jika ada, jika tidak gunakan tahunList
   const tahunData = Object.keys(maps.tahun || {}).length > 0 ? Object.values(maps.tahun) : tahunList;
-  
+
   // Dropdown state
   const [openYearDropdown, setOpenYearDropdown] = useState(false);
 
@@ -52,7 +53,7 @@ function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTah
     const found = tahunData.find((y) => String(y.id_tahun) === String(activeYear));
     return found ? (found.tahun || found.nama || activeYear) : activeYear;
   };
-  
+
   return (
     <div className="relative year-selector-dropdown-container w-48">
       <button
@@ -61,11 +62,10 @@ function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTah
           e.preventDefault();
           setOpenYearDropdown(!openYearDropdown);
         }}
-        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-          activeYear 
-            ? 'border-[#0384d6] bg-white' 
-            : 'border-slate-300 bg-white hover:border-gray-400'
-        }`}
+        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${activeYear
+          ? 'border-[#0384d6] bg-white'
+          : 'border-slate-300 bg-white hover:border-gray-400'
+          }`}
         aria-label="Pilih tahun"
         disabled={isLoadingTahun}
       >
@@ -75,15 +75,14 @@ function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTah
             {isLoadingTahun ? "Memuat tahun..." : getSelectedYearLabel()}
           </span>
         </div>
-        <FiChevronDown 
-          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-            openYearDropdown ? 'rotate-180' : ''
-          }`} 
-          size={16} 
+        <FiChevronDown
+          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openYearDropdown ? 'rotate-180' : ''
+            }`}
+          size={16}
         />
       </button>
       {openYearDropdown && !isLoadingTahun && (
-        <div 
+        <div
           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-selector-dropdown-menu mt-1 w-full"
         >
           <button
@@ -92,11 +91,10 @@ function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTah
               setActiveYear("");
               setOpenYearDropdown(false);
             }}
-            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-              !activeYear
-                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                : 'text-gray-700'
-            }`}
+            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!activeYear
+              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+              : 'text-gray-700'
+              }`}
           >
             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
             <span>Semua Tahun</span>
@@ -114,11 +112,10 @@ function YearSelector({ maps, activeYear, setActiveYear, tahunList, isLoadingTah
                   setActiveYear(y.id_tahun.toString());
                   setOpenYearDropdown(false);
                 }}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                  activeYear === y.id_tahun.toString()
-                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                    : 'text-gray-700'
-                }`}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${activeYear === y.id_tahun.toString()
+                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                  : 'text-gray-700'
+                  }`}
               >
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                 <span className="truncate">{y.tahun || y.nama}</span>
@@ -139,7 +136,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
     link_bukti: "",
     id_tahun: "",
   });
-  
+
   // Dropdown tahun state
   const [openTahunDropdown, setOpenTahunDropdown] = useState(false);
   const [tahunDropdownPosition, setTahunDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -205,7 +202,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Validasi tahun harus dipilih
     if (!form.id_tahun || form.id_tahun === "") {
       Swal.fire({
@@ -215,13 +212,13 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
       });
       return;
     }
-    
+
     setOpenTahunDropdown(false);
     onSave(form);
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -230,7 +227,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -257,34 +254,32 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
                   });
                   setOpenTahunDropdown(!openTahunDropdown);
                 }}
-                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  form.id_tahun 
-                    ? 'border-[#0384d6] bg-white' 
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
                 aria-label="Pilih tahun akademik"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                   <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {form.id_tahun 
+                    {form.id_tahun
                       ? (() => {
-                          const tahunData = Object.keys(maps.tahun || {}).length > 0 ? Object.values(maps.tahun) : tahunList;
-                          const found = tahunData.find((y) => String(y.id_tahun) === String(form.id_tahun));
-                          return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun akademik...";
-                        })()
+                        const tahunData = Object.keys(maps.tahun || {}).length > 0 ? Object.values(maps.tahun) : tahunList;
+                        const found = tahunData.find((y) => String(y.id_tahun) === String(form.id_tahun));
+                        return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun akademik...";
+                      })()
                       : "Pilih tahun akademik..."}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openTahunDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={18} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={18}
                 />
               </button>
               {openTahunDropdown && (
-                <div 
+                <div
                   className="fixed z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu"
                   style={{
                     top: `${tahunDropdownPosition.top}px`,
@@ -310,11 +305,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
                           handleChange("id_tahun", y.id_tahun.toString());
                           setOpenTahunDropdown(false);
                         }}
-                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                          form.id_tahun === y.id_tahun.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                        }`}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === y.id_tahun.toString()
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                          }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                         <span className="truncate">{y.tahun || y.nama}</span>
@@ -362,21 +356,21 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
           </div>
 
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-            <button 
-                type="button" 
-                onClick={() => {
-                  setOpenTahunDropdown(false);
-                  onClose();
-                }} 
-                className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:bg-red-300 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            <button
+              type="button"
+              onClick={() => {
+                setOpenTahunDropdown(false);
+                onClose();
+              }}
+              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:bg-red-300 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
-                Batal
+              Batal
             </button>
-            <button 
-                type="submit" 
-                className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium shadow-sm hover:bg-blue-200 hover:shadow-md active:bg-blue-300 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-100 disabled:hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium shadow-sm hover:bg-blue-200 hover:shadow-md active:bg-blue-300 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-100 disabled:hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-                Simpan
+              Simpan
             </button>
           </div>
         </form>
@@ -389,7 +383,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
 function TablePerYear({ rows, onEdit, onDelete, onRestore, onHardDelete, canUpdate, canDelete, getYearLabel, showDeleted, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition }) {
   // Hanya tampilkan data yang dihapus jika showDeleted true
   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-  
+
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left">
@@ -528,10 +522,11 @@ function TableSummary({ rows }) {
 }
 
 /* ---------- Page Component ---------- */
-export default function Tabel1A2({ auth, role }) {
-  const { maps: mapsFromHook } = useMaps(auth?.user || true);
+export default function Tabel1A2({ role }) {
+  const { authUser } = useAuth();
+  const { maps: mapsFromHook } = useMaps(authUser || true);
   const maps = mapsFromHook ?? { tahun: {} };
-  
+
   // Fallback untuk memastikan data tahun tersedia untuk semua role
   const [tahunList, setTahunList] = useState([]);
   const [isLoadingTahun, setIsLoadingTahun] = useState(false);
@@ -547,7 +542,7 @@ export default function Tabel1A2({ auth, role }) {
   // Modal state & editing row
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -602,7 +597,7 @@ export default function Tabel1A2({ auth, role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         // Restore scroll position when modal closes
         document.body.style.position = '';
@@ -625,7 +620,7 @@ export default function Tabel1A2({ auth, role }) {
     const fetchTahunIfEmpty = async () => {
       if (Object.keys(maps.tahun || {}).length === 0 && !isLoadingTahun) {
         setIsLoadingTahun(true);
-        
+
         // Langsung gunakan hardcoded fallback untuk role lppm
         // menggunakan id_tahun yang sesuai dengan database
         const defaultTahunList = [
@@ -649,7 +644,7 @@ export default function Tabel1A2({ auth, role }) {
           { id_tahun: 2037, tahun: "2037/2038" },
           { id_tahun: 2038, tahun: "2038/2039" }
         ];
-        
+
         setTahunList(defaultTahunList);
         setIsLoadingTahun(false);
       }
@@ -688,10 +683,17 @@ export default function Tabel1A2({ auth, role }) {
     const yearIds = getRelativeYearIdsFromBase(baseYearId);
     if (!yearIds.length) return;
     const [ts, ts1, ts2, ts3, ts4] = yearIds;
-    
+
+    // Siapkan query string tambahan untuk unit filter
+    let unitQs = "";
+    const lowerRole = role?.toLowerCase();
+    if ((lowerRole === 'prodi' || lowerRole === 'kaprodi') && authUser?.id_unit_prodi) {
+      unitQs = `&id_unit=${authUser.id_unit_prodi}`;
+    }
+
     // Fetch data untuk 5 tahun terakhir (hanya data aktif, tanpa yang dihapus)
     const fetches = [ts, ts1, ts2, ts3, ts4].map((id) =>
-      id ? apiFetch(`/sumber-pendanaan?id_tahun=${encodeURIComponent(id)}`) : Promise.resolve([])
+      id ? apiFetch(`/sumber-pendanaan?id_tahun=${encodeURIComponent(id)}${unitQs}`) : Promise.resolve([])
     );
     const [tsData, ts1Data, ts2Data, ts3Data, ts4Data] = await Promise.all(fetches);
     const normalize = (d) => (Array.isArray(d) ? d : d?.items || []);
@@ -742,8 +744,20 @@ export default function Tabel1A2({ auth, role }) {
 
   // Fetch summary (all years) from backend
   const fetchSummaryAll = async () => {
-    const data = await apiFetch(`/sumber-pendanaan/summary`);
-    setSummaryRows(Array.isArray(data) ? data : data?.items || []);
+    try {
+      // Tambahkan filter unit jika user adalah prodi/kaprodi
+      let qs = "";
+      const lowerRole = role?.toLowerCase();
+      if ((lowerRole === 'prodi' || lowerRole === 'kaprodi') && authUser?.id_unit_prodi) {
+        qs = `?id_unit=${authUser.id_unit_prodi}`;
+      }
+
+      const data = await apiFetch(`/sumber-pendanaan/summary${qs}`);
+      setSummaryRows(Array.isArray(data) ? data : data?.items || []);
+    } catch (err) {
+      console.error("Gagal fetch summary:", err);
+      // Jangan throw error agar tidak memblokir UI utama
+    }
   };
 
 
@@ -758,7 +772,7 @@ export default function Tabel1A2({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -767,7 +781,7 @@ export default function Tabel1A2({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idA = a.id_sumber || 0;
       const idB = b.id_sumber || 0;
@@ -779,27 +793,34 @@ export default function Tabel1A2({ auth, role }) {
   const fetchData = async (isToggle = false) => {
     try {
       // Debug logging
-      console.log("Tabel1A2 - Fetching data with:", { 
-        activeYear, 
+      console.log("Tabel1A2 - Fetching data with:", {
+        activeYear,
         showDeleted,
-        mapsTahun: Object.keys(maps.tahun || {}), 
+        mapsTahun: Object.keys(maps.tahun || {}),
         tahunListLength: tahunList.length,
         role: role,
         isToggle
       });
-      
+
       // Fetch data utama
       let qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
       if (showDeleted) {
         qs += (qs.length > 1 ? "&" : "") + "include_deleted=1";
       }
+
+      // Tambahkan filter unit jika user adalah prodi/kaprodi
+      const lowerRole = role?.toLowerCase();
+      if ((lowerRole === 'prodi' || lowerRole === 'kaprodi') && authUser?.id_unit_prodi) {
+        qs += (qs.includes('?') ? "&" : "?") + `id_unit=${authUser.id_unit_prodi}`;
+      }
+
       const fullUrl = `/sumber-pendanaan${qs}`;
       console.log("Tabel1A2 - Making API call to:", fullUrl);
-      
+
       try {
         const data = await apiFetch(fullUrl);
-        console.log("Tabel1A2 - API Response:", { 
-          qs, 
+        console.log("Tabel1A2 - API Response:", {
+          qs,
           fullUrl,
           dataLength: Array.isArray(data) ? data.length : 0,
           data: data
@@ -919,7 +940,7 @@ export default function Tabel1A2({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`/sumber-pendanaan/${row.id_sumber}`, { method: "DELETE" });
-          
+
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
@@ -958,7 +979,7 @@ export default function Tabel1A2({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`/sumber-pendanaan/${row.id_sumber}/hard-delete`, { method: "DELETE" });
-          
+
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
@@ -997,7 +1018,7 @@ export default function Tabel1A2({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`/sumber-pendanaan/${row.id_sumber}/restore`, { method: "POST" });
-          
+
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
@@ -1043,9 +1064,9 @@ export default function Tabel1A2({ auth, role }) {
             method: "POST",
             body: JSON.stringify({ ids: selectedRows }),
           });
-          
+
           setSelectedRows([]);
-          
+
           // Refresh data
           const qs = activeYear ? `?id_tahun=${encodeURIComponent(activeYear)}` : "?";
           const qsWithDeleted = showDeleted ? qs + (qs.length > 1 ? "&" : "") + "include_deleted=1" : qs;
@@ -1097,9 +1118,9 @@ export default function Tabel1A2({ auth, role }) {
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <YearSelector 
-            maps={maps} 
-            activeYear={activeYear} 
+          <YearSelector
+            maps={maps}
+            activeYear={activeYear}
             setActiveYear={setActiveYear}
             tahunList={tahunList}
             isLoadingTahun={isLoadingTahun}
@@ -1108,11 +1129,10 @@ export default function Tabel1A2({ auth, role }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={false}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                }`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -1120,11 +1140,10 @@ export default function Tabel1A2({ auth, role }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={false}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                }`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -1146,21 +1165,21 @@ export default function Tabel1A2({ auth, role }) {
               onClick={async () => {
                 try {
                   setLoading(true);
-                  
+
                   // Helper function untuk get year label
                   const getYearLabel = (id) => {
                     const tahunData = Object.keys(maps.tahun || {}).length > 0 ? Object.values(maps.tahun) : tahunList;
                     const found = tahunData.find((y) => String(y.id_tahun) === String(id));
                     return found ? (found.tahun || found.nama || id) : id;
                   };
-                  
+
                   // Prepare data untuk export (hanya data yang aktif, tidak yang dihapus)
                   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-                  
+
                   if (filteredRows.length === 0) {
                     throw new Error('Tidak ada data untuk diekspor.');
                   }
-                  
+
                   const exportData = filteredRows.map((row, index) => ({
                     'No': index + 1,
                     'Tahun': getYearLabel(row.id_tahun),
@@ -1168,7 +1187,7 @@ export default function Tabel1A2({ auth, role }) {
                     'Jumlah Dana': Number(String(row.jumlah_dana || '0').replace(/[^\d.-]/g, '')) || 0,
                     'Link Bukti': row.link_bukti || ''
                   }));
-                  
+
                   // Coba import xlsx library
                   let XLSX;
                   try {
@@ -1184,7 +1203,7 @@ export default function Tabel1A2({ auth, role }) {
                       }
                       return strValue;
                     };
-                    
+
                     const headers = ['No', 'Tahun', 'Sumber Dana', 'Jumlah Dana', 'Link Bukti'];
                     const csvRows = [
                       headers.map(escapeCsv).join(','),
@@ -1197,7 +1216,7 @@ export default function Tabel1A2({ auth, role }) {
                       ].map(escapeCsv).join(','))
                     ];
                     const csvContent = '\ufeff' + csvRows.join('\n');
-                    
+
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -1207,7 +1226,7 @@ export default function Tabel1A2({ auth, role }) {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-                    
+
                     Swal.fire({
                       icon: 'success',
                       title: 'Berhasil!',
@@ -1217,13 +1236,13 @@ export default function Tabel1A2({ auth, role }) {
                     });
                     return;
                   }
-                  
+
                   // Buat workbook baru
                   const wb = XLSX.utils.book_new();
-                  
+
                   // Buat worksheet dari data
                   const ws = XLSX.utils.json_to_sheet(exportData);
-                  
+
                   // Set column widths
                   ws['!cols'] = [
                     { wch: 5 },   // No
@@ -1232,10 +1251,10 @@ export default function Tabel1A2({ auth, role }) {
                     { wch: 20 },  // Jumlah Dana
                     { wch: 40 }   // Link Bukti
                   ];
-                  
+
                   // Tambahkan worksheet ke workbook
                   XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1A2');
-                  
+
                   // Generate file dan download
                   const fileName = `Tabel_1A2_Sumber_Pendanaan_${new Date().toISOString().split('T')[0]}.xlsx`;
                   XLSX.writeFile(wb, fileName);
@@ -1315,9 +1334,9 @@ export default function Tabel1A2({ auth, role }) {
         const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
         const currentRow = filteredRows.find((r) => (r.id_sumber || filteredRows.indexOf(r)) === openDropdownId);
         if (!currentRow) return null;
-        
+
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -1397,12 +1416,12 @@ export default function Tabel1A2({ auth, role }) {
               onClick={async () => {
                 try {
                   setLoading(true);
-                  
+
                   // Prepare data untuk export ringkasan
                   if (summaryRows.length === 0) {
                     throw new Error('Tidak ada data ringkasan untuk diekspor.');
                   }
-                  
+
                   const exportData = summaryRows.map((row) => ({
                     'Sumber Pendanaan': row.sumber_dana || '',
                     'TS-4': Number(String(row.ts4 || '0').replace(/[^\d.-]/g, '')) || 0,
@@ -1412,7 +1431,7 @@ export default function Tabel1A2({ auth, role }) {
                     'TS': Number(String(row.ts || '0').replace(/[^\d.-]/g, '')) || 0,
                     'Link Bukti': row.link_bukti || ''
                   }));
-                  
+
                   // Coba import xlsx library
                   let XLSX;
                   try {
@@ -1428,7 +1447,7 @@ export default function Tabel1A2({ auth, role }) {
                       }
                       return strValue;
                     };
-                    
+
                     const headers = ['Sumber Pendanaan', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'];
                     const csvRows = [
                       headers.map(escapeCsv).join(','),
@@ -1443,7 +1462,7 @@ export default function Tabel1A2({ auth, role }) {
                       ].map(escapeCsv).join(','))
                     ];
                     const csvContent = '\ufeff' + csvRows.join('\n');
-                    
+
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -1453,7 +1472,7 @@ export default function Tabel1A2({ auth, role }) {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-                    
+
                     Swal.fire({
                       icon: 'success',
                       title: 'Berhasil!',
@@ -1463,13 +1482,13 @@ export default function Tabel1A2({ auth, role }) {
                     });
                     return;
                   }
-                  
+
                   // Buat workbook baru
                   const wb = XLSX.utils.book_new();
-                  
+
                   // Buat worksheet dari data
                   const ws = XLSX.utils.json_to_sheet(exportData);
-                  
+
                   // Set column widths
                   ws['!cols'] = [
                     { wch: 25 },  // Sumber Pendanaan
@@ -1480,10 +1499,10 @@ export default function Tabel1A2({ auth, role }) {
                     { wch: 15 },  // TS
                     { wch: 40 }   // Link Bukti
                   ];
-                  
+
                   // Tambahkan worksheet ke workbook
                   XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan 1A2');
-                  
+
                   // Generate file dan download
                   const fileName = `Tabel_1A2_Ringkasan_${new Date().toISOString().split('T')[0]}.xlsx`;
                   XLSX.writeFile(wb, fileName);
@@ -1523,20 +1542,20 @@ export default function Tabel1A2({ auth, role }) {
           </div>
         </div>
       </div>
-      <TableSummary 
-        rows={summaryRows} 
+      <TableSummary
+        rows={summaryRows}
       />
 
-             {/* Modal */}
-             <ModalForm
-               isOpen={modalOpen}
-               onClose={() => setModalOpen(false)}
-               onSave={handleSave}
-               initialData={editingRow}
-               maps={maps}
-               activeYear={activeYear}
-               tahunList={tahunList}
-             />
+      {/* Modal */}
+      <ModalForm
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        initialData={editingRow}
+        maps={maps}
+        activeYear={activeYear}
+        tahunList={tahunList}
+      />
     </div>
   );
 }

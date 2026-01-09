@@ -35,7 +35,13 @@ const ALL_TABLES = [
 
 export default function C1WithTopNav({ lastC1Tab }) {
   const { authUser } = useAuth();
-  const role = authUser?.role;
+  // Normalisasi: perlakukan 'kaprodi' sebagai 'prodi' agar menggunakan izin yang sama
+  // Note: kaprodi ini mencakup kaprodi_ti dan kaprodi_mi
+  let role = authUser?.role;
+  const lowerRole = role?.toLowerCase() || '';
+  if (lowerRole.includes('kaprodi') || lowerRole === 'kaprodi_ti' || lowerRole === 'kaprodi_mi') {
+    role = 'prodi';
+  }
 
   // Filter tabel berdasarkan akses role ('R'ead)
   const tabs = useMemo(() => {
