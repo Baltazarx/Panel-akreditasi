@@ -531,9 +531,9 @@ const MobileExpandingMenu = ({ isOpen, setIsOpen, activeTable, updateActiveTable
 // Sub-komponen untuk konten navigasi - sudah React.memo
 const SidebarContent = React.memo(({ activeTable, updateActiveTable, sidebarItems, adminItems }) => {
   return (
-    <div className="flex flex-col min-h-full pt-16">
-      <div className="flex items-center gap-3 px-5 pb-5 flex-shrink-0 border-b border-slate-200">
-        <FaTable className="h-8 w-8 text-[#043975]" />
+    <div className="flex flex-col min-h-full">
+      <div className="flex items-center gap-3 px-5 py-6 flex-shrink-0 border-b border-slate-200">
+        <FaTable className="h-7 w-7 text-[#043975]" />
         <h2 className="font-bold text-[#043975] text-xl">Tabel</h2>
       </div>
 
@@ -612,11 +612,19 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
       className="absolute z-10 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
       style={{ zIndex: 10 }}
       animate={{
-        top: 16,
-        left: isOpen ? 256 : 0,
+        top: isOpen ? 20 : 16,
+        left: isOpen ? 240 : 0, // 288 (width) - 32 (btn width) - 16 (padding)
         padding: isOpen ? '0.5rem' : '0.5rem',
-        backgroundColor: isOpen ? 'rgba(255, 255, 255, 0.9)' : 'rgb(255, 255, 255)',
+        backgroundColor: isOpen ? 'rgba(255, 255, 255, 0)' : 'rgb(255, 255, 255)', // Transparent when inside? Or white? Let's keep style first: White.
+        // User said "style first". Original style was white.
+        backgroundColor: isOpen ? 'rgb(255, 255, 255)' : 'rgb(255, 255, 255)',
         borderRadius: isOpen ? '0.5rem' : '0 0.75rem 0.75rem 0',
+        boxShadow: isOpen
+          ? 'none' // Remove shadow when inside to look clean? Or keep it? "Design jangan diubah". Keep shadow. 
+          // Actually if it is inside header, shadow might look weird if header has border. 
+          // Let's keep it close to original but inside.
+          : '0 2px 8px 0 rgba(0, 0, 0, 0.12), 0 1px 4px -1px rgba(0, 0, 0, 0.1)',
+        // Wait, original has shadow when open too.
         boxShadow: isOpen
           ? '0 2px 8px 0 rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1)'
           : '0 2px 8px 0 rgba(0, 0, 0, 0.12), 0 1px 4px -1px rgba(0, 0, 0, 0.1)',
@@ -630,15 +638,10 @@ const ExpandingSidebar = ({ isOpen, setIsOpen, activeTable, updateActiveTable, s
         ? { type: "spring", stiffness: 120, damping: 20 }
         : { type: "spring", stiffness: 300, damping: 30 }
       }
-      whileHover={isOpen ? {
+      whileHover={{
         backgroundColor: 'rgb(255, 255, 255)',
         boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
         scale: 1.05
-      } : {
-        backgroundColor: 'rgb(249, 250, 251)',
-        boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-        scale: 1.02,
-        borderColor: 'rgba(229, 231, 235, 0.9)'
       }}
       whileTap={{ scale: 0.95 }}
       aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
