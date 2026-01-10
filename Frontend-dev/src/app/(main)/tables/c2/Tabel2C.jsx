@@ -99,7 +99,7 @@ export default function Tabel2C({ role }) {
 
   // Cek apakah user adalah prodi TI atau MI
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
-  const isProdiUser = userProdiId && (userProdiId === 4 || userProdiId === 5);
+  const isProdiUser = userProdiId && (userProdiId === 6 || userProdiId === 7);
 
   // Pastikan showDeleted selalu false untuk user prodi
   useEffect(() => {
@@ -115,13 +115,13 @@ export default function Tabel2C({ role }) {
       .filter(u => {
         const id = u.id_unit ?? u.id;
         const nama = (u.nama_unit || u.nama || "").toLowerCase();
-        return id === 4 || id === 5 || nama.includes('teknik informatika') || nama.includes('manajemen informatika');
+        return id === 6 || id === 7 || nama.includes('teknik informatika') || nama.includes('manajemen informatika');
       })
       .map(u => ({
         id: u.id_unit ?? u.id,
         nama: u.nama_unit || u.nama || ""
       }))
-      .filter(u => u.id && (u.id === 4 || u.id === 5));
+      .filter(u => u.id && (u.id === 6 || u.id === 7));
   }, [maps.units]);
 
   const availableYears = useMemo(() => {

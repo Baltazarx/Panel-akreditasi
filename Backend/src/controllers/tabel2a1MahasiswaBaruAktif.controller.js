@@ -12,6 +12,12 @@ export const listMahasiswaBaruAktif = async (req, res) => {
       params.push(req.query.id_tahun);
     }
 
+    // Filter unit prodi
+    if (req.query?.id_unit_prodi) {
+      where.push(`id_unit_prodi = ?`);
+      params.push(req.query.id_unit_prodi);
+    }
+
     // Filter tahun multiple ?id_tahun_in=2023,2024,2025
     if (req.query?.id_tahun_in) {
       const arr = String(req.query.id_tahun_in)

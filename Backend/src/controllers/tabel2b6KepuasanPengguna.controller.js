@@ -8,7 +8,7 @@ const getStatistikData = async (id_unit_prodi, id_tahun) => {
     const hasDeletedAt2a3 = await hasColumn('tabel_2a3_kondisi_mahasiswa', 'deleted_at');
     const hasDeletedAt2a1 = await hasColumn('tabel_2a1_mahasiswa_baru_aktif', 'deleted_at');
     const hasDeletedAt2b6 = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
-    
+
     // 1. Jumlah alumni/lulusan dalam 3 tahun terakhir
     let sqlAlumni = `SELECT SUM(jml_lulus) as total_alumni_3_tahun
        FROM tabel_2a3_kondisi_mahasiswa 
@@ -61,16 +61,16 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     const userRole = req.user?.role?.toLowerCase();
     const isKemahasiswaan = userRole === 'kemahasiswaan';
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+
     // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
-    if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
-      delete req.query.id_unit_prodi;
-    }
-    
+    // if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
+    //   delete req.query.id_unit_prodi;
+    // }
+
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
-    
+
     let { where, params } = await buildWhere(req, 'tabel_2b6_kepuasan_pengguna', 't2b6');
 
     // Jika kolom deleted_at tidak ada, hapus filter deleted_at dari WHERE clause
@@ -79,62 +79,13 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     // Khusus role kemahasiswaan: tampilkan semua prodi (jangan batasi id_unit_prodi)
+    // Khusus role kemahasiswaan: tampilkan semua prodi (jangan batasi id_unit_prodi)
+    // Logic removed to respect client filter
+    /*
     if (isKemahasiswaan && !isSuperAdmin) {
-      const newWhere = [];
-      const newParams = [];
-
-      // Sinkronisasi penghapusan clause dengan params
-      let paramIdx = 0;
-      for (const clause of where) {
-        const isUnitFilter = /\bt2b6\.id_unit_prodi\s*=\s*\?/i.test(clause);
-        const isYearFilter = /\bt2b6\.id_tahun\s*=\s*\?/i.test(clause);
-        const isYearInFilter = /\bt2b6\.id_tahun\s+IN\s*\(/i.test(clause);
-        const isDeletedNull = /\bt2b6\.deleted_at\s+IS\s+NULL/i.test(clause);
-
-        if (isDeletedNull) {
-          // Skip jika kolom deleted_at tidak ada
-          if (hasDeletedAt) {
-            newWhere.push(clause);
-          }
-          continue; // tidak konsumsi param
-        }
-
-        if (isUnitFilter) {
-          // skip clause dan konsumsi 1 param (unit)
-          paramIdx += 1;
-          continue;
-        }
-
-        if (isYearFilter) {
-          newWhere.push(clause);
-          newParams.push(params[paramIdx]);
-          paramIdx += 1;
-          continue;
-        }
-
-        if (isYearInFilter) {
-          // Hitung jumlah placeholder "?" di IN (...)
-          const placeholders = (clause.match(/\?/g) || []).length;
-          newWhere.push(clause);
-          for (let i = 0; i < placeholders; i += 1) {
-            newParams.push(params[paramIdx]);
-            paramIdx += 1;
-          }
-          continue;
-        }
-
-        // Default: teruskan clause apa adanya dan coba konsumsi param jika ada
-        newWhere.push(clause);
-        if (paramIdx < params.length) {
-          newParams.push(params[paramIdx]);
-          paramIdx += 1;
-        }
-      }
-
-      where = newWhere;
-      params = newParams;
-      // override done silently
+       ...
     }
+    */
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b6');
 
     const sql = `
@@ -161,7 +112,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     // Ambil data statistik
     const { id_unit_prodi, id_tahun } = req.query;
     let statistik = null;
-    
+
     if (id_unit_prodi && id_tahun) {
       // Jika ada filter spesifik, ambil statistik untuk filter tersebut
       statistik = await getStatistikData(id_unit_prodi, id_tahun);
@@ -172,7 +123,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
         const [unitProdi, tahun] = combo.split('-');
         return getStatistikData(parseInt(unitProdi), parseInt(tahun));
       });
-      
+
       const statistikResults = await Promise.all(statistikPromises);
       statistik = statistikResults.filter(s => s !== null);
     }
@@ -191,7 +142,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
       sqlState: err.sqlState,
       sqlMessage: err.sqlMessage
     });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'List failed',
       message: err.message || 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? err.stack : undefined
@@ -205,7 +156,7 @@ export const getTabel2b6KepuasanPenggunaById = async (req, res) => {
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
-    
+
     const [rows] = await pool.query(
       `SELECT 
         t2b6.id,
@@ -246,14 +197,14 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
   try {
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
-    
-    const { 
-      id_unit_prodi, 
-      id_tahun, 
-      jenis_kemampuan, 
-      persen_sangat_baik, 
-      persen_baik, 
-      persen_cukup, 
+
+    const {
+      id_unit_prodi,
+      id_tahun,
+      jenis_kemampuan,
+      persen_sangat_baik,
+      persen_baik,
+      persen_cukup,
       persen_kurang,
       rencana_tindak_lanjut,
     } = req.body;
@@ -265,8 +216,8 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
     // Validasi total persentase tidak boleh lebih dari 100%
     const totalPersen = parseFloat(((persen_sangat_baik || 0) + (persen_baik || 0) + (persen_cukup || 0) + (persen_kurang || 0)).toFixed(2));
     if (totalPersen > 100) {
-      return res.status(400).json({ 
-        error: `Total persentase (${totalPersen}%) tidak boleh lebih dari 100%.` 
+      return res.status(400).json({
+        error: `Total persentase (${totalPersen}%) tidak boleh lebih dari 100%.`
       });
     }
 
@@ -279,7 +230,7 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
       persen_cukup: persen_cukup || 0,
       persen_kurang: persen_kurang || 0,
     };
-    
+
     // Hanya tambahkan rencana_tindak_lanjut jika kolom ada
     if (hasRencanaTindakLanjut && rencana_tindak_lanjut !== undefined) {
       data.rencana_tindak_lanjut = rencana_tindak_lanjut || null;
@@ -299,11 +250,11 @@ export const createTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     const [r] = await pool.query(`INSERT INTO tabel_2b6_kepuasan_pengguna SET ?`, [data]);
-    
+
     // Cek apakah kolom-kolom opsional ada untuk query SELECT setelah insert
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     // hasRencanaTindakLanjut sudah dideklarasikan di atas
-    
+
     const [row] = await pool.query(
       `SELECT 
         t2b6.id,
@@ -334,26 +285,26 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
   try {
     // Cek apakah kolom-kolom opsional ada di tabel
     const hasRencanaTindakLanjut = await hasColumn('tabel_2b6_kepuasan_pengguna', 'rencana_tindak_lanjut');
-    
-    const { 
-      id_unit_prodi, 
-      id_tahun, 
-      jenis_kemampuan, 
-      persen_sangat_baik, 
-      persen_baik, 
-      persen_cukup, 
+
+    const {
+      id_unit_prodi,
+      id_tahun,
+      jenis_kemampuan,
+      persen_sangat_baik,
+      persen_baik,
+      persen_cukup,
       persen_kurang,
       rencana_tindak_lanjut,
     } = req.body;
 
     // Validasi total persentase tidak boleh lebih dari 100%
-    if (persen_sangat_baik !== undefined || persen_baik !== undefined || 
-        persen_cukup !== undefined || persen_kurang !== undefined) {
-      const totalPersen = parseFloat(((persen_sangat_baik || 0) + (persen_baik || 0) + 
-                         (persen_cukup || 0) + (persen_kurang || 0)).toFixed(2));
+    if (persen_sangat_baik !== undefined || persen_baik !== undefined ||
+      persen_cukup !== undefined || persen_kurang !== undefined) {
+      const totalPersen = parseFloat(((persen_sangat_baik || 0) + (persen_baik || 0) +
+        (persen_cukup || 0) + (persen_kurang || 0)).toFixed(2));
       if (totalPersen > 100) {
-        return res.status(400).json({ 
-          error: `Total persentase (${totalPersen}%) tidak boleh lebih dari 100%.` 
+        return res.status(400).json({
+          error: `Total persentase (${totalPersen}%) tidak boleh lebih dari 100%.`
         });
       }
     }
@@ -367,7 +318,7 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
       persen_cukup: persen_cukup,
       persen_kurang: persen_kurang,
     };
-    
+
     // Hanya tambahkan rencana_tindak_lanjut jika kolom ada dan nilai diberikan
     if (hasRencanaTindakLanjut && rencana_tindak_lanjut !== undefined) {
       data.rencana_tindak_lanjut = rencana_tindak_lanjut;
@@ -385,11 +336,11 @@ export const updateTabel2b6KepuasanPengguna = async (req, res) => {
     }
 
     await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET ? WHERE id = ?`, [data, req.params.id]);
-    
+
     // Cek apakah kolom-kolom opsional ada untuk query SELECT setelah update
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
     // hasRencanaTindakLanjut sudah dideklarasikan di atas
-    
+
     const [row] = await pool.query(
       `SELECT 
         t2b6.id,
@@ -421,13 +372,13 @@ export const softDeleteTabel2b6KepuasanPengguna = async (req, res) => {
   try {
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
-    
+
     if (!hasDeletedAt) {
       // Jika kolom deleted_at tidak ada, gunakan hard delete sebagai fallback
       await pool.query(`DELETE FROM tabel_2b6_kepuasan_pengguna WHERE id = ?`, [req.params.id]);
       return res.json({ ok: true, hardDeleted: true, message: 'Soft delete not supported, using hard delete' });
     }
-    
+
     const payload = { deleted_at: new Date() };
     if (await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_by')) {
       payload.deleted_by = req.user?.id_user || null;
@@ -445,19 +396,19 @@ export const restoreTabel2b6KepuasanPengguna = async (req, res) => {
   try {
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
-    
+
     if (!hasDeletedAt) {
       return res.status(400).json({ error: 'Restore not supported. Table does not have deleted_at column.' });
     }
-    
+
     const hasDeletedBy = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_by');
-    
+
     if (hasDeletedBy) {
       await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET deleted_at=NULL, deleted_by=NULL WHERE id = ?`, [req.params.id]);
     } else {
       await pool.query(`UPDATE tabel_2b6_kepuasan_pengguna SET deleted_at=NULL WHERE id = ?`, [req.params.id]);
     }
-    
+
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreTabel2b6KepuasanPengguna:", err);
@@ -481,9 +432,9 @@ export const summaryTabel2b6KepuasanPengguna = async (req, res) => {
   try {
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_2b6_kepuasan_pengguna', 'deleted_at');
-    
+
     const { id_unit_prodi, id_tahun } = req.query;
-    
+
     let sql = `
       SELECT 
         uk.nama_unit AS nama_unit_prodi,
@@ -498,24 +449,24 @@ export const summaryTabel2b6KepuasanPengguna = async (req, res) => {
       LEFT JOIN tahun_akademik ta ON t2b6.id_tahun = ta.id_tahun
       WHERE 1=1
     `;
-    
+
     // Hanya tambahkan filter deleted_at jika kolom ada
     if (hasDeletedAt) {
       sql += ` AND t2b6.deleted_at IS NULL`;
     }
-    
+
     const params = [];
-    
+
     if (id_unit_prodi) {
       sql += ` AND t2b6.id_unit_prodi = ?`;
       params.push(id_unit_prodi);
     }
-    
+
     if (id_tahun) {
       sql += ` AND t2b6.id_tahun = ?`;
       params.push(id_tahun);
     }
-    
+
     sql += ` GROUP BY t2b6.id_unit_prodi, t2b6.id_tahun ORDER BY ta.tahun DESC`;
 
     const [rows] = await pool.query(sql, params);
@@ -538,7 +489,7 @@ export const getJenisKemampuanTersedia = async (req, res) => {
       'Kepemimpinan',
       'Etos Kerja'
     ];
-    
+
     res.json(jenisKemampuan);
   } catch (err) {
     console.error("Error getJenisKemampuanTersedia:", err);
@@ -550,13 +501,13 @@ export const getJenisKemampuanTersedia = async (req, res) => {
 export const getDataStatistikTabel2b6 = async (req, res) => {
   try {
     const { id_unit_prodi, id_tahun } = req.query;
-    
+
     if (!id_unit_prodi || !id_tahun) {
       return res.status(400).json({ error: 'Field `id_unit_prodi` dan `id_tahun` wajib diisi.' });
     }
 
     const statistik = await getStatistikData(id_unit_prodi, id_tahun);
-    
+
     if (!statistik) {
       return res.status(500).json({ error: 'Failed to get statistik data' });
     }

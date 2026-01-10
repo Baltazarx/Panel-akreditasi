@@ -17,18 +17,18 @@ export default function Tabel2A1({ role }) {
   const [initialLoadingPend, setInitialLoadingPend] = useState(true);
   const [initialLoadingMaba, setInitialLoadingMaba] = useState(true);
   const [error, setError] = useState("");
-  
+
   // Filter states - Global filters
   const [selectedYear, setSelectedYear] = useState(''); // Global filter tahun
-  const [selectedUnitProdi, setSelectedUnitProdi] = useState('4'); // Default: TI
-  
+  const [selectedUnitProdi, setSelectedUnitProdi] = useState('6'); // Default: TI
+
   // Local states untuk show deleted
   const [showDeletedPend, setShowDeletedPend] = useState(false);
   const [showDeletedMaba, setShowDeletedMaba] = useState(false);
-  
+
   // Flag untuk memastikan tahun default hanya di-set sekali
   const hasSetDefaultYear = useRef(false);
-  
+
   // Selection states for bulk actions
   const [selectedRowsPend, setSelectedRowsPend] = useState([]);
   const [selectedRowsMaba, setSelectedRowsMaba] = useState([]);
@@ -37,7 +37,7 @@ export default function Tabel2A1({ role }) {
   const [editingMaba, setEditingMaba] = useState(null);
   const [showModalPend, setShowModalPend] = useState(false);
   const [showModalMaba, setShowModalMaba] = useState(false);
-  
+
   // Dropdown states for filters and forms
   const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
   const [openUnitFilterDropdown, setOpenUnitFilterDropdown] = useState(false);
@@ -49,7 +49,7 @@ export default function Tabel2A1({ role }) {
   const [openMabaJalurDropdown, setOpenMabaJalurDropdown] = useState(false);
   const [openGabunganYearDropdown, setOpenGabunganYearDropdown] = useState(false);
   const [openGabunganUnitDropdown, setOpenGabunganUnitDropdown] = useState(false);
-  
+
   // Dropdown menu state - untuk setiap bagian tabel
   const [openDropdownIdPend, setOpenDropdownIdPend] = useState(null);
   const [openDropdownIdMaba, setOpenDropdownIdMaba] = useState(null);
@@ -61,9 +61,9 @@ export default function Tabel2A1({ role }) {
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if ((openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) && 
-          !event.target.closest('.dropdown-container') && 
-          !event.target.closest('.fixed')) {
+      if ((openDropdownIdPend || openDropdownIdMaba || openDropdownIdGabungan || openDropdownMaba) &&
+        !event.target.closest('.dropdown-container') &&
+        !event.target.closest('.fixed')) {
         setOpenDropdownIdPend(null);
         setOpenDropdownIdMaba(null);
         setOpenDropdownIdGabungan(null);
@@ -204,7 +204,7 @@ export default function Tabel2A1({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -229,7 +229,7 @@ export default function Tabel2A1({ role }) {
   const canCMaba = roleCan(role, tableMaba.key, "C");
   const canUMaba = roleCan(role, tableMaba.key, "U");
   const canDMaba = roleCan(role, tableMaba.key, "D");
-  
+
   // Pastikan showDeleted selalu false untuk role ALA
   useEffect(() => {
     if (role?.toLowerCase() === "ala") {
@@ -237,7 +237,7 @@ export default function Tabel2A1({ role }) {
       setShowDeletedMaba(false);
     }
   }, [role]);
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = useCallback((rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -249,7 +249,7 @@ export default function Tabel2A1({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -258,7 +258,7 @@ export default function Tabel2A1({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idA = a.id || 0;
       const idB = b.id || 0;
@@ -275,17 +275,17 @@ export default function Tabel2A1({ role }) {
       }
       setError("");
       const params = new URLSearchParams();
-      
+
       // Filter berdasarkan prodi (selalu ada karena default adalah TI)
       const unitProdi = selectedUnitProdi || '4';
       params.append("id_unit_prodi", unitProdi);
-      
+
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-        
+
         if (currentYearIndex !== -1) {
           // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3, TS-4
           const yearIds = [];
@@ -295,24 +295,24 @@ export default function Tabel2A1({ role }) {
               yearIds.push(tahunList[yearIndex].id_tahun);
             }
           }
-          
+
           if (yearIds.length > 0) {
             params.append("id_tahun_in", yearIds.join(','));
           }
         }
       }
-      
+
       // Handle showDeleted
       if (showDeletedPend) {
         params.append("include_deleted", "1");
       }
-      
+
       const data = await apiFetch(`${tablePend.path}?${params}`);
-      
+
       // Backend sudah melakukan filtering, jadi langsung gunakan data
       const rowsArray = Array.isArray(data) ? data : (data?.items || []);
       const sortedData = sortRowsByLatest(rowsArray);
-      
+
       setRowsPend(sortedData);
     } catch (e) {
       setError(e?.message || "Gagal memuat data pendaftaran");
@@ -324,7 +324,7 @@ export default function Tabel2A1({ role }) {
       }
     }
   }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun, sortRowsByLatest]);
-  
+
   const fetchMaba = useCallback(async (isToggle = false) => {
     try {
       // Only show loading skeleton on initial load, not when toggling
@@ -334,17 +334,17 @@ export default function Tabel2A1({ role }) {
       }
       setError("");
       const params = new URLSearchParams();
-      
+
       // Filter berdasarkan prodi (selalu ada karena default adalah TI)
       const unitProdi = selectedUnitProdi || '4';
       params.append("id_unit_prodi", unitProdi);
-      
+
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-        
+
         if (currentYearIndex !== -1) {
           // Ambil ID tahun untuk TS, TS-1, TS-2, TS-3, TS-4
           const yearIds = [];
@@ -354,24 +354,24 @@ export default function Tabel2A1({ role }) {
               yearIds.push(tahunList[yearIndex].id_tahun);
             }
           }
-          
+
           if (yearIds.length > 0) {
             params.append("id_tahun_in", yearIds.join(','));
           }
         }
       }
-      
+
       // Handle showDeleted
       if (showDeletedMaba) {
         params.append("include_deleted", "1");
       }
-      
+
       const data = await apiFetch(`${tableMaba.path}?${params}`);
-      
+
       // Backend sudah melakukan filtering, jadi langsung gunakan data
       const rowsArray = Array.isArray(data) ? data : (data?.items || []);
       const sortedData = sortRowsByLatest(rowsArray);
-      
+
       setRowsMaba(sortedData);
     } catch (e) {
       setError(e?.message || "Gagal memuat data mahasiswa baru/aktif");
@@ -404,11 +404,11 @@ export default function Tabel2A1({ role }) {
     const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
     const currentYearId = parseInt(selectedYear);
     const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-    
+
     if (currentYearIndex === -1) return [];
 
     const result = [];
-    
+
     // TS, TS-1, TS-2, TS-3, TS-4
     for (let i = 0; i <= 4; i++) {
       const yearIndex = currentYearIndex - i;
@@ -441,23 +441,23 @@ export default function Tabel2A1({ role }) {
       const yearId = year.id_tahun;
 
       // Data pendaftaran
-      const pendData = rowsPend.find(p => 
-        p.id_unit_prodi === unitProdiId && 
-        p.id_tahun === yearId && 
+      const pendData = rowsPend.find(p =>
+        (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId)) &&
+        p.id_tahun === yearId &&
         !p.deleted_at
       );
 
       // Data mahasiswa baru dan aktif
-      const mabaData = rowsMaba.filter(m => 
-        m.id_unit_prodi === unitProdiId && 
-        m.id_tahun === yearId && 
+      const mabaData = rowsMaba.filter(m =>
+        m.id_unit_prodi === unitProdiId &&
+        m.id_tahun === yearId &&
         !m.deleted_at
       );
 
       // Proses data mahasiswa baru
       const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
       const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
-      
+
       // Proses data mahasiswa aktif
       const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
       const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
@@ -533,26 +533,26 @@ export default function Tabel2A1({ role }) {
   const exportPendaftaranToExcel = async () => {
     try {
       setLoading(true);
-      
+
       // Filter data berdasarkan showDeleted
       const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
-      
+
       if (filteredRows.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       if (selectedYear && maps?.tahun) {
         // Format TS jika ada filter tahun
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-        
+
         if (currentYearIndex !== -1) {
           const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-          
+
           for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex < 0 || yearIndex >= tahunList.length) {
@@ -568,8 +568,8 @@ export default function Tabel2A1({ role }) {
             }
 
             const year = tahunList[yearIndex];
-            const pendData = filteredRows.find(p => 
-              p.id_tahun === year.id_tahun && 
+            const pendData = filteredRows.find(p =>
+              p.id_tahun === year.id_tahun &&
               (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId))
             );
 
@@ -585,8 +585,8 @@ export default function Tabel2A1({ role }) {
         }
       } else {
         // Format normal jika tidak ada filter tahun
-        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-        const filteredByProdi = filteredRows.filter(row => 
+        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 6;
+        const filteredByProdi = filteredRows.filter(row =>
           row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
         );
 
@@ -616,17 +616,17 @@ export default function Tabel2A1({ role }) {
           }
           return strValue;
         };
-        
+
         // Get headers from first row
         const headers = Object.keys(exportData[0] || {});
         const csvRows = [
           headers.map(escapeCsv).join(','),
-          ...exportData.map(row => 
+          ...exportData.map(row =>
             headers.map(header => escapeCsv(row[header])).join(',')
           )
         ];
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -636,7 +636,7 @@ export default function Tabel2A1({ role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -649,10 +649,10 @@ export default function Tabel2A1({ role }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari data
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 8 },   // TS/No
@@ -663,10 +663,10 @@ export default function Tabel2A1({ role }) {
         { wch: 20 },   // Pendaftar Afirmasi
         { wch: 25 }    // Pendaftar Kebutuhan Khusus
       ];
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Pendaftaran');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2A1_Pendaftaran_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -694,26 +694,26 @@ export default function Tabel2A1({ role }) {
   const exportMabaToExcel = async () => {
     try {
       setLoading(true);
-      
+
       // Filter data berdasarkan showDeleted
       const filteredRows = rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at);
-      
+
       if (filteredRows.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       if (selectedYear && maps?.tahun) {
         // Format TS jika ada filter tahun
         const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
         const currentYearId = parseInt(selectedYear);
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-        
+
         if (currentYearIndex !== -1) {
           const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-          
+
           for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex < 0 || yearIndex >= tahunList.length) {
@@ -737,8 +737,8 @@ export default function Tabel2A1({ role }) {
             }
 
             const year = tahunList[yearIndex];
-            const mabaData = filteredRows.filter(m => 
-              m.id_tahun === year.id_tahun && 
+            const mabaData = filteredRows.filter(m =>
+              m.id_tahun === year.id_tahun &&
               (m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId))
             );
 
@@ -768,7 +768,7 @@ export default function Tabel2A1({ role }) {
       } else {
         // Format normal jika tidak ada filter tahun
         const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-        const filteredByProdi = filteredRows.filter(row => 
+        const filteredByProdi = filteredRows.filter(row =>
           row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
         );
 
@@ -785,7 +785,7 @@ export default function Tabel2A1({ role }) {
         Object.keys(groupedByYear).forEach(yearId => {
           const tahunName = getTahunName(parseInt(yearId));
           const mabaData = groupedByYear[yearId];
-          
+
           const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
           const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
           const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
@@ -825,17 +825,17 @@ export default function Tabel2A1({ role }) {
           }
           return strValue;
         };
-        
+
         // Get headers from first row
         const headers = Object.keys(exportData[0] || {});
         const csvRows = [
           headers.map(escapeCsv).join(','),
-          ...exportData.map(row => 
+          ...exportData.map(row =>
             headers.map(header => escapeCsv(row[header])).join(',')
           )
         ];
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -845,7 +845,7 @@ export default function Tabel2A1({ role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -858,10 +858,10 @@ export default function Tabel2A1({ role }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari data
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 8 },   // TS
@@ -880,10 +880,10 @@ export default function Tabel2A1({ role }) {
         { wch: 18 },  // Aktif RPL - Afirmasi
         { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
       ];
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Mahasiswa Baru & Aktif');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2A1_Mahasiswa_Baru_Aktif_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -911,14 +911,14 @@ export default function Tabel2A1({ role }) {
   const exportGabunganToExcel = async () => {
     try {
       setLoading(true);
-      
+
       if (!selectedYear || !maps?.tahun) {
         throw new Error('Pilih tahun TS terlebih dahulu untuk mengekspor data.');
       }
 
       const unitProdiId = parseInt(selectedUnitProdi) || 4;
       const tableData = processDataForTable(unitProdiId);
-      
+
       if (tableData.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
@@ -959,17 +959,17 @@ export default function Tabel2A1({ role }) {
           }
           return strValue;
         };
-        
+
         // Get headers from first row
         const headers = Object.keys(exportData[0] || {});
         const csvRows = [
           headers.map(escapeCsv).join(','),
-          ...exportData.map(row => 
+          ...exportData.map(row =>
             headers.map(header => escapeCsv(row[header])).join(',')
           )
         ];
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -979,7 +979,7 @@ export default function Tabel2A1({ role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -992,10 +992,10 @@ export default function Tabel2A1({ role }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari data
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 8 },   // TS
@@ -1016,10 +1016,10 @@ export default function Tabel2A1({ role }) {
         { wch: 18 },  // Aktif RPL - Afirmasi
         { wch: 23 }   // Aktif RPL - Kebutuhan Khusus
       ];
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Data Mahasiswa');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2A1_Data_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -1042,25 +1042,25 @@ export default function Tabel2A1({ role }) {
       setLoading(false);
     }
   };
-  
+
   // Set default tahun saat pertama kali maps dimuat berdasarkan tahun sistem
   useEffect(() => {
     if (!mapsLoading && maps?.tahun && Object.keys(maps.tahun).length > 0 && !hasSetDefaultYear.current) {
       // Deteksi tahun saat ini dari sistem
       const currentYear = new Date().getFullYear();
-      
+
       // Cari tahun yang sesuai dengan tahun sistem dari maps.tahun
       const tahunList = Object.values(maps.tahun);
       if (tahunList.length > 0) {
         // Cari tahun yang mengandung tahun saat ini (misal: "2024/2025" mengandung 2024)
         let tahunTerpilih = null;
-        
+
         // Prioritas 1: Cari tahun yang persis sama dengan tahun saat ini
         tahunTerpilih = tahunList.find(t => {
           const tahunStr = String(t.tahun || '');
           return tahunStr.includes(String(currentYear));
         });
-        
+
         // Prioritas 2: Jika tidak ditemukan, cari tahun terdekat (tahun akademik yang mengandung tahun saat ini atau tahun sebelumnya)
         if (!tahunTerpilih) {
           tahunTerpilih = tahunList.find(t => {
@@ -1069,14 +1069,14 @@ export default function Tabel2A1({ role }) {
             return tahunInt >= currentYear - 1 && tahunInt <= currentYear;
           });
         }
-        
+
         // Prioritas 3: Jika masih tidak ditemukan, gunakan tahun terbaru berdasarkan id_tahun
         if (!tahunTerpilih) {
-          tahunTerpilih = tahunList.reduce((latest, current) => 
+          tahunTerpilih = tahunList.reduce((latest, current) =>
             (Number(current.id_tahun) > Number(latest.id_tahun)) ? current : latest
           );
         }
-        
+
         if (tahunTerpilih) {
           setSelectedYear(String(tahunTerpilih.id_tahun));
           hasSetDefaultYear.current = true;
@@ -1084,15 +1084,15 @@ export default function Tabel2A1({ role }) {
       }
     }
   }, [mapsLoading, maps?.tahun]);
-  
+
   // Initial load untuk Pendaftaran
-  useEffect(() => { 
+  useEffect(() => {
     if (!mapsLoading && maps?.tahun) {
-      fetchPend(false); 
+      fetchPend(false);
       setSelectedRowsPend([]);
     }
   }, [selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun, fetchPend]);
-  
+
   // Toggle showDeleted untuk Pendaftaran
   useEffect(() => {
     if (!initialLoadingPend && !mapsLoading && maps?.tahun) {
@@ -1100,15 +1100,15 @@ export default function Tabel2A1({ role }) {
       setSelectedRowsPend([]);
     }
   }, [showDeletedPend, initialLoadingPend, mapsLoading, maps?.tahun, fetchPend]);
-  
+
   // Initial load untuk Mahasiswa Baru & Aktif
-  useEffect(() => { 
+  useEffect(() => {
     if (!mapsLoading && maps?.tahun) {
-      fetchMaba(false); 
+      fetchMaba(false);
       setSelectedRowsMaba([]);
     }
   }, [selectedYear, selectedUnitProdi, mapsLoading, maps?.tahun, fetchMaba]);
-  
+
   // Toggle showDeleted untuk Mahasiswa Baru & Aktif
   useEffect(() => {
     if (!initialLoadingMaba && !mapsLoading && maps?.tahun) {
@@ -1120,20 +1120,20 @@ export default function Tabel2A1({ role }) {
   // Helper functions untuk mendapatkan nama dari maps
   const getUnitName = (id) => {
     if (!id) return "-";
-    
+
     // Convert to number untuk konsistensi
     const numId = parseInt(id);
-    
+
     // Mapping untuk prodi TI dan MI
     if (numId === 1) return "Teknik Informatika (TI)"; // Legacy support
     if (numId === 4) return "Teknik Informatika (TI)";
     if (numId === 5) return "Manajemen Informatika (MI)";
-    
+
     // Fallback ke maps jika ada
     if (maps?.unit_kerja && maps.unit_kerja[numId]) {
       return maps.unit_kerja[numId].nama_unit || `Unit ${numId}`;
     }
-    
+
     return `Unit ${numId}`;
   };
   const getTahunName = (id) => {
@@ -1159,12 +1159,12 @@ export default function Tabel2A1({ role }) {
         setLoading(true);
         const idField = getIdField(row);
         const deleteUrl = `${table.path}/${row[idField]}`;
-        const deleteBody = { 
+        const deleteBody = {
           deleted_by: "Unknown User",
           deleted_at: new Date().toISOString()
         };
         console.log('Soft Delete Request:', { deleteUrl, deleteBody, idField, rowId: row[idField] });
-        await apiFetch(deleteUrl, { 
+        await apiFetch(deleteUrl, {
           method: "DELETE",
           body: JSON.stringify(deleteBody)
         });
@@ -1229,7 +1229,7 @@ export default function Tabel2A1({ role }) {
           restored_at: new Date().toISOString()
         };
         console.log('Restore Request:', { restoreUrl, restoreBody, idField, rowId: row[idField] });
-        await apiFetch(restoreUrl, { 
+        await apiFetch(restoreUrl, {
           method: "POST",
           body: JSON.stringify(restoreBody)
         });
@@ -1248,9 +1248,9 @@ export default function Tabel2A1({ role }) {
   // Bulk restore dengan SweetAlert2
   const doRestoreMultiple = async (table) => {
     const selectedRows = table.key === tablePend.key ? selectedRowsPend : selectedRowsMaba;
-    console.log('doRestoreMultiple called:', { 
-      tableKey: table.key, 
-      selectedRows, 
+    console.log('doRestoreMultiple called:', {
+      tableKey: table.key,
+      selectedRows,
       selectedRowsCount: selectedRows.length,
       selectedRowsPend,
       selectedRowsMaba
@@ -1277,7 +1277,7 @@ export default function Tabel2A1({ role }) {
         setLoading(true);
         await apiFetch(`${table.path}/restore-multiple`, {
           method: "POST",
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             ids: selectedRows,
             restored_by: "Unknown User",
             restored_at: new Date().toISOString()
@@ -1344,7 +1344,7 @@ export default function Tabel2A1({ role }) {
 
       // Validasi: Total 3 kategori (pendaftar + afirmasi + kebutuhan khusus) tidak boleh melebihi daya tampung
       const totalPendaftar = pendaftarNum + afirmasiNum + kebutuhanKhususNum;
-      
+
       if (dayaTampungNum > 0 && totalPendaftar > dayaTampungNum) {
         Swal.fire({
           icon: 'warning',
@@ -1364,7 +1364,7 @@ export default function Tabel2A1({ role }) {
           row.id_tahun === tahunId &&
           !row.deleted_at
         );
-        
+
         if (existingRow) {
           Swal.fire({
             icon: 'warning',
@@ -1391,24 +1391,24 @@ export default function Tabel2A1({ role }) {
       console.log('Unit Prodi value:', formPend.id_unit_prodi);
       const response = await apiFetch(target, { method, body: JSON.stringify(body) });
       console.log('API Response:', response);
-      setShowModalPend(false); 
+      setShowModalPend(false);
       setEditingPend(null);
       // Reset form setelah update/create berhasil
       setFormPend({
         id_unit_prodi: "", id_tahun: "", daya_tampung: "", pendaftar: "", pendaftar_afirmasi: "", pendaftar_kebutuhan_khusus: ""
       });
       fetchPend();
-      Swal.fire({ 
-        icon: 'success', 
-        title: 'Berhasil!', 
-        text: editingPend ? 'Data berhasil diperbarui.' : 'Data berhasil ditambahkan.', 
-        timer: 1500, 
-        showConfirmButton: false 
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: editingPend ? 'Data berhasil diperbarui.' : 'Data berhasil ditambahkan.',
+        timer: 1500,
+        showConfirmButton: false
       });
     } catch (e) {
       console.error('Error submitting Pendaftaran:', e);
       let errorMessage = e.message || 'Terjadi kesalahan saat menyimpan data';
-      
+
       // Handle specific error messages from backend
       if (e.response) {
         const responseError = typeof e.response === 'string' ? JSON.parse(e.response) : e.response;
@@ -1416,7 +1416,7 @@ export default function Tabel2A1({ role }) {
           errorMessage = responseError.error;
         }
       }
-      
+
       // Handle HTTP status codes
       if (e.status === 409) {
         errorMessage = 'Data dengan kombinasi unit prodi dan tahun yang sama sudah ada';
@@ -1425,10 +1425,10 @@ export default function Tabel2A1({ role }) {
       } else if (e.status === 500) {
         errorMessage = errorMessage || 'Terjadi kesalahan di server. Silakan coba lagi.';
       }
-      
-      Swal.fire({ 
-        icon: 'error', 
-        title: editingPend ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data', 
+
+      Swal.fire({
+        icon: 'error',
+        title: editingPend ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data',
         text: errorMessage,
         footer: e.status ? `Error ${e.status}` : ''
       });
@@ -1436,7 +1436,7 @@ export default function Tabel2A1({ role }) {
       setLoading(false);
     }
   };
-  
+
   const submitMaba = async (e) => {
     e.preventDefault();
     setOpenMabaUnitDropdown(false);
@@ -1523,25 +1523,25 @@ export default function Tabel2A1({ role }) {
       console.log('Unit Prodi value:', formMaba.id_unit_prodi);
       const response = await apiFetch(target, { method, body: JSON.stringify(body) });
       console.log('API Response:', response);
-      setShowModalMaba(false); 
+      setShowModalMaba(false);
       setEditingMaba(null);
       // Reset form setelah update/create berhasil
       setFormMaba({
         id_unit_prodi: "", id_tahun: "", jenis: "baru", jalur: "reguler", jumlah_total: "", jumlah_afirmasi: "", jumlah_kebutuhan_khusus: ""
       });
       fetchMaba();
-      Swal.fire({ 
-        icon: 'success', 
-        title: 'Berhasil!', 
-        text: editingMaba ? 'Data berhasil diperbarui.' : 'Data berhasil ditambahkan.', 
-        timer: 1500, 
-        showConfirmButton: false 
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: editingMaba ? 'Data berhasil diperbarui.' : 'Data berhasil ditambahkan.',
+        timer: 1500,
+        showConfirmButton: false
       });
     } catch (e) {
-      Swal.fire({ 
-        icon: 'error', 
-        title: editingMaba ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data', 
-        text: e.message 
+      Swal.fire({
+        icon: 'error',
+        title: editingMaba ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data',
+        text: e.message
       });
     } finally {
       setLoading(false);
@@ -1562,33 +1562,31 @@ export default function Tabel2A1({ role }) {
             }
           }}
           disabled={loading}
-          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-            selectedYear 
-              ? 'border-[#0384d6] bg-white text-black' 
-              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-          } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedYear
+            ? 'border-[#0384d6] bg-white text-black'
+            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Pilih tahun"
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
             <span className={`truncate ${selectedYear ? 'text-black' : 'text-gray-500'}`}>
-              {selectedYear 
+              {selectedYear
                 ? (() => {
-                    const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(selectedYear));
-                    return found ? found.tahun : selectedYear;
-                  })()
+                  const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(selectedYear));
+                  return found ? found.tahun : selectedYear;
+                })()
                 : "Pilih Tahun"}
             </span>
           </div>
-          <FiChevronDown 
-            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-              isOpen ? 'rotate-180' : ''
-            }`} 
-            size={16} 
+          <FiChevronDown
+            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+              }`}
+            size={16}
           />
         </button>
         {isOpen && !loading && (
-          <div 
+          <div
             className={`absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full ${menuClass || ''}`}
             style={{ minWidth: '200px' }}
           >
@@ -1600,11 +1598,10 @@ export default function Tabel2A1({ role }) {
                     setSelectedYear("");
                     setIsOpen(false);
                   }}
-                  className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                    !selectedYear
-                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                      : 'text-gray-700'
-                  }`}
+                  className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedYear
+                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                    : 'text-gray-700'
+                    }`}
                 >
                   <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                   <span>Pilih Tahun</span>
@@ -1617,11 +1614,10 @@ export default function Tabel2A1({ role }) {
                       setSelectedYear(String(y.id_tahun));
                       setIsOpen(false);
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                      selectedYear === String(y.id_tahun)
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedYear === String(y.id_tahun)
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
+                      }`}
                   >
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                     <span>{y.tahun}</span>
@@ -1652,42 +1648,39 @@ export default function Tabel2A1({ role }) {
             }
           }}
           disabled={loading}
-          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-            selectedUnit 
-              ? 'border-[#0384d6] bg-white text-black' 
-              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-          } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedUnit
+            ? 'border-[#0384d6] bg-white text-black'
+            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Pilih unit prodi"
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
             <span className={`truncate ${selectedUnit ? 'text-black' : 'text-gray-500'}`}>
-              {selectedUnit === '4' ? 'Teknik Informatika (TI)' : selectedUnit === '5' ? 'Manajemen Informatika (MI)' : 'Pilih Prodi'}
+              {selectedUnit === '6' ? 'Teknik Informatika (TI)' : selectedUnit === '7' ? 'Manajemen Informatika (MI)' : 'Pilih Prodi'}
             </span>
           </div>
-          <FiChevronDown 
-            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-              isOpen ? 'rotate-180' : ''
-            }`} 
-            size={16} 
+          <FiChevronDown
+            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+              }`}
+            size={16}
           />
         </button>
         {isOpen && !loading && (
-          <div 
+          <div
             className={`absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-filter-dropdown-menu mt-1 w-full ${menuClass || ''}`}
             style={{ minWidth: '200px' }}
           >
             <button
               type="button"
               onClick={() => {
-                setSelectedUnit("4");
+                setSelectedUnit("6");
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                selectedUnit === '4'
-                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                  : 'text-gray-700'
-              }`}
+              className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedUnit === '6'
+                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                : 'text-gray-700'
+                }`}
             >
               <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
               <span>Teknik Informatika (TI)</span>
@@ -1695,14 +1688,13 @@ export default function Tabel2A1({ role }) {
             <button
               type="button"
               onClick={() => {
-                setSelectedUnit("5");
+                setSelectedUnit("7");
                 setIsOpen(false);
               }}
-              className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                selectedUnit === '5'
-                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                  : 'text-gray-700'
-              }`}
+              className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedUnit === '7'
+                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                : 'text-gray-700'
+                }`}
             >
               <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
               <span>Manajemen Informatika (MI)</span>
@@ -1720,14 +1712,14 @@ export default function Tabel2A1({ role }) {
     const rows = rowsPend;
     const showDeleted = showDeletedPend;
     const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
-    
+
     // Proses data untuk ditampilkan per TS jika selectedYear ada
     let displayRows = [];
     if (selectedYear && maps?.tahun) {
       const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
       const currentYearId = parseInt(selectedYear);
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-      
+
       if (currentYearIndex !== -1) {
         // TS, TS-1, TS-2, TS-3, TS-4
         for (let i = 0; i <= 4; i++) {
@@ -1749,10 +1741,10 @@ export default function Tabel2A1({ role }) {
 
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
-          
+
           // Filter berdasarkan prodi yang dipilih
           const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-          
+
           // Cari data pendaftaran untuk unit prodi tertentu
           // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
           const pendData = rows.find(p => {
@@ -1764,7 +1756,7 @@ export default function Tabel2A1({ role }) {
               return matchesYear && matchesProdi && !p.deleted_at;
             }
           });
-          
+
           displayRows.push({
             ts: i === 0 ? 'TS' : `TS-${i}`,
             tahun: year.tahun,
@@ -1790,7 +1782,7 @@ export default function Tabel2A1({ role }) {
           return matchesProdi && !row.deleted_at;
         }
       });
-      
+
       displayRows = filteredRows.map(row => ({
         ts: getTahunName(row.id_tahun),
         tahun: row.id_tahun,
@@ -1833,9 +1825,9 @@ export default function Tabel2A1({ role }) {
                 JUMLAH CALON MAHASISWA
               </th>
               {role?.toLowerCase() !== "ala" && (
-              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
-              </th>
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AKSI
+                </th>
               )}
             </tr>
             {/* Row 2: Sub-header */}
@@ -1887,8 +1879,8 @@ export default function Tabel2A1({ role }) {
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
                     {row.ts}
                   </td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                {row.dayaTampung || '-'}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                    {row.dayaTampung || '-'}
                   </td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
                     {row.pendaftar || '-'}
@@ -1900,37 +1892,37 @@ export default function Tabel2A1({ role }) {
                     {row.pendaftarKebutuhanKhusus || '-'}
                   </td>
                   {role?.toLowerCase() !== "ala" && (
-                  <td className="px-6 py-4 border border-slate-200">
-                    {row.rowData && !row.rowData.deleted_at && (
-                      <div className="flex items-center justify-center dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rowId = getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx;
-                            if (openDropdownIdPend !== rowId) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const dropdownWidth = 192;
-                              setDropdownPosition({
-                                top: rect.bottom + 4,
-                                left: Math.max(8, rect.right - dropdownWidth)
-                              });
-                              setOpenDropdownIdPend(rowId);
-                            } else {
-                              setOpenDropdownIdPend(null);
-                            }
-                          }}
-                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                          aria-label="Menu aksi"
-                          aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
-                        >
-                          <FiMoreVertical size={18} />
-                        </button>
-                      </div>
-                    )}
-                    {row.rowData && row.rowData.deleted_at && (
-                      <div className="text-center italic text-red-600">Dihapus</div>
-                    )}
-                  </td>
+                    <td className="px-6 py-4 border border-slate-200">
+                      {row.rowData && !row.rowData.deleted_at && (
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rowId = getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx;
+                              if (openDropdownIdPend !== rowId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownIdPend(rowId);
+                              } else {
+                                setOpenDropdownIdPend(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi"
+                            aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      )}
+                      {row.rowData && row.rowData.deleted_at && (
+                        <div className="text-center italic text-red-600">Dihapus</div>
+                      )}
+                    </td>
                   )}
                 </tr>
               );
@@ -1956,14 +1948,14 @@ export default function Tabel2A1({ role }) {
     const rows = rowsMaba;
     const showDeleted = showDeletedMaba;
     const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
-    
+
     // Proses data untuk ditampilkan per TS jika selectedYear ada
     let displayRows = [];
     if (selectedYear && maps?.tahun) {
       const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
       const currentYearId = parseInt(selectedYear);
       const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
-      
+
       if (currentYearIndex !== -1) {
         // TS, TS-1, TS-2, TS-3, TS-4
         for (let i = 0; i <= 4; i++) {
@@ -1993,10 +1985,10 @@ export default function Tabel2A1({ role }) {
 
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
-          
+
           // Filter berdasarkan prodi yang dipilih
           const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-          
+
           // Cari data mahasiswa baru dan aktif untuk unit prodi tertentu
           // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
           const mabaData = rows.filter(m => {
@@ -2008,15 +2000,15 @@ export default function Tabel2A1({ role }) {
               return matchesYear && matchesProdi && !m.deleted_at;
             }
           });
-          
+
           // Proses data mahasiswa baru
           const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
           const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
-          
+
           // Proses data mahasiswa aktif
           const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
           const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
-          
+
           displayRows.push({
             ts: i === 0 ? 'TS' : `TS-${i}`,
             tahun: year.tahun,
@@ -2050,7 +2042,7 @@ export default function Tabel2A1({ role }) {
           return matchesProdi && !row.deleted_at;
         }
       });
-      
+
       const groupedByYear = {};
       filteredRows.forEach(row => {
         const yearId = row.id_tahun;
@@ -2059,17 +2051,17 @@ export default function Tabel2A1({ role }) {
         }
         groupedByYear[yearId].push(row);
       });
-      
+
       displayRows = Object.keys(groupedByYear).map(yearId => {
         const yearIdNum = parseInt(yearId);
         const tahunName = getTahunName(yearIdNum);
         const mabaData = groupedByYear[yearId];
-        
+
         const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
         const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
         const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
         const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
-        
+
         return {
           ts: tahunName,
           tahun: yearIdNum,
@@ -2199,16 +2191,16 @@ export default function Tabel2A1({ role }) {
           <tbody className="divide-y divide-slate-200">
             {displayRows.map((row, idx) => {
               // Untuk checkbox, cek apakah ada rowData yang terpilih
-              const rowDataIds = row.rowData && row.rowData.length > 0 
+              const rowDataIds = row.rowData && row.rowData.length > 0
                 ? row.rowData.map(r => r[getIdField(r)])
                 : [];
               const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
-              const firstDataId = row.rowData && row.rowData.length > 0 
+              const firstDataId = row.rowData && row.rowData.length > 0
                 ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : null)
                 : null;
               // Pastikan key selalu unik dengan menggabungkan firstDataId dan idx
               const uniqueKey = `maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId !== null ? firstDataId : 'no-id'}-${idx}`;
-              
+
               return (
                 <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
@@ -2385,29 +2377,29 @@ export default function Tabel2A1({ role }) {
                       const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
                       const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                       return (
-                      <div className="flex items-center justify-center dropdown-container">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (openDropdownMaba !== dropdownKey) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const dropdownWidth = 192;
-                              setDropdownPosition({
-                                top: rect.bottom + 4,
-                                left: Math.max(8, rect.right - dropdownWidth)
-                              });
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
                                 setOpenDropdownMaba(dropdownKey);
-                            } else {
+                              } else {
                                 setOpenDropdownMaba(null);
-                            }
-                          }}
-                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                             aria-label="Menu aksi Mahasiswa Aktif RPL"
                             aria-expanded={openDropdownMaba === dropdownKey}
-                        >
-                          <FiMoreVertical size={18} />
-                        </button>
-                      </div>
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
                       );
                     })()}
                   </td>
@@ -2432,11 +2424,11 @@ export default function Tabel2A1({ role }) {
     const selectedRows = table.key === tablePend.key ? selectedRowsPend : selectedRowsMaba;
     const setSelectedRows = table.key === tablePend.key ? setSelectedRowsPend : setSelectedRowsMaba;
     const isAllSelected = rows.length > 0 && rows.every(row => selectedRows.includes(row[getIdField(row)]));
-    
-    console.log('renderTable:', { 
-      tableKey: table.key, 
-      rowsCount: rows.length, 
-      selectedRows, 
+
+    console.log('renderTable:', {
+      tableKey: table.key,
+      rowsCount: rows.length,
+      selectedRows,
       selectedRowsCount: selectedRows.length,
       isAllSelected,
       showDeleted
@@ -2457,17 +2449,17 @@ export default function Tabel2A1({ role }) {
                   />
                 </th>
               )}
-              {headers.map((h,i) => (
+              {headers.map((h, i) => (
                 <th key={i} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">{h}</th>
               ))}
               <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {rows.map((r,i) => {
+            {rows.map((r, i) => {
               const isSelected = selectedRows.includes(r[getIdField(r)]);
               return (
-                <tr key={i} className={`transition-colors ${i%2===0?"bg-white":"bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <tr key={i} className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                   {showDeleted && (
                     <td className="px-6 py-4 text-center border border-slate-200">
                       <input
@@ -2476,11 +2468,11 @@ export default function Tabel2A1({ role }) {
                         onChange={(e) => {
                           const idField = getIdField(r);
                           const id = r[idField];
-                          console.log('Individual checkbox change:', { 
-                            tableKey: table.key, 
-                            row: r, 
-                            idField, 
-                            id, 
+                          console.log('Individual checkbox change:', {
+                            tableKey: table.key,
+                            row: r,
+                            idField,
+                            id,
                             checked: e.target.checked,
                             currentSelectedRows: selectedRows
                           });
@@ -2498,7 +2490,7 @@ export default function Tabel2A1({ role }) {
                       />
                     </td>
                   )}
-                  {keys.map((k,j) => {
+                  {keys.map((k, j) => {
                     let displayValue = r[k];
                     if (k === 'id_unit_prodi') displayValue = getUnitName(r[k]);
                     if (k === 'id_tahun') displayValue = getTahunName(r[k]);
@@ -2556,21 +2548,21 @@ export default function Tabel2A1({ role }) {
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
-      
+
       {/* Loading State */}
       {mapsLoading && (
         <div className="flex justify-center items-center py-8">
           <div className="text-slate-600">Memuat data...</div>
         </div>
       )}
-      
+
       {/* Error Display */}
       {error && (
         <div className="mb-4 p-4 text-red-700 bg-red-100 border border-red-300 rounded-lg">
           {error}
         </div>
       )}
-      
+
       {/* Pendaftaran */}
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
@@ -2589,31 +2581,30 @@ export default function Tabel2A1({ role }) {
 
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <YearSelector 
-              selectedYear={selectedYear} 
-              setSelectedYear={setSelectedYear} 
+            <YearSelector
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
               label="Tahun"
               isOpen={openYearFilterDropdown}
               setIsOpen={setOpenYearFilterDropdown}
             />
-            <UnitSelector 
-              selectedUnit={selectedUnitProdi} 
-              setSelectedUnit={setSelectedUnitProdi} 
+            <UnitSelector
+              selectedUnit={selectedUnitProdi}
+              setSelectedUnit={setSelectedUnitProdi}
               label="Prodi"
               isOpen={openUnitFilterDropdown}
               setIsOpen={setOpenUnitFilterDropdown}
             />
-            
+
             {canDPend && role?.toLowerCase() !== "ala" && (
               <div className="inline-flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setShowDeletedPend(false)}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    !showDeletedPend
-                      ? "bg-white text-[#0384d6] shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeletedPend
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   aria-label="Tampilkan data aktif"
                 >
                   Data
@@ -2621,11 +2612,10 @@ export default function Tabel2A1({ role }) {
                 <button
                   onClick={() => setShowDeletedPend(true)}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    showDeletedPend
-                      ? "bg-white text-[#0384d6] shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeletedPend
+                    ? "bg-white text-[#0384d6] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   aria-label="Tampilkan data terhapus"
                 >
                   Data Terhapus
@@ -2641,9 +2631,9 @@ export default function Tabel2A1({ role }) {
                 Pulihkan ({selectedRowsPend.length})
               </button>
             )}
-            
+
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={exportPendaftaranToExcel}
@@ -2678,9 +2668,9 @@ export default function Tabel2A1({ role }) {
             return rowId === openDropdownIdPend;
           });
           if (!currentRow) return null;
-          
+
           return (
-            <div 
+            <div
               className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
               style={{
                 top: `${dropdownPosition.top}px`,
@@ -2752,178 +2742,176 @@ export default function Tabel2A1({ role }) {
 
       {/* Mahasiswa Baru & Aktif - Hidden for role pmb */}
       {role?.toLowerCase() !== "pmb" && (
-      <section>
-        <header className="pb-6 mb-6 border-b border-slate-200">
-          <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-sm text-slate-500">
-              Kelola data mahasiswa baru dan aktif per tahun akademik.
-            </p>
-            {!loading && (
-              <span className="inline-flex items-center text-sm text-slate-700">
-                Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rowsMaba.length}</span>
-              </span>
-            )}
-          </div>
-        </header>
+        <section>
+          <header className="pb-6 mb-6 border-b border-slate-200">
+            <h1 className="text-2xl font-bold text-slate-800">{tableMaba.label}</h1>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-sm text-slate-500">
+                Kelola data mahasiswa baru dan aktif per tahun akademik.
+              </p>
+              {!loading && (
+                <span className="inline-flex items-center text-sm text-slate-700">
+                  Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rowsMaba.length}</span>
+                </span>
+              )}
+            </div>
+          </header>
 
-        <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {canDMaba && role?.toLowerCase() !== "ala" && (
-              <div className="inline-flex bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setShowDeletedMaba(false)}
-                  disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    !showDeletedMaba
+          <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {canDMaba && role?.toLowerCase() !== "ala" && (
+                <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setShowDeletedMaba(false)}
+                    disabled={loading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeletedMaba
                       ? "bg-white text-[#0384d6] shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  aria-label="Tampilkan data aktif"
-                >
-                  Data
-                </button>
-                <button
-                  onClick={() => setShowDeletedMaba(true)}
-                  disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    showDeletedMaba
+                      } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data aktif"
+                  >
+                    Data
+                  </button>
+                  <button
+                    onClick={() => setShowDeletedMaba(true)}
+                    disabled={loading}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeletedMaba
                       ? "bg-white text-[#0384d6] shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  aria-label="Tampilkan data terhapus"
+                      } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    aria-label="Tampilkan data terhapus"
+                  >
+                    Data Terhapus
+                  </button>
+                </div>
+              )}
+              {canUMaba && showDeletedMaba && selectedRowsMaba.length > 0 && (
+                <button
+                  onClick={() => doRestoreMultiple(tableMaba)}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
                 >
-                  Data Terhapus
+                  Pulihkan ({selectedRowsMaba.length})
                 </button>
-              </div>
-            )}
-            {canUMaba && showDeletedMaba && selectedRowsMaba.length > 0 && (
-              <button
-                onClick={() => doRestoreMultiple(tableMaba)}
-                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                Pulihkan ({selectedRowsMaba.length})
-              </button>
-            )}
-            
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={exportMabaToExcel}
-              disabled={loading || rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at).length === 0}
-              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Export ke Excel"
-            >
-              <FiDownload size={18} />
-              <span>Export Excel</span>
-            </button>
-            {canCMaba && role?.toLowerCase() !== "pmb" && (
-              <button
-                onClick={() => setShowModalMaba(true)}
-                className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                + Tambah Data
-              </button>
-            )}
-          </div>
-        </div>
+              )}
 
-        <div className="relative transition-opacity duration-300 ease-in-out">
-          {renderTableMaba()}
-        </div>
+            </div>
 
-        {/* Dropdown Menu Maba - Fixed Position (untuk 4 kolom aksi terpisah) */}
-        {openDropdownMaba !== null && (() => {
-          // Parse dropdown key: format "baru-reguler-{id}" atau "baru-rpl-{id}" atau "aktif-reguler-{id}" atau "aktif-rpl-{id}"
-          const match = openDropdownMaba.match(/^(baru|aktif)-(reguler|rpl)-(.+)$/);
-          if (!match) return null;
-          
-          const jenis = match[1]; // "baru" atau "aktif"
-          const jalur = match[2]; // "reguler" atau "rpl"
-          const idStr = match[3]; // ID
-          const rowId = isNaN(idStr) ? idStr : parseInt(idStr);
-          
-          // Cari data yang sesuai dari rowsMaba
-          const currentRowData = rowsMaba.find((r) => {
-            const rId = getIdField(r) ? r[getIdField(r)] : null;
-            return r.jenis === jenis && r.jalur === jalur && (rId === rowId || String(rId) === String(rowId) || String(rId) === idStr);
-          });
-          
-          if (!currentRowData) return null;
-          
-          return (
-            <div 
-              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
-              style={{
-                top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`
-              }}
-            >
-              {!showDeletedMaba && canUMaba && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportMabaToExcel}
+                disabled={loading || rowsMaba.filter(r => showDeletedMaba ? r.deleted_at : !r.deleted_at).length === 0}
+                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                title="Export ke Excel"
+              >
+                <FiDownload size={18} />
+                <span>Export Excel</span>
+              </button>
+              {canCMaba && role?.toLowerCase() !== "pmb" && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingMaba(currentRowData);
-                    setFormMaba(currentRowData);
-                    setShowModalMaba(true);
-                    setOpenDropdownMaba(null);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                  aria-label={`Edit data ${jenis} ${jalur}`}
+                  onClick={() => setShowModalMaba(true)}
+                  className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
                 >
-                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
-                  <span>Edit</span>
-                </button>
-              )}
-              {!showDeletedMaba && canDMaba && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    doDelete(currentRowData, tableMaba);
-                    setOpenDropdownMaba(null);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                  aria-label={`Hapus data ${jenis} ${jalur}`}
-                >
-                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
-                  <span>Hapus</span>
-                </button>
-              )}
-              {showDeletedMaba && canUMaba && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    doRestore(currentRowData, tableMaba);
-                    setOpenDropdownMaba(null);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
-                  aria-label={`Pulihkan data ${jenis} ${jalur}`}
-                >
-                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
-                  <span>Pulihkan</span>
-                </button>
-              )}
-              {showDeletedMaba && canDMaba && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    doHardDelete(currentRowData, tableMaba);
-                    setOpenDropdownMaba(null);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                  aria-label={`Hapus permanen data ${jenis} ${jalur}`}
-                >
-                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                  <span>Hapus Permanen</span>
+                  + Tambah Data
                 </button>
               )}
             </div>
-          );
-        })()}
-      </section>
+          </div>
+
+          <div className="relative transition-opacity duration-300 ease-in-out">
+            {renderTableMaba()}
+          </div>
+
+          {/* Dropdown Menu Maba - Fixed Position (untuk 4 kolom aksi terpisah) */}
+          {openDropdownMaba !== null && (() => {
+            // Parse dropdown key: format "baru-reguler-{id}" atau "baru-rpl-{id}" atau "aktif-reguler-{id}" atau "aktif-rpl-{id}"
+            const match = openDropdownMaba.match(/^(baru|aktif)-(reguler|rpl)-(.+)$/);
+            if (!match) return null;
+
+            const jenis = match[1]; // "baru" atau "aktif"
+            const jalur = match[2]; // "reguler" atau "rpl"
+            const idStr = match[3]; // ID
+            const rowId = isNaN(idStr) ? idStr : parseInt(idStr);
+
+            // Cari data yang sesuai dari rowsMaba
+            const currentRowData = rowsMaba.find((r) => {
+              const rId = getIdField(r) ? r[getIdField(r)] : null;
+              return r.jenis === jenis && r.jalur === jalur && (rId === rowId || String(rId) === String(rowId) || String(rId) === idStr);
+            });
+
+            if (!currentRowData) return null;
+
+            return (
+              <div
+                className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+                style={{
+                  top: `${dropdownPosition.top}px`,
+                  left: `${dropdownPosition.left}px`
+                }}
+              >
+                {!showDeletedMaba && canUMaba && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingMaba(currentRowData);
+                      setFormMaba(currentRowData);
+                      setShowModalMaba(true);
+                      setOpenDropdownMaba(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                    aria-label={`Edit data ${jenis} ${jalur}`}
+                  >
+                    <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                    <span>Edit</span>
+                  </button>
+                )}
+                {!showDeletedMaba && canDMaba && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doDelete(currentRowData, tableMaba);
+                      setOpenDropdownMaba(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                    aria-label={`Hapus data ${jenis} ${jalur}`}
+                  >
+                    <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                    <span>Hapus</span>
+                  </button>
+                )}
+                {showDeletedMaba && canUMaba && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doRestore(currentRowData, tableMaba);
+                      setOpenDropdownMaba(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                    aria-label={`Pulihkan data ${jenis} ${jalur}`}
+                  >
+                    <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                    <span>Pulihkan</span>
+                  </button>
+                )}
+                {showDeletedMaba && canDMaba && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      doHardDelete(currentRowData, tableMaba);
+                      setOpenDropdownMaba(null);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                    aria-label={`Hapus permanen data ${jenis} ${jalur}`}
+                  >
+                    <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                    <span>Hapus Permanen</span>
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+        </section>
       )}
 
       {/* Tabel Data Mahasiswa - Struktur Kompleks */}
@@ -2949,18 +2937,18 @@ export default function Tabel2A1({ role }) {
         {/* Filter Unit Prodi */}
         <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <YearSelector 
-              selectedYear={selectedYear} 
-              setSelectedYear={setSelectedYear} 
+            <YearSelector
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
               label="Tahun TS"
               isOpen={openGabunganYearDropdown}
               setIsOpen={setOpenGabunganYearDropdown}
               containerClass="gabungan-year-dropdown-container"
               menuClass="gabungan-year-dropdown-menu"
             />
-            <UnitSelector 
-              selectedUnit={selectedUnitProdi} 
-              setSelectedUnit={setSelectedUnitProdi} 
+            <UnitSelector
+              selectedUnit={selectedUnitProdi}
+              setSelectedUnit={setSelectedUnitProdi}
               label="Prodi"
               isOpen={openGabunganUnitDropdown}
               setIsOpen={setOpenGabunganUnitDropdown}
@@ -3031,10 +3019,10 @@ export default function Tabel2A1({ role }) {
               {(() => {
                 const unitProdiId = parseInt(selectedUnitProdi) || 4;
                 const tableData = processDataForTable(unitProdiId);
-                
+
                 // Filter data berdasarkan showDeleted jika diperlukan
                 // (Saat ini tabel gabungan ini hanya menampilkan data aktif)
-                
+
                 if (tableData.length === 0) {
                   return (
                     <tr>
@@ -3081,15 +3069,15 @@ export default function Tabel2A1({ role }) {
             return rowId === openDropdownIdGabungan;
           });
           if (!currentRow) return null;
-          
+
           // Tentukan table berdasarkan context
           const table = tablePend; // Default, bisa disesuaikan
           const canUpdate = roleCan(role, table.key, "U");
           const canDelete = roleCan(role, table.key, "D");
           const showDeleted = showDeletedPend; // Default, bisa disesuaikan
-          
+
           return (
-            <div 
+            <div
               className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
               style={{
                 top: `${dropdownPosition.top}px`,
@@ -3162,7 +3150,7 @@ export default function Tabel2A1({ role }) {
 
       {/* Modal Form Pendaftaran - Hidden for role ala */}
       {showModalPend && role?.toLowerCase() !== "ala" && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -3171,13 +3159,13 @@ export default function Tabel2A1({ role }) {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
-              <h3 className="text-xl font-bold">{editingPend?"Edit Pendaftaran":"Tambah Pendaftaran"}</h3>
+              <h3 className="text-xl font-bold">{editingPend ? "Edit Pendaftaran" : "Tambah Pendaftaran"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir daya tampung & pendaftar per tahun.</p>
             </div>
             <div className="p-8 overflow-y-auto flex-1">
@@ -3192,11 +3180,10 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenPendUnitDropdown(!openPendUnitDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formPend.id_unit_prodi
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formPend.id_unit_prodi
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih unit prodi"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3205,28 +3192,26 @@ export default function Tabel2A1({ role }) {
                             {formPend.id_unit_prodi === '4' ? 'Teknik Informatika (TI)' : formPend.id_unit_prodi === '5' ? 'Manajemen Informatika (MI)' : '-- Pilih Unit Prodi --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openPendUnitDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openPendUnitDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openPendUnitDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto pend-unit-dropdown-menu mt-1 w-full"
                         >
                           <button
                             type="button"
                             onClick={() => {
-                              setFormPend({...formPend, id_unit_prodi: "4"});
+                              setFormPend({ ...formPend, id_unit_prodi: "4" });
                               setOpenPendUnitDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formPend.id_unit_prodi === "4"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formPend.id_unit_prodi === "4"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Teknik Informatika (TI)</span>
@@ -3234,14 +3219,13 @@ export default function Tabel2A1({ role }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormPend({...formPend, id_unit_prodi: "5"});
+                              setFormPend({ ...formPend, id_unit_prodi: "5" });
                               setOpenPendUnitDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formPend.id_unit_prodi === "5"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formPend.id_unit_prodi === "5"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Manajemen Informatika (MI)</span>
@@ -3259,33 +3243,31 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenPendTahunDropdown(!openPendTahunDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formPend.id_tahun
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formPend.id_tahun
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih tahun akademik"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formPend.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formPend.id_tahun 
+                            {formPend.id_tahun
                               ? (() => {
-                                  const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(formPend.id_tahun));
-                                  return found ? found.tahun : formPend.id_tahun;
-                                })()
+                                const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(formPend.id_tahun));
+                                return found ? found.tahun : formPend.id_tahun;
+                              })()
                               : "-- Pilih Tahun --"}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openPendTahunDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openPendTahunDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openPendTahunDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto pend-tahun-dropdown-menu mt-1 w-full"
                         >
                           {maps?.tahun && Object.values(maps.tahun).length > 0 ? (
@@ -3294,14 +3276,13 @@ export default function Tabel2A1({ role }) {
                                 key={y.id_tahun}
                                 type="button"
                                 onClick={() => {
-                                  setFormPend({...formPend, id_tahun: String(y.id_tahun)});
+                                  setFormPend({ ...formPend, id_tahun: String(y.id_tahun) });
                                   setOpenPendTahunDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formPend.id_tahun === String(y.id_tahun)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formPend.id_tahun === String(y.id_tahun)
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                  }`}
                               >
                                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span>{y.tahun}</span>
@@ -3318,46 +3299,46 @@ export default function Tabel2A1({ role }) {
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Daya Tampung <span className="text-red-500">*</span></label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.daya_tampung} onChange={e=>setFormPend({...formPend,daya_tampung:e.target.value})} required />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.daya_tampung} onChange={e => setFormPend({ ...formPend, daya_tampung: e.target.value })} required />
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Pendaftar <span className="text-red-500">*</span></label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar} onChange={e=>setFormPend({...formPend,pendaftar:e.target.value})} required />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar} onChange={e => setFormPend({ ...formPend, pendaftar: e.target.value })} required />
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Pendaftar Afirmasi</label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar_afirmasi} onChange={e=>setFormPend({...formPend,pendaftar_afirmasi:e.target.value})} />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar_afirmasi} onChange={e => setFormPend({ ...formPend, pendaftar_afirmasi: e.target.value })} />
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Pendaftar Kebutuhan Khusus</label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar_kebutuhan_khusus} onChange={e=>setFormPend({...formPend,pendaftar_kebutuhan_khusus:e.target.value})} />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formPend.pendaftar_kebutuhan_khusus} onChange={e => setFormPend({ ...formPend, pendaftar_kebutuhan_khusus: e.target.value })} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                  <button 
-                      type="button" 
-                      onClick={() => {
-                        setOpenPendUnitDropdown(false);
-                        setOpenPendTahunDropdown(false);
-                        setShowModalPend(false);
-                      }} 
-                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenPendUnitDropdown(false);
+                      setOpenPendTahunDropdown(false);
+                      setShowModalPend(false);
+                    }}
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      Batal
+                    Batal
                   </button>
-                  <button 
-                      type="submit" 
-                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-                      disabled={loading}
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                      {loading ? (
-                          <div className="flex items-center justify-center space-x-2">
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                              <span>Menyimpan...</span>
-                          </div>
-                      ) : (
-                          'Simpan'
-                      )}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      'Simpan'
+                    )}
                   </button>
                 </div>
               </form>
@@ -3368,7 +3349,7 @@ export default function Tabel2A1({ role }) {
 
       {/* Modal Form Maba - Hidden for role pmb */}
       {showModalMaba && role?.toLowerCase() !== "pmb" && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -3377,13 +3358,13 @@ export default function Tabel2A1({ role }) {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col relative z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
-              <h3 className="text-xl font-bold">{editingMaba?"Edit Mahasiswa Baru/Aktif":"Tambah Mahasiswa Baru/Aktif"}</h3>
+              <h3 className="text-xl font-bold">{editingMaba ? "Edit Mahasiswa Baru/Aktif" : "Tambah Mahasiswa Baru/Aktif"}</h3>
               <p className="text-white/80 mt-1 text-sm">Isi formulir jumlah mahasiswa berdasarkan jenis dan tahun.</p>
             </div>
             <div className="p-8 overflow-y-auto flex-1">
@@ -3398,11 +3379,10 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenMabaUnitDropdown(!openMabaUnitDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formMaba.id_unit_prodi
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formMaba.id_unit_prodi
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih unit prodi"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3411,28 +3391,26 @@ export default function Tabel2A1({ role }) {
                             {formMaba.id_unit_prodi === '4' ? 'Teknik Informatika (TI)' : formMaba.id_unit_prodi === '5' ? 'Manajemen Informatika (MI)' : formMaba.id_unit_prodi ? (maps?.unit_kerja && Object.values(maps.unit_kerja).find(u => String(u.id_unit) === String(formMaba.id_unit_prodi))?.nama_unit) || formMaba.id_unit_prodi : '-- Pilih Unit Prodi --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openMabaUnitDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openMabaUnitDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openMabaUnitDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto maba-unit-dropdown-menu mt-1 w-full"
                         >
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, id_unit_prodi: "4"});
+                              setFormMaba({ ...formMaba, id_unit_prodi: "4" });
                               setOpenMabaUnitDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.id_unit_prodi === "4"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === "4"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Teknik Informatika (TI)</span>
@@ -3440,14 +3418,13 @@ export default function Tabel2A1({ role }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, id_unit_prodi: "5"});
+                              setFormMaba({ ...formMaba, id_unit_prodi: "5" });
                               setOpenMabaUnitDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.id_unit_prodi === "5"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === "5"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Manajemen Informatika (MI)</span>
@@ -3457,14 +3434,13 @@ export default function Tabel2A1({ role }) {
                               key={u.id_unit}
                               type="button"
                               onClick={() => {
-                                setFormMaba({...formMaba, id_unit_prodi: String(u.id_unit)});
+                                setFormMaba({ ...formMaba, id_unit_prodi: String(u.id_unit) });
                                 setOpenMabaUnitDropdown(false);
                               }}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                formMaba.id_unit_prodi === String(u.id_unit)
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
-                              }`}
+                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === String(u.id_unit)
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
+                                }`}
                             >
                               <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                               <span>{u.nama_unit}</span>
@@ -3483,33 +3459,31 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenMabaTahunDropdown(!openMabaTahunDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formMaba.id_tahun
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formMaba.id_tahun
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih tahun akademik"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formMaba.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formMaba.id_tahun 
+                            {formMaba.id_tahun
                               ? (() => {
-                                  const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(formMaba.id_tahun));
-                                  return found ? found.tahun : formMaba.id_tahun;
-                                })()
+                                const found = maps?.tahun && Object.values(maps.tahun).find((y) => String(y.id_tahun) === String(formMaba.id_tahun));
+                                return found ? found.tahun : formMaba.id_tahun;
+                              })()
                               : "-- Pilih Tahun --"}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openMabaTahunDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openMabaTahunDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openMabaTahunDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto maba-tahun-dropdown-menu mt-1 w-full"
                         >
                           {maps?.tahun && Object.values(maps.tahun).length > 0 ? (
@@ -3518,14 +3492,13 @@ export default function Tabel2A1({ role }) {
                                 key={y.id_tahun}
                                 type="button"
                                 onClick={() => {
-                                  setFormMaba({...formMaba, id_tahun: String(y.id_tahun)});
+                                  setFormMaba({ ...formMaba, id_tahun: String(y.id_tahun) });
                                   setOpenMabaTahunDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  formMaba.id_tahun === String(y.id_tahun)
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
-                                }`}
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_tahun === String(y.id_tahun)
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
+                                  }`}
                               >
                                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span>{y.tahun}</span>
@@ -3549,11 +3522,10 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenMabaJenisDropdown(!openMabaJenisDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formMaba.jenis
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formMaba.jenis
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih jenis mahasiswa"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3562,28 +3534,26 @@ export default function Tabel2A1({ role }) {
                             {formMaba.jenis === 'baru' ? 'Baru' : formMaba.jenis === 'aktif' ? 'Aktif' : '-- Pilih Jenis --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openMabaJenisDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openMabaJenisDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openMabaJenisDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto maba-jenis-dropdown-menu mt-1 w-full"
                         >
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, jenis: "baru"});
+                              setFormMaba({ ...formMaba, jenis: "baru" });
                               setOpenMabaJenisDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.jenis === "baru"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.jenis === "baru"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Baru</span>
@@ -3591,14 +3561,13 @@ export default function Tabel2A1({ role }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, jenis: "aktif"});
+                              setFormMaba({ ...formMaba, jenis: "aktif" });
                               setOpenMabaJenisDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.jenis === "aktif"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.jenis === "aktif"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Aktif</span>
@@ -3616,11 +3585,10 @@ export default function Tabel2A1({ role }) {
                           e.preventDefault();
                           setOpenMabaJalurDropdown(!openMabaJalurDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formMaba.jalur
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formMaba.jalur
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
                         aria-label="Pilih jalur"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3629,28 +3597,26 @@ export default function Tabel2A1({ role }) {
                             {formMaba.jalur === 'reguler' ? 'Reguler' : formMaba.jalur === 'rpl' ? 'RPL' : '-- Pilih Jalur --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openMabaJalurDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openMabaJalurDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openMabaJalurDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto maba-jalur-dropdown-menu mt-1 w-full"
                         >
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, jalur: "reguler"});
+                              setFormMaba({ ...formMaba, jalur: "reguler" });
                               setOpenMabaJalurDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.jalur === "reguler"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.jalur === "reguler"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>Reguler</span>
@@ -3658,14 +3624,13 @@ export default function Tabel2A1({ role }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormMaba({...formMaba, jalur: "rpl"});
+                              setFormMaba({ ...formMaba, jalur: "rpl" });
                               setOpenMabaJalurDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              formMaba.jalur === "rpl"
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.jalur === "rpl"
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span>RPL</span>
@@ -3676,44 +3641,44 @@ export default function Tabel2A1({ role }) {
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Total <span className="text-red-500">*</span></label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_total} onChange={e=>setFormMaba({...formMaba,jumlah_total:e.target.value})} required />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_total} onChange={e => setFormMaba({ ...formMaba, jumlah_total: e.target.value })} required />
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Afirmasi</label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_afirmasi} onChange={e=>setFormMaba({...formMaba,jumlah_afirmasi:e.target.value})} />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_afirmasi} onChange={e => setFormMaba({ ...formMaba, jumlah_afirmasi: e.target.value })} />
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Kebutuhan Khusus</label>
-                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_kebutuhan_khusus} onChange={e=>setFormMaba({...formMaba,jumlah_kebutuhan_khusus:e.target.value})} />
+                    <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_kebutuhan_khusus} onChange={e => setFormMaba({ ...formMaba, jumlah_kebutuhan_khusus: e.target.value })} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                  <button 
-                      type="button" 
-                      onClick={() => {
-                        setOpenMabaUnitDropdown(false);
-                        setOpenMabaTahunDropdown(false);
-                        setOpenMabaJenisDropdown(false);
-                        setOpenMabaJalurDropdown(false);
-                        setShowModalMaba(false);
-                      }} 
-                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenMabaUnitDropdown(false);
+                      setOpenMabaTahunDropdown(false);
+                      setOpenMabaJenisDropdown(false);
+                      setOpenMabaJalurDropdown(false);
+                      setShowModalMaba(false);
+                    }}
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      Batal
+                    Batal
                   </button>
-                  <button 
-                      type="submit" 
-                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-                      disabled={loading}
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                      {loading ? (
-                          <div className="flex items-center justify-center space-x-2">
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                              <span>Menyimpan...</span>
-                          </div>
-                      ) : (
-                          'Simpan'
-                      )}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      'Simpan'
+                    )}
                   </button>
                 </div>
               </form>

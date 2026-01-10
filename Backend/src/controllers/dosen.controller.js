@@ -14,7 +14,6 @@ export const listDosen = async (req, res) => {
         d.nidn,
         d.nuptk,
         d.beban_sks,
-        d.homebase,
         d.pt,
         p.nama_lengkap,
         d.id_pegawai,
@@ -76,13 +75,13 @@ export const listDosen = async (req, res) => {
     // Debugging (Bisa dihapus nanti)
     // console.log('Executing SQL:', sql);
     // console.log('With params:', params);
-    
+
     const [rows] = await pool.query(sql, params);
     res.json(rows);
   } catch (err) {
     console.error("Error listDosen:", err);
-    res.status(500).json({ 
-      error: 'List failed', 
+    res.status(500).json({
+      error: 'List failed',
       details: err.sqlMessage || err.message
     });
   }
@@ -109,9 +108,9 @@ export const getDosenById = async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error("Error getDosenById:", err);
-    res.status(500).json({ 
-      error: 'Get failed', 
-      details: err.sqlMessage || err.message 
+    res.status(500).json({
+      error: 'Get failed',
+      details: err.sqlMessage || err.message
     });
   }
 };
@@ -123,7 +122,6 @@ export const createDosen = async (req, res) => {
       id_pegawai: req.body.id_pegawai,
       nidn: req.body.nidn,
       nuptk: req.body.nuptk,
-      homebase: req.body.homebase,
       id_jafung: req.body.id_jafung,
       beban_sks: req.body.beban_sks,
       pt: req.body.pt,
@@ -152,9 +150,9 @@ export const createDosen = async (req, res) => {
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createDosen:", err);
-    res.status(500).json({ 
-      error: 'Create failed', 
-      details: err.sqlMessage || err.message 
+    res.status(500).json({
+      error: 'Create failed',
+      details: err.sqlMessage || err.message
     });
   }
 };
@@ -166,7 +164,6 @@ export const updateDosen = async (req, res) => {
       id_pegawai: req.body.id_pegawai,
       nidn: req.body.nidn,
       nuptk: req.body.nuptk,
-      homebase: req.body.homebase,
       id_jafung: req.body.id_jafung,
       beban_sks: req.body.beban_sks,
       pt: req.body.pt,
@@ -179,7 +176,7 @@ export const updateDosen = async (req, res) => {
     Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     if (Object.keys(data).length === 0) {
-        return res.status(400).json({ error: 'Tidak ada data untuk diupdate.'});
+      return res.status(400).json({ error: 'Tidak ada data untuk diupdate.' });
     }
 
     await pool.query(
@@ -206,9 +203,9 @@ export const updateDosen = async (req, res) => {
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateDosen:", err);
-    res.status(500).json({ 
-      error: 'Update failed', 
-      details: err.sqlMessage || err.message 
+    res.status(500).json({
+      error: 'Update failed',
+      details: err.sqlMessage || err.message
     });
   }
 };
@@ -227,9 +224,9 @@ export const softDeleteDosen = async (req, res) => {
     res.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error("Error softDeleteDosen:", err);
-    res.status(500).json({ 
-      error: 'Delete failed', 
-      details: err.sqlMessage || err.message 
+    res.status(500).json({
+      error: 'Delete failed',
+      details: err.sqlMessage || err.message
     });
   }
 };
@@ -244,9 +241,9 @@ export const restoreDosen = async (req, res) => {
     res.json({ ok: true, restored: true });
   } catch (err) {
     console.error("Error restoreDosen:", err);
-    res.status(500).json({ 
-      error: 'Restore failed', 
-      details: err.sqlMessage || err.message 
+    res.status(500).json({
+      error: 'Restore failed',
+      details: err.sqlMessage || err.message
     });
   }
 };

@@ -8,52 +8,21 @@ export const listTabel2b5KesesuaianKerja = async (req, res) => {
     const userRole = req.user?.role?.toLowerCase();
     const isKemahasiswaan = userRole === 'kemahasiswaan';
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+
     // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
-    if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
-      delete req.query.id_unit_prodi;
-    }
-    
+    // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
+    // if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
+    //   delete req.query.id_unit_prodi;
+    // }
+
     const { where, params } = await buildWhere(req, 'tabel_2b5_kesesuaian_kerja', 't2b5');
-    
+
     // Hapus filter id_unit_prodi dari where clause untuk role KEMAHASISWAAN (bisa lihat semua data)
-    if (isKemahasiswaan && !isSuperAdmin) {
-      // Cari dan hapus semua filter yang mengandung id_unit_prodi
-      const filteredWhere = [];
-      const filteredParams = [];
-      let paramIndex = 0;
-      
-      for (let i = 0; i < where.length; i++) {
-        const condition = where[i];
-        // Skip kondisi yang mengandung id_unit_prodi
-        if (!/id_unit_prodi/i.test(condition)) {
-          filteredWhere.push(condition);
-          // Hitung jumlah parameter di kondisi ini
-          const matches = condition.match(/\?/g);
-          if (matches) {
-            for (let j = 0; j < matches.length; j++) {
-              if (paramIndex < params.length) {
-                filteredParams.push(params[paramIndex]);
-              }
-              paramIndex++;
-            }
-          }
-        } else {
-          // Skip parameter untuk kondisi id_unit_prodi yang dihapus
-          const matches = condition.match(/\?/g);
-          if (matches) {
-            paramIndex += matches.length;
-          }
-        }
-      }
-      
-      // Update where dan params
-      where.length = 0;
-      where.push(...filteredWhere);
-      params.length = 0;
-      params.push(...filteredParams);
-    }
-    
+    // Hapus filter id_unit_prodi dari where clause untuk role KEMAHASISWAAN (bisa lihat semua data)
+    // if (isKemahasiswaan && !isSuperAdmin) {
+    //   ... logic removed ...
+    // }
+
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b5');
 
     const sql = `
@@ -117,14 +86,14 @@ export const getTabel2b5KesesuaianKerjaById = async (req, res) => {
 // === CREATE TABEL 2B5 KESESUAIAN KERJA ===
 export const createTabel2b5KesesuaianKerja = async (req, res) => {
   try {
-    const { 
-      id_unit_prodi, 
-      id_tahun_lulus, 
-      jml_infokom, 
-      jml_non_infokom, 
-      jml_internasional, 
-      jml_nasional, 
-      jml_wirausaha 
+    const {
+      id_unit_prodi,
+      id_tahun_lulus,
+      jml_infokom,
+      jml_non_infokom,
+      jml_internasional,
+      jml_nasional,
+      jml_wirausaha
     } = req.body;
 
     if (!id_unit_prodi || !id_tahun_lulus) {
@@ -141,10 +110,10 @@ export const createTabel2b5KesesuaianKerja = async (req, res) => {
     if (tabel2b4Data.length > 0) {
       const jumlahTerlacak = tabel2b4Data[0].jumlah_terlacak;
       const totalInput = (jml_infokom || 0) + (jml_non_infokom || 0) + (jml_internasional || 0) + (jml_nasional || 0) + (jml_wirausaha || 0);
-      
+
       if (totalInput > jumlahTerlacak) {
-        return res.status(400).json({ 
-          error: `Total jumlah (${totalInput}) tidak boleh lebih dari jumlah terlacak di tabel 2.B.4 (${jumlahTerlacak}).` 
+        return res.status(400).json({
+          error: `Total jumlah (${totalInput}) tidak boleh lebih dari jumlah terlacak di tabel 2.B.4 (${jumlahTerlacak}).`
         });
       }
     }
@@ -195,14 +164,14 @@ export const createTabel2b5KesesuaianKerja = async (req, res) => {
 // === UPDATE TABEL 2B5 KESESUAIAN KERJA ===
 export const updateTabel2b5KesesuaianKerja = async (req, res) => {
   try {
-    const { 
-      id_unit_prodi, 
-      id_tahun_lulus, 
-      jml_infokom, 
-      jml_non_infokom, 
-      jml_internasional, 
-      jml_nasional, 
-      jml_wirausaha 
+    const {
+      id_unit_prodi,
+      id_tahun_lulus,
+      jml_infokom,
+      jml_non_infokom,
+      jml_internasional,
+      jml_nasional,
+      jml_wirausaha
     } = req.body;
 
     // Validasi jumlah tidak boleh lebih dari jumlah terlacak di tabel 2.B.4
@@ -216,10 +185,10 @@ export const updateTabel2b5KesesuaianKerja = async (req, res) => {
       if (tabel2b4Data.length > 0) {
         const jumlahTerlacak = tabel2b4Data[0].jumlah_terlacak;
         const totalInput = (jml_infokom || 0) + (jml_non_infokom || 0) + (jml_internasional || 0) + (jml_nasional || 0) + (jml_wirausaha || 0);
-        
+
         if (totalInput > jumlahTerlacak) {
-          return res.status(400).json({ 
-            error: `Total jumlah (${totalInput}) tidak boleh lebih dari jumlah terlacak di tabel 2.B.4 (${jumlahTerlacak}).` 
+          return res.status(400).json({
+            error: `Total jumlah (${totalInput}) tidak boleh lebih dari jumlah terlacak di tabel 2.B.4 (${jumlahTerlacak}).`
           });
         }
       }
@@ -308,7 +277,7 @@ export const hardDeleteTabel2b5KesesuaianKerja = async (req, res) => {
 export const validateJumlahTabel2b5 = async (req, res) => {
   try {
     const { id_unit_prodi, id_tahun_lulus, jml_infokom, jml_non_infokom, jml_internasional, jml_nasional, jml_wirausaha } = req.query;
-    
+
     if (!id_unit_prodi || !id_tahun_lulus) {
       return res.status(400).json({ error: 'Field `id_unit_prodi` dan `id_tahun_lulus` wajib diisi.' });
     }
@@ -321,7 +290,7 @@ export const validateJumlahTabel2b5 = async (req, res) => {
     );
 
     if (tabel2b4Data.length === 0) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Data tidak ditemukan di tabel 2.B.4 untuk unit prodi dan tahun lulus tersebut.',
         jumlah_terlacak: 0,
         total_input: 0,
@@ -330,18 +299,18 @@ export const validateJumlahTabel2b5 = async (req, res) => {
     }
 
     const jumlahTerlacak = tabel2b4Data[0].jumlah_terlacak;
-    const totalInput = (parseInt(jml_infokom) || 0) + (parseInt(jml_non_infokom) || 0) + 
-                      (parseInt(jml_internasional) || 0) + (parseInt(jml_nasional) || 0) + 
-                      (parseInt(jml_wirausaha) || 0);
-    
+    const totalInput = (parseInt(jml_infokom) || 0) + (parseInt(jml_non_infokom) || 0) +
+      (parseInt(jml_internasional) || 0) + (parseInt(jml_nasional) || 0) +
+      (parseInt(jml_wirausaha) || 0);
+
     const valid = totalInput <= jumlahTerlacak;
 
     res.json({
       jumlah_terlacak: jumlahTerlacak,
       total_input: totalInput,
       valid: valid,
-      message: valid ? 
-        `Valid! Total ${totalInput} tidak melebihi jumlah terlacak ${jumlahTerlacak}` : 
+      message: valid ?
+        `Valid! Total ${totalInput} tidak melebihi jumlah terlacak ${jumlahTerlacak}` :
         `Tidak valid! Total ${totalInput} melebihi jumlah terlacak ${jumlahTerlacak}`
     });
   } catch (err) {
@@ -354,7 +323,7 @@ export const validateJumlahTabel2b5 = async (req, res) => {
 export const summaryTabel2b5KesesuaianKerja = async (req, res) => {
   try {
     const { id_unit_prodi, id_tahun_lulus } = req.query;
-    
+
     let sql = `
       SELECT 
         uk.nama_unit AS nama_unit_prodi,
@@ -377,19 +346,19 @@ export const summaryTabel2b5KesesuaianKerja = async (req, res) => {
         AND t2b4.deleted_at IS NULL
       WHERE t2b5.deleted_at IS NULL
     `;
-    
+
     const params = [];
-    
+
     if (id_unit_prodi) {
       sql += ` AND t2b5.id_unit_prodi = ?`;
       params.push(id_unit_prodi);
     }
-    
+
     if (id_tahun_lulus) {
       sql += ` AND t2b5.id_tahun_lulus = ?`;
       params.push(id_tahun_lulus);
     }
-    
+
     sql += ` GROUP BY t2b5.id_unit_prodi, t2b5.id_tahun_lulus ORDER BY ta.tahun DESC`;
 
     const [rows] = await pool.query(sql, params);
