@@ -236,6 +236,48 @@ export default function Tabel2C({ role }) {
     return params.join('&') + deletedParam;
   }, [isSuperAdmin, selectedProdi, authUser]);
 
+  // Helper function untuk mapping data tahun dengan filter berdasarkan showDeleted  
+  const mapDataByYear = useCallback((dataTahunan, dataDetails, yearOrder, showDeletedFlag) => {
+    const map = {};
+    yearOrder.forEach((y) => {
+      if (y != null) {
+        // Cari data tahunan untuk tahun ini
+        const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
+
+        if (tahunData) {
+          const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
+          const link = tahunData.link_bukti || "";
+          const id_tahunan = tahunData.id;
+          const id_unit_prodi = tahunData.id_unit_prodi || null;
+          const deleted_at = tahunData.deleted_at || null;
+
+          // Filter berdasarkan showDeletedFlag
+          if (showDeletedFlag && !deleted_at) {
+            map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
+            return;
+          }
+          if (!showDeletedFlag && deleted_at) {
+            map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
+            return;
+          }
+
+          // Ambil detail untuk id_tahunan ini
+          const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
+          const counts = {};
+          details.forEach((d) => {
+            counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
+          });
+
+          map[y] = { aktif, link, counts, id_tahunan, id_unit_prodi, deleted_at, hasData: true };
+        } else {
+          // Tidak ada data di database untuk tahun ini - tampilkan entry kosong
+          map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
+        }
+      }
+    });
+    return map;
+  }, []);
+
   // Fetch master bentuk + data per tahun
   useEffect(() => {
     if (!selectedYear || yearOrder.length === 0) {
@@ -270,14 +312,6 @@ export default function Tabel2C({ role }) {
 
     (async () => {
       try {
-        // EKSPERIMENTAL: Explicitly block Kaprodi (backend rejected)
-        const rawRole = (authUser?.role || "").toLowerCase();
-        if (rawRole.includes("kaprodi")) {
-          console.log("Force blocking Kaprodi from Tabel 2C fetch to prevent 403");
-          setLoading(false);
-          return;
-        }
-
         // Cek permission regular
         const hasReadAccess = isSuperAdmin || roleCan(authUser?.role, "fleksibilitas_pembelajaran", "r");
         if (!hasReadAccess) {
@@ -295,16 +329,13 @@ export default function Tabel2C({ role }) {
         // Fetch data fleksibilitas untuk semua tahun dalam yearOrder (yang valid)
         let resAll = { masterBentuk: [], dataTahunan: [], dataDetails: [] };
         if (validYears.length > 0) {
-          // EKSPERIMENTAL DEBUG: Comment out fetch to see if error persists
-          // resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
-          console.log("DEBUG ROLE CHECK:", {
-            authUserRole: authUser?.role,
-            rawRole: (authUser?.role || "").toLowerCase(),
-            isSuperAdmin
-          });
+          // Build query params
+          const queryParams = buildQueryParams(validYears, showDeleted);
+          console.log('Fetching Tabel2C with params:', queryParams);
 
-          // MOCK RESPONSE untuk mencegah crash saat debugging
-          resAll = { masterBentuk: [], dataTahunan: [], dataDetails: [] };
+          // Fetch actual data from API
+          resAll = await apiFetch(`/tabel2c-fleksibilitas-pembelajaran?${queryParams}`);
+          console.log('Received Tabel2C data:', resAll);
 
           // Parse response dari backend: { masterBentuk, dataTahunan, dataDetails }
           const masterBentuk = resAll.masterBentuk || [];
@@ -326,51 +357,7 @@ export default function Tabel2C({ role }) {
         setLoading(false);
       }
     })();
-  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted, sortRowsByLatest, buildQueryParams, authUser]);
-
-  // Helper function untuk mapping data tahun dengan filter berdasarkan showDeleted
-  const mapDataByYear = useCallback((dataTahunan, dataDetails, yearOrder, showDeletedFlag) => {
-    const map = {};
-    yearOrder.forEach((y) => {
-      if (y != null) {
-        // Cari data tahunan untuk tahun ini
-        const tahunData = dataTahunan.find((d) => String(d.id_tahun) === String(y));
-
-        if (tahunData) {
-          const aktif = tahunData.jumlah_mahasiswa_aktif || 0;
-          const link = tahunData.link_bukti || "";
-          const id_tahunan = tahunData.id;
-          const id_unit_prodi = tahunData.id_unit_prodi || null;
-          const deleted_at = tahunData.deleted_at || null;
-
-          // Filter berdasarkan showDeletedFlag
-          // Jika showDeleted aktif, hanya tampilkan data yang sudah di-soft delete
-          // Jika showDeleted tidak aktif, hanya tampilkan data yang tidak di-soft delete
-          if (showDeletedFlag && !deleted_at) {
-            map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
-            return;
-          }
-          if (!showDeletedFlag && deleted_at) {
-            map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
-            return;
-          }
-
-          // Ambil detail untuk id_tahunan ini
-          const details = dataDetails.filter((d) => d.id_tahunan === id_tahunan);
-          const counts = {};
-          details.forEach((d) => {
-            counts[d.id_bentuk] = d.jumlah_mahasiswa_ikut || 0;
-          });
-
-          map[y] = { aktif, link, counts, id_tahunan, id_unit_prodi, deleted_at, hasData: true };
-        } else {
-          // Tidak ada data di database untuk tahun ini - tampilkan entry kosong
-          map[y] = { aktif: 0, link: "", counts: {}, id_tahunan: null, id_unit_prodi: null, deleted_at: null, hasData: false };
-        }
-      }
-    });
-    return map;
-  }, []);
+  }, [selectedYear, yearOrder.join(","), selectedProdi, isSuperAdmin, showDeleted, sortRowsByLatest, buildQueryParams, authUser, mapDataByYear]);
 
   const totalsByYear = useMemo(() => {
     const sums = {};

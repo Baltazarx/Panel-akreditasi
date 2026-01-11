@@ -98,31 +98,25 @@ export default function ProfilLulusanCRUD({ role, maps, onDataChange, readOnly =
   const fetchRows = async () => {
     setLoading(true);
     try {
-      // Jika user prodi, filter berdasarkan prodi mereka
-      // Jika user prodi, filter berdasarkan prodi mereka
       let url = "/profil-lulusan";
 
-      let fetchId = null;
+      // Data Profil Lulusan sudah menggunakan ID yang benar: 6 = TI, 7 = MI
+      // Tidak perlu mapping lagi
+
       if (!isSuperAdmin && userProdiId) {
-        // User prodi login
-        const pid = String(userProdiId);
-        if (pid === '6') fetchId = '4';
-        else if (pid === '7') fetchId = '5';
-        else fetchId = pid;
+        // User prodi login - fetch data mereka
+        url += `?id_unit_prodi=${userProdiId}`;
       } else if (selectedProdi) {
-        // Superadmin filter dropdown
-        if (selectedProdi === '6') fetchId = '4';
-        else if (selectedProdi === '7') fetchId = '5';
-        else fetchId = selectedProdi;
+        // Superadmin filter dropdown - gunakan ID yang dipilih
+        url += `?id_unit_prodi=${selectedProdi}`;
+      } else {
+        // Superadmin memilih "Semua Prodi" - fetch TI dan MI
+        url += "?id_unit_prodi_in=6,7";
       }
 
-      if (fetchId) {
-        url += `?id_unit_prodi=${fetchId}`;
-      } else {
-        // Superadmin memilih "Semua Prodi" = kirim semua prodi (TI dan MI)
-        url += "?id_unit_prodi_in=4,5";
-      }
+      console.log('Fetching Profil Lulusan from:', url);
       const result = await apiFetch(url);
+      console.log('Profil Lulusan data received:', result);
       const rowsArray = Array.isArray(result) ? result : [];
       const sortedRows = sortRowsByLatest(rowsArray);
       setRows(sortedRows);

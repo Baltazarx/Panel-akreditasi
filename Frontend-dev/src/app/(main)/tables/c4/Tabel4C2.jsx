@@ -61,14 +61,14 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       try {
         let tahunIds = [];
         let order = [];
-        
+
         if (tahunLaporan && tahunLaporan.id_ts && tahunLaporan.id_ts1 && tahunLaporan.id_ts2 && tahunLaporan.id_ts3 && tahunLaporan.id_ts4) {
           // Gunakan tahunLaporan jika semua 5 tahun tersedia
           tahunIds = [
-            tahunLaporan.id_ts4, 
-            tahunLaporan.id_ts3, 
-            tahunLaporan.id_ts2, 
-            tahunLaporan.id_ts1, 
+            tahunLaporan.id_ts4,
+            tahunLaporan.id_ts3,
+            tahunLaporan.id_ts2,
+            tahunLaporan.id_ts1,
             tahunLaporan.id_ts
           ];
           order = [
@@ -86,7 +86,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
             order = [ts, ts - 1, ts - 2, ts - 3, ts - 4];
           }
         }
-        
+
         if (tahunIds.length > 0) {
           const data = await apiFetch("/tahun-akademik");
           const list = Array.isArray(data) ? data : [];
@@ -188,7 +188,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999 }}
       onClick={(e) => {
@@ -198,7 +198,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -224,33 +224,31 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                   setOpenJenisDropdown(false);
                   setOpenTahunDropdown(false);
                 }}
-                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                  form.id_dosen
-                    ? 'border-[#0384d6] bg-white' 
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
+                  }`}
                 aria-label="Pilih dosen"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
                   <span className={`truncate ${form.id_dosen ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {form.id_dosen 
+                    {form.id_dosen
                       ? (() => {
-                          const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
-                          return found ? found.nama : "-- Pilih Dosen --";
-                        })()
+                        const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
+                        return found ? found.nama : "-- Pilih Dosen --";
+                      })()
                       : "-- Pilih Dosen --"}
                   </span>
                 </div>
-                <FiChevronDown 
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                    openDosenDropdown ? 'rotate-180' : ''
-                  }`} 
-                  size={18} 
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openDosenDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={18}
                 />
               </button>
               {openDosenDropdown && (
-                <div 
+                <div
                   className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto dosen-dropdown-menu mt-1 w-full"
                 >
                   {dosenList.length === 0 ? (
@@ -266,11 +264,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                           handleChange("id_dosen", d.id_dosen.toString());
                           setOpenDosenDropdown(false);
                         }}
-                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                          form.id_dosen === d.id_dosen.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                        }`}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === d.id_dosen.toString()
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                          }`}
                       >
                         <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
                         <span className="truncate">{d.nama}</span>
@@ -313,34 +310,32 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                     setOpenDosenDropdown(false);
                     setOpenTahunDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.jenis_diseminasi
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.jenis_diseminasi
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih jenis diseminasi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.jenis_diseminasi ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.jenis_diseminasi === "L" 
-                        ? "L - Lokal" 
+                      {form.jenis_diseminasi === "L"
+                        ? "L - Lokal"
                         : form.jenis_diseminasi === "N"
-                        ? "N - Nasional"
-                        : form.jenis_diseminasi === "I"
-                        ? "I - Internasional"
-                        : "-- Pilih Jenis --"}
+                          ? "N - Nasional"
+                          : form.jenis_diseminasi === "I"
+                            ? "I - Internasional"
+                            : "-- Pilih Jenis --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openJenisDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openJenisDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openJenisDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto jenis-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -349,11 +344,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         handleChange("jenis_diseminasi", "");
                         setOpenJenisDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.jenis_diseminasi
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.jenis_diseminasi
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>-- Pilih Jenis --</span>
@@ -364,11 +358,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         handleChange("jenis_diseminasi", "L");
                         setOpenJenisDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.jenis_diseminasi === "L"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_diseminasi === "L"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>L - Lokal</span>
@@ -379,11 +372,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         handleChange("jenis_diseminasi", "N");
                         setOpenJenisDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.jenis_diseminasi === "N"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_diseminasi === "N"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>N - Nasional</span>
@@ -394,11 +386,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         handleChange("jenis_diseminasi", "I");
                         setOpenJenisDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.jenis_diseminasi === "I"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_diseminasi === "I"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>I - Internasional</span>
@@ -422,54 +413,52 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                     setOpenDosenDropdown(false);
                     setOpenJenisDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_tahun_diseminasi
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun_diseminasi
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih tahun diseminasi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_tahun_diseminasi ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_tahun_diseminasi 
+                      {form.id_tahun_diseminasi
                         ? (() => {
-                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun_diseminasi));
-                            if (found) {
-                              let label = found.tahun || found.nama || found.id_tahun;
-                              if (tahunLaporan) {
-                                if (found.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
-                                else if (found.id_tahun === tahunLaporan.id_ts3) label = `TS-3 (${label})`;
-                                else if (found.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
-                                else if (found.id_tahun === tahunLaporan.id_ts1) label = `TS-1 (${label})`;
-                                else if (found.id_tahun === tahunLaporan.id_ts) label = `TS (${label})`;
-                              } else if (selectedTahun) {
-                                const ts = parseInt(selectedTahun, 10);
-                                if (!isNaN(ts)) {
-                                  const tId = parseInt(found.id_tahun, 10);
-                                  if (tId === ts) label = `TS (${label})`;
-                                  else if (tId === ts - 1) label = `TS-1 (${label})`;
-                                  else if (tId === ts - 2) label = `TS-2 (${label})`;
-                                  else if (tId === ts - 3) label = `TS-3 (${label})`;
-                                  else if (tId === ts - 4) label = `TS-4 (${label})`;
-                                }
+                          const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun_diseminasi));
+                          if (found) {
+                            let label = found.tahun || found.nama || found.id_tahun;
+                            if (tahunLaporan) {
+                              if (found.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
+                              else if (found.id_tahun === tahunLaporan.id_ts3) label = `TS-3 (${label})`;
+                              else if (found.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
+                              else if (found.id_tahun === tahunLaporan.id_ts1) label = `TS-1 (${label})`;
+                              else if (found.id_tahun === tahunLaporan.id_ts) label = `TS (${label})`;
+                            } else if (selectedTahun) {
+                              const ts = parseInt(selectedTahun, 10);
+                              if (!isNaN(ts)) {
+                                const tId = parseInt(found.id_tahun, 10);
+                                if (tId === ts) label = `TS (${label})`;
+                                else if (tId === ts - 1) label = `TS-1 (${label})`;
+                                else if (tId === ts - 2) label = `TS-2 (${label})`;
+                                else if (tId === ts - 3) label = `TS-3 (${label})`;
+                                else if (tId === ts - 4) label = `TS-4 (${label})`;
                               }
-                              return label;
                             }
-                            return "-- Pilih Tahun --";
-                          })()
+                            return label;
+                          }
+                          return "-- Pilih Tahun --";
+                        })()
                         : "-- Pilih Tahun --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openTahunDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openTahunDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu mt-1 w-full"
                     style={{ minWidth: '200px' }}
                   >
@@ -480,7 +469,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                     ) : (
                       tahunList.map((t) => {
                         let label = t.tahun || t.nama || t.id_tahun;
-                        
+
                         // Tentukan label TS berdasarkan tahunLaporan atau selectedTahun
                         if (tahunLaporan) {
                           if (t.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
@@ -500,7 +489,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                             else if (tId === ts - 4) label = `TS-4 (${label})`;
                           }
                         }
-                        
+
                         return (
                           <button
                             key={t.id_tahun}
@@ -509,11 +498,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                               handleChange("id_tahun_diseminasi", t.id_tahun.toString());
                               setOpenTahunDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              form.id_tahun_diseminasi === t.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                            }`}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun_diseminasi === t.id_tahun.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span className="truncate">{label}</span>
@@ -572,7 +560,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
   const { authUser } = useAuth();
   const role = propRole || authUser?.role;
   const { maps } = useMaps(auth?.user || authUser || true);
-  
+
   const [rows, setRows] = useState([]);
   const [tahunLaporan, setTahunLaporan] = useState(null);
   const [error, setError] = useState("");
@@ -582,18 +570,18 @@ export default function Tabel4C2({ auth, role: propRole }) {
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [tahunList, setTahunList] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [openTahunFilterDropdown, setOpenTahunFilterDropdown] = useState(false);
-  
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -605,7 +593,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -614,14 +602,14 @@ export default function Tabel4C2({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);
     });
   };
-  
+
   // Fetch tahun akademik
   useEffect(() => {
     const fetchTahun = async () => {
@@ -637,13 +625,14 @@ export default function Tabel4C2({ auth, role: propRole }) {
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          // Set default ke tahun 2020/2021 jika ada, jika tidak ambil tahun terkecil
+          // Set default ke tahun 2025/2026 jika ada, jika tidak ambil tahun terbesar (terakhir)
           const defaultTahun = sorted.find(t => {
             const idTahun = parseInt(t.id_tahun) || 0;
             const tahunStr = String(t.tahun || t.nama || "").toLowerCase();
-            return idTahun === 2020 || tahunStr.includes("2020/2021") || tahunStr.includes("2020");
+            return idTahun === 2025 || tahunStr.includes("2025/2026") || tahunStr.includes("2025");
           });
-          setSelectedTahun(defaultTahun ? defaultTahun.id_tahun : sorted[0].id_tahun);
+          // Fallback ke tahun terbesar (terakhir dalam sorted array)
+          setSelectedTahun(defaultTahun ? defaultTahun.id_tahun : sorted[sorted.length - 1].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -655,7 +644,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
   // Fetch data
   const fetchRows = async () => {
     if (!selectedTahun) return;
-    
+
     try {
       setLoading(true);
       setError("");
@@ -663,16 +652,20 @@ export default function Tabel4C2({ auth, role: propRole }) {
       if (showDeleted) {
         url += "&include_deleted=1";
       }
+      console.log('Fetching Tabel 4C2 from:', url);
       const response = await apiFetch(url);
-      
+      console.log('Tabel 4C2 response:', response);
+
       if (response.tahun_laporan) {
         setTahunLaporan(response.tahun_laporan);
       }
-      
+
       const data = Array.isArray(response.data) ? response.data : (response.items || []);
+      console.log('Tabel 4C2 data array:', data);
       const sortedRows = sortRowsByLatest(data);
       setRows(sortedRows);
     } catch (e) {
+      console.error('Error fetching Tabel 4C2:', e);
       setError(e?.message || "Gagal memuat data");
       Swal.fire('Error!', e?.message || "Gagal memuat data", 'error');
     } finally {
@@ -904,7 +897,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       Swal.fire('Berhasil!', 'Data berhasil diekspor.', 'success');
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal mengekspor data", 'error');
@@ -925,7 +918,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
   const groupedData = useMemo(() => {
     const activeRows = rows.filter(r => !r.deleted_at);
     const grouped = new Map();
-    
+
     activeRows.forEach(row => {
       const key = `${row.nama_dtpr || ''}_${row.judul_pkm || ''}`;
       if (!grouped.has(key)) {
@@ -949,33 +942,33 @@ export default function Tabel4C2({ auth, role: propRole }) {
         if (row.id_tahun_diseminasi === tahunLaporan.id_ts || row.tahun_ts === '√') item.ts = true;
       }
     });
-    
+
     return Array.from(grouped.values());
   }, [rows, tahunLaporan]);
 
   // Calculate summary (hanya dari data yang tidak dihapus)
   const summary = useMemo(() => {
     const activeRows = rows.filter(r => !r.deleted_at);
-    
+
     // Jumlah Judul PkM per tahun
     const judulTS4 = new Set();
     const judulTS3 = new Set();
     const judulTS2 = new Set();
     const judulTS1 = new Set();
     const judulTS = new Set();
-    
+
     // Jumlah Diseminasi per tahun
     let diseminasiTS4 = 0;
     let diseminasiTS3 = 0;
     let diseminasiTS2 = 0;
     let diseminasiTS1 = 0;
     let diseminasiTS = 0;
-    
+
     // Jumlah per jenis
     let jumlahLokal = 0;
     let jumlahNasional = 0;
     let jumlahInternasional = 0;
-    
+
     activeRows.forEach(row => {
       if (tahunLaporan) {
         // Check TS-4
@@ -1004,13 +997,13 @@ export default function Tabel4C2({ auth, role: propRole }) {
           diseminasiTS++;
         }
       }
-      
+
       // Count per jenis
       if (row.jenis_diseminasi === 'L') jumlahLokal++;
       else if (row.jenis_diseminasi === 'N') jumlahNasional++;
       else if (row.jenis_diseminasi === 'I') jumlahInternasional++;
     });
-    
+
     return {
       jumlahJudulTS4: judulTS4.size,
       jumlahJudulTS3: judulTS3.size,
@@ -1056,33 +1049,31 @@ export default function Tabel4C2({ auth, role: propRole }) {
                 e.preventDefault();
                 setOpenTahunFilterDropdown(!openTahunFilterDropdown);
               }}
-              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                selectedTahun 
-                  ? 'border-[#0384d6] bg-white text-black' 
-                  : 'border-gray-300 bg-white text-black hover:border-gray-400'
-              }`}
+              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
+                ? 'border-[#0384d6] bg-white text-black'
+                : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                }`}
               aria-label="Pilih tahun"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                 <span className={`truncate ${selectedTahun ? 'text-black' : 'text-gray-500'}`}>
-                  {selectedTahun 
+                  {selectedTahun
                     ? (() => {
-                        const found = tahunList.find((y) => y.id_tahun === selectedTahun);
-                        return found ? (found.tahun || found.nama || found.id_tahun) : selectedTahun;
-                      })()
+                      const found = tahunList.find((y) => y.id_tahun === selectedTahun);
+                      return found ? (found.tahun || found.nama || found.id_tahun) : selectedTahun;
+                    })()
                     : "-- Pilih Tahun --"}
                 </span>
               </div>
-              <FiChevronDown 
-                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                  openTahunFilterDropdown ? 'rotate-180' : ''
-                }`} 
-                size={16} 
+              <FiChevronDown
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunFilterDropdown ? 'rotate-180' : ''
+                  }`}
+                size={16}
               />
             </button>
             {openTahunFilterDropdown && (
-              <div 
+              <div
                 className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-filter-dropdown-menu mt-1 w-full"
                 style={{ minWidth: '200px' }}
               >
@@ -1095,11 +1086,10 @@ export default function Tabel4C2({ auth, role: propRole }) {
                         setSelectedTahun(y.id_tahun);
                         setOpenTahunFilterDropdown(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                        selectedTahun === y.id_tahun
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                       <span>{y.tahun || y.nama || y.id_tahun}</span>
@@ -1118,11 +1108,10 @@ export default function Tabel4C2({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -1130,11 +1119,10 @@ export default function Tabel4C2({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -1183,11 +1171,11 @@ export default function Tabel4C2({ auth, role: propRole }) {
             <tr>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">No</th>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                Nama DTPR<br/>(Ketua)
+                Nama DTPR<br />(Ketua)
               </th>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">Judul</th>
               <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
-                Diseminasi Hasil PkM<br/>(L/N/I)
+                Diseminasi Hasil PkM<br />(L/N/I)
               </th>
               {tahunLaporan && (
                 <th colSpan="5" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
@@ -1241,14 +1229,14 @@ export default function Tabel4C2({ auth, role: propRole }) {
                   // Buat key yang unik dengan menggabungkan rowId dan index untuk menghindari duplikasi
                   const uniqueKey = `${rowId}-${i}`;
                   const isDeleted = r.deleted_at;
-                  
+
                   // Check checkmark untuk 5 tahun
                   const checkTS4 = tahunLaporan && (r.id_tahun_diseminasi === tahunLaporan.id_ts4 || r.tahun_ts4 === '√');
                   const checkTS3 = tahunLaporan && (r.id_tahun_diseminasi === tahunLaporan.id_ts3 || r.tahun_ts3 === '√');
                   const checkTS2 = tahunLaporan && (r.id_tahun_diseminasi === tahunLaporan.id_ts2 || r.tahun_ts2 === '√');
                   const checkTS1 = tahunLaporan && (r.id_tahun_diseminasi === tahunLaporan.id_ts1 || r.tahun_ts1 === '√');
                   const checkTS = tahunLaporan && (r.id_tahun_diseminasi === tahunLaporan.id_ts || r.tahun_ts === '√');
-                  
+
                   return (
                     <tr
                       key={uniqueKey}
@@ -1273,10 +1261,10 @@ export default function Tabel4C2({ auth, role: propRole }) {
                       )}
                       <td className="px-6 py-4 border border-slate-200 text-slate-700">
                         {r.link_bukti ? (
-                          <a 
-                            href={r.link_bukti} 
-                            target="_blank" 
-                            rel="noreferrer" 
+                          <a
+                            href={r.link_bukti}
+                            target="_blank"
+                            rel="noreferrer"
                             className="text-[#0384d6] underline hover:text-[#043975]"
                           >
                             Lihat
@@ -1315,7 +1303,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                     </tr>
                   );
                 })}
-                
+
                 {/* Summary Rows - Hanya tampilkan jika tidak menampilkan data yang dihapus */}
                 {filteredRows.length > 0 && !loading && !showDeleted && tahunLaporan && (
                   <>
@@ -1341,7 +1329,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                       </td>
                       <td colSpan={(canUpdate || canDelete) ? 2 : 1} className="px-6 py-4 border border-slate-200"></td>
                     </tr>
-                    
+
                     {/* Jumlah Diseminasi Hasil PkM */}
                     <tr className="font-semibold">
                       <td colSpan="4" className="px-6 py-4 text-center border border-slate-200 text-slate-800">
@@ -1364,7 +1352,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                       </td>
                       <td colSpan={(canUpdate || canDelete) ? 2 : 1} className="px-6 py-4 border border-slate-200"></td>
                     </tr>
-                    
+
                     {/* Jumlah PkM Lokal */}
                     <tr className="font-semibold">
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
@@ -1378,7 +1366,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}
                     </tr>
-                    
+
                     {/* Jumlah PkM Nasional */}
                     <tr className="font-semibold">
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
@@ -1392,7 +1380,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
                         <td className="px-6 py-4 border border-slate-200"></td>
                       )}
                     </tr>
-                    
+
                     {/* Jumlah PkM Internasional */}
                     <tr className="font-semibold">
                       <td className="px-6 py-4 text-center border border-slate-200 text-slate-800">
@@ -1425,7 +1413,7 @@ export default function Tabel4C2({ auth, role: propRole }) {
         const isDeleted = currentRow.deleted_at;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,

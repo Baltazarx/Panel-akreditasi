@@ -14,7 +14,6 @@ export const listDosen = async (req, res) => {
         d.nidn,
         d.nuptk,
         d.beban_sks,
-        d.homebase,
         d.pt,
         p.nama_lengkap,
         d.id_pegawai,

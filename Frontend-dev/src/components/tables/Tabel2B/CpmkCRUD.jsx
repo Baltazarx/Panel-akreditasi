@@ -62,41 +62,29 @@ export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 
     }
   }, [openProdiFilterDropdown]);
 
-  // === PERBAIKAN: Filter dilakukan di backend, bukan di frontend ===
+  // Fetch CPMK data
   const fetchRows = async () => {
     setLoading(true);
     try {
       let url = "/cpmk";
 
-      // MAPPING ID PRODI:
-      // Frontend (User/Unit): 6 = TI, 7 = MI
-      // Backend (Data CPMK): 4 = TI, 5 = MI
-      // Kita perlu mapping ID frontend ke ID data backend saat fetch
-
-      let fetchId = null;
+      // Data CPMK sudah menggunakan ID yang benar: 6 = TI, 7 = MI
+      // Tidak perlu mapping lagi
 
       if (!isSuperAdmin && userProdiId) {
-        // User prodi login
-        const pid = String(userProdiId);
-        if (pid === '6') fetchId = '4';
-        else if (pid === '7') fetchId = '5';
-        else fetchId = pid;
+        // User prodi login - fetch data mereka
+        url += `?id_unit_prodi=${userProdiId}`;
       } else if (selectedProdi) {
-        // Superadmin filter dropdown
-        if (selectedProdi === '6') fetchId = '4';
-        else if (selectedProdi === '7') fetchId = '5';
-        else fetchId = selectedProdi;
-      }
-
-      if (fetchId) {
-        url += `?id_unit_prodi=${fetchId}`;
+        // Superadmin filter dropdown - gunakan ID yang dipilih
+        url += `?id_unit_prodi=${selectedProdi}`;
       } else {
-        // Superadmin memilih "Semua Prodi" atau default load
-        // Fetch data untuk ID 4 (TI) dan 5 (MI) yang ada di tabel CPMK
-        url += "?id_unit_prodi_in=4,5";
+        // Superadmin memilih "Semua Prodi" - fetch TI dan MI
+        url += "?id_unit_prodi_in=6,7";
       }
 
+      console.log('Fetching CPMK from:', url);
       const result = await apiFetch(url);
+      console.log('CPMK data received:', result);
       setRows(result);
     } catch (err) {
       console.error("Error fetching CPMK:", err);
