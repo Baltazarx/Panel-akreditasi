@@ -385,7 +385,7 @@ export default function Tabel6({ auth, role: propRole }) {
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
-  const isKetuastikom = userRole?.toLowerCase() === 'ketuastikom';
+  const isKetuastikom = userRole?.toLowerCase() === 'ketua';
 
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit;
@@ -826,8 +826,8 @@ export default function Tabel6({ auth, role: propRole }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -837,8 +837,8 @@ export default function Tabel6({ auth, role: propRole }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -846,7 +846,7 @@ export default function Tabel6({ auth, role: propRole }) {
             </button>
           </div>
 
-          {/* Dropdown filter untuk superadmin dan ketuastikom */}
+          {/* Dropdown filter untuk superadmin dan ketua */}
           {(isSuperAdmin || isKetuastikom) && (
             <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
               <button
@@ -856,8 +856,8 @@ export default function Tabel6({ auth, role: propRole }) {
                   setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                 }}
                 className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
-                    ? 'border-[#0384d6] bg-white text-black'
-                    : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white text-black'
+                  : 'border-gray-300 bg-white text-black hover:border-gray-400'
                   }`}
                 aria-label="Pilih program studi"
               >
@@ -891,8 +891,8 @@ export default function Tabel6({ auth, role: propRole }) {
                         setOpenProdiFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedProdi
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -909,8 +909,8 @@ export default function Tabel6({ auth, role: propRole }) {
                           setOpenProdiFilterDropdown(false);
                         }}
                         className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(prodi.id_unit)
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />

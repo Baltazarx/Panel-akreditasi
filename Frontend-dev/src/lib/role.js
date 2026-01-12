@@ -10,7 +10,7 @@ export const ACCESS_MATRIX = {
   'waket1': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'waket2': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'tpm': { '*': { c: true, r: true, u: true, d: true, h: true } },
-  'ketuastikom': { '*': { r: true } }, // Hanya read wildcard
+  'ketua': { '*': { r: true } }, // Hanya read wildcard
 
   // ========== PRODI (sesuai aturan baru C1 + aturan Tabel 2B) ==========
   'prodi': {
@@ -182,9 +182,9 @@ export function roleCan(role, tableKey, action) {
   const actionLower = typeof action === 'string' ? action.toLowerCase() : String(action).toLowerCase();
   const tableKeyLower = typeof tableKey === 'string' ? tableKey.toLowerCase() : String(tableKey).toLowerCase();
 
-  // Role KETUASTIKOM hanya boleh Read-only di semua tabel
-  if (roleLower === 'ketuastikom' && actionLower !== 'r') {
-    console.log('roleCan - Role ketuastikom read-only enforcement');
+  // Role KETUA hanya boleh Read-only di semua tabel
+  if (roleLower === 'ketua' && actionLower !== 'r') {
+    console.log('roleCan - Role ketua read-only enforcement');
     return false;
   }
 

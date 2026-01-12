@@ -219,9 +219,9 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange, ma
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
 
-      // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-) untuk header export
+      // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI- atau CPL-TI-) untuk header export
       const displayColumns = data.columns.map(col =>
-        col.startsWith('CPL-') && !col.startsWith('CPL-MI-')
+        col.startsWith('CPL-') && !col.startsWith('CPL-MI-') && !col.startsWith('CPL-TI-')
           ? col.replace(/^CPL-/, 'CPL-TI-')
           : col
       );
@@ -454,8 +454,8 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange, ma
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold uppercase border border-white">CPMK</th>
                 {data.columns.map((col) => {
-                  // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI-)
-                  const displayCol = col.startsWith('CPL-') && !col.startsWith('CPL-MI-')
+                  // Ubah CPL- menjadi CPL-TI- (kecuali yang sudah CPL-MI- atau CPL-TI-)
+                  const displayCol = col.startsWith('CPL-') && !col.startsWith('CPL-MI-') && !col.startsWith('CPL-TI-')
                     ? col.replace(/^CPL-/, 'CPL-TI-')
                     : col;
 

@@ -6,7 +6,7 @@ export const listDosen = async (req, res) => {
   try {
     const { role, id_unit, id_unit_prodi } = req.user || {};
     const { include_deleted } = req.query;
-    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketuastikom', 'admin']); // Ditambah admin jaga-jaga
+    const superRoles = new Set(['waket1', 'waket2', 'tpm', 'ketua', 'admin']); // Ditambah admin jaga-jaga
 
     let sql = `
       SELECT 

@@ -165,9 +165,9 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
 
-      // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-) untuk header export
+      // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI- atau PL-TI-) untuk header export
       const displayColumns = data.columns.map(col =>
-        col.startsWith('PL-') && !col.startsWith('PL-MI-')
+        col.startsWith('PL-') && !col.startsWith('PL-MI-') && !col.startsWith('PL-TI-')
           ? col.replace(/^PL-/, 'PL-TI-')
           : col
       );
@@ -445,8 +445,8 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
               </tr>
               <tr>
                 {data.columns.map((col) => {
-                  // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI-)
-                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-')
+                  // Ubah PL- menjadi PL-TI- (kecuali yang sudah PL-MI- atau PL-TI-)
+                  const displayCol = col.startsWith('PL-') && !col.startsWith('PL-MI-') && !col.startsWith('PL-TI-')
                     ? col.replace(/^PL-/, 'PL-TI-')
                     : col;
 

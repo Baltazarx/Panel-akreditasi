@@ -4,34 +4,34 @@ export const AccessMatrix = {
   // ========== SUPERADMIN (Sudah Punya Akses *) ==========
   'waket1': { '*': { C: true, R: true, U: true, D: true, H: true } },
   'waket2': { '*': { C: true, R: true, U: true, D: true, H: true } },
-  'tpm':    { '*': { C: true, R: true, U: true, D: true, H: true } },
-  'ketuastikom': { '*': { R: true } }, // Read-only wildcard
+  'tpm': { '*': { C: true, R: true, U: true, D: true, H: true } },
+  'ketua': { '*': { R: true } }, // Read-only wildcard (renamed from ketuastikom)
 
   // ========== PRODI ==========
   'prodi': {
     // ---- Tabel C1 ----
-    'tabel_1a4':        { R: true }, // Sesuai permintaan (Hanya Read)
+    'tabel_1a4': { R: true }, // Sesuai permintaan (Hanya Read)
 
     // ---- Tabel 2A3 ----
     'tabel_2a3_kondisi_mahasiswa': { C: true, R: true, U: true, D: true },
 
     // ---- Tabel 2B & Lainnya (dari sebelumnya) ----
-    'profil_lulusan':   { C: true, R: true, U: true, D: true },
-    'cpl':                { C: true, R: true, U: true, D: true },
-    'mata_kuliah':        { C: true, R: true, U: true, D: true },
-    'cpmk':               { C: true, R: true, U: true, D: true },
-    'visi_misi':          { C: true, R: true, U: true, D: true },
+    'profil_lulusan': { C: true, R: true, U: true, D: true },
+    'cpl': { C: true, R: true, U: true, D: true },
+    'mata_kuliah': { C: true, R: true, U: true, D: true },
+    'cpmk': { C: true, R: true, U: true, D: true },
+    'visi_misi': { C: true, R: true, U: true, D: true },
     'tabel_6_kesesuaian_visi_misi': { C: true, R: true, U: true, D: true },
-    'pemetaan2b1':        { R: true },
-    'pemetaan2b2':        { R: true, U: true },
-    'pemetaan2b3':        { R: true },
-    'pemetaanCpmkCpl':    { C: true, R: true, U: true, D: true },
+    'pemetaan2b1': { R: true },
+    'pemetaan2b2': { R: true, U: true },
+    'pemetaan2b3': { R: true },
+    'pemetaanCpmkCpl': { C: true, R: true, U: true, D: true },
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
-    'beban_kerja_dosen':        { C: true, R: true, U: true, D: true },
-    'mahasiswa_kondisi':        { C: true, R: true, U: true, D: true },
+    'beban_kerja_dosen': { C: true, R: true, U: true, D: true },
+    'mahasiswa_kondisi': { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
-    'sumber_rekognisi_master':  { C: true, R: true, U: true, D: true },
+    'sumber_rekognisi_master': { C: true, R: true, U: true, D: true },
 
     // === BERITA & PENGUMUMAN ===
     'berita': { R: true }, // Hanya baca untuk prodi
@@ -49,8 +49,8 @@ export const AccessMatrix = {
 
   // ========== LPPM ==========
   'lppm': {
-    'tabel_1a2':  { C: true, R: true, U: true, D: true },
-    'tabel_1a3':  { C: true, R: true, U: true, D: true },
+    'tabel_1a2': { C: true, R: true, U: true, D: true },
+    'tabel_1a3': { C: true, R: true, U: true, D: true },
     'tabel_3a2_penelitian': { C: true, R: true, U: true, D: true },
     'tabel_3a3_pengembangan_dtpr': { C: true, R: true, U: true, D: true },
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true },
@@ -60,16 +60,16 @@ export const AccessMatrix = {
     'tabel_4c1_kerjasama_pkm': { C: true, R: true, U: true, D: true },
     'tabel_4c2_diseminasi_pkm': { C: true, R: true, U: true, D: true },
     'tabel_4c3_hki_pkm': { C: true, R: true, U: true, D: true },
-  
+
     // === BERITA & PENGUMUMAN ===
     'berita': { R: true }, // Hanya baca untuk LPPM
 
     // === TAMBAHAN: Izin Baca untuk API yang Gagal ===
-    'sumber_pendanaan':         { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
-    'sumber_pendanaan_summary':   { R: true }, // Untuk API /sumber-pendanaan/summary (jika keynya ini)
-    'penggunaan_dana':          { R: true }, // Untuk API /penggunaan-dana
-    'penggunaan_dana_summary':  { R: true }, // Untuk API /penggunaan-dana/summary
-    
+    'sumber_pendanaan': { R: true }, // Untuk API /sumber-pendanaan (jika keynya ini)
+    'sumber_pendanaan_summary': { R: true }, // Untuk API /sumber-pendanaan/summary (jika keynya ini)
+    'penggunaan_dana': { R: true }, // Untuk API /penggunaan-dana
+    'penggunaan_dana_summary': { R: true }, // Untuk API /penggunaan-dana/summary
+
     // === MASTER DATA: Izin Baca untuk useMaps hook ===
     'unit_kerja': { R: true }, // Untuk dropdown unit kerja
     'pegawai': { R: true }, // Untuk dropdown pegawai
@@ -79,7 +79,7 @@ export const AccessMatrix = {
     'tenaga_kependidikan': { R: true }, // Untuk dropdown tendik
     'audit_mutu_internal': { R: true }, // Untuk data audit mutu internal
     'dosen': { R: true }, // Untuk dropdown dosen di form Tabel 3.A.2
-    
+
     // === USER MANAGEMENT: Izin Baca untuk UserManagementPage ===
     // 'users': { R: true }, // Dihapus: LPPM tidak memiliki akses Panel Admin
   },
@@ -167,7 +167,7 @@ export const AccessMatrix = {
     'berita': { R: true }, // Hanya baca untuk PMB
   },
 
-// ========== KERJASAMA ==========
+  // ========== KERJASAMA ==========
   'kerjasama': {
     // ---- Tabel 3C1 (CRUD + Hard Delete) ----
     'tabel_3c1_kerjasama_penelitian': { C: true, R: true, U: true, D: true },
