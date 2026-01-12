@@ -10,7 +10,7 @@ export async function apiFetch(path, opts = {}) {
   };
 
   const fullUrl = `${BASE_URL}${path}`;
-  
+
   try {
     const res = await fetch(fullUrl, {
       ...opts,
@@ -25,11 +25,11 @@ export async function apiFetch(path, opts = {}) {
       // Juga skip log untuk endpoint yang biasanya tidak ada (tendik, audit-mutu-internal, dll)
       const skipLogPaths = ['/tendik', '/audit-mutu-internal', '/ref-jabatan-struktural', '/ref-jabatan-fungsional'];
       const shouldSkipLog = skipLogPaths.some(skipPath => path.includes(skipPath));
-      
+
       // Skip log untuk 404, 401, atau endpoint yang biasanya tidak ada
       // Juga skip log jika opts.silent = true (untuk error yang sudah ditangani)
       const shouldLog = res.status !== 404 && res.status !== 401 && !shouldSkipLog && !opts.silent;
-      
+
       // Hanya log error yang benar-benar perlu perhatian (500, 403, dll)
       if (shouldLog && res.status >= 500) {
         let errorBody = text;
@@ -86,8 +86,9 @@ export async function apiFetch(path, opts = {}) {
 // Helper untuk ambil primary key ID (generic table)
 export function getIdField(row) {
   if (!row || typeof row !== "object") return "id";
-  
-  // Check for common ID field patterns
+
+  // Check for common ID field patterns - more specific IDs first!
+  if ("id_beban_kerja" in row) return "id_beban_kerja"; // [FIX] Added for beban_kerja_dosen table
   if ("id_pimpinan" in row) return "id_pimpinan";
   if ("id_dosen" in row) return "id_dosen";
   if ("id_tendik" in row) return "id_tendik";
@@ -95,7 +96,7 @@ export function getIdField(row) {
   if ("id_user" in row) return "id_user";
   if ("id" in row) return "id";
   if ("_id" in row) return "_id";
-  
+
   // Fallback to first key that looks like an ID
   const firstKey = Object.keys(row)[0];
   return firstKey || "id";

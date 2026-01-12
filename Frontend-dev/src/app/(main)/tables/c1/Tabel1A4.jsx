@@ -12,8 +12,17 @@ const LABEL = "1.A.4 Rata-rata Beban DTPR (EWMP) TS";
 
 const n = (v) => Number(v || 0);
 
-function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, doRestoreSingle, showDeleted, openDropdownId, setOpenDropdownId, setDropdownPosition }) {
-  const getDosenName = (id) => maps.pegawai[id]?.nama_lengkap || id;
+function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, doRestoreSingle, showDeleted, openDropdownId, setOpenDropdownId, setDropdownPosition, dosenList }) {
+  // [FIX] Use dosenList for lookup by id_dosen, fallback to maps.pegawai by id_pegawai
+  const getDosenName = (id_dosen, id_pegawai) => {
+    // First try dosenList (by id_dosen)
+    const fromDosenList = dosenList?.find(d => String(d.id_dosen) === String(id_dosen));
+    if (fromDosenList?.nama_lengkap) return fromDosenList.nama_lengkap;
+    // Fallback to maps.pegawai (by id_pegawai)
+    if (id_pegawai && maps.pegawai[id_pegawai]?.nama_lengkap) return maps.pegawai[id_pegawai].nama_lengkap;
+    // Last resort
+    return id_dosen || id_pegawai || 'Unknown';
+  };
 
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
@@ -48,17 +57,16 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
         </thead>
         <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
           {rows.map((r, i) => {
-            const pengajaranTotal = n(r.sks_pengajaran);
-            const pengajaranPsSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
-            const pengajaranPsLainPtSendiri = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
-            const pengajaranPtLain = pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : 0;
+            // [UPDATED] Using 5 separate columns directly (no fallback to totals)
+            const pengajaranPsSendiri = n(r.sks_pengajaran_ps_sendiri) || 0;
+            const pengajaranPsLainPtSendiri = n(r.sks_pengajaran_ps_lain_pt_sendiri) || 0;
+            const pengajaranPtLain = n(r.sks_pengajaran_pt_lain) || 0;
 
             const penelitian = n(r.sks_penelitian);
             const pkm = n(r.sks_pkm);
 
-            const manajemenTotal = n(r.sks_manajemen);
-            const manajemenPtSendiri = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
-            const manajemenPtLain = manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : 0;
+            const manajemenPtSendiri = n(r.sks_manajemen_pt_sendiri) || 0;
+            const manajemenPtLain = n(r.sks_manajemen_pt_lain) || 0;
 
             const total = (
               n(pengajaranPsSendiri) +
@@ -78,7 +86,7 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
             return (
               <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
-                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen)}</td>
+                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen, r.id_pegawai)}</td>
                 <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
                 <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsLainPtSendiri}</td>
                 <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPtLain}</td>
@@ -391,15 +399,19 @@ export default function Tabel1A4({ role }) {
     if (editing) {
       setEditIdTahun(editing.id_tahun || "");
       setEditIdDosen(editing.id_dosen || "");
+      // [FIX] Jangan bagi otomatis - masukkan total ke field pertama saja agar user bisa edit manual
+      // Atau gunakan nilai terpisah jika ada di backend
       const pengajaranTotal = n(editing.sks_pengajaran);
-      setEditPengajaranPsSendiri(pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : "");
-      setEditPengajaranPsLainPtSendiri(pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : "");
-      setEditPengajaranPtLain(pengajaranTotal > 0 ? (pengajaranTotal / 3).toFixed(2) : "");
+      const manajemenTotal = n(editing.sks_manajemen);
+
+      // [FIX] Cek apakah ada field terpisah dari backend, jika tidak gunakan total di field pertama
+      setEditPengajaranPsSendiri(editing.sks_pengajaran_ps_sendiri ?? pengajaranTotal ?? "");
+      setEditPengajaranPsLainPtSendiri(editing.sks_pengajaran_ps_lain_pt_sendiri ?? "");
+      setEditPengajaranPtLain(editing.sks_pengajaran_pt_lain ?? "");
       setEditPenelitian(editing.sks_penelitian ?? "");
       setEditPkm(editing.sks_pkm ?? "");
-      const manajemenTotal = n(editing.sks_manajemen);
-      setEditManajemenPtSendiri(manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : "");
-      setEditManajemenPtLain(manajemenTotal > 0 ? (manajemenTotal / 2).toFixed(2) : "");
+      setEditManajemenPtSendiri(editing.sks_manajemen_pt_sendiri ?? manajemenTotal ?? "");
+      setEditManajemenPtLain(editing.sks_manajemen_pt_lain ?? "");
       setShowEditModal(true);
       setOpenEditTahunDropdown(false);
       setOpenEditDosenDropdown(false);
@@ -583,8 +595,8 @@ export default function Tabel1A4({ role }) {
                 }}
                 disabled={loading}
                 className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedYear
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-slate-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-slate-300 bg-white hover:border-gray-400'
                   } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 aria-label="Pilih tahun"
               >
@@ -616,8 +628,8 @@ export default function Tabel1A4({ role }) {
                       setOpenYearFilterDropdown(false);
                     }}
                     className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedYear
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
                       }`}
                   >
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -637,8 +649,8 @@ export default function Tabel1A4({ role }) {
                           setOpenYearFilterDropdown(false);
                         }}
                         className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedYear === y.id_tahun.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -657,8 +669,8 @@ export default function Tabel1A4({ role }) {
                 onClick={() => setShowDeleted(false)}
                 disabled={loading}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                    ? "bg-white text-[#0384d6] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
                   } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data aktif"
               >
@@ -668,8 +680,8 @@ export default function Tabel1A4({ role }) {
                 onClick={() => setShowDeleted(true)}
                 disabled={loading}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                    ? "bg-white text-[#0384d6] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
                   } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data terhapus"
               >
@@ -889,6 +901,7 @@ export default function Tabel1A4({ role }) {
         doHardDelete={doHardDelete}
         doRestoreSingle={doRestoreSingle}
         showDeleted={showDeleted}
+        dosenList={dosenList}
       />
 
       {/* Dropdown Menu - Fixed Position */}
@@ -1007,10 +1020,14 @@ export default function Tabel1A4({ role }) {
                     const body = {
                       id_tahun: parseInt(newIdTahun),
                       id_dosen: parseInt(newIdDosen),
-                      sks_pengajaran: n(newPengajaranPsSendiri) + n(newPengajaranPsLainPtSendiri) + n(newPengajaranPtLain),
+                      // [UPDATED] Using 5 separate columns only (no totals)
+                      sks_pengajaran_ps_sendiri: n(newPengajaranPsSendiri),
+                      sks_pengajaran_ps_lain_pt_sendiri: n(newPengajaranPsLainPtSendiri),
+                      sks_pengajaran_pt_lain: n(newPengajaranPtLain),
                       sks_penelitian: n(newPenelitian),
                       sks_pkm: n(newPkm),
-                      sks_manajemen: n(newManajemenPtSendiri) + n(newManajemenPtLain)
+                      sks_manajemen_pt_sendiri: n(newManajemenPtSendiri),
+                      sks_manajemen_pt_lain: n(newManajemenPtLain)
                     };
                     await apiFetch(ENDPOINT, { method: "POST", body: JSON.stringify(body) });
                     setShowCreateModal(false);
@@ -1033,8 +1050,8 @@ export default function Tabel1A4({ role }) {
                         setOpenNewDosenDropdown(false);
                       }}
                       className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdTahun
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        ? 'border-[#0384d6] bg-white'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                         }`}
                       aria-label="Pilih tahun"
                     >
@@ -1073,8 +1090,8 @@ export default function Tabel1A4({ role }) {
                                 setOpenNewTahunDropdown(false);
                               }}
                               className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdTahun === y.id_tahun.toString()
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
                                 }`}
                             >
                               <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1097,8 +1114,8 @@ export default function Tabel1A4({ role }) {
                         setOpenNewTahunDropdown(false);
                       }}
                       className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdDosen
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        ? 'border-[#0384d6] bg-white'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                         }`}
                       aria-label="Pilih dosen"
                     >
@@ -1137,8 +1154,8 @@ export default function Tabel1A4({ role }) {
                                 setOpenNewDosenDropdown(false);
                               }}
                               className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdDosen === d.id_dosen.toString()
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
                                 }`}
                             >
                               <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1268,11 +1285,23 @@ export default function Tabel1A4({ role }) {
                     const body = {
                       id_tahun: parseInt(editIdTahun),
                       id_dosen: parseInt(editIdDosen),
-                      sks_pengajaran: n(editPengajaranPsSendiri) + n(editPengajaranPsLainPtSendiri) + n(editPengajaranPtLain),
+                      // [UPDATED] Using 5 separate columns only (no totals)
+                      sks_pengajaran_ps_sendiri: n(editPengajaranPsSendiri),
+                      sks_pengajaran_ps_lain_pt_sendiri: n(editPengajaranPsLainPtSendiri),
+                      sks_pengajaran_pt_lain: n(editPengajaranPtLain),
                       sks_penelitian: n(editPenelitian),
                       sks_pkm: n(editPkm),
-                      sks_manajemen: n(editManajemenPtSendiri) + n(editManajemenPtLain)
+                      sks_manajemen_pt_sendiri: n(editManajemenPtSendiri),
+                      sks_manajemen_pt_lain: n(editManajemenPtLain)
                     };
+                    // [DEBUG] Log data yang dikirim
+                    console.log('[DEBUG] Edit submission:', {
+                      idField,
+                      editingId: editing?.[idField],
+                      editing,
+                      body,
+                      url: `${ENDPOINT}/${editing?.[idField]}`
+                    });
                     await apiFetch(`${ENDPOINT}/${editing?.[idField]}`, { method: "PUT", body: JSON.stringify(body) });
                     setShowEditModal(false);
                     setEditing(null);
@@ -1294,8 +1323,8 @@ export default function Tabel1A4({ role }) {
                         setOpenEditDosenDropdown(false);
                       }}
                       className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdTahun
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        ? 'border-[#0384d6] bg-white'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                         }`}
                       aria-label="Pilih tahun"
                     >
@@ -1334,8 +1363,8 @@ export default function Tabel1A4({ role }) {
                                 setOpenEditTahunDropdown(false);
                               }}
                               className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdTahun === y.id_tahun.toString()
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
                                 }`}
                             >
                               <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1358,8 +1387,8 @@ export default function Tabel1A4({ role }) {
                         setOpenEditTahunDropdown(false);
                       }}
                       className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdDosen
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        ? 'border-[#0384d6] bg-white'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                         }`}
                       aria-label="Pilih dosen"
                     >
@@ -1398,8 +1427,8 @@ export default function Tabel1A4({ role }) {
                                 setOpenEditDosenDropdown(false);
                               }}
                               className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdDosen === d.id_dosen.toString()
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
                                 }`}
                             >
                               <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />

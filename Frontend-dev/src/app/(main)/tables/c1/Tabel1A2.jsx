@@ -839,21 +839,12 @@ export default function Tabel1A2({ role }) {
         setRows([]);
       }
 
-      // Fetch summary (hanya data aktif)
-      if (activeYear) {
-        try {
-          await computeSummaryForActiveYear();
-        } catch (summaryErr) {
-          console.error("Summary computation error:", summaryErr);
-          setSummaryRows([]);
-        }
-      } else {
-        try {
-          await fetchSummaryAll();
-        } catch (summaryErr) {
-          console.error("Summary fetch error:", summaryErr);
-          setSummaryRows([]);
-        }
+      // Fetch summary (always use backend's dynamic TS calculation)
+      try {
+        await fetchSummaryAll();
+      } catch (summaryErr) {
+        console.error("Summary fetch error:", summaryErr);
+        setSummaryRows([]);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
