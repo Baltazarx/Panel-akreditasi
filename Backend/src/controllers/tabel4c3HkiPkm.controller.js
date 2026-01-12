@@ -7,48 +7,48 @@ import ExcelJS from 'exceljs';
 // (Di-copy dari controller sebelumnya untuk konsistensi)
 // ==========================================================
 const getTahunAkademik = async (ts_id_terpilih, connection) => {
-    
-    // 1. Validasi dan konversi ts_id yang dipilih
-    const ts = parseInt(ts_id_terpilih, 10);
-    if (isNaN(ts)) {
-        console.error(`DEBUG: ts_id '${ts_id_terpilih}' tidak valid.`);
-        throw new Error('ts_id tidak valid atau tidak disediakan.');
-    }
 
-    // 2. Hitung 5 ID tahun secara dinamis
-    const id_ts = ts;
-    const id_ts1 = ts - 1;
-    const id_ts2 = ts - 2;
-    const id_ts3 = ts - 3;
-    const id_ts4 = ts - 4;
-    
-    const tahunIdsList = [id_ts4, id_ts3, id_ts2, id_ts1, id_ts];
+  // 1. Validasi dan konversi ts_id yang dipilih
+  const ts = parseInt(ts_id_terpilih, 10);
+  if (isNaN(ts)) {
+    console.error(`DEBUG: ts_id '${ts_id_terpilih}' tidak valid.`);
+    throw new Error('ts_id tidak valid atau tidak disediakan.');
+  }
 
-    // 3. Ambil nama tahun dari DB untuk 5 ID yang dihitung
-    const [rows] = await (connection || pool).query(
-      `SELECT id_tahun, tahun 
+  // 2. Hitung 5 ID tahun secara dinamis
+  const id_ts = ts;
+  const id_ts1 = ts - 1;
+  const id_ts2 = ts - 2;
+  const id_ts3 = ts - 3;
+  const id_ts4 = ts - 4;
+
+  const tahunIdsList = [id_ts4, id_ts3, id_ts2, id_ts1, id_ts];
+
+  // 3. Ambil nama tahun dari DB untuk 5 ID yang dihitung
+  const [rows] = await (connection || pool).query(
+    `SELECT id_tahun, tahun 
        FROM tahun_akademik 
        WHERE id_tahun IN (?)
        ORDER BY id_tahun ASC`,
-      [tahunIdsList] 
-    );
+    [tahunIdsList]
+  );
 
-    // 4. Buat Map untuk pencarian nama tahun (lebih efisien)
-    const tahunMap = new Map(rows.map(row => [row.id_tahun, row.tahun]));
+  // 4. Buat Map untuk pencarian nama tahun (lebih efisien)
+  const tahunMap = new Map(rows.map(row => [row.id_tahun, row.tahun]));
 
-    // 5. Kembalikan objek 5 tahun yang lengkap
-    return {
-        id_ts4: id_ts4,
-        id_ts3: id_ts3,
-        id_ts2: id_ts2,
-        id_ts1: id_ts1,
-        id_ts:  id_ts,
-        nama_ts4: tahunMap.get(id_ts4) || `${id_ts4}`,
-        nama_ts3: tahunMap.get(id_ts3) || `${id_ts3}`,
-        nama_ts2: tahunMap.get(id_ts2) || `${id_ts2}`,
-        nama_ts1: tahunMap.get(id_ts1) || `${id_ts1}`,
-        nama_ts:  tahunMap.get(id_ts)  || `${id_ts}`,
-    };
+  // 5. Kembalikan objek 5 tahun yang lengkap
+  return {
+    id_ts4: id_ts4,
+    id_ts3: id_ts3,
+    id_ts2: id_ts2,
+    id_ts1: id_ts1,
+    id_ts: id_ts,
+    nama_ts4: tahunMap.get(id_ts4) || `${id_ts4}`,
+    nama_ts3: tahunMap.get(id_ts3) || `${id_ts3}`,
+    nama_ts2: tahunMap.get(id_ts2) || `${id_ts2}`,
+    nama_ts1: tahunMap.get(id_ts1) || `${id_ts1}`,
+    nama_ts: tahunMap.get(id_ts) || `${id_ts}`,
+  };
 };
 
 
@@ -77,11 +77,11 @@ export const listTabel4c3HkiPkm = async (req, res) => {
     // Special handling: Role LPPM bisa melihat semua data tanpa filter unit
     const userRole = req.user?.role?.toLowerCase();
     const isLppm = userRole === 'lppm';
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
     // Alias 'h' untuk tabel_4c3_hki_pkm
     const { where, params } = await buildWhere(req, 'tabel_4c3_hki_pkm', 'h');
-    
+
     // Hapus filter id_unit untuk role LPPM (bisa lihat semua data)
     if (isLppm && !isSuperAdmin) {
       const unitFilterPattern = /h\.id_unit\s*=\s*\?/i;
@@ -92,7 +92,7 @@ export const listTabel4c3HkiPkm = async (req, res) => {
           break;
         }
       }
-      
+
       if (unitFilterIndex !== -1) {
         where.splice(unitFilterIndex, 1);
         let paramIndex = 0;
@@ -105,23 +105,23 @@ export const listTabel4c3HkiPkm = async (req, res) => {
         }
       }
     }
-    
+
     const customOrder = req.query?.order_by;
-    const orderBy = customOrder 
+    const orderBy = customOrder
       ? buildOrderBy(customOrder, 'nama_dtpr', 'pg')
       : 'pg.nama_lengkap ASC, h.id_tahun_perolehan DESC'; // Order by nama, lalu tahun terbaru
 
     // 1. Ambil ts_id dari query parameter
     const { ts_id } = req.query;
     if (!ts_id) {
-        return res.status(400).json({ 
-            error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk melihat laporan.' 
-        });
+      return res.status(400).json({
+        error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk melihat laporan.'
+      });
     }
 
     // 2. Panggil helper (5 tahun)
     const tahunIds = await getTahunAkademik(ts_id);
-    
+
     // 3. Tambahkan filter HANYA untuk 5 tahun laporan
     const tahunFilters = [tahunIds.id_ts4, tahunIds.id_ts3, tahunIds.id_ts2, tahunIds.id_ts1, tahunIds.id_ts];
     where.push(`h.id_tahun_perolehan IN (?)`);
@@ -159,17 +159,17 @@ export const listTabel4c3HkiPkm = async (req, res) => {
       ORDER BY ${orderBy}`;
 
     const [rows] = await pool.query(sql, params);
-    
+
     // Kirim juga info tahunnya ke frontend
     res.json({
-        tahun_laporan: tahunIds,
-        data: rows
+      tahun_laporan: tahunIds,
+      data: rows
     });
 
   } catch (err) {
     console.error("Error listTabel4c3HkiPkm:", err);
     if (err.message.includes('ts_id tidak valid')) {
-        return res.status(400).json({ error: err.message });
+      return res.status(400).json({ error: err.message });
     }
     res.status(500).json({ error: 'Gagal mengambil daftar HKI PkM', details: err.sqlMessage || err.message });
   }
@@ -181,8 +181,8 @@ export const listTabel4c3HkiPkm = async (req, res) => {
 ================================
 */
 export const getTabel4c3HkiPkmById = async (req, res) => {
-    try {
-        const sql = `
+  try {
+    const sql = `
             SELECT 
               h.*, 
               pg.nama_lengkap AS nama_dtpr,
@@ -195,16 +195,16 @@ export const getTabel4c3HkiPkmById = async (req, res) => {
             LEFT JOIN tahun_akademik t ON h.id_tahun_perolehan = t.id_tahun
             WHERE h.id = ? AND h.deleted_at IS NULL
         `;
-        const [rows] = await pool.query(sql, [req.params.id]);
+    const [rows] = await pool.query(sql, [req.params.id]);
 
-        if (!rows[0]) return res.status(404).json({ error: 'Data HKI PkM tidak ditemukan' });
-        
-        res.json(rows[0]);
+    if (!rows[0]) return res.status(404).json({ error: 'Data HKI PkM tidak ditemukan' });
 
-    } catch (err) {
-        console.error("Error getTabel4c3HkiPkmById:", err);
-        res.status(500).json({ error: 'Gagal mengambil detail data HKI PkM', details: err.message });
-    }
+    res.json(rows[0]);
+
+  } catch (err) {
+    console.error("Error getTabel4c3HkiPkmById:", err);
+    res.status(500).json({ error: 'Gagal mengambil detail data HKI PkM', details: err.message });
+  }
 };
 
 /*
@@ -214,7 +214,7 @@ export const getTabel4c3HkiPkmById = async (req, res) => {
 */
 export const createTabel4c3HkiPkm = async (req, res) => {
   try {
-    const { 
+    const {
       id_dosen,
       judul_hki,
       jenis_hki,
@@ -224,16 +224,16 @@ export const createTabel4c3HkiPkm = async (req, res) => {
 
     // 1. Validasi Input
     if (!id_dosen || !judul_hki || !jenis_hki || !id_tahun_perolehan) {
-        return res.status(400).json({ 
-            error: 'Input tidak lengkap. (id_dosen, judul_hki, jenis_hki, id_tahun_perolehan) wajib diisi.' 
-        });
+      return res.status(400).json({
+        error: 'Input tidak lengkap. (id_dosen, judul_hki, jenis_hki, id_tahun_perolehan) wajib diisi.'
+      });
     }
-    
+
     // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
     // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
     let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
-    if (!final_id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
+    if (!final_id_unit) {
+      return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' });
     }
 
     const id_user = req.user?.id_user;
@@ -248,33 +248,33 @@ export const createTabel4c3HkiPkm = async (req, res) => {
     };
 
     // 4. Tambah audit columns
-    if (await hasColumn('tabel_4c3_hki_pkm', 'created_by') && id_user) { 
-      dataToInsert.created_by = id_user; 
+    if (await hasColumn('tabel_4c3_hki_pkm', 'created_by') && id_user) {
+      dataToInsert.created_by = id_user;
     }
 
     // 5. Eksekusi Query
     const [result] = await pool.query(
-        'INSERT INTO tabel_4c3_hki_pkm SET ?', 
-        [dataToInsert]
+      'INSERT INTO tabel_4c3_hki_pkm SET ?',
+      [dataToInsert]
     );
     const newId = result.insertId;
-    
+
     // 6. Ambil data baru untuk dikembalikan
     const [rows] = await pool.query(
-        `SELECT * FROM tabel_4c3_hki_pkm WHERE id = ?`,
-        [newId]
+      `SELECT * FROM tabel_4c3_hki_pkm WHERE id = ?`,
+      [newId]
     );
 
-    res.status(201).json({ 
-        message: 'Data HKI PkM berhasil dibuat', 
-        id: newId,
-        data: rows[0]
+    res.status(201).json({
+      message: 'Data HKI PkM berhasil dibuat',
+      id: newId,
+      data: rows[0]
     });
 
   } catch (err) {
     console.error("Error createTabel4c3HkiPkm:", err);
     if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ error: 'Data duplikat terdeteksi.', details: err.sqlMessage });
+      return res.status(409).json({ error: 'Data duplikat terdeteksi.', details: err.sqlMessage });
     }
     res.status(500).json({ error: 'Gagal membuat data HKI PkM', details: err.sqlMessage || err.message });
   }
@@ -289,7 +289,7 @@ export const updateTabel4c3HkiPkm = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { 
+    const {
       id_dosen,
       judul_hki,
       jenis_hki,
@@ -299,16 +299,16 @@ export const updateTabel4c3HkiPkm = async (req, res) => {
 
     // 1. Validasi Input
     if (!id_dosen || !judul_hki || !jenis_hki || !id_tahun_perolehan) {
-        return res.status(400).json({ 
-            error: 'Input tidak lengkap. (id_dosen, judul_hki, jenis_hki, id_tahun_perolehan) wajib diisi.' 
-        });
+      return res.status(400).json({
+        error: 'Input tidak lengkap. (id_dosen, judul_hki, jenis_hki, id_tahun_perolehan) wajib diisi.'
+      });
     }
-    
+
     // 2. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
     // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
     let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
-    if (!final_id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' }); 
+    if (!final_id_unit) {
+      return res.status(400).json({ error: 'Unit kerja (Prodi/LPPM) tidak ditemukan dari data user.' });
     }
 
     const id_user = req.user?.id_user;
@@ -323,29 +323,29 @@ export const updateTabel4c3HkiPkm = async (req, res) => {
     };
 
     // 4. Tambah audit columns
-    if (await hasColumn('tabel_4c3_hki_pkm', 'updated_by') && id_user) { 
-      dataToUpdate.updated_by = id_user; 
+    if (await hasColumn('tabel_4c3_hki_pkm', 'updated_by') && id_user) {
+      dataToUpdate.updated_by = id_user;
     }
 
     // 5. Eksekusi Query
     const [result] = await pool.query(
-        'UPDATE tabel_4c3_hki_pkm SET ? WHERE id = ?', 
-        [dataToUpdate, id]
-    );
-    
-    if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Data HKI PkM tidak ditemukan atau tidak ada perubahan.' });
-    }
-    
-    // 6. Ambil data baru untuk dikembalikan
-    const [rows] = await pool.query(
-        `SELECT * FROM tabel_4c3_hki_pkm WHERE id = ?`,
-        [id]
+      'UPDATE tabel_4c3_hki_pkm SET ? WHERE id = ?',
+      [dataToUpdate, id]
     );
 
-    res.json({ 
-        message: 'Data HKI PkM berhasil diperbarui',
-        data: rows[0]
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Data HKI PkM tidak ditemukan atau tidak ada perubahan.' });
+    }
+
+    // 6. Ambil data baru untuk dikembalikan
+    const [rows] = await pool.query(
+      `SELECT * FROM tabel_4c3_hki_pkm WHERE id = ?`,
+      [id]
+    );
+
+    res.json({
+      message: 'Data HKI PkM berhasil diperbarui',
+      data: rows[0]
     });
 
   } catch (err) {
@@ -362,11 +362,11 @@ export const updateTabel4c3HkiPkm = async (req, res) => {
 export const softDeleteTabel4c3HkiPkm = async (req, res) => {
   try {
     const payload = { deleted_at: new Date() };
-    if (await hasColumn('tabel_4c3_hki_pkm', 'deleted_by')) { 
-      payload.deleted_by = req.user?.id_user || null; 
+    if (await hasColumn('tabel_4c3_hki_pkm', 'deleted_by')) {
+      payload.deleted_by = req.user?.id_user || null;
     }
     const [result] = await pool.query(
-      'UPDATE tabel_4c3_hki_pkm SET ? WHERE id = ?', 
+      'UPDATE tabel_4c3_hki_pkm SET ? WHERE id = ?',
       [payload, req.params.id]
     );
     if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
@@ -385,43 +385,43 @@ export const softDeleteTabel4c3HkiPkm = async (req, res) => {
 export const restoreTabel4c3HkiPkm = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Validasi ID
     if (!id || id === 'undefined' || id === 'null') {
       return res.status(400).json({ error: 'ID tidak valid.' });
     }
-    
+
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_4c3_hki_pkm', 'deleted_at');
     if (!hasDeletedAt) {
       return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
     }
-    
+
     // Cek apakah kolom deleted_by ada
     const hasDeletedBy = await hasColumn('tabel_4c3_hki_pkm', 'deleted_by');
-    
+
     // Restore data
     if (hasDeletedBy) {
       const [result] = await pool.query(
         'UPDATE tabel_4c3_hki_pkm SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data HKI PkM berhasil dipulihkan' });
     } else {
       const [result] = await pool.query(
         'UPDATE tabel_4c3_hki_pkm SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data HKI PkM berhasil dipulihkan' });
     }
   } catch (err) {
@@ -438,7 +438,7 @@ export const restoreTabel4c3HkiPkm = async (req, res) => {
 export const hardDeleteTabel4c3HkiPkm = async (req, res) => {
   try {
     const [result] = await pool.query(
-      'DELETE FROM tabel_4c3_hki_pkm WHERE id = ?', 
+      'DELETE FROM tabel_4c3_hki_pkm WHERE id = ?',
       [req.params.id]
     );
     if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
@@ -455,29 +455,29 @@ export const hardDeleteTabel4c3HkiPkm = async (req, res) => {
 ================================
 */
 export const exportTabel4c3HkiPkm = async (req, res) => {
-    try {
-        // Alias 'h'
-        const { where, params } = await buildWhere(req, 'tabel_4c3_hki_pkm', 'h');
-        const orderBy = 'pg.nama_lengkap ASC, h.id_tahun_perolehan DESC';
+  try {
+    // Alias 'h'
+    const { where, params } = await buildWhere(req, 'tabel_4c3_hki_pkm', 'h');
+    const orderBy = 'pg.nama_lengkap ASC, h.id_tahun_perolehan DESC';
 
-        // 1. Ambil ts_id
-        const { ts_id } = req.query;
-        if (!ts_id) {
-            return res.status(400).json({ 
-                error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk export.' 
-            });
-        }
+    // 1. Ambil ts_id
+    const { ts_id } = req.query;
+    if (!ts_id) {
+      return res.status(400).json({
+        error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk export.'
+      });
+    }
 
-        // 2. Panggil helper 5 tahun
-        const tahunIds = await getTahunAkademik(ts_id);
-        
-        // 3. Tambahkan filter HANYA untuk 5 tahun laporan
-        const tahunFilters = [tahunIds.id_ts4, tahunIds.id_ts3, tahunIds.id_ts2, tahunIds.id_ts1, tahunIds.id_ts];
-        where.push(`h.id_tahun_perolehan IN (?)`);
-        params.push(tahunFilters);
-        
-        // 4. Buat SQL
-        const sql = `
+    // 2. Panggil helper 5 tahun
+    const tahunIds = await getTahunAkademik(ts_id);
+
+    // 3. Tambahkan filter HANYA untuk 5 tahun laporan
+    const tahunFilters = [tahunIds.id_ts4, tahunIds.id_ts3, tahunIds.id_ts2, tahunIds.id_ts1, tahunIds.id_ts];
+    where.push(`h.id_tahun_perolehan IN (?)`);
+    params.push(tahunFilters);
+
+    // 4. Buat SQL
+    const sql = `
             SELECT 
               pg.nama_lengkap AS nama_dtpr,
               h.judul_hki,
@@ -496,67 +496,67 @@ export const exportTabel4c3HkiPkm = async (req, res) => {
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             
             ORDER BY ${orderBy}`;
-            
-        const [rows] = await pool.query(sql, params);
-        
-        // 5. Buat Excel
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Tabel 4.C.3');
-        
-        // Header Gabungan (Merge) - [5 KOLOM]
-        sheet.mergeCells('E1:I1'); // -> E, F, G, H, I
-        sheet.getCell('E1').value = `Tahun Perolehan (TS = ${tahunIds.nama_ts})`;
-        sheet.getCell('E1').font = { bold: true };
-        sheet.getCell('E1').alignment = { horizontal: 'center' };
-        
-        // Header Kolom - [5 TAHUN]
-        const headers = [
-            { header: 'Nama DTPR', key: 'nama_dtpr', width: 30 },
-            { header: 'Judul HKI', key: 'judul_hki', width: 40 },
-            { header: 'Jenis HKI', key: 'jenis_hki', width: 30 },
-            { header: 'Link Bukti', key: 'link_bukti', width: 30 },
-            // Header 5 Tahun
-            { header: `TS-4 (${tahunIds.nama_ts4})`, key: 'tahun_ts4', width: 15 },
-            { header: `TS-3 (${tahunIds.nama_ts3})`, key: 'tahun_ts3', width: 15 },
-            { header: `TS-2 (${tahunIds.nama_ts2})`, key: 'tahun_ts2', width: 15 },
-            { header: `TS-1 (${tahunIds.nama_ts1})`, key: 'tahun_ts1', width: 15 },
-            { header: `TS (${tahunIds.nama_ts})`, key: 'tahun_ts', width: 15 },
-        ];
-        
-        // Susun ulang kolom agar Link Bukti ada di akhir
-        const linkBuktiHeader = headers.splice(3, 1)[0];
-        headers.push(linkBuktiHeader);
-        
-        sheet.getRow(2).columns = headers;
-        sheet.getRow(2).font = { bold: true };
-        sheet.getRow(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
-        // 6. Tambah Data
-        sheet.addRows(rows);
+    const [rows] = await pool.query(sql, params);
 
-        // 7. Styling Data - [5 TAHUN]
-        sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-            if (rowNumber > 2) { 
-                row.alignment = { vertical: 'middle', wrapText: true };
-                // Center-align kolom tertentu
-                ['tahun_ts4', 'tahun_ts3', 'tahun_ts2', 'tahun_ts1', 'tahun_ts'].forEach(key => {
-                    row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
-                });
-            }
+    // 5. Buat Excel
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Tabel 4.C.3');
+
+    // Header Gabungan (Merge) - [5 KOLOM]
+    sheet.mergeCells('E1:I1'); // -> E, F, G, H, I
+    sheet.getCell('E1').value = `Tahun Perolehan (TS = ${tahunIds.nama_ts})`;
+    sheet.getCell('E1').font = { bold: true };
+    sheet.getCell('E1').alignment = { horizontal: 'center' };
+
+    // Header Kolom - [5 TAHUN]
+    const headers = [
+      { header: 'Nama DTPR', key: 'nama_dtpr', width: 30 },
+      { header: 'Judul HKI', key: 'judul_hki', width: 40 },
+      { header: 'Jenis HKI', key: 'jenis_hki', width: 30 },
+      { header: 'Link Bukti', key: 'link_bukti', width: 30 },
+      // Header 5 Tahun
+      { header: `TS-4 (${tahunIds.nama_ts4})`, key: 'tahun_ts4', width: 15 },
+      { header: `TS-3 (${tahunIds.nama_ts3})`, key: 'tahun_ts3', width: 15 },
+      { header: `TS-2 (${tahunIds.nama_ts2})`, key: 'tahun_ts2', width: 15 },
+      { header: `TS-1 (${tahunIds.nama_ts1})`, key: 'tahun_ts1', width: 15 },
+      { header: `TS (${tahunIds.nama_ts})`, key: 'tahun_ts', width: 15 },
+    ];
+
+    // Susun ulang kolom agar Link Bukti ada di akhir
+    const linkBuktiHeader = headers.splice(3, 1)[0];
+    headers.push(linkBuktiHeader);
+
+    sheet.getRow(2).columns = headers;
+    sheet.getRow(2).font = { bold: true };
+    sheet.getRow(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+    // 6. Tambah Data
+    sheet.addRows(rows);
+
+    // 7. Styling Data - [5 TAHUN]
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > 2) {
+        row.alignment = { vertical: 'middle', wrapText: true };
+        // Center-align kolom tertentu
+        ['tahun_ts4', 'tahun_ts3', 'tahun_ts2', 'tahun_ts1', 'tahun_ts'].forEach(key => {
+          row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
         });
+      }
+    });
 
-        // 8. Kirim file
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Tabel_4C3_HKI_PkM.xlsx');
+    // 8. Kirim file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Tabel_4C3_HKI_PkM.xlsx');
 
-        await workbook.xlsx.write(res);
-        res.end();
+    await workbook.xlsx.write(res);
+    res.end();
 
-    } catch (err) {
-        console.error("Error exportTabel4c3HkiPkm:", err);
-        if (err.message.includes('ts_id tidak valid')) {
-            return res.status(400).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Gagal mengekspor data HKI PkM', details: err.message });
+  } catch (err) {
+    console.error("Error exportTabel4c3HkiPkm:", err);
+    if (err.message.includes('ts_id tidak valid')) {
+      return res.status(400).json({ error: err.message });
     }
+    res.status(500).json({ error: 'Gagal mengekspor data HKI PkM', details: err.message });
+  }
 };

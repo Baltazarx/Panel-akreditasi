@@ -39,7 +39,7 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
 
   const userRole = authUser?.role || role;
 
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole?.toLowerCase());
 
 
 

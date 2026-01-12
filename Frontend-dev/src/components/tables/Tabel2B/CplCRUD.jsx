@@ -24,7 +24,7 @@ export default function CplCRUD({ role, maps, onDataChange, readOnly = false, re
 
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole?.toLowerCase());
 
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;

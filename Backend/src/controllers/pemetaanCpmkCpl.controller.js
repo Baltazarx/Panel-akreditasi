@@ -11,12 +11,12 @@ import ExcelJS from 'exceljs';
 export const listPemetaanCpmkCpl = async (req, res) => {
   try {
     const userRole = req.user.role?.toLowerCase();
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
     // Build WHERE clause berdasarkan role dan query parameter untuk CPMK
     let cpmkWhereClause = [];
     let cpmkQueryParams = [];
-    
+
     if (!isSuperAdmin && req.user.id_unit) {
       // User prodi: hanya lihat CPMK milik prodi mereka
       cpmkWhereClause.push('cpmk.id_unit_prodi = ?');
@@ -35,14 +35,14 @@ export const listPemetaanCpmkCpl = async (req, res) => {
       FROM cpl
     `;
     let cplQueryParams = [];
-    
+
     // Jika ada filter prodi untuk CPMK, filter CPL juga berdasarkan prodi yang sama
     const prodiId = req.query?.id_unit_prodi || (!isSuperAdmin ? req.user.id_unit : null);
     if (prodiId) {
       sqlCpl += ` WHERE cpl.id_unit_prodi = ?`;
       cplQueryParams.push(prodiId);
     }
-    
+
     sqlCpl += ` ORDER BY cpl.kode_cpl ASC`;
     const [cplRows] = await pool.query(sqlCpl, cplQueryParams);
     const cplCodes = cplRows.map(p => p.kode_cpl);
@@ -94,14 +94,14 @@ export const listPemetaanCpmkCpl = async (req, res) => {
 export const updatePemetaanCpmkCpl = async (req, res) => {
   const { rows, id_unit_prodi: id_unit_prodi_from_body } = req.body;
   const userRole = req.user.role?.toLowerCase();
-  
+
   // Cek apakah user adalah superadmin
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-  
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
   // Prioritas: id_unit_prodi dari body (jika superadmin mengirim), lalu dari user yang login
   // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
   let id_unit_prodi = id_unit_prodi_from_body || req.user?.id_unit_prodi || req.user?.id_unit;
-  
+
   if (!isSuperAdmin && !id_unit_prodi) {
     return res.status(400).json({ error: 'User tidak memiliki id_unit_prodi.' });
   }
@@ -116,12 +116,12 @@ export const updatePemetaanCpmkCpl = async (req, res) => {
     // 1. Ambil semua CPMK (superadmin tanpa filter) atau CPMK milik prodi ini (user prodi atau superadmin dengan filter)
     let cpmkQuery = `SELECT id_cpmk, kode_cpmk FROM cpmk`;
     let queryParams = [];
-    
+
     if (id_unit_prodi) {
       cpmkQuery += ` WHERE id_unit_prodi = ?`;
       queryParams = [id_unit_prodi];
     }
-    
+
     const [cpmks] = await connection.query(cpmkQuery, queryParams);
     const cpmkCodeToId = new Map(cpmks.map(c => [c.kode_cpmk, c.id_cpmk]));
     const allCpmkIdsInProdi = cpmks.map(c => c.id_cpmk);
@@ -199,14 +199,14 @@ export const exportPemetaanCpmkCpl = async (req, res) => {
       FROM cpl
     `;
     let cplQueryParams = [];
-    
+
     // Jika ada filter prodi untuk CPMK, filter CPL juga berdasarkan prodi yang sama
     const prodiId = req.query?.id_unit_prodi;
     if (prodiId) {
       sqlCpl += ` WHERE cpl.id_unit_prodi = ?`;
       cplQueryParams.push(prodiId);
     }
-    
+
     sqlCpl += ` ORDER BY cpl.kode_cpl ASC`;
     const [cplRows] = await pool.query(sqlCpl, cplQueryParams);
     const cplCodes = cplRows.map(p => p.kode_cpl);

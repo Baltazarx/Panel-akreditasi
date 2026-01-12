@@ -22,7 +22,7 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange, ma
 
   // Cek role SuperAdmin
   const userRole = authUser?.role || role;
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole?.toLowerCase());
 
   // Ambil id_unit_prodi dari authUser (ini adalah id_unit_prodi untuk user prodi)
   // Fix: Gunakan fallback yang sama dengan komponen lain

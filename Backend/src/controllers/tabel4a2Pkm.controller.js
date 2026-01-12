@@ -34,48 +34,48 @@ const pivotPendanaanSQL = (tahunIds, aliasPendanaan = 'p', aliasTahun = 't') => 
 // (Di-copy dari controller 3C1)
 // ==========================================================
 const getTahunAkademik = async (ts_id_terpilih, connection) => {
-    
-    // 1. Validasi dan konversi ts_id yang dipilih
-    const ts = parseInt(ts_id_terpilih, 10);
-    if (isNaN(ts)) {
-        console.error(`DEBUG: ts_id '${ts_id_terpilih}' tidak valid.`);
-        throw new Error('ts_id tidak valid atau tidak disediakan.');
-    }
 
-    // 2. Hitung 5 ID tahun secara dinamis
-    const id_ts = ts;
-    const id_ts1 = ts - 1;
-    const id_ts2 = ts - 2;
-    const id_ts3 = ts - 3;
-    const id_ts4 = ts - 4;
-    
-    const tahunIdsList = [id_ts4, id_ts3, id_ts2, id_ts1, id_ts];
+  // 1. Validasi dan konversi ts_id yang dipilih
+  const ts = parseInt(ts_id_terpilih, 10);
+  if (isNaN(ts)) {
+    console.error(`DEBUG: ts_id '${ts_id_terpilih}' tidak valid.`);
+    throw new Error('ts_id tidak valid atau tidak disediakan.');
+  }
 
-    // 3. Ambil nama tahun dari DB untuk 5 ID yang dihitung
-    const [rows] = await (connection || pool).query(
-      `SELECT id_tahun, tahun 
+  // 2. Hitung 5 ID tahun secara dinamis
+  const id_ts = ts;
+  const id_ts1 = ts - 1;
+  const id_ts2 = ts - 2;
+  const id_ts3 = ts - 3;
+  const id_ts4 = ts - 4;
+
+  const tahunIdsList = [id_ts4, id_ts3, id_ts2, id_ts1, id_ts];
+
+  // 3. Ambil nama tahun dari DB untuk 5 ID yang dihitung
+  const [rows] = await (connection || pool).query(
+    `SELECT id_tahun, tahun 
        FROM tahun_akademik 
        WHERE id_tahun IN (?)
        ORDER BY id_tahun ASC`,
-      [tahunIdsList] 
-    );
+    [tahunIdsList]
+  );
 
-    // 4. Buat Map untuk pencarian nama tahun (lebih efisien)
-    const tahunMap = new Map(rows.map(row => [row.id_tahun, row.tahun]));
+  // 4. Buat Map untuk pencarian nama tahun (lebih efisien)
+  const tahunMap = new Map(rows.map(row => [row.id_tahun, row.tahun]));
 
-    // 5. Kembalikan objek 5 tahun yang lengkap
-    return {
-        id_ts4: id_ts4,
-        id_ts3: id_ts3,
-        id_ts2: id_ts2,
-        id_ts1: id_ts1,
-        id_ts:  id_ts,
-        nama_ts4: tahunMap.get(id_ts4) || `${id_ts4}`,
-        nama_ts3: tahunMap.get(id_ts3) || `${id_ts3}`,
-        nama_ts2: tahunMap.get(id_ts2) || `${id_ts2}`,
-        nama_ts1: tahunMap.get(id_ts1) || `${id_ts1}`,
-        nama_ts:  tahunMap.get(id_ts)  || `${id_ts}`,
-    };
+  // 5. Kembalikan objek 5 tahun yang lengkap
+  return {
+    id_ts4: id_ts4,
+    id_ts3: id_ts3,
+    id_ts2: id_ts2,
+    id_ts1: id_ts1,
+    id_ts: id_ts,
+    nama_ts4: tahunMap.get(id_ts4) || `${id_ts4}`,
+    nama_ts3: tahunMap.get(id_ts3) || `${id_ts3}`,
+    nama_ts2: tahunMap.get(id_ts2) || `${id_ts2}`,
+    nama_ts1: tahunMap.get(id_ts1) || `${id_ts1}`,
+    nama_ts: tahunMap.get(id_ts) || `${id_ts}`,
+  };
 };
 
 
@@ -89,11 +89,11 @@ export const listTabel4a2Pkm = async (req, res) => {
     // Special handling: Role LPPM bisa melihat semua data tanpa filter unit
     const userRole = req.user?.role?.toLowerCase();
     const isLppm = userRole === 'lppm';
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
     // Alias 'pkm' untuk tabel_4a2_pkm
     const { where, params } = await buildWhere(req, 'tabel_4a2_pkm', 'pkm');
-    
+
     // Hapus filter id_unit untuk role LPPM (bisa lihat semua data)
     if (isLppm && !isSuperAdmin) {
       const unitFilterPattern = /pkm\.id_unit\s*=\s*\?/i;
@@ -104,7 +104,7 @@ export const listTabel4a2Pkm = async (req, res) => {
           break;
         }
       }
-      
+
       if (unitFilterIndex !== -1) {
         where.splice(unitFilterIndex, 1);
         let paramIndex = 0;
@@ -117,25 +117,25 @@ export const listTabel4a2Pkm = async (req, res) => {
         }
       }
     }
-    
+
     const customOrder = req.query?.order_by;
-    const orderBy = customOrder 
+    const orderBy = customOrder
       ? buildOrderBy(customOrder, 'id', 'pkm')
       : 'pg.nama_lengkap ASC'; // Order by nama dosen
 
     // 1. Ambil ts_id dari query parameter
     const { ts_id } = req.query;
     if (!ts_id) {
-        return res.status(400).json({ 
-            error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk melihat laporan.' 
-        });
+      return res.status(400).json({
+        error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk melihat laporan.'
+      });
     }
 
     // 2. Panggil helper (5 tahun)
     const tahunIds = await getTahunAkademik(ts_id);
-    
-    if (!tahunIds.id_ts) { 
-        return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
+
+    if (!tahunIds.id_ts) {
+      return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
     }
 
     // 3. Buat SQL
@@ -190,17 +190,17 @@ export const listTabel4a2Pkm = async (req, res) => {
       ORDER BY ${orderBy}`;
 
     const [rows] = await pool.query(sql, params);
-    
+
     // Kirim juga info tahunnya ke frontend
     res.json({
-        tahun_laporan: tahunIds,
-        data: rows
+      tahun_laporan: tahunIds,
+      data: rows
     });
 
   } catch (err) {
     console.error("Error listTabel4a2Pkm:", err);
     if (err.message.includes('ts_id tidak valid')) {
-        return res.status(400).json({ error: err.message });
+      return res.status(400).json({ error: err.message });
     }
     res.status(500).json({ error: 'Gagal mengambil daftar PkM', details: err.sqlMessage || err.message });
   }
@@ -212,10 +212,10 @@ export const listTabel4a2Pkm = async (req, res) => {
 ================================
 */
 export const getTabel4a2PkmById = async (req, res) => {
-    try {
-        // 1. Ambil data Induk (PkM)
-        const [parentRows] = await pool.query(
-            `SELECT 
+  try {
+    // 1. Ambil data Induk (PkM)
+    const [parentRows] = await pool.query(
+      `SELECT 
                pkm.*, 
                uk.nama_unit,
                pg.nama_lengkap AS nama_dtpr
@@ -223,31 +223,31 @@ export const getTabel4a2PkmById = async (req, res) => {
              LEFT JOIN unit_kerja uk ON pkm.id_unit = uk.id_unit 
              LEFT JOIN dosen d ON pkm.id_dosen_ketua = d.id_dosen
              LEFT JOIN pegawai pg ON d.id_pegawai = pg.id_pegawai
-             WHERE pkm.id = ? AND pkm.deleted_at IS NULL`, 
-            [req.params.id]
-        );
+             WHERE pkm.id = ? AND pkm.deleted_at IS NULL`,
+      [req.params.id]
+    );
 
-        if (!parentRows[0]) return res.status(404).json({ error: 'Data PkM tidak ditemukan' });
+    if (!parentRows[0]) return res.status(404).json({ error: 'Data PkM tidak ditemukan' });
 
-        // 2. Ambil data Anak (Pendanaan)
-        const [childRows] = await pool.query(
-            `SELECT id_tahun, jumlah_dana 
+    // 2. Ambil data Anak (Pendanaan)
+    const [childRows] = await pool.query(
+      `SELECT id_tahun, jumlah_dana 
              FROM tabel_4a2_pendanaan_pkm 
              WHERE id_pkm = ?`,
-            [req.params.id]
-        );
+      [req.params.id]
+    );
 
-        // 3. Gabungkan
-        const result = {
-            ...parentRows[0],
-            pendanaan: childRows
-        };
-        
-        res.json(result);
-    } catch (err) {
-        console.error("Error getTabel4a2PkmById:", err);
-        res.status(500).json({ error: 'Gagal mengambil detail data PkM' });
-    }
+    // 3. Gabungkan
+    const result = {
+      ...parentRows[0],
+      pendanaan: childRows
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error getTabel4a2PkmById:", err);
+    res.status(500).json({ error: 'Gagal mengambil detail data PkM' });
+  }
 };
 
 /*
@@ -259,7 +259,7 @@ export const createTabel4a2Pkm = async (req, res) => {
   let connection;
   try {
     // 1. Ambil data dari body
-    const { 
+    const {
       // Kolom Induk
       link_roadmap,
       id_dosen_ketua,
@@ -269,25 +269,25 @@ export const createTabel4a2Pkm = async (req, res) => {
       sumber_dana,
       durasi_tahun,
       link_bukti,
-      
+
       // Kolom Anak
       pendanaan // Ini harusnya array: [{id_tahun: 2024, jumlah_dana: 10000}, ...]
     } = req.body;
 
     // 2. Validasi Induk
-    if (!id_dosen_ketua || !judul_pkm || !sumber_dana) { 
-        return res.status(400).json({ error: 'Input tidak lengkap (id_dosen_ketua, judul_pkm, sumber_dana) wajib diisi.' }); 
+    if (!id_dosen_ketua || !judul_pkm || !sumber_dana) {
+      return res.status(400).json({ error: 'Input tidak lengkap (id_dosen_ketua, judul_pkm, sumber_dana) wajib diisi.' });
     }
     // Validasi Anak
     if (!Array.isArray(pendanaan)) { // Boleh kosong, tapi harus array
-        return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
+      return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
     }
 
     // 3. Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
     // Fallback: jika id_unit tidak ada, coba gunakan id_unit_prodi
     let final_id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
-    if (!final_id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' }); 
+    if (!final_id_unit) {
+      return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' });
     }
 
     // 4. Siapkan data Induk
@@ -302,8 +302,8 @@ export const createTabel4a2Pkm = async (req, res) => {
       durasi_tahun,
       link_bukti
     };
-    if (await hasColumn('tabel_4a2_pkm', 'created_by') && req.user?.id_user) { 
-      dataParent.created_by = req.user.id_user; 
+    if (await hasColumn('tabel_4a2_pkm', 'created_by') && req.user?.id_user) {
+      dataParent.created_by = req.user.id_user;
     }
 
     // 5. Mulai Transaksi
@@ -312,25 +312,25 @@ export const createTabel4a2Pkm = async (req, res) => {
 
     // 6. Insert Induk
     const [resultParent] = await connection.query(
-        'INSERT INTO tabel_4a2_pkm SET ?', 
-        [dataParent]
+      'INSERT INTO tabel_4a2_pkm SET ?',
+      [dataParent]
     );
     const newPkmId = resultParent.insertId;
 
     // 7. Insert Anak (jika ada)
     for (const item of pendanaan) {
-        // Simpan hanya jika ada dana (atau > 0)
-        if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) { 
-            await connection.query(
-                'INSERT INTO tabel_4a2_pendanaan_pkm (id_pkm, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
-                [newPkmId, item.id_tahun, item.jumlah_dana]
-            );
-        }
+      // Simpan hanya jika ada dana (atau > 0)
+      if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) {
+        await connection.query(
+          'INSERT INTO tabel_4a2_pendanaan_pkm (id_pkm, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
+          [newPkmId, item.id_tahun, item.jumlah_dana]
+        );
+      }
     }
 
     // 8. Commit Transaksi
     await connection.commit();
-    
+
     res.status(201).json({ message: 'Data PkM berhasil dibuat', id: newPkmId });
 
   } catch (err) {
@@ -353,7 +353,7 @@ export const updateTabel4a2Pkm = async (req, res) => {
 
   try {
     // 1. Ambil data dari body
-    const { 
+    const {
       // Kolom Induk
       link_roadmap,
       id_dosen_ketua,
@@ -363,24 +363,24 @@ export const updateTabel4a2Pkm = async (req, res) => {
       sumber_dana,
       durasi_tahun,
       link_bukti,
-      
+
       // Kolom Anak
       pendanaan // Ini harusnya array: [{id_tahun: 2024, jumlah_dana: 10000}, ...]
     } = req.body;
 
     // 2. Validasi Induk
-    if (!id_dosen_ketua || !judul_pkm || !sumber_dana) { 
-        return res.status(400).json({ error: 'Input tidak lengkap (id_dosen_ketua, judul_pkm, sumber_dana) wajib diisi.' }); 
+    if (!id_dosen_ketua || !judul_pkm || !sumber_dana) {
+      return res.status(400).json({ error: 'Input tidak lengkap (id_dosen_ketua, judul_pkm, sumber_dana) wajib diisi.' });
     }
     // Validasi Anak
     if (!Array.isArray(pendanaan)) {
-        return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
+      return res.status(400).json({ error: 'Data pendanaan harus berupa array.' });
     }
 
     // 3. Ambil data User
     const id_unit = req.user?.id_unit;
-    if (!id_unit) { 
-      return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' }); 
+    if (!id_unit) {
+      return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' });
     }
 
     // 4. Siapkan data Induk
@@ -395,8 +395,8 @@ export const updateTabel4a2Pkm = async (req, res) => {
       durasi_tahun,
       link_bukti
     };
-    if (await hasColumn('tabel_4a2_pkm', 'updated_by') && req.user?.id_user) { 
-      dataParent.updated_by = req.user.id_user; 
+    if (await hasColumn('tabel_4a2_pkm', 'updated_by') && req.user?.id_user) {
+      dataParent.updated_by = req.user.id_user;
     }
 
     // 5. Mulai Transaksi
@@ -405,11 +405,11 @@ export const updateTabel4a2Pkm = async (req, res) => {
 
     // 6. Update Induk
     const [resultParent] = await connection.query(
-        'UPDATE tabel_4a2_pkm SET ? WHERE id = ?', 
-        [dataParent, id]
+      'UPDATE tabel_4a2_pkm SET ? WHERE id = ?',
+      [dataParent, id]
     );
     if (resultParent.affectedRows === 0) {
-        throw new Error('Data PkM tidak ditemukan atau tidak ada perubahan.');
+      throw new Error('Data PkM tidak ditemukan atau tidak ada perubahan.');
     }
 
     // 7. Hapus data Anak (Pendanaan) lama
@@ -417,24 +417,24 @@ export const updateTabel4a2Pkm = async (req, res) => {
 
     // 8. Masukkan data Anak (Pendanaan) baru
     for (const item of pendanaan) {
-        if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) { 
-            await connection.query(
-                'INSERT INTO tabel_4a2_pendanaan_pkm (id_pkm, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
-                [id, item.id_tahun, item.jumlah_dana]
-            );
-        }
+      if (item.id_tahun && item.jumlah_dana && item.jumlah_dana > 0) {
+        await connection.query(
+          'INSERT INTO tabel_4a2_pendanaan_pkm (id_pkm, id_tahun, jumlah_dana) VALUES (?, ?, ?)',
+          [id, item.id_tahun, item.jumlah_dana]
+        );
+      }
     }
 
     // 9. Commit Transaksi
     await connection.commit();
-    
+
     res.json({ message: 'Data PkM berhasil diperbarui' });
 
   } catch (err) {
-    if (connection) await connection.rollback(); 
+    if (connection) await connection.rollback();
     console.error("Error updateTabel4a2Pkm:", err);
     if (err.message.includes('tidak ditemukan')) {
-        return res.status(404).json({ error: err.message });
+      return res.status(404).json({ error: err.message });
     }
     res.status(500).json({ error: 'Gagal memperbarui data PkM', details: err.sqlMessage || err.message });
   } finally {
@@ -450,11 +450,11 @@ export const updateTabel4a2Pkm = async (req, res) => {
 export const softDeleteTabel4a2Pkm = async (req, res) => {
   try {
     const payload = { deleted_at: new Date() };
-    if (await hasColumn('tabel_4a2_pkm', 'deleted_by')) { 
-      payload.deleted_by = req.user?.id_user || null; 
+    if (await hasColumn('tabel_4a2_pkm', 'deleted_by')) {
+      payload.deleted_by = req.user?.id_user || null;
     }
     const [result] = await pool.query(
-      'UPDATE tabel_4a2_pkm SET ? WHERE id = ?', 
+      'UPDATE tabel_4a2_pkm SET ? WHERE id = ?',
       [payload, req.params.id]
     );
     if (result.affectedRows === 0) { return res.status(404).json({ error: 'Data tidak ditemukan.' }); }
@@ -473,43 +473,43 @@ export const softDeleteTabel4a2Pkm = async (req, res) => {
 export const restoreTabel4a2Pkm = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Validasi ID
     if (!id || id === 'undefined' || id === 'null') {
       return res.status(400).json({ error: 'ID tidak valid.' });
     }
-    
+
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_4a2_pkm', 'deleted_at');
     if (!hasDeletedAt) {
       return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
     }
-    
+
     // Cek apakah kolom deleted_by ada
     const hasDeletedBy = await hasColumn('tabel_4a2_pkm', 'deleted_by');
-    
+
     // Restore data
     if (hasDeletedBy) {
       const [result] = await pool.query(
         'UPDATE tabel_4a2_pkm SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data PkM berhasil dipulihkan' });
     } else {
       const [result] = await pool.query(
         'UPDATE tabel_4a2_pkm SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data PkM berhasil dipulihkan' });
     }
   } catch (err) {
@@ -527,25 +527,25 @@ export const hardDeleteTabel4a2Pkm = async (req, res) => {
   let connection;
   try {
     const { id } = req.params;
-    
+
     // Mulai transaksi
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    
+
     // Hapus data anak (pendanaan) dulu
     await connection.query('DELETE FROM tabel_4a2_pendanaan_pkm WHERE id_pkm = ?', [id]);
-    
+
     // Hapus data induk
     const [result] = await connection.query(
-      'DELETE FROM tabel_4a2_pkm WHERE id = ?', 
+      'DELETE FROM tabel_4a2_pkm WHERE id = ?',
       [id]
     );
-    
+
     if (result.affectedRows === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Data PkM tidak ditemukan.' });
     }
-    
+
     // Commit transaksi
     await connection.commit();
     res.json({ message: 'Data PkM berhasil dihapus secara permanen (hard delete).' });
@@ -564,27 +564,27 @@ export const hardDeleteTabel4a2Pkm = async (req, res) => {
 ================================
 */
 export const exportTabel4a2Pkm = async (req, res) => {
-    try {
-        const { where, params } = await buildWhere(req, 'tabel_4a2_pkm', 'pkm');
-        const orderBy = 'pg.nama_lengkap ASC'; // Order by nama dosen
+  try {
+    const { where, params } = await buildWhere(req, 'tabel_4a2_pkm', 'pkm');
+    const orderBy = 'pg.nama_lengkap ASC'; // Order by nama dosen
 
-        // 1. Ambil ts_id
-        const { ts_id } = req.query;
-        if (!ts_id) {
-            return res.status(400).json({ 
-                error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk export.' 
-            });
-        }
+    // 1. Ambil ts_id
+    const { ts_id } = req.query;
+    if (!ts_id) {
+      return res.status(400).json({
+        error: 'Query parameter ?ts_id=TAHUN (contoh: ?ts_id=2024) wajib diisi untuk export.'
+      });
+    }
 
-        // 2. Panggil helper 5 tahun
-        const tahunIds = await getTahunAkademik(ts_id);
-        
-        if (!tahunIds.id_ts) {
-            return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
-        }
+    // 2. Panggil helper 5 tahun
+    const tahunIds = await getTahunAkademik(ts_id);
 
-        // 3. Buat SQL (Sama persis seperti list)
-        const sql = `
+    if (!tahunIds.id_ts) {
+      return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
+    }
+
+    // 3. Buat SQL (Sama persis seperti list)
+    const sql = `
             SELECT
               pg.nama_lengkap AS nama_dtpr,
               pkm.judul_pkm,
@@ -621,86 +621,86 @@ export const exportTabel4a2Pkm = async (req, res) => {
               pkm.deleted_at
             
             ORDER BY ${orderBy}`;
-            
-        const [rows] = await pool.query(sql, params);
-        
-        // 4. Buat Excel
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Tabel 4.A.2');
-        
-        // Header Gabungan (Merge) - [5 KOLOM]
-        sheet.mergeCells('G1:K1'); // G, H, I, J, K
-        sheet.getCell('G1').value = `Pendanaan (Rp Juta) (TS = ${tahunIds.nama_ts})`;
-        sheet.getCell('G1').font = { bold: true };
-        sheet.getCell('G1').alignment = { horizontal: 'center' };
-        
-        // Header Kolom - [5 TAHUN]
-        const headers = [
-            { header: 'Nama DTPR (Ketua PkM)', key: 'nama_dtpr', width: 30 },
-            { header: 'Judul PkM', key: 'judul_pkm', width: 40 },
-            { header: 'Jumlah Mahasiswa Terlibat', key: 'jml_mhs_terlibat', width: 20 },
-            { header: 'Jenis Hibah PkM', key: 'jenis_hibah_pkm', width: 25 },
-            { header: 'Sumber Dana (L/N/I)', key: 'sumber_dana', width: 20 },
-            { header: 'Durasi (Tahun)', key: 'durasi_tahun', width: 15 },
-            
-            // Header 5 Tahun
-            { header: `TS-4 (${tahunIds.nama_ts4})`, key: 'pendanaan_ts4', width: 20 },
-            { header: `TS-3 (${tahunIds.nama_ts3})`, key: 'pendanaan_ts3', width: 20 },
-            { header: `TS-2 (${tahunIds.nama_ts2})`, key: 'pendanaan_ts2', width: 20 },
-            { header: `TS-1 (${tahunIds.nama_ts1})`, key: 'pendanaan_ts1', width: 20 },
-            { header: `TS (${tahunIds.nama_ts})`, key: 'pendanaan_ts', width: 20 },
-            
-            { header: 'Link Bukti', key: 'link_bukti', width: 30 },
-        ];
-        
-        sheet.getRow(2).columns = headers;
-        sheet.getRow(2).font = { bold: true };
-        sheet.getRow(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
-        // 5. Tambah Data
-        const dataRows = rows.map(row => ({
-            ...row,
-            // Konversi ke Juta Rupiah
-            pendanaan_ts4: row.pendanaan_ts4 / 1000000, 
-            pendanaan_ts3: row.pendanaan_ts3 / 1000000, 
-            pendanaan_ts2: row.pendanaan_ts2 / 1000000,
-            pendanaan_ts1: row.pendanaan_ts1 / 1000000,
-            pendanaan_ts: row.pendanaan_ts / 1000000,  
-        }));
-        
-        sheet.addRows(dataRows);
+    const [rows] = await pool.query(sql, params);
 
-        // 6. Styling Data - [5 TAHUN]
-        sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-            if (rowNumber > 2) { 
-                row.alignment = { vertical: 'middle', wrapText: true };
-                // Center-align kolom tertentu
-                ['jml_mhs_terlibat', 'sumber_dana', 'durasi_tahun'].forEach(key => {
-                    row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
-                });
-                
-                // Format Rupiah
-                const pendanaanKeys = ['pendanaan_ts4', 'pendanaan_ts3', 'pendanaan_ts2', 'pendanaan_ts1', 'pendanaan_ts'];
-                pendanaanKeys.forEach(key => {
-                    const cell = row.getCell(key);
-                    cell.alignment = { vertical: 'middle', horizontal: 'right' };
-                    cell.numFmt = '#,##0.00'; 
-                });
-            }
+    // 4. Buat Excel
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Tabel 4.A.2');
+
+    // Header Gabungan (Merge) - [5 KOLOM]
+    sheet.mergeCells('G1:K1'); // G, H, I, J, K
+    sheet.getCell('G1').value = `Pendanaan (Rp Juta) (TS = ${tahunIds.nama_ts})`;
+    sheet.getCell('G1').font = { bold: true };
+    sheet.getCell('G1').alignment = { horizontal: 'center' };
+
+    // Header Kolom - [5 TAHUN]
+    const headers = [
+      { header: 'Nama DTPR (Ketua PkM)', key: 'nama_dtpr', width: 30 },
+      { header: 'Judul PkM', key: 'judul_pkm', width: 40 },
+      { header: 'Jumlah Mahasiswa Terlibat', key: 'jml_mhs_terlibat', width: 20 },
+      { header: 'Jenis Hibah PkM', key: 'jenis_hibah_pkm', width: 25 },
+      { header: 'Sumber Dana (L/N/I)', key: 'sumber_dana', width: 20 },
+      { header: 'Durasi (Tahun)', key: 'durasi_tahun', width: 15 },
+
+      // Header 5 Tahun
+      { header: `TS-4 (${tahunIds.nama_ts4})`, key: 'pendanaan_ts4', width: 20 },
+      { header: `TS-3 (${tahunIds.nama_ts3})`, key: 'pendanaan_ts3', width: 20 },
+      { header: `TS-2 (${tahunIds.nama_ts2})`, key: 'pendanaan_ts2', width: 20 },
+      { header: `TS-1 (${tahunIds.nama_ts1})`, key: 'pendanaan_ts1', width: 20 },
+      { header: `TS (${tahunIds.nama_ts})`, key: 'pendanaan_ts', width: 20 },
+
+      { header: 'Link Bukti', key: 'link_bukti', width: 30 },
+    ];
+
+    sheet.getRow(2).columns = headers;
+    sheet.getRow(2).font = { bold: true };
+    sheet.getRow(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+    // 5. Tambah Data
+    const dataRows = rows.map(row => ({
+      ...row,
+      // Konversi ke Juta Rupiah
+      pendanaan_ts4: row.pendanaan_ts4 / 1000000,
+      pendanaan_ts3: row.pendanaan_ts3 / 1000000,
+      pendanaan_ts2: row.pendanaan_ts2 / 1000000,
+      pendanaan_ts1: row.pendanaan_ts1 / 1000000,
+      pendanaan_ts: row.pendanaan_ts / 1000000,
+    }));
+
+    sheet.addRows(dataRows);
+
+    // 6. Styling Data - [5 TAHUN]
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > 2) {
+        row.alignment = { vertical: 'middle', wrapText: true };
+        // Center-align kolom tertentu
+        ['jml_mhs_terlibat', 'sumber_dana', 'durasi_tahun'].forEach(key => {
+          row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
         });
 
-        // 7. Kirim file
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Tabel_4A2_PkM_DTPR.xlsx');
+        // Format Rupiah
+        const pendanaanKeys = ['pendanaan_ts4', 'pendanaan_ts3', 'pendanaan_ts2', 'pendanaan_ts1', 'pendanaan_ts'];
+        pendanaanKeys.forEach(key => {
+          const cell = row.getCell(key);
+          cell.alignment = { vertical: 'middle', horizontal: 'right' };
+          cell.numFmt = '#,##0.00';
+        });
+      }
+    });
 
-        await workbook.xlsx.write(res);
-        res.end();
+    // 7. Kirim file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Tabel_4A2_PkM_DTPR.xlsx');
 
-    } catch (err) {
-        console.error("Error exportTabel4a2Pkm:", err);
-        if (err.message.includes('ts_id tidak valid')) {
-            return res.status(400).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Gagal mengekspor data PkM', details: err.message });
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    console.error("Error exportTabel4a2Pkm:", err);
+    if (err.message.includes('ts_id tidak valid')) {
+      return res.status(400).json({ error: err.message });
     }
+    res.status(500).json({ error: 'Gagal mengekspor data PkM', details: err.message });
+  }
 };

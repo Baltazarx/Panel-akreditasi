@@ -7,22 +7,22 @@ export const listTabel2b4MasaTunggu = async (req, res) => {
     // Special handling: Role KEMAHASISWAAN bisa melihat semua data tanpa filter unit prodi
     const userRole = req.user?.role?.toLowerCase();
     const isKemahasiswaan = userRole === 'kemahasiswaan';
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
     // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
     if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {
       delete req.query.id_unit_prodi;
     }
-    
+
     const { where, params } = await buildWhere(req, 'tabel_2b4_masa_tunggu', 't2b4');
-    
+
     // Hapus filter id_unit_prodi dari where clause untuk role KEMAHASISWAAN (bisa lihat semua data)
     if (isKemahasiswaan && !isSuperAdmin) {
       // Cari dan hapus semua filter yang mengandung id_unit_prodi
       const filteredWhere = [];
       const filteredParams = [];
       let paramIndex = 0;
-      
+
       for (let i = 0; i < where.length; i++) {
         const condition = where[i];
         // Skip kondisi yang mengandung id_unit_prodi
@@ -46,14 +46,14 @@ export const listTabel2b4MasaTunggu = async (req, res) => {
           }
         }
       }
-      
+
       // Update where dan params
       where.length = 0;
       where.push(...filteredWhere);
       params.length = 0;
       params.push(...filteredParams);
     }
-    
+
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 't2b4');
 
     const sql = `
@@ -104,12 +104,12 @@ export const getTabel2b4MasaTungguById = async (req, res) => {
 // === CREATE TABEL 2B4 MASA TUNGGU ===
 export const createTabel2b4MasaTunggu = async (req, res) => {
   try {
-    const { 
-      id_unit_prodi, 
-      id_tahun_lulus, 
-      jumlah_lulusan, 
-      jumlah_terlacak, 
-      rata_rata_waktu_tunggu_bulan 
+    const {
+      id_unit_prodi,
+      id_tahun_lulus,
+      jumlah_lulusan,
+      jumlah_terlacak,
+      rata_rata_waktu_tunggu_bulan
     } = req.body;
 
     if (!id_unit_prodi || !id_tahun_lulus) {
@@ -156,12 +156,12 @@ export const createTabel2b4MasaTunggu = async (req, res) => {
 // === UPDATE TABEL 2B4 MASA TUNGGU ===
 export const updateTabel2b4MasaTunggu = async (req, res) => {
   try {
-    const { 
-      id_unit_prodi, 
-      id_tahun_lulus, 
-      jumlah_lulusan, 
-      jumlah_terlacak, 
-      rata_rata_waktu_tunggu_bulan 
+    const {
+      id_unit_prodi,
+      id_tahun_lulus,
+      jumlah_lulusan,
+      jumlah_terlacak,
+      rata_rata_waktu_tunggu_bulan
     } = req.body;
 
     const data = {
@@ -241,7 +241,7 @@ export const hardDeleteTabel2b4MasaTunggu = async (req, res) => {
 export const summaryTabel2b4MasaTunggu = async (req, res) => {
   try {
     const { id_unit_prodi, id_tahun_lulus } = req.query;
-    
+
     let sql = `
       SELECT 
         uk.nama_unit AS nama_unit_prodi,
@@ -255,19 +255,19 @@ export const summaryTabel2b4MasaTunggu = async (req, res) => {
       LEFT JOIN tahun_akademik ta ON t2b4.id_tahun_lulus = ta.id_tahun
       WHERE t2b4.deleted_at IS NULL
     `;
-    
+
     const params = [];
-    
+
     if (id_unit_prodi) {
       sql += ` AND t2b4.id_unit_prodi = ?`;
       params.push(id_unit_prodi);
     }
-    
+
     if (id_tahun_lulus) {
       sql += ` AND t2b4.id_tahun_lulus = ?`;
       params.push(id_tahun_lulus);
     }
-    
+
     sql += ` GROUP BY t2b4.id_unit_prodi, t2b4.id_tahun_lulus ORDER BY ta.tahun DESC`;
 
     const [rows] = await pool.query(sql, params);
@@ -282,7 +282,7 @@ export const summaryTabel2b4MasaTunggu = async (req, res) => {
 export const getDataForTabel2b5 = async (req, res) => {
   try {
     const { id_unit_prodi, id_tahun_lulus } = req.query;
-    
+
     let sql = `
       SELECT 
         t2b4.id_unit_prodi,
@@ -297,19 +297,19 @@ export const getDataForTabel2b5 = async (req, res) => {
       LEFT JOIN tahun_akademik ta ON t2b4.id_tahun_lulus = ta.id_tahun
       WHERE t2b4.deleted_at IS NULL
     `;
-    
+
     const params = [];
-    
+
     if (id_unit_prodi) {
       sql += ` AND t2b4.id_unit_prodi = ?`;
       params.push(id_unit_prodi);
     }
-    
+
     if (id_tahun_lulus) {
       sql += ` AND t2b4.id_tahun_lulus = ?`;
       params.push(id_tahun_lulus);
     }
-    
+
     sql += ` ORDER BY ta.tahun DESC, uk.nama_unit ASC`;
 
     const [rows] = await pool.query(sql, params);

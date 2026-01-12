@@ -38,7 +38,7 @@ export const buildWhere = async (req, table, alias = 'm') => {
   if (await hasColumn(table, 'id_unit_prodi')) {
     // Cek role user
     const isSuperAdmin =
-      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
+      ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(req.user?.role?.toLowerCase());
 
     // Definisikan role level prodi
     // (SESUAIKAN DAFTAR INI dengan role prodi Anda, misal: 'prodi_ti', 'kaprodi_mi', 'dosen_ti', dll.)
@@ -74,7 +74,7 @@ export const buildWhere = async (req, table, alias = 'm') => {
   if (await hasColumn(table, 'id_unit')) {
     // Cek role user
     const isSuperAdmin =
-      ['superadmin', 'waket1', 'waket2', 'tpm'].includes(req.user?.role?.toLowerCase());
+      ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(req.user?.role?.toLowerCase());
 
     // Definisikan role yang filternya per-unit (bukan prodi)
     // (SESUAIKAN DAFTAR INI dengan role unit Anda)

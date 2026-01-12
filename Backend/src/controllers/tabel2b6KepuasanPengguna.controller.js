@@ -60,7 +60,7 @@ export const listTabel2b6KepuasanPengguna = async (req, res) => {
     // Special handling: Role KEMAHASISWAAN bisa melihat semua data tanpa filter unit prodi
     const userRole = req.user?.role?.toLowerCase();
     const isKemahasiswaan = userRole === 'kemahasiswaan';
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
 
     // Untuk role kemahasiswaan, hapus query parameter id_unit_prodi jika ada
     // if (isKemahasiswaan && !isSuperAdmin && req.query?.id_unit_prodi) {

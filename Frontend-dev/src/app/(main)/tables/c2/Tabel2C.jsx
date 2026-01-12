@@ -95,7 +95,7 @@ export default function Tabel2C({ role }) {
   const [editingBentukId, setEditingBentukId] = useState(null); // ID bentuk pembelajaran yang sedang diedit
   const [editingBentukName, setEditingBentukName] = useState(""); // Nama bentuk pembelajaran yang sedang diedit
 
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(role?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(role?.toLowerCase());
 
   // Cek apakah user adalah prodi TI atau MI
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;

@@ -136,7 +136,7 @@ export default function Tabel2A3() {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -186,7 +186,7 @@ export default function Tabel2A3() {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -195,7 +195,7 @@ export default function Tabel2A3() {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idA = a.id || 0;
       const idB = b.id || 0;
@@ -209,23 +209,23 @@ export default function Tabel2A3() {
     try {
       console.log("🔄 Tabel2A3 - Starting refresh");
       console.log("👤 Auth user:", authUser ? { id: authUser.id, unit: authUser.unit, role: authUser.role } : null);
-      
+
       const mc = await apiFetch(`/tabel2a3-kondisi-mahasiswa?timestamp=${new Date().getTime()}`);
       console.log("📊 Raw API response:", mc);
       console.log("📊 Is array:", Array.isArray(mc));
       console.log("📊 Length:", Array.isArray(mc) ? mc.length : 'N/A');
-      
+
       const rowsArray = Array.isArray(mc) ? mc : [];
       const sortedData = sortRowsByLatest(rowsArray);
       setMahasiswaConditions(sortedData);
-      
+
       const years = [...(Array.isArray(mc) ? mc : [])].map((x) => Number(x?.id_tahun)).filter((n) => Number.isFinite(n));
       console.log("📅 Available years:", years);
-      
+
       const latest = years.length === 0 ? new Date().getFullYear() : Math.max(...years);
       console.log("📅 Selected year:", latest);
       setSelectedTahun(latest);
-      
+
       console.log("✅ Tabel2A3 - Refresh completed");
     } catch (e) {
       console.error("❌ Tabel2A3 - Failed to fetch data:", e);
@@ -248,20 +248,20 @@ export default function Tabel2A3() {
       });
       return null;
     }
-    
+
     // Untuk role khusus seperti WAKET, cari data dari semua unit
     let searchData = mahasiswaConditions;
-    if (authUser?.unit && !authUser?.role?.toLowerCase().includes('waket') && !authUser?.role?.toLowerCase().includes('tpm')) {
+    if (authUser?.unit && !authUser?.role?.toLowerCase().includes('waket') && !authUser?.role?.toLowerCase().includes('tpm') && !authUser?.role?.toLowerCase().includes('ketua')) {
       searchData = mahasiswaConditions.filter(item => item.id_unit_prodi === authUser.unit);
     }
-    
+
     // Backend mengembalikan data agregat dari tabel_2a1 dan tabel_2a3
     const record = searchData.find(d => d.id_tahun === selectedTahun);
     if (!record) return null;
-    
+
     // Jika ada jml_lulus atau jml_do, berarti data sudah ada di tabel_2a3
     const hasData = (record.jml_lulus && record.jml_lulus > 0) || (record.jml_do && record.jml_do > 0);
-    
+
     return hasData ? {
       id: record.id,
       id_tahun: selectedTahun,
@@ -279,25 +279,25 @@ export default function Tabel2A3() {
       hasUnit: !!authUser?.unit,
       selectedTahun
     });
-    
+
     if (!authUser?.unit) {
       // Untuk role khusus seperti WAKET, gunakan unit default
-      if (authUser?.role?.toLowerCase().includes('waket') || authUser?.role?.toLowerCase().includes('tpm')) {
+      if (authUser?.role?.toLowerCase().includes('waket') || authUser?.role?.toLowerCase().includes('tpm') || authUser?.role?.toLowerCase().includes('ketua')) {
         console.log("⚠️ User dengan role khusus, menggunakan unit default");
         setModalMode('add');
         setEditingData({ id_tahun: selectedTahun, id_unit_prodi: 1, jml_lulus: 0, jml_do: 0 }); // Default ke Ketua STIKOM
         setIsModalOpen(true);
         return;
       } else {
-        Swal.fire({ 
-          icon: 'error', 
-          title: 'Error!', 
-          text: 'Unit program studi tidak ditemukan. Silakan logout dan login kembali.' 
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Unit program studi tidak ditemukan. Silakan logout dan login kembali.'
         });
         return;
       }
     }
-    
+
     setModalMode('add');
     setEditingData({ id_tahun: selectedTahun, id_unit_prodi: authUser.unit, jml_lulus: 0, jml_do: 0 });
     setIsModalOpen(true);
@@ -322,7 +322,7 @@ export default function Tabel2A3() {
       confirmButtonText: 'Ya, hapus!',
       cancelButtonText: 'Batal'
     });
-    
+
     if (result.isConfirmed) {
       try {
         await apiFetch(`/tabel2a3-kondisi-mahasiswa/${currentYearLulusDoData.id}`, { method: 'DELETE' });
@@ -378,7 +378,7 @@ export default function Tabel2A3() {
     console.log("📊 Selected tahun:", selectedTahun);
     console.log("👤 Auth user unit:", authUser?.unit);
     console.log("📊 Mahasiswa conditions:", mahasiswaConditions);
-    
+
     if (!selectedTahun) {
       console.log("⚠️ Tabel2A3 - Missing selectedTahun:", {
         selectedTahun,
@@ -387,17 +387,17 @@ export default function Tabel2A3() {
       });
       return [];
     }
-    
+
     // Untuk role khusus seperti WAKET, tampilkan data dari semua unit
     let dataToProcess = mahasiswaConditions;
-    if (authUser?.unit && !authUser?.role?.toLowerCase().includes('waket') && !authUser?.role?.toLowerCase().includes('tpm')) {
+    if (authUser?.unit && !authUser?.role?.toLowerCase().includes('waket') && !authUser?.role?.toLowerCase().includes('tpm') && !authUser?.role?.toLowerCase().includes('ketua')) {
       // Filter data untuk unit prodi user
       dataToProcess = mahasiswaConditions.filter(item => item.id_unit_prodi === authUser.unit);
       console.log("🔍 Filtered data for unit", authUser.unit, ":", dataToProcess);
     } else {
       console.log("🔍 Showing data from all units for role:", authUser?.role);
     }
-    
+
     // Inisialisasi struktur data agregat
     const aggregatedData = {
       "Mahasiswa Baru": { kategori: "Mahasiswa Baru", ts: 0, ts_minus_1: 0, ts_minus_2: 0, ts_minus_3: 0, ts_minus_4: 0, jumlah: 0 },
@@ -405,42 +405,42 @@ export default function Tabel2A3() {
       "Lulus pada saat TS": { kategori: "Lulus pada saat TS", ts: 0, ts_minus_1: 0, ts_minus_2: 0, ts_minus_3: 0, ts_minus_4: 0, jumlah: 0 },
       "Mengundurkan Diri/DO pada saat TS": { kategori: "Mengundurkan Diri/DO pada saat TS", ts: 0, ts_minus_1: 0, ts_minus_2: 0, ts_minus_3: 0, ts_minus_4: 0, jumlah: 0 }
     };
-    
+
     // Proses data dari backend
     // Backend mengembalikan: jumlah_maba, jumlah_mhs_aktif, jml_lulus, jml_do
     dataToProcess.forEach(item => {
       const year = Number(item.id_tahun);
       const yearDiff = selectedTahun - year;
-      
+
       if (yearDiff < 0 || yearDiff > 4) return; // Skip data di luar range TS sampai TS-4
-      
+
       const tsKey = yearDiff === 0 ? 'ts' : `ts_minus_${yearDiff}`;
-      
+
       // Mahasiswa Baru (dari jml_baru)
       const jmlBaru = Number(item.jml_baru) || 0;
       aggregatedData["Mahasiswa Baru"][tsKey] += jmlBaru;
-      
+
       // Mahasiswa Aktif (dari jml_aktif)
       const jmlAktif = Number(item.jml_aktif) || 0;
       aggregatedData["Mahasiswa Aktif pada saat TS"][tsKey] += jmlAktif;
-      
+
       // Lulus
       const jmlLulus = Number(item.jml_lulus) || 0;
       aggregatedData["Lulus pada saat TS"][tsKey] += jmlLulus;
-      
+
       // DO/Mengundurkan Diri
       const jmlDo = Number(item.jml_do) || 0;
       aggregatedData["Mengundurkan Diri/DO pada saat TS"][tsKey] += jmlDo;
     });
-    
+
     // Hitung total jumlah untuk setiap kategori
     Object.values(aggregatedData).forEach(row => {
       row.jumlah = row.ts + row.ts_minus_1 + row.ts_minus_2 + row.ts_minus_3 + row.ts_minus_4;
     });
-    
+
     const result = Object.values(aggregatedData);
     console.log("📊 Final aggregated data:", result);
-    
+
     return result;
   }, [mahasiswaConditions, selectedTahun, authUser?.unit]);
 
@@ -453,7 +453,7 @@ export default function Tabel2A3() {
       })}
     </tr>
   ));
-  
+
   const renderSumRow = (rows, leaves) => {
     const totals = {};
     leaves.forEach(leaf => {
@@ -476,7 +476,7 @@ export default function Tabel2A3() {
   const exportToExcel = async () => {
     try {
       setLoading(true);
-      
+
       if (!selectedTahun) {
         throw new Error('Pilih tahun akademik terlebih dahulu untuk mengekspor data.');
       }
@@ -487,7 +487,7 @@ export default function Tabel2A3() {
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Tambahkan data dari displayRows
       displayRows.forEach((row) => {
         exportData.push({
@@ -500,7 +500,7 @@ export default function Tabel2A3() {
           'Jumlah': row.jumlah || 0
         });
       });
-      
+
       // Tambahkan baris Jumlah
       const totals = {};
       leaves.forEach(leaf => {
@@ -508,7 +508,7 @@ export default function Tabel2A3() {
           totals[leaf.key] = displayRows.reduce((acc, r) => acc + (Number(r?.[leaf.key]) || 0), 0);
         }
       });
-      
+
       exportData.push({
         'Kategori': 'Jumlah',
         'TS': totals.ts || 0,
@@ -534,17 +534,17 @@ export default function Tabel2A3() {
           }
           return strValue;
         };
-        
+
         // Get headers from first row
         const headers = Object.keys(exportData[0] || {});
         const csvRows = [
           headers.map(escapeCsv).join(','),
-          ...exportData.map(row => 
+          ...exportData.map(row =>
             headers.map(header => escapeCsv(row[header])).join(',')
           )
         ];
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -554,7 +554,7 @@ export default function Tabel2A3() {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -567,10 +567,10 @@ export default function Tabel2A3() {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari data
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 35 },  // Kategori
@@ -581,10 +581,10 @@ export default function Tabel2A3() {
         { wch: 12 },  // TS-4
         { wch: 12 }   // Jumlah
       ];
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Kondisi Mahasiswa');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2A3_Kondisi_Mahasiswa_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -614,7 +614,7 @@ export default function Tabel2A3() {
       <p className="mt-2 text-slate-600">Memuat data...</p>
     </div>
   );
-  
+
   if (error) return (
     <div className="p-8">
       <div className="p-4 text-red-700 bg-red-100 border border-red-300 rounded-lg">
@@ -652,33 +652,31 @@ export default function Tabel2A3() {
                 }
               }}
               disabled={loading}
-              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                selectedTahun 
-                  ? 'border-[#0384d6] bg-white text-black' 
+              className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
+                  ? 'border-[#0384d6] bg-white text-black'
                   : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Pilih tahun"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                 <span className={`truncate ${selectedTahun ? 'text-black' : 'text-gray-500'}`}>
-                  {selectedTahun 
+                  {selectedTahun
                     ? (() => {
-                        const found = tahunList.find((t) => Number(t.id_tahun) === Number(selectedTahun));
-                        return found ? (found.tahun || found.nama) : selectedTahun;
-                      })()
+                      const found = tahunList.find((t) => Number(t.id_tahun) === Number(selectedTahun));
+                      return found ? (found.tahun || found.nama) : selectedTahun;
+                    })()
                     : "Pilih Tahun"}
                 </span>
               </div>
-              <FiChevronDown 
-                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                  openYearFilterDropdown ? 'rotate-180' : ''
-                }`} 
-                size={16} 
+              <FiChevronDown
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openYearFilterDropdown ? 'rotate-180' : ''
+                  }`}
+                size={16}
               />
             </button>
             {openYearFilterDropdown && !loading && (
-              <div 
+              <div
                 className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
                 style={{ minWidth: '200px' }}
               >
@@ -691,11 +689,10 @@ export default function Tabel2A3() {
                         setSelectedTahun(Number(tahun.id_tahun));
                         setOpenYearFilterDropdown(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                        selectedTahun === Number(tahun.id_tahun)
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === Number(tahun.id_tahun)
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                       <span>{tahun.tahun || tahun.nama}</span>
@@ -710,7 +707,7 @@ export default function Tabel2A3() {
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={exportToExcel}
@@ -767,7 +764,7 @@ export default function Tabel2A3() {
       </div>
 
       {isModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -777,7 +774,7 @@ export default function Tabel2A3() {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}

@@ -8,46 +8,46 @@ import ExcelJS from 'exceljs';
  * yang perlu menampilkan tabel PIVOT.
  */
 const getPivotClauses = (reqQuery) => {
-    const years = ['ts', 'ts_1', 'ts_2', 'ts_3', 'ts_4']; // 5 tahun
-    const params = [];
-    const selectDana = [];
-    const selectLinkBukti = [];
+  const years = ['ts', 'ts_1', 'ts_2', 'ts_3', 'ts_4']; // 5 tahun
+  const params = [];
+  const selectDana = [];
+  const selectLinkBukti = [];
 
-    for (const year of years) {
-        const idTahunKey = `id_tahun_${year}`;
-        const idTahunVal = reqQuery[idTahunKey];
-        
-        if (!idTahunVal) {
-            throw new Error(`Query parameter ${idTahunKey} wajib ada.`);
-        }
-        
-        const idTahunInt = parseInt(idTahunVal);
-        params.push(idTahunInt); // Tambahkan ke params
+  for (const year of years) {
+    const idTahunKey = `id_tahun_${year}`;
+    const idTahunVal = reqQuery[idTahunKey];
 
-        // 1. Buat SQL untuk SELECT Dana
-        selectDana.push(
-            `SUM(CASE WHEN pd.id_tahun = ? THEN pd.jumlah_dana ELSE 0 END) AS dana_${year}`
-        );
-
-        // 2. Buat SQL untuk SELECT Link Bukti
-        selectLinkBukti.push(
-            `MAX(CASE WHEN pd.id_tahun = ? THEN pd.link_bukti ELSE NULL END)`
-        );
+    if (!idTahunVal) {
+      throw new Error(`Query parameter ${idTahunKey} wajib ada.`);
     }
 
-    let allSelects = [
-        ...selectDana,
-        // Ambil 1 link bukti (prioritas TS)
-        `COALESCE(${selectLinkBukti.join(', ')}) AS link_bukti_display`
-    ];
+    const idTahunInt = parseInt(idTahunVal);
+    params.push(idTahunInt); // Tambahkan ke params
 
-    // Params untuk dana (5) + params untuk link (5)
-    let allParams = [...params, ...params];
-    
-    return {
-        selectSql: `, ${allSelects.join(',\n')}`, 
-        params: allParams
-    };
+    // 1. Buat SQL untuk SELECT Dana
+    selectDana.push(
+      `SUM(CASE WHEN pd.id_tahun = ? THEN pd.jumlah_dana ELSE 0 END) AS dana_${year}`
+    );
+
+    // 2. Buat SQL untuk SELECT Link Bukti
+    selectLinkBukti.push(
+      `MAX(CASE WHEN pd.id_tahun = ? THEN pd.link_bukti ELSE NULL END)`
+    );
+  }
+
+  let allSelects = [
+    ...selectDana,
+    // Ambil 1 link bukti (prioritas TS)
+    `COALESCE(${selectLinkBukti.join(', ')}) AS link_bukti_display`
+  ];
+
+  // Params untuk dana (5) + params untuk link (5)
+  let allParams = [...params, ...params];
+
+  return {
+    selectSql: `, ${allSelects.join(',\n')}`,
+    params: allParams
+  };
 };
 
 // === FUNGSI CRUD ===
@@ -61,11 +61,11 @@ export const listTabel3a2Penelitian = async (req, res) => {
     // Special handling: Role LPPM bisa melihat semua data tanpa filter unit
     const userRole = req.user?.role?.toLowerCase();
     const isLppm = userRole === 'lppm';
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-    
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
     const { selectSql, params: pivotParams } = getPivotClauses(req.query);
     const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
-    
+
     // Hapus filter id_unit untuk role LPPM (bisa lihat semua data)
     if (isLppm && !isSuperAdmin) {
       // Cari dan hapus filter id_unit dari where clause
@@ -77,7 +77,7 @@ export const listTabel3a2Penelitian = async (req, res) => {
           break;
         }
       }
-      
+
       if (unitFilterIndex !== -1) {
         where.splice(unitFilterIndex, 1);
         // Hapus 1 param yang sesuai dengan filter id_unit
@@ -93,7 +93,7 @@ export const listTabel3a2Penelitian = async (req, res) => {
         }
       }
     }
-    
+
     const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
 
     // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
@@ -135,12 +135,12 @@ export const listTabel3a2Penelitian = async (req, res) => {
     // Gabungkan params: pivot dulu, baru where, lalu tahun filter
     const allParams = [...pivotParams, ...whereParams, ...tahunList];
     const [rows] = await pool.query(sql, allParams);
-    
+
     // Ganti link_bukti (per baris) dengan link_bukti_display (pivot)
     const finalRows = rows.map(row => {
-        row.link_bukti = row.link_bukti_display;
-        delete row.link_bukti_display;
-        return row;
+      row.link_bukti = row.link_bukti_display;
+      delete row.link_bukti_display;
+      return row;
     });
 
     res.json(finalRows);
@@ -156,44 +156,44 @@ export const listTabel3a2Penelitian = async (req, res) => {
  * Tidak membutuhkan query params tahun.
  */
 export const getTabel3a2PenelitianById = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        // 1. Ambil data parent (penelitian)
-        const [parentRows] = await pool.query(
-            `SELECT p.*, uk.nama_unit AS nama_unit_prodi
+    // 1. Ambil data parent (penelitian)
+    const [parentRows] = await pool.query(
+      `SELECT p.*, uk.nama_unit AS nama_unit_prodi
              FROM tabel_3a2_penelitian p
              LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
-             WHERE p.id = ?`, 
-            [id]
-        );
-        if (!parentRows[0]) {
-            return res.status(404).json({ error: 'Data tidak ditemukan' });
-        }
-        
-        // 2. Ambil data children (pendanaan)
-        const [childrenRows] = await pool.query(
-            `SELECT id_tahun, jumlah_dana, link_bukti 
-             FROM tabel_3a2_pendanaan 
-             WHERE id_penelitian = ?`, 
-            [id]
-        );
-        
-        // 3. Gabungkan
-        const result = {
-            ...parentRows[0],
-            // Cari 1 link_bukti dari array children untuk ditampilkan di form
-            link_bukti: childrenRows.find(c => c.link_bukti)?.link_bukti || null,
-            pendanaan: childrenRows // Kirim sebagai array
-            // link_roadmap sudah termasuk di parentRows[0] karena SELECT p.*
-        };
-        
-        res.json(result);
-
-    } catch (err) {
-        console.error("Error getTabel3a2PenelitianById:", err);
-        res.status(500).json({ error: 'Gagal mengambil detail data', details: err.message });
+             WHERE p.id = ?`,
+      [id]
+    );
+    if (!parentRows[0]) {
+      return res.status(404).json({ error: 'Data tidak ditemukan' });
     }
+
+    // 2. Ambil data children (pendanaan)
+    const [childrenRows] = await pool.query(
+      `SELECT id_tahun, jumlah_dana, link_bukti 
+             FROM tabel_3a2_pendanaan 
+             WHERE id_penelitian = ?`,
+      [id]
+    );
+
+    // 3. Gabungkan
+    const result = {
+      ...parentRows[0],
+      // Cari 1 link_bukti dari array children untuk ditampilkan di form
+      link_bukti: childrenRows.find(c => c.link_bukti)?.link_bukti || null,
+      pendanaan: childrenRows // Kirim sebagai array
+      // link_roadmap sudah termasuk di parentRows[0] karena SELECT p.*
+    };
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("Error getTabel3a2PenelitianById:", err);
+    res.status(500).json({ error: 'Gagal mengambil detail data', details: err.message });
+  }
 };
 
 /**
@@ -203,7 +203,7 @@ export const getTabel3a2PenelitianById = async (req, res) => {
 export const createTabel3a2Penelitian = async (req, res) => {
   let connection;
   try {
-    const { 
+    const {
       id_unit, id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
       link_bukti,
@@ -214,23 +214,23 @@ export const createTabel3a2Penelitian = async (req, res) => {
     // Validasi
     if (!id_dosen_ketua) { return res.status(400).json({ error: 'Dosen Ketua wajib diisi.' }); }
     if (!judul_penelitian) { return res.status(400).json({ error: 'Judul Penelitian wajib diisi.' }); }
-    
+
     // Debug: Log req.user untuk melihat strukturnya
     console.log("createTabel3a2Penelitian - req.user:", req.user);
     console.log("createTabel3a2Penelitian - req.user?.id_unit:", req.user?.id_unit);
     console.log("createTabel3a2Penelitian - req.body.id_unit:", req.body.id_unit);
-    
+
     // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
     // Fallback: jika id_unit tidak ada di user, gunakan dari body
     let final_id_unit = id_unit || req.user?.id_unit || req.user?.id_unit_prodi;
-    
-    if (!final_id_unit) { 
+
+    if (!final_id_unit) {
       console.error("createTabel3a2Penelitian - req.user tidak memiliki id_unit:", req.user);
-      return res.status(400).json({ 
-        error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit. Silakan logout dan login ulang untuk mendapatkan token baru.' 
-      }); 
+      return res.status(400).json({
+        error: 'Unit/Prodi tidak ditemukan dari data user. Pastikan user sudah memiliki unit. Silakan logout dan login ulang untuk mendapatkan token baru.'
+      });
     }
-    
+
     const parentData = {
       id_unit: final_id_unit, // Otomatis dari user yang login atau dari body
       id_dosen_ketua, judul_penelitian,
@@ -244,12 +244,12 @@ export const createTabel3a2Penelitian = async (req, res) => {
     // Parse array pendanaan
     let pendanaanArray = [];
     if (pendanaan) {
-        try {
-            pendanaanArray = JSON.parse(pendanaan);
-            if (!Array.isArray(pendanaanArray)) throw new Error("Format pendanaan tidak valid.");
-        } catch (e) {
-            return res.status(400).json({ error: 'Data pendanaan (JSON) tidak valid.' });
-        }
+      try {
+        pendanaanArray = JSON.parse(pendanaan);
+        if (!Array.isArray(pendanaanArray)) throw new Error("Format pendanaan tidak valid.");
+      } catch (e) {
+        return res.status(400).json({ error: 'Data pendanaan (JSON) tidak valid.' });
+      }
     }
 
     // --- MULAI TRANSAKSI ---
@@ -262,23 +262,23 @@ export const createTabel3a2Penelitian = async (req, res) => {
 
     // 2. Insert ke tabel Child (Pendanaan)
     if (pendanaanArray.length > 0) {
-        const pendanaanValues = pendanaanArray.map((item, index) => [
-            insertedPenelitianId,
-            item.id_tahun,
-            item.jumlah_dana || 0,
-            (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
-        ]);
-        
-        await connection.query(
-            'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?', 
-            [pendanaanValues]
-        );
+      const pendanaanValues = pendanaanArray.map((item, index) => [
+        insertedPenelitianId,
+        item.id_tahun,
+        item.jumlah_dana || 0,
+        (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
+      ]);
+
+      await connection.query(
+        'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?',
+        [pendanaanValues]
+      );
     }
 
     // 3. Commit Transaksi
     await connection.commit();
     // --- AKHIR TRANSAKSI ---
-    
+
     res.status(201).json({ message: 'Data penelitian berhasil dibuat', id: insertedPenelitianId });
 
   } catch (err) {
@@ -298,8 +298,8 @@ export const updateTabel3a2Penelitian = async (req, res) => {
   let connection;
   try {
     const { id } = req.params; // ID Penelitian
-    
-    const { 
+
+    const {
       id_unit, id_dosen_ketua, judul_penelitian,
       jml_mhs_terlibat, jenis_hibah, sumber_dana, durasi_tahun,
       link_bukti,
@@ -310,12 +310,12 @@ export const updateTabel3a2Penelitian = async (req, res) => {
     // Validasi
     if (!id_dosen_ketua) { return res.status(400).json({ error: 'Dosen Ketua wajib diisi.' }); }
     if (!judul_penelitian) { return res.status(400).json({ error: 'Judul Penelitian wajib diisi.' }); }
-    
+
     // Auto-fill id_unit dari user yang login (konsisten dengan 3a1)
     // Fallback: jika id_unit tidak ada di user, gunakan dari body
     let final_id_unit = id_unit || req.user?.id_unit || req.user?.id_unit_prodi;
-    if (!final_id_unit) { 
-      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user.' }); 
+    if (!final_id_unit) {
+      return res.status(400).json({ error: 'Unit/Prodi tidak ditemukan dari data user.' });
     }
 
     const parentData = {
@@ -331,12 +331,12 @@ export const updateTabel3a2Penelitian = async (req, res) => {
     // Parse array pendanaan
     let pendanaanArray = [];
     if (pendanaan) {
-        try {
-            pendanaanArray = JSON.parse(pendanaan);
-            if (!Array.isArray(pendanaanArray)) throw new Error("Format pendanaan tidak valid.");
-        } catch (e) {
-            return res.status(400).json({ error: 'Data pendanaan (JSON) tidak valid.' });
-        }
+      try {
+        pendanaanArray = JSON.parse(pendanaan);
+        if (!Array.isArray(pendanaanArray)) throw new Error("Format pendanaan tidak valid.");
+      } catch (e) {
+        return res.status(400).json({ error: 'Data pendanaan (JSON) tidak valid.' });
+      }
     }
 
     // --- MULAI TRANSAKSI ---
@@ -346,7 +346,7 @@ export const updateTabel3a2Penelitian = async (req, res) => {
     // 1. Update tabel Parent
     const [parentResult] = await connection.query('UPDATE tabel_3a2_penelitian SET ? WHERE id = ?', [parentData, id]);
     if (parentResult.affectedRows === 0) {
-        throw new Error('Data penelitian tidak ditemukan.');
+      throw new Error('Data penelitian tidak ditemukan.');
     }
 
     // 2. Hapus data pendanaan lama (Child)
@@ -354,17 +354,17 @@ export const updateTabel3a2Penelitian = async (req, res) => {
 
     // 3. Insert ulang data pendanaan (Child)
     if (pendanaanArray.length > 0) {
-        const pendanaanValues = pendanaanArray.map((item, index) => [
-            id, // ID dari params
-            item.id_tahun,
-            item.jumlah_dana || 0,
-            (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
-        ]);
-        
-        await connection.query(
-            'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?', 
-            [pendanaanValues]
-        );
+      const pendanaanValues = pendanaanArray.map((item, index) => [
+        id, // ID dari params
+        item.id_tahun,
+        item.jumlah_dana || 0,
+        (index === 0) ? link_bukti : null // Simpan link_bukti di baris pertama
+      ]);
+
+      await connection.query(
+        'INSERT INTO tabel_3a2_pendanaan (id_penelitian, id_tahun, jumlah_dana, link_bukti) VALUES ?',
+        [pendanaanValues]
+      );
     }
 
     // 4. Commit Transaksi
@@ -388,12 +388,12 @@ export const updateTabel3a2Penelitian = async (req, res) => {
 export const softDeleteTabel3a2Penelitian = async (req, res) => {
   try {
     const payload = { deleted_at: new Date() };
-    if (await hasColumn('tabel_3a2_penelitian', 'deleted_by')) { 
-      payload.deleted_by = req.user?.id_user || null; 
+    if (await hasColumn('tabel_3a2_penelitian', 'deleted_by')) {
+      payload.deleted_by = req.user?.id_user || null;
     }
     const [result] = await pool.query('UPDATE tabel_3a2_penelitian SET ? WHERE id = ?', [payload, req.params.id]);
-    if (result.affectedRows === 0) { 
-      return res.status(404).json({ error: 'Data tidak ditemukan.' }); 
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Data tidak ditemukan.' });
     }
     res.json({ message: 'Data berhasil dihapus (soft delete)' });
   } catch (err) {
@@ -408,43 +408,43 @@ export const softDeleteTabel3a2Penelitian = async (req, res) => {
 export const restoreTabel3a2Penelitian = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Validasi ID
     if (!id || id === 'undefined' || id === 'null') {
       return res.status(400).json({ error: 'ID tidak valid.' });
     }
-    
+
     // Cek apakah kolom deleted_at ada
     const hasDeletedAt = await hasColumn('tabel_3a2_penelitian', 'deleted_at');
     if (!hasDeletedAt) {
       return res.status(400).json({ error: 'Restore tidak didukung. Tabel tidak memiliki kolom deleted_at.' });
     }
-    
+
     // Cek apakah kolom deleted_by ada
     const hasDeletedBy = await hasColumn('tabel_3a2_penelitian', 'deleted_by');
-    
+
     // Restore data
     if (hasDeletedBy) {
       const [result] = await pool.query(
         'UPDATE tabel_3a2_penelitian SET deleted_at = NULL, deleted_by = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data penelitian berhasil dipulihkan' });
     } else {
       const [result] = await pool.query(
         'UPDATE tabel_3a2_penelitian SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
         [id]
       );
-      
+
       if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Tidak ada data yang dapat dipulihkan. Data mungkin sudah dipulihkan atau tidak dihapus.' });
       }
-      
+
       res.json({ ok: true, restored: true, message: 'Data penelitian berhasil dipulihkan' });
     }
   } catch (err) {
@@ -467,7 +467,7 @@ export const hardDeleteTabel3a2Penelitian = async (req, res) => {
     // 2. Hapus data Parent
     const [parentResult] = await connection.query('DELETE FROM tabel_3a2_penelitian WHERE id = ?', [id]);
     if (parentResult.affectedRows === 0) {
-        throw new Error('Data tidak ditemukan.');
+      throw new Error('Data tidak ditemukan.');
     }
     await connection.commit();
     res.json({ message: 'Data berhasil dihapus secara permanen (hard delete).' });
@@ -484,25 +484,25 @@ export const hardDeleteTabel3a2Penelitian = async (req, res) => {
  * [EXPORT/PIVOT] Ekspor data PIVOT 5 tahun ke Excel.
  */
 export const exportTabel3a2Penelitian = async (req, res) => {
-    try {
-        // 1. Ambil data (logika sama dengan 'list')
-        const { selectSql, params: pivotParams } = getPivotClauses(req.query);
-        const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
-        const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
+  try {
+    // 1. Ambil data (logika sama dengan 'list')
+    const { selectSql, params: pivotParams } = getPivotClauses(req.query);
+    const { where, params: whereParams } = await buildWhere(req, 'tabel_3a2_penelitian', 'p');
+    const orderBy = buildOrderBy(req.query?.order_by, 'id', 'p');
 
-        // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
-        const tahunList = pivotParams.slice(0, 5); // TS, TS-1, TS-2, TS-3, TS-4
+    // Ambil tahun-tahun dari pivot params (5 tahun pertama adalah id_tahun)
+    const tahunList = pivotParams.slice(0, 5); // TS, TS-1, TS-2, TS-3, TS-4
 
-        // Build WHERE clause dengan filter tahun
-        const whereClauses = [...where];
-        // Filter: Hanya tampilkan penelitian yang memiliki pendanaan dalam rentang TS sampai TS-4
-        whereClauses.push(`EXISTS (
+    // Build WHERE clause dengan filter tahun
+    const whereClauses = [...where];
+    // Filter: Hanya tampilkan penelitian yang memiliki pendanaan dalam rentang TS sampai TS-4
+    whereClauses.push(`EXISTS (
           SELECT 1 FROM tabel_3a2_pendanaan pd2 
           WHERE pd2.id_penelitian = p.id 
           AND pd2.id_tahun IN (?, ?, ?, ?, ?)
         )`);
 
-        const sql = `
+    const sql = `
           SELECT 
             pg.nama_lengkap AS nama_dosen_ketua,
             p.judul_penelitian, p.jml_mhs_terlibat, p.jenis_hibah,
@@ -523,64 +523,64 @@ export const exportTabel3a2Penelitian = async (req, res) => {
             p.id, uk.nama_unit, pg.nama_lengkap
           ORDER BY ${orderBy}
         `;
-        
-        const allParams = [...pivotParams, ...whereParams, ...tahunList];
-        const [rows] = await pool.query(sql, allParams);
-        
-        // Ganti link_bukti (per baris) dengan link_bukti_display (pivot)
-        const finalRows = rows.map(row => {
-            row.link_bukti = row.link_bukti_display;
-            delete row.link_bukti_display;
-            return row;
+
+    const allParams = [...pivotParams, ...whereParams, ...tahunList];
+    const [rows] = await pool.query(sql, allParams);
+
+    // Ganti link_bukti (per baris) dengan link_bukti_display (pivot)
+    const finalRows = rows.map(row => {
+      row.link_bukti = row.link_bukti_display;
+      delete row.link_bukti_display;
+      return row;
+    });
+
+    // 2. Buat Workbook Excel
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Tabel 3.A.2');
+
+    // 3. Definisikan Header (Update 5 TAHUN)
+    sheet.columns = [
+      // [PERBAIKAN] Tambahkan kolom Link Roadmap
+      { header: 'Link Roadmap', key: 'link_roadmap', width: 30 },
+      { header: 'Nama DTPR (Ketua)', key: 'nama_dosen_ketua', width: 30 },
+      { header: 'Judul Penelitian', key: 'judul_penelitian', width: 45 },
+      { header: 'Jumlah Mahasiswa yang Terlibat', key: 'jml_mhs_terlibat', width: 20 },
+      { header: 'Jenis Hibah Penelitian', key: 'jenis_hibah', width: 25 },
+      { header: 'Sumber (L/N/I)', key: 'sumber_dana', width: 15 },
+      { header: 'Durasi (tahun)', key: 'durasi_tahun', width: 15 },
+      // Update 5 TAHUN
+      { header: 'Pendanaan (Rp Juta) TS-4', key: 'dana_ts_4', width: 20, style: { numFmt: '#,##0' } },
+      { header: 'Pendanaan (Rp Juta) TS-3', key: 'dana_ts_3', width: 20, style: { numFmt: '#,##0' } },
+      { header: 'Pendanaan (Rp Juta) TS-2', key: 'dana_ts_2', width: 20, style: { numFmt: '#,##0' } },
+      { header: 'Pendanaan (Rp Juta) TS-1', key: 'dana_ts_1', width: 20, style: { numFmt: '#,##0' } },
+      { header: 'Pendanaan (Rp Juta) TS', key: 'dana_ts', width: 20, style: { numFmt: '#,##0' } },
+      { header: 'Link Bukti', key: 'link_bukti', width: 30 }
+    ];
+
+    // 4. Tambahkan data
+    sheet.addRows(finalRows);
+
+    // 5. Styling
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.alignment = { vertical: 'middle', wrapText: true };
+        ['jml_mhs_terlibat', 'sumber_dana', 'durasi_tahun'].forEach(key => {
+          row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
         });
+      }
+    });
 
-        // 2. Buat Workbook Excel
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Tabel 3.A.2');
+    // 6. Kirim file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Tabel_3A2_Penelitian.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
 
-        // 3. Definisikan Header (Update 5 TAHUN)
-        sheet.columns = [
-            // [PERBAIKAN] Tambahkan kolom Link Roadmap
-            { header: 'Link Roadmap', key: 'link_roadmap', width: 30 },
-            { header: 'Nama DTPR (Ketua)', key: 'nama_dosen_ketua', width: 30 },
-            { header: 'Judul Penelitian', key: 'judul_penelitian', width: 45 },
-            { header: 'Jumlah Mahasiswa yang Terlibat', key: 'jml_mhs_terlibat', width: 20 },
-            { header: 'Jenis Hibah Penelitian', key: 'jenis_hibah', width: 25 },
-            { header: 'Sumber (L/N/I)', key: 'sumber_dana', width: 15 },
-            { header: 'Durasi (tahun)', key: 'durasi_tahun', width: 15 },
-            // Update 5 TAHUN
-            { header: 'Pendanaan (Rp Juta) TS-4', key: 'dana_ts_4', width: 20, style: { numFmt: '#,##0' } },
-            { header: 'Pendanaan (Rp Juta) TS-3', key: 'dana_ts_3', width: 20, style: { numFmt: '#,##0' } },
-            { header: 'Pendanaan (Rp Juta) TS-2', key: 'dana_ts_2', width: 20, style: { numFmt: '#,##0' } },
-            { header: 'Pendanaan (Rp Juta) TS-1', key: 'dana_ts_1', width: 20, style: { numFmt: '#,##0' } },
-            { header: 'Pendanaan (Rp Juta) TS', key: 'dana_ts', width: 20, style: { numFmt: '#,##0' } },
-            { header: 'Link Bukti', key: 'link_bukti', width: 30 }
-        ];
-
-        // 4. Tambahkan data
-        sheet.addRows(finalRows);
-
-        // 5. Styling
-        sheet.getRow(1).font = { bold: true };
-        sheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        
-        sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-            if (rowNumber > 1) {
-                row.alignment = { vertical: 'middle', wrapText: true };
-                ['jml_mhs_terlibat', 'sumber_dana', 'durasi_tahun'].forEach(key => {
-                    row.getCell(key).alignment = { vertical: 'middle', horizontal: 'center' };
-                });
-            }
-        });
-
-        // 6. Kirim file
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Tabel_3A2_Penelitian.xlsx');
-        await workbook.xlsx.write(res);
-        res.end();
-
-    } catch (err) {
-        console.error("Error exportTabel3a2Penelitian:", err);
-        res.status(500).json({ error: 'Gagal mengekspor data penelitian', details: err.message });
-    }
+  } catch (err) {
+    console.error("Error exportTabel3a2Penelitian:", err);
+    res.status(500).json({ error: 'Gagal mengekspor data penelitian', details: err.message });
+  }
 };

@@ -19,7 +19,7 @@ export default function Pemetaan2B3({ role, refreshTrigger, maps }) {
 
   // Cek role SuperAdmin
   const userRole = authUser?.role || role;
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole?.toLowerCase());
 
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;

@@ -19,7 +19,7 @@ export default function Tabel2B5({ role }) {
   const isKemahasiswaan = userRole?.toLowerCase() === 'kemahasiswaan';
 
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole?.toLowerCase());
 
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit;

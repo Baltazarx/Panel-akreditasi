@@ -33,14 +33,14 @@ export const listPemetaan2b2 = async (req, res) => {
       FROM profil_lulusan pl
     `;
     let plParams = [];
-    
+
     // Jika ada query parameter id_unit_prodi, filter PL berdasarkan prodi yang sama
     const prodiId = req.query?.id_unit_prodi;
     if (prodiId) {
       sqlPl += ` WHERE pl.id_unit_prodi = ?`;
       plParams.push(prodiId);
     }
-    
+
     sqlPl += ` ORDER BY pl.kode_pl ASC`;
     const [plRows] = await pool.query(sqlPl, plParams);
     const plCodes = plRows.map(p => p.kode_pl);
@@ -101,14 +101,14 @@ export const exportPemetaan2b2 = async (req, res) => {
       FROM profil_lulusan pl
     `;
     let plParams = [];
-    
+
     // Jika ada query parameter id_unit_prodi, filter PL berdasarkan prodi yang sama
     const prodiId = req.query?.id_unit_prodi;
     if (prodiId) {
       sqlPl += ` WHERE pl.id_unit_prodi = ?`;
       plParams.push(prodiId);
     }
-    
+
     sqlPl += ` ORDER BY pl.kode_pl ASC`;
     const [plRows] = await pool.query(sqlPl, plParams);
     const plCodes = plRows.map(p => p.kode_pl);
@@ -182,11 +182,11 @@ export const exportPemetaan2b2 = async (req, res) => {
 export const updatePemetaan2b2 = async (req, res) => {
   // Input body: { rows: [ { kode_cpl: 'CPL01', row: { PL1: true, ... } }, ... ] }
   const { rows, id_unit_prodi: id_unit_prodi_from_body } = req.body;
-  
+
   // Cek apakah user adalah superadmin
   const userRole = req.user?.role?.toLowerCase();
-  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole);
-  
+  const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(userRole);
+
   // Prioritas: id_unit_prodi dari body (jika superadmin mengirim), lalu dari user yang login
   // Fallback: jika id_unit_prodi tidak ada, coba gunakan id_unit
   let id_unit_prodi = id_unit_prodi_from_body || req.user?.id_unit_prodi || req.user?.id_unit;
