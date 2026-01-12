@@ -10,7 +10,7 @@ export const ACCESS_MATRIX = {
   'waket1': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'waket2': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'tpm': { '*': { c: true, r: true, u: true, d: true, h: true } },
-  'ketua': { '*': { r: true } }, // Hanya read wildcard
+  'ketua': { '*': { c: true, r: true, u: true, d: true, h: true } }, // Full access like other superadmins
 
   // ========== PRODI (sesuai aturan baru C1 + aturan Tabel 2B) ==========
   'prodi': {
@@ -182,11 +182,8 @@ export function roleCan(role, tableKey, action) {
   const actionLower = typeof action === 'string' ? action.toLowerCase() : String(action).toLowerCase();
   const tableKeyLower = typeof tableKey === 'string' ? tableKey.toLowerCase() : String(tableKey).toLowerCase();
 
-  // Role KETUA hanya boleh Read-only di semua tabel
-  if (roleLower === 'ketua' && actionLower !== 'r') {
-    console.log('roleCan - Role ketua read-only enforcement');
-    return false;
-  }
+  // Enforcement read-only untuk ketua dihapus agar bisa edit data
+  // if (roleLower === 'ketua' && actionLower !== 'r') { ... }
 
   // Dapatkan izin untuk role tersebut
   const permissions = ACCESS_MATRIX[roleLower];

@@ -15,6 +15,10 @@ export const listDosen = async (req, res) => {
         d.nuptk,
         d.beban_sks,
         d.pt,
+        d.pt,
+        -- [FIX] Gunakan id_unit_homebase dan join untuk dapat namanya
+        d.id_unit_homebase,
+        uk_hb.nama_unit AS homebase,
         p.nama_lengkap,
         d.id_pegawai,
         
@@ -35,7 +39,11 @@ export const listDosen = async (req, res) => {
       JOIN pegawai p ON d.id_pegawai = p.id_pegawai
       
       -- [FIX] Join Unit via Pegawai
+      -- [FIX] Join Unit via Pegawai
       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+
+      -- [FIX] Join Homebase Dosen
+      LEFT JOIN unit_kerja uk_hb ON d.id_unit_homebase = uk_hb.id_unit
       
       -- Join Jabatan Fungsional
       LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
@@ -92,6 +100,8 @@ export const getDosenById = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT d.*, 
+              d.id_unit_homebase,
+              uk_hb.nama_unit AS homebase,
               p.nama_lengkap, 
               rjf.nama_jafung AS jabatan_fungsional,
               p.id_unit, 
@@ -100,6 +110,8 @@ export const getDosenById = async (req, res) => {
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
        -- [FIX] Join ke Unit via Pegawai
        LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       -- [FIX] Join Homebase
+       LEFT JOIN unit_kerja uk_hb ON d.id_unit_homebase = uk_hb.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [req.params.id]
@@ -125,7 +137,16 @@ export const createDosen = async (req, res) => {
       id_jafung: req.body.id_jafung,
       beban_sks: req.body.beban_sks,
       pt: req.body.pt,
+      homebase: req.body.homebase,
     };
+
+    // Manual mapping homebase string -> ID (6=TI, 7=MI)
+    if (data.homebase) {
+      if (data.homebase.includes('Teknik Informatika')) data.id_unit_homebase = 6;
+      else if (data.homebase.includes('Manajemen Informatika')) data.id_unit_homebase = 7;
+      delete data.homebase;
+    }
+
     if (await hasColumn('dosen', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
     }
@@ -134,6 +155,8 @@ export const createDosen = async (req, res) => {
 
     const [row] = await pool.query(
       `SELECT d.*, 
+              d.id_unit_homebase,
+              uk_hb.nama_unit AS homebase,
               p.nama_lengkap, 
               rjf.nama_jafung AS jabatan_fungsional,
               p.id_unit, 
@@ -142,6 +165,8 @@ export const createDosen = async (req, res) => {
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
        -- [FIX] Join Unit via Pegawai
        LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       -- [FIX] Join Homebase
+       LEFT JOIN unit_kerja uk_hb ON d.id_unit_homebase = uk_hb.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [r.insertId]
@@ -167,7 +192,16 @@ export const updateDosen = async (req, res) => {
       id_jafung: req.body.id_jafung,
       beban_sks: req.body.beban_sks,
       pt: req.body.pt,
+      homebase: req.body.homebase,
     };
+
+    // Manual mapping homebase string -> ID (6=TI, 7=MI)
+    if (data.homebase) {
+      if (data.homebase.includes('Teknik Informatika')) data.id_unit_homebase = 6;
+      else if (data.homebase.includes('Manajemen Informatika')) data.id_unit_homebase = 7;
+      delete data.homebase;
+    }
+
     if (await hasColumn('dosen', 'updated_by') && req.user?.id_user) {
       data.updated_by = req.user.id_user;
     }
@@ -186,6 +220,8 @@ export const updateDosen = async (req, res) => {
 
     const [row] = await pool.query(
       `SELECT d.*, 
+              d.id_unit_homebase,
+              uk_hb.nama_unit AS homebase,
               p.nama_lengkap, 
               rjf.nama_jafung AS jabatan_fungsional,
               p.id_unit, 
@@ -194,6 +230,8 @@ export const updateDosen = async (req, res) => {
        JOIN pegawai p ON d.id_pegawai = p.id_pegawai
        -- [FIX] Join Unit via Pegawai
        LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       -- [FIX] Join Homebase
+       LEFT JOIN unit_kerja uk_hb ON d.id_unit_homebase = uk_hb.id_unit
        LEFT JOIN ref_jabatan_fungsional rjf ON d.id_jafung = rjf.id_jafung
        WHERE d.id_dosen=?`,
       [req.params.id]
@@ -218,7 +256,7 @@ export const softDeleteDosen = async (req, res) => {
       payload.deleted_by = req.user?.id_user || null;
     }
     await pool.query(
-      `UPDATE dosen SET ? WHERE id_dosen=?`,
+      `UPDATE dosen SET ? WHERE id_dosen =? `,
       [payload, req.params.id]
     );
     res.json({ ok: true, softDeleted: true });
@@ -235,7 +273,7 @@ export const softDeleteDosen = async (req, res) => {
 export const restoreDosen = async (req, res) => {
   try {
     await pool.query(
-      `UPDATE dosen SET deleted_at=NULL WHERE id_dosen=?`,
+      `UPDATE dosen SET deleted_at = NULL WHERE id_dosen =? `,
       [req.params.id]
     );
     res.json({ ok: true, restored: true });
@@ -252,7 +290,7 @@ export const restoreDosen = async (req, res) => {
 export const hardDeleteDosen = async (req, res) => {
   try {
     await pool.query(
-      `DELETE FROM dosen WHERE id_dosen=?`,
+      `DELETE FROM dosen WHERE id_dosen =? `,
       [req.params.id]
     );
     res.json({ ok: true, hardDeleted: true });

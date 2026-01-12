@@ -136,14 +136,14 @@ const sidebarStructure = [
         icon: FaFolder, // Changed to folder
         description: "Pemetaan Kurikulum",
         children: [
-          { key: "pemetaan2b1", name: "2B.1 MK vs PL", icon: FaFile, Component: Pemetaan2B1, accessKey: "pemetaan2b1", description: "MK vs Profil Lulusan" },
-          { key: "pemetaan2b2", name: "2B.2 CPL vs PL", icon: FaFile, Component: Pemetaan2B2, accessKey: "pemetaan2b2", description: "CPL vs Profil Lulusan" },
-          { key: "pemetaan2b3", name: "2B.3 Peta CPL", icon: FaFile, Component: Pemetaan2B3, accessKey: "pemetaan2b3", description: "Peta Beban CPL" },
-          { key: "pemetaanCpmkCpl", name: "CPMK vs CPL", icon: FaFile, Component: PemetaanCpmkCpl, accessKey: "pemetaanCpmkCpl", description: "Peta CPMK ke CPL" },
-          { key: "cpmk", name: "CPMK", icon: FaFile, Component: CpmkCRUD, accessKey: "cpmk", description: "Data CPMK" },
-          { key: "mata_kuliah", name: "Mata Kuliah", icon: FaFile, Component: MataKuliahCRUD, accessKey: "mata_kuliah", description: "Data Mata Kuliah" },
-          { key: "cpl", name: "CPL", icon: FaFile, Component: CplCRUD, accessKey: "cpl", description: "Data CPL" },
           { key: "profil_lulusan", name: "Profil Lulusan", icon: FaFile, Component: ProfilLulusanCRUD, accessKey: "profil_lulusan", description: "Data Profil Lulusan" },
+          { key: "cpl", name: "CPL", icon: FaFile, Component: CplCRUD, accessKey: "cpl", description: "Data CPL" },
+          { key: "mata_kuliah", name: "Mata Kuliah", icon: FaFile, Component: MataKuliahCRUD, accessKey: "mata_kuliah", description: "Data Mata Kuliah" },
+          { key: "cpmk", name: "CPMK", icon: FaFile, Component: CpmkCRUD, accessKey: "cpmk", description: "Data CPMK" },
+          { key: "pemetaanCpmkCpl", name: "CPMK vs CPL", icon: FaFile, Component: PemetaanCpmkCpl, accessKey: "pemetaanCpmkCpl", description: "Peta CPMK ke CPL" },
+          { key: "pemetaan2b3", name: "2B.3 Peta CPL", icon: FaFile, Component: Pemetaan2B3, accessKey: "pemetaan2b3", description: "Peta Beban CPL" },
+          { key: "pemetaan2b2", name: "2B.2 CPL vs PL", icon: FaFile, Component: Pemetaan2B2, accessKey: "pemetaan2b2", description: "CPL vs Profil Lulusan" },
+          { key: "pemetaan2b1", name: "2B.1 MK vs PL", icon: FaFile, Component: Pemetaan2B1, accessKey: "pemetaan2b1", description: "MK vs Profil Lulusan" },
         ]
       },
       { key: "2b4", name: "Tabel 2B-4", icon: FaFile, Component: Tabel2B4, accessKey: "tabel_2b4_masa_tunggu", description: "Masa Tunggu" },

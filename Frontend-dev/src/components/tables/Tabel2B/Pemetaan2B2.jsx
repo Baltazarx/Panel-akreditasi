@@ -27,20 +27,22 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange, maps }
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.id_unit || authUser?.unit;
 
-  // State untuk filter prodi
-  const [selectedProdi, setSelectedProdi] = useState("");
+  // State untuk filter prodi (null = belum di-set)
+  const [selectedProdi, setSelectedProdi] = useState(null);
 
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
   // Set selectedProdi untuk user prodi atau default untuk superadmin
   useEffect(() => {
-    if (!isSuperAdmin && userProdiId && !selectedProdi) {
-      // User prodi: set ke prodi mereka
-      setSelectedProdi(String(userProdiId));
-    } else if (isSuperAdmin && !selectedProdi) {
-      // Superadmin: default ke "Semua Prodi"
-      setSelectedProdi("");
+    if (selectedProdi === null) {
+      if (!isSuperAdmin && userProdiId) {
+        // User prodi: set ke prodi mereka
+        setSelectedProdi(String(userProdiId));
+      } else if (isSuperAdmin) {
+        // Superadmin: default ke "Teknik Informatika" (ID 6) agar langsung tampil data
+        setSelectedProdi("6");
+      }
     }
   }, [isSuperAdmin, userProdiId, selectedProdi]);
 
@@ -157,10 +159,11 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange, maps }
       targetProdiId = selectedProdi;
     }
 
-    // Map ID frontend (6/7) ke backend (4/5) untuk save
+    // Map ID frontend ke backend - HAPUS MAPPING INI KARENA ID 6&7 SUDAH BENAR DI DB
+    // let saveId = String(targetProdiId);
+    // if (saveId === '6') saveId = '4';
+    // else if (saveId === '7') saveId = '5';
     let saveId = String(targetProdiId);
-    if (saveId === '6') saveId = '4';
-    else if (saveId === '7') saveId = '5';
 
     // Query parameter untuk filter
     const queryParams = new URLSearchParams();
