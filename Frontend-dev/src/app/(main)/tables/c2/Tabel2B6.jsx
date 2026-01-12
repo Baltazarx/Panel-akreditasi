@@ -183,12 +183,19 @@ export default function Tabel2B6({ role }) {
 
   const availableUnits = useMemo(() => {
     const allUnits = Object.values(maps?.units || {}).map(u => ({ id: u.id_unit || u.id, nama: u.nama_unit || u.nama }));
+    // Filter HANYA Teknik Informatika (ID 6) dan Manajemen Informatika (ID 7)
+    // Abaikan unit lain seperti TPM, LPM, Kemahasiswaan, dll.
     const onlyTIMI = allUnits.filter(u => {
       const id = Number(u.id);
-      const name = String(u.nama || "");
-      return id === 6 || id === 7 || /Teknik Informatika|Prodi TI|\bTI\b/i.test(name) || /Manajemen Informatika|Prodi MI|\bMI\b/i.test(name);
+      return id === 6 || id === 7;
     });
-    return onlyTIMI.sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+
+    return onlyTIMI.sort((a, b) => {
+      // Prioritaskan Teknik Informatika (ID 6) agar muncul di paling atas
+      if (Number(a.id) === 6) return -1;
+      if (Number(b.id) === 6) return 1;
+      return String(a.nama).localeCompare(String(b.nama));
+    });
   }, [maps?.units]);
 
   const canCreate = roleCan(role, tableKey, "C");

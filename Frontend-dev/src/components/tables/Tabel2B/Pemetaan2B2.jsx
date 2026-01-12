@@ -72,20 +72,11 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange, maps }
     // Tambahkan query parameter untuk filter prodi
     const queryParams = new URLSearchParams();
 
-    let fetchId = null;
+    // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
     if (!isSuperAdmin && userProdiId) {
-      const pid = String(userProdiId);
-      if (pid === '6') fetchId = '4';
-      else if (pid === '7') fetchId = '5';
-      else fetchId = pid;
+      queryParams.append("id_unit_prodi", String(userProdiId));
     } else if (isSuperAdmin && selectedProdi && selectedProdi !== "") {
-      if (selectedProdi === '6') fetchId = '4';
-      else if (selectedProdi === '7') fetchId = '5';
-      else fetchId = selectedProdi;
-    }
-
-    if (fetchId) {
-      queryParams.append("id_unit_prodi", fetchId);
+      queryParams.append("id_unit_prodi", selectedProdi);
     }
 
     // Jika superadmin memilih "Semua Prodi" (empty string), tidak kirim query parameter

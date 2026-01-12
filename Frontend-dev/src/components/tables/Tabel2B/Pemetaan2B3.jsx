@@ -69,21 +69,13 @@ export default function Pemetaan2B3({ role, refreshTrigger, maps }) {
     // Tambahkan query parameter jika filter aktif
     const queryParams = new URLSearchParams();
 
-    let fetchId = null;
+    // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
     if (!isSuperAdmin && userProdiId) {
-      const pid = String(userProdiId);
-      if (pid === '6') fetchId = '4';
-      else if (pid === '7') fetchId = '5';
-      else fetchId = pid;
+      queryParams.append("id_unit_prodi", String(userProdiId));
     } else if (isSuperAdmin && selectedProdi) {
-      if (selectedProdi === '6') fetchId = '4';
-      else if (selectedProdi === '7') fetchId = '5';
-      else fetchId = selectedProdi;
+      queryParams.append("id_unit_prodi", selectedProdi);
     }
 
-    if (fetchId) {
-      queryParams.append("id_unit_prodi", fetchId);
-    }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
     try {

@@ -134,8 +134,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       try {
         const data = await apiFetch("/unit-kerja");
         const list = Array.isArray(data) ? data : [];
-        // Filter hanya TI (4) dan MI (5)
-        const filtered = list.filter(uk => uk.id_unit === 4 || uk.id_unit === 5);
+        // Filter hanya TI (6) dan MI (7)
+        const filtered = list.filter(uk => uk.id_unit === 6 || uk.id_unit === 7);
         setProdiList(filtered.sort((a, b) => a.id_unit - b.id_unit));
       } catch (err) {
         console.error("Error fetching prodi:", err);
@@ -160,10 +160,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       } else {
         // Tambah data baru: untuk superadmin, set dari selectedProdi
         // Untuk user prodi, ambil dari authUser
-        const defaultProdiId = isSuperAdmin 
+        const defaultProdiId = isSuperAdmin
           ? (selectedProdi ? String(selectedProdi) : "")
           : (authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit ? String(authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit) : "");
-        
+
         setForm({
           id_unit_prodi: defaultProdiId,
           visi_pt: "",
@@ -194,7 +194,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validasi id_unit_prodi wajib diisi
     if (!form.id_unit_prodi) {
       Swal.fire({
@@ -205,7 +205,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       });
       return;
     }
-    
+
     setLoading(true);
     try {
       await onSave(form);
@@ -217,7 +217,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -226,7 +226,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -247,11 +247,11 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
               <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-3 cursor-not-allowed">
                 <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
                 <span className="truncate">
-                  {form.id_unit_prodi 
+                  {form.id_unit_prodi
                     ? (() => {
-                        const found = prodiList.find((p) => String(p.id_unit) === String(form.id_unit_prodi));
-                        return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Program Studi --";
-                      })()
+                      const found = prodiList.find((p) => String(p.id_unit) === String(form.id_unit_prodi));
+                      return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Program Studi --";
+                    })()
                     : "-- Program Studi --"}
                 </span>
               </div>
@@ -267,7 +267,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           {/* Visi Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2">Visi</h3>
-            
+
             <div>
               <label htmlFor="visi_pt" className="block text-sm font-medium text-slate-700 mb-1">
                 Visi PT
@@ -314,7 +314,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           {/* Misi Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2">Misi</h3>
-            
+
             <div>
               <label htmlFor="misi_pt" className="block text-sm font-medium text-slate-700 mb-1">
                 Misi PT
@@ -372,7 +372,7 @@ export default function Tabel6({ auth, role: propRole }) {
   const { authUser } = useAuth();
   const role = propRole || authUser?.role;
   const { maps } = useMaps(auth?.user || authUser || true);
-  
+
   const [rows, setRows] = useState([]);
   const [currentData, setCurrentData] = useState(null);
   const [error, setError] = useState("");
@@ -381,25 +381,25 @@ export default function Tabel6({ auth, role: propRole }) {
   const [editData, setEditData] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  
+
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
   const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(userRole?.toLowerCase());
   const isKetuastikom = userRole?.toLowerCase() === 'ketuastikom';
-  
+
   // Ambil id_unit_prodi dari authUser jika user adalah prodi user
   const userProdiId = authUser?.id_unit_prodi || authUser?.unit || authUser?.id_unit;
-  
+
   // State filter menyimpan id_unit_prodi
   const [selectedProdi, setSelectedProdi] = useState("");
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
-  
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -411,7 +411,7 @@ export default function Tabel6({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -420,14 +420,14 @@ export default function Tabel6({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);
     });
   };
-  
+
   // Lock body scroll and add modal-open class when modal is open
   useEffect(() => {
     if (showForm) {
@@ -437,7 +437,7 @@ export default function Tabel6({ auth, role: propRole }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -450,12 +450,12 @@ export default function Tabel6({ auth, role: propRole }) {
       document.body.classList.remove('modal-open');
     }
   }, [showForm]);
-  
+
   // Ekstrak Prodi dari maps untuk filter - hanya TI dan MI
   const prodiList = Object.values(maps?.units || {})
-    .filter(uk => uk.id_unit === 4 || uk.id_unit === 5) // Hanya TI (4) dan MI (5)
-    .sort((a, b) => a.id_unit - b.id_unit); // Sort berdasarkan id_unit (TI dulu, lalu MI)
-  
+    .filter(uk => uk.id_unit === 6 || uk.id_unit === 7) // Hanya TI (6) dan MI (7)
+    .sort((a, b) => a.id_unit - b.id_unit); // Sort berdasarkan id_unit (TI=6 dulu, lalu MI=7)
+
   // Set selectedProdi untuk user prodi
   // Untuk role ketuastikom, jangan set selectedProdi (bisa lihat semua data)
   useEffect(() => {
@@ -467,24 +467,24 @@ export default function Tabel6({ auth, role: propRole }) {
       // User prodi: set ke prodi mereka
       setSelectedProdi(String(userProdiId));
     } else if (isSuperAdmin && !selectedProdi && prodiList.length > 0) {
-      // Superadmin: default ke Prodi TI (id_unit = 4)
+      // Superadmin: default ke Prodi TI (id_unit = 6)
       setSelectedProdi(String(prodiList[0].id_unit));
     }
   }, [isSuperAdmin, userProdiId, selectedProdi, prodiList, isKetuastikom]);
-  
+
   // Fetch data
   const fetchRows = async () => {
     try {
       setLoading(true);
       setError("");
       let url = ENDPOINT;
-      
+
       // Build query parameters
       const params = [];
       if (showDeleted) {
         params.push("include_deleted=1");
       }
-      
+
       // Filter berdasarkan prodi
       // Untuk role ketuastikom, jangan kirim filter (bisa lihat semua data)
       if (!isKetuastikom) {
@@ -496,24 +496,24 @@ export default function Tabel6({ auth, role: propRole }) {
           params.push(`id_unit_prodi=${selectedProdi}`);
         }
       }
-      
+
       if (params.length > 0) {
         url += "?" + params.join("&");
       }
-      
+
       const data = await apiFetch(url);
       const dataArray = Array.isArray(data) ? data : (data.items || []);
       const sortedDataArray = sortRowsByLatest(dataArray);
       setRows(sortedDataArray);
-      
+
       // Set current data berdasarkan filter (hanya untuk display info, bukan untuk tabel)
       // Tabel akan menampilkan semua data dari filteredRows
       if (sortedDataArray.length > 0) {
         if (isKetuastikom) {
           // Role ketuastikom: jika ada selectedProdi, tampilkan data prodi yang dipilih
           if (selectedProdi) {
-            const filteredData = sortedDataArray.find(r => 
-              String(r.id_unit_prodi) === String(selectedProdi) && 
+            const filteredData = sortedDataArray.find(r =>
+              String(r.id_unit_prodi) === String(selectedProdi) &&
               (showDeleted ? r.deleted_at : !r.deleted_at)
             );
             setCurrentData(filteredData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
@@ -523,15 +523,15 @@ export default function Tabel6({ auth, role: propRole }) {
           }
         } else if (selectedProdi) {
           // Jika ada filter prodi, tampilkan data prodi yang dipilih
-          const filteredData = sortedDataArray.find(r => 
-            String(r.id_unit_prodi) === String(selectedProdi) && 
+          const filteredData = sortedDataArray.find(r =>
+            String(r.id_unit_prodi) === String(selectedProdi) &&
             (showDeleted ? r.deleted_at : !r.deleted_at)
           );
           setCurrentData(filteredData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
         } else if (!isSuperAdmin && userProdiId) {
           // User prodi: tampilkan data prodi mereka
-          const userData = sortedDataArray.find(r => 
-            String(r.id_unit_prodi) === String(userProdiId) && 
+          const userData = sortedDataArray.find(r =>
+            String(r.id_unit_prodi) === String(userProdiId) &&
             (showDeleted ? r.deleted_at : !r.deleted_at)
           );
           setCurrentData(userData || sortedDataArray.find(r => showDeleted ? r.deleted_at : !r.deleted_at) || sortedDataArray[0]);
@@ -564,7 +564,7 @@ export default function Tabel6({ auth, role: propRole }) {
       fetchRows();
     }
   }, [showDeleted, selectedProdi, isSuperAdmin, userProdiId, isKetuastikom]);
-  
+
   // Update currentData saat selectedProdi berubah untuk role ketuastikom (filter di frontend)
   useEffect(() => {
     if (isKetuastikom && rows.length > 0) {
@@ -606,13 +606,13 @@ export default function Tabel6({ auth, role: propRole }) {
         ...formData,
         id_unit_prodi: formData.id_unit_prodi ? parseInt(formData.id_unit_prodi) : formData.id_unit_prodi
       };
-      
+
       if (editData) {
         await apiFetch(`${ENDPOINT}/${editData.id}`, {
           method: 'PUT',
           body: JSON.stringify(dataToSend)
         });
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -625,7 +625,7 @@ export default function Tabel6({ auth, role: propRole }) {
           method: 'POST',
           body: JSON.stringify(dataToSend)
         });
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -634,7 +634,7 @@ export default function Tabel6({ auth, role: propRole }) {
           showConfirmButton: false
         });
       }
-      
+
       setShowForm(false);
       setEditData(null);
       await fetchRows();
@@ -775,7 +775,7 @@ export default function Tabel6({ auth, role: propRole }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       Swal.fire('Berhasil!', 'Data berhasil diekspor.', 'success');
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal mengekspor data", 'error');
@@ -785,19 +785,19 @@ export default function Tabel6({ auth, role: propRole }) {
   // Filter rows
   const filteredRows = useMemo(() => {
     let filtered = rows;
-    
+
     // Filter berdasarkan status deleted
     if (showDeleted) {
       filtered = filtered.filter(r => r.deleted_at);
     } else {
       filtered = filtered.filter(r => !r.deleted_at);
     }
-    
+
     // Filter berdasarkan selectedProdi untuk role ketuastikom (filter di frontend)
     if (isKetuastikom && selectedProdi) {
       filtered = filtered.filter(r => String(r.id_unit_prodi) === String(selectedProdi));
     }
-    
+
     return filtered;
   }, [rows, showDeleted, selectedProdi, isKetuastikom]);
 
@@ -825,11 +825,10 @@ export default function Tabel6({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -837,106 +836,101 @@ export default function Tabel6({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
             </button>
           </div>
 
-            {/* Dropdown filter untuk superadmin dan ketuastikom */}
-            {(isSuperAdmin || isKetuastikom) && (
-              <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenProdiFilterDropdown(!openProdiFilterDropdown);
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    selectedProdi 
-                      ? 'border-[#0384d6] bg-white text-black' 
-                      : 'border-gray-300 bg-white text-black hover:border-gray-400'
+          {/* Dropdown filter untuk superadmin dan ketuastikom */}
+          {(isSuperAdmin || isKetuastikom) && (
+            <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                }}
+                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                    ? 'border-[#0384d6] bg-white text-black'
+                    : 'border-gray-300 bg-white text-black hover:border-gray-400'
                   }`}
-                  aria-label="Pilih program studi"
+                aria-label="Pilih program studi"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                  <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                    {selectedProdi
+                      ? (() => {
+                        const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
+                        return found ? found.nama_unit : selectedProdi;
+                      })()
+                      : isSuperAdmin ? "Semua Prodi" : "-- Pilih Prodi --"}
+                  </span>
+                </div>
+                <FiChevronDown
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
+                    }`}
+                  size={16}
+                />
+              </button>
+              {openProdiFilterDropdown && (
+                <div
+                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                  style={{ minWidth: '200px' }}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                    <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                      {selectedProdi 
-                        ? (() => {
-                            const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
-                            return found ? found.nama_unit : selectedProdi;
-                          })()
-                        : isSuperAdmin ? "Semua Prodi" : "-- Pilih Prodi --"}
-                    </span>
-                  </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openProdiFilterDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={16} 
-                  />
-                </button>
-                {openProdiFilterDropdown && (
-                  <div 
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
-                    style={{ minWidth: '200px' }}
-                  >
-                    {isSuperAdmin && (
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedProdi("");
+                        setOpenProdiFilterDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedProdi
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                        }`}
+                    >
+                      <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                      <span>Semua Prodi</span>
+                    </button>
+                  )}
+                  {prodiList.length > 0 ? (
+                    prodiList.map((prodi) => (
                       <button
+                        key={prodi.id_unit}
                         type="button"
                         onClick={() => {
-                          setSelectedProdi("");
+                          setSelectedProdi(String(prodi.id_unit));
                           setOpenProdiFilterDropdown(false);
                         }}
-                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                          !selectedProdi
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(prodi.id_unit)
                             ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                             : 'text-gray-700'
-                        }`}
+                          }`}
                       >
                         <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                        <span>Semua Prodi</span>
+                        <span>{prodi.nama_unit}</span>
                       </button>
-                    )}
-                    {prodiList.length > 0 ? (
-                      prodiList.map((prodi) => (
-                        <button
-                          key={prodi.id_unit}
-                          type="button"
-                          onClick={() => {
-                            setSelectedProdi(String(prodi.id_unit));
-                            setOpenProdiFilterDropdown(false);
-                          }}
-                          className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                            selectedProdi === String(prodi.id_unit)
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                          <span>{prodi.nama_unit}</span>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Tidak ada data program studi
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Tidak ada data program studi
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
-           <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
-             {loading ? "Memuat..." : `${filteredRows.length} data`}
-             {selectedProdi && ` - ${prodiList.find(p => p.id_unit == selectedProdi)?.nama_unit || 'Prodi Terpilih'}`}
-           </span>
+          <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-slate-100 text-slate-800">
+            {loading ? "Memuat..." : `${filteredRows.length} data`}
+            {selectedProdi && ` - ${prodiList.find(p => p.id_unit == selectedProdi)?.nama_unit || 'Prodi Terpilih'}`}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -973,116 +967,116 @@ export default function Tabel6({ auth, role: propRole }) {
         <div className="relative transition-opacity duration-200 ease-in-out">
           <table className="w-full text-sm text-left">
             <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-            {loading ? (
-              <tr>
-                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
-                  <p className="mt-4">Memuat data...</p>
-                </td>
-              </tr>
-            ) : filteredRows.length > 0 ? (
-              filteredRows.map((row, idx) => {
-                const rowId = row.id || idx;
-                const isDeleted = row.deleted_at;
-                // Alternating row colors
-                const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
-                return (
-                  <React.Fragment key={rowId}>
-                    {/* Row 1: Header Visi */}
-                    <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        Visi PT
-                      </th>
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        Visi UPPS
-                      </th>
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        Visi Keilmuan PS
-                      </th>
-                      {(canUpdate || canDelete || canHardDelete) && (
+              {loading ? (
+                <tr>
+                  <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200 bg-white">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#0384d6]"></div>
+                    <p className="mt-4">Memuat data...</p>
+                  </td>
+                </tr>
+              ) : filteredRows.length > 0 ? (
+                filteredRows.map((row, idx) => {
+                  const rowId = row.id || idx;
+                  const isDeleted = row.deleted_at;
+                  // Alternating row colors
+                  const rowBgClass = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+                  return (
+                    <React.Fragment key={rowId}>
+                      {/* Row 1: Header Visi */}
+                      <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
                         <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                          Aksi
+                          Visi PT
                         </th>
-                      )}
-                    </tr>
-                    {/* Row 2: Data Visi */}
-                    <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {row.visi_pt || ""}
-                      </td>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {row.visi_upps || ""}
-                      </td>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {row.visi_keilmuan_ps || ""}
-                      </td>
-                      {(canUpdate || canDelete || canHardDelete) && (
-                        <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                          <ActionDropdown
-                            row={row}
-                            canUpdate={canUpdate}
-                            canDelete={canDelete}
-                            canHardDelete={canHardDelete}
-                            onEdit={() => {
-                              setEditData(row);
-                              setShowForm(true);
-                            }}
-                            onDelete={handleDelete}
-                            onRestore={handleRestore}
-                            onHardDelete={handleHardDelete}
-                            openDropdownId={openDropdownId}
-                            setOpenDropdownId={setOpenDropdownId}
-                          />
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          Visi UPPS
+                        </th>
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          Visi Keilmuan PS
+                        </th>
+                        {(canUpdate || canDelete || canHardDelete) && (
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                            Aksi
+                          </th>
+                        )}
+                      </tr>
+                      {/* Row 2: Data Visi */}
+                      <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {row.visi_pt || ""}
                         </td>
-                      )}
-                    </tr>
-                    {/* Row 3: Header Misi */}
-                    <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        Misi PT
-                      </th>
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        Misi UPPS
-                      </th>
-                      <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        {/* Kosong */}
-                      </th>
-                      {(canUpdate || canDelete || canHardDelete) && (
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {row.visi_upps || ""}
+                        </td>
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {row.visi_keilmuan_ps || ""}
+                        </td>
+                        {(canUpdate || canDelete || canHardDelete) && (
+                          <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                            <ActionDropdown
+                              row={row}
+                              canUpdate={canUpdate}
+                              canDelete={canDelete}
+                              canHardDelete={canHardDelete}
+                              onEdit={() => {
+                                setEditData(row);
+                                setShowForm(true);
+                              }}
+                              onDelete={handleDelete}
+                              onRestore={handleRestore}
+                              onHardDelete={handleHardDelete}
+                              openDropdownId={openDropdownId}
+                              setOpenDropdownId={setOpenDropdownId}
+                            />
+                          </td>
+                        )}
+                      </tr>
+                      {/* Row 3: Header Misi */}
+                      <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          Misi PT
+                        </th>
+                        <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                          Misi UPPS
+                        </th>
                         <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
                           {/* Kosong */}
                         </th>
-                      )}
-                    </tr>
-                    {/* Row 4: Data Misi */}
-                    <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {row.misi_pt || ""}
-                      </td>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {row.misi_upps || ""}
-                      </td>
-                      <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
-                        {/* Kosong */}
-                      </td>
-                      {(canUpdate || canDelete || canHardDelete) && (
-                        <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                        {(canUpdate || canDelete || canHardDelete) && (
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                            {/* Kosong */}
+                          </th>
+                        )}
+                      </tr>
+                      {/* Row 4: Data Misi */}
+                      <tr className={`transition-all duration-200 ease-in-out ${isDeleted ? 'bg-red-50 hover:bg-red-100' : `${rowBgClass} hover:bg-[#eaf4ff]`}`}>
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {row.misi_pt || ""}
+                        </td>
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top whitespace-pre-wrap ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                          {row.misi_upps || ""}
+                        </td>
+                        <td className={`px-6 py-4 text-slate-700 border border-slate-200 align-top ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
                           {/* Kosong */}
                         </td>
-                      )}
-                    </tr>
-                  </React.Fragment>
-                );
-              })
-            ) : (
-              <tr className="bg-white">
-                <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                        {(canUpdate || canDelete || canHardDelete) && (
+                          <td className={`px-6 py-4 text-center border border-slate-200 ${isDeleted ? 'bg-red-50' : rowBgClass}`}>
+                            {/* Kosong */}
+                          </td>
+                        )}
+                      </tr>
+                    </React.Fragment>
+                  );
+                })
+              ) : (
+                <tr className="bg-white">
+                  <td colSpan={(canUpdate || canDelete || canHardDelete) ? 4 : 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang tersedia untuk tabel ini.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

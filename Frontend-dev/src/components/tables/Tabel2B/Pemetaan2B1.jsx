@@ -53,7 +53,7 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
 
   // === BARU: State untuk filter prodi ===
 
-  // Asumsi ID: 4 = TI, 5 = MI. "" = Semua Prodi
+  // Asumsi ID: 6 = TI, 7 = MI. "" = Semua Prodi
 
   const [selectedProdi, setSelectedProdi] = useState("");
 
@@ -111,34 +111,22 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
 
     setLoading(true);
 
-
-
     // === MODIFIKASI: Tambahkan query parameter jika filter aktif ===
 
     const queryParams = new URLSearchParams();
 
     // Jika user prodi, filter berdasarkan prodi mereka
-    let fetchId = null;
+    // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
     if (!isSuperAdmin && userProdiId) {
-      const pid = String(userProdiId);
-      if (pid === '6') fetchId = '4';
-      else if (pid === '7') fetchId = '5';
-      else fetchId = pid;
+      queryParams.append("id_unit_prodi", String(userProdiId));
     } else if (isSuperAdmin && selectedProdi) {
-      if (selectedProdi === '6') fetchId = '4';
-      else if (selectedProdi === '7') fetchId = '5';
-      else fetchId = selectedProdi;
-    }
-
-    if (fetchId) {
-      queryParams.append("id_unit_prodi", fetchId);
+      // Superadmin memilih prodi tertentu
+      queryParams.append("id_unit_prodi", selectedProdi);
     }
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
     // =========================================================
-
-
 
     try {
 

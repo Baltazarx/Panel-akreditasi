@@ -88,15 +88,9 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
   }, [isSuperAdmin, userProdiId, selectedProdi]);
 
   // === PERBAIKAN: Logika filter disederhanakan ===
-  // === PERBAIKAN: Logika filter disederhanakan dan disesuaikan mapping ===
+  // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
   const filteredRows = selectedProdi
-    ? rows.filter(row => {
-      let rowId = String(row.id_unit_prodi);
-      // Map data ID ke user ID untuk comparison
-      if (rowId === '4') rowId = '6';
-      if (rowId === '5') rowId = '7';
-      return rowId == selectedProdi;
-    })
+    ? rows.filter(row => String(row.id_unit_prodi) === selectedProdi)
     : rows;
 
   const fetchRows = async () => {
@@ -105,22 +99,11 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
       // Jika user prodi, filter berdasarkan prodi mereka
       let url = "/mata-kuliah";
 
-      let fetchId = null;
+      // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
       if (!isSuperAdmin && userProdiId) {
-        const pid = String(userProdiId);
-        if (pid === '6') fetchId = '4';
-        else if (pid === '7') fetchId = '5';
-        else fetchId = pid;
+        url += `?id_unit_prodi=${String(userProdiId)}`;
       } else if (selectedProdi) {
-        if (selectedProdi === '6') fetchId = '4';
-        else if (selectedProdi === '7') fetchId = '5';
-        else fetchId = selectedProdi;
-      }
-
-      if (fetchId) {
-        url += `?id_unit_prodi=${fetchId}`;
-      } else if (isSuperAdmin) {
-        // Default load for superadmin? Maybe load all? Or just TI/MI?
+        url += `?id_unit_prodi=${selectedProdi}`;
       }
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
