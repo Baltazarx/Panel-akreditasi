@@ -12,12 +12,7 @@ export const listPegawai = async (req, res) => {
         p.*,
         uk.nama_unit,
         rjs.nama_jabatan AS jabatan_struktural,
-        
-        -- [LOGIC BARU: POIN 2] 
-        -- Menggabungkan "Ketua/Staff" dengan "Nama Unit" untuk tampilan.
-        -- Contoh Output: "Ketua Prodi TI", "Staff Keuangan", "Ketua LPPM"
         TRIM(CONCAT(COALESCE(rjs.nama_jabatan, ''), ' ', COALESCE(uk.nama_unit, ''))) AS jabatan_display
-        
       FROM pegawai p
       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
       LEFT JOIN ref_jabatan_struktural rjs ON p.id_jabatan = rjs.id_jabatan
@@ -26,6 +21,30 @@ export const listPegawai = async (req, res) => {
     `;
 
     const [rows] = await pool.query(sql, params);
+
+    // [NEW] Jika include=units, tambahkan data unit kerja multiple
+    if (req.query.include === 'units') {
+      for (let pegawai of rows) {
+        const [units] = await pool.query(
+          `SELECT 
+            pu.id,
+            pu.id_unit,
+            pu.is_primary,
+            pu.tanggal_mulai,
+            pu.tanggal_selesai,
+            pu.keterangan,
+            uk.nama_unit
+          FROM pegawai_unit pu
+          LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
+          WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
+          ORDER BY pu.is_primary DESC, pu.tanggal_mulai ASC`,
+          [pegawai.id_pegawai]
+        );
+        pegawai.units = units;
+        pegawai.units_count = units.length;
+      }
+    }
+
     res.json(rows);
   } catch (err) {
     console.error("Error listPegawai:", err);
@@ -49,6 +68,25 @@ export const getPegawaiById = async (req, res) => {
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+
+    // [NEW] Ambil semua unit kerja pegawai ini
+    const [units] = await pool.query(
+      `SELECT 
+        pu.id,
+        pu.id_unit,
+        pu.is_primary,
+        pu.tanggal_mulai,
+        pu.tanggal_selesai,
+        pu.keterangan,
+        uk.nama_unit
+      FROM pegawai_unit pu
+      LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
+      WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
+      ORDER BY pu.is_primary DESC`,
+      [req.params.id]
+    );
+
+    rows[0].units = units;
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Get failed', details: err.message });
@@ -57,41 +95,91 @@ export const getPegawaiById = async (req, res) => {
 
 // ===== CREATE =====
 export const createPegawai = async (req, res) => {
+  const connection = await pool.getConnection();
+
   try {
-    // [LOGIC BARU: POIN 3] Input NIKP sekarang ada di sini
+    await connection.beginTransaction();
+
     const data = {
       nama_lengkap: req.body.nama_lengkap,
-      nikp: req.body.nikp || null, // Field baru
+      nikp: req.body.nikp || null,
       pendidikan_terakhir: req.body.pendidikan_terakhir,
-      id_unit: req.body.id_unit || null,
-      id_jabatan: req.body.id_jabatan || null, // Hanya akan berisi 1 (Ketua) atau 2 (Staff)
+      id_unit: req.body.id_unit || null, // Unit utama untuk backward compatibility
+      id_jabatan: req.body.id_jabatan || null,
     };
 
     if (await hasColumn('pegawai', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
     }
 
-    const [r] = await pool.query(`INSERT INTO pegawai SET ?`, [data]);
-    
+    // Insert pegawai
+    const [r] = await connection.query(`INSERT INTO pegawai SET ?`, [data]);
+    const id_pegawai = r.insertId;
+
+    // [NEW] Insert ke pegawai_unit jika ada units array
+    if (req.body.units && Array.isArray(req.body.units) && req.body.units.length > 0) {
+      for (let i = 0; i < req.body.units.length; i++) {
+        const unit = req.body.units[i];
+        await connection.query(
+          `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai, keterangan) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            id_pegawai,
+            unit.id_unit || unit,
+            i === 0 ? 1 : 0, // Unit pertama sebagai primary
+            new Date().toISOString().split('T')[0],
+            unit.keterangan || null
+          ]
+        );
+      }
+    } else if (data.id_unit) {
+      // Fallback: Jika tidak ada units array tapi ada id_unit, create single unit
+      await connection.query(
+        `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai) 
+         VALUES (?, ?, 1, ?)`,
+        [id_pegawai, data.id_unit, new Date().toISOString().split('T')[0]]
+      );
+    }
+
+    await connection.commit();
+
+    // Return data lengkap dengan units
     const [row] = await pool.query(
       `SELECT p.*, uk.nama_unit, rjs.nama_jabatan AS jabatan_struktural
        FROM pegawai p
        LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
        LEFT JOIN ref_jabatan_struktural rjs ON p.id_jabatan = rjs.id_jabatan
        WHERE p.id_pegawai=?`,
-      [r.insertId]
+      [id_pegawai]
     );
+
+    const [units] = await pool.query(
+      `SELECT pu.*, uk.nama_unit 
+       FROM pegawai_unit pu 
+       LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
+       WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL`,
+      [id_pegawai]
+    );
+
+    row[0].units = units;
     res.status(201).json(row[0]);
+
   } catch (err) {
+    await connection.rollback();
     console.error("Error createPegawai:", err);
     res.status(500).json({ error: 'Create failed', details: err.message });
+  } finally {
+    connection.release();
   }
 };
 
 // ===== UPDATE =====
 export const updatePegawai = async (req, res) => {
+  const connection = await pool.getConnection();
+
   try {
-    // [LOGIC BARU: POIN 3] Update NIKP juga
+    await connection.beginTransaction();
+
     const data = {
       nama_lengkap: req.body.nama_lengkap,
       nikp: req.body.nikp || null,
@@ -104,11 +192,59 @@ export const updatePegawai = async (req, res) => {
       data.updated_by = req.user.id_user;
     }
 
-    await pool.query(
+    // Update pegawai
+    await connection.query(
       `UPDATE pegawai SET ? WHERE id_pegawai=?`,
       [data, req.params.id]
     );
 
+    // [NEW] Update pegawai_unit jika ada units array
+    if (req.body.units && Array.isArray(req.body.units)) {
+      // Soft delete semua unit existing
+      await connection.query(
+        `UPDATE pegawai_unit SET deleted_at = NOW() WHERE id_pegawai = ?`,
+        [req.params.id]
+      );
+
+      // Insert units baru
+      for (let i = 0; i < req.body.units.length; i++) {
+        const unit = req.body.units[i];
+        const id_unit = unit.id_unit || unit;
+
+        // Cek apakah sudah ada (mungkin soft deleted), restore jika ada
+        const [existing] = await connection.query(
+          `SELECT id FROM pegawai_unit WHERE id_pegawai = ? AND id_unit = ? LIMIT 1`,
+          [req.params.id, id_unit]
+        );
+
+        if (existing.length > 0) {
+          // Restore yang sudah ada
+          await connection.query(
+            `UPDATE pegawai_unit 
+             SET deleted_at = NULL, is_primary = ?, tanggal_mulai = COALESCE(tanggal_mulai, ?)
+             WHERE id = ?`,
+            [i === 0 ? 1 : 0, new Date().toISOString().split('T')[0], existing[0].id]
+          );
+        } else {
+          // Insert baru
+          await connection.query(
+            `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai, keterangan) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [
+              req.params.id,
+              id_unit,
+              i === 0 ? 1 : 0,
+              new Date().toISOString().split('T')[0],
+              unit.keterangan || null
+            ]
+          );
+        }
+      }
+    }
+
+    await connection.commit();
+
+    // Return data lengkap
     const [row] = await pool.query(
       `SELECT p.*, uk.nama_unit, rjs.nama_jabatan AS jabatan_struktural
        FROM pegawai p
@@ -117,41 +253,71 @@ export const updatePegawai = async (req, res) => {
        WHERE p.id_pegawai=?`,
       [req.params.id]
     );
+
     if (!row[0]) return res.status(404).json({ error: 'Not found' });
+
+    const [units] = await pool.query(
+      `SELECT pu.*, uk.nama_unit 
+       FROM pegawai_unit pu 
+       LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
+       WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
+       ORDER BY pu.is_primary DESC`,
+      [req.params.id]
+    );
+
+    row[0].units = units;
     res.json(row[0]);
+
   } catch (err) {
+    await connection.rollback();
     console.error("Error updatePegawai:", err);
     res.status(500).json({ error: 'Update failed', details: err.message });
+  } finally {
+    connection.release();
   }
 };
 
-// ... (Fungsi Delete/Restore/HardDelete tetap sama, gunakan kode lama untuk bagian ini)
+// ===== DELETE =====
 export const deletePegawai = async (req, res) => {
-    // Gunakan kode delete yang sudah ada sebelumnya
-    try {
-        if (await hasColumn('pegawai', 'deleted_at')) {
-            const payload = { deleted_at: new Date() };
-            if (await hasColumn('pegawai', 'deleted_by')) payload.deleted_by = req.user?.id_user || null;
-            await pool.query(`UPDATE pegawai SET ? WHERE id_pegawai=?`, [payload, req.params.id]);
-            return res.json({ ok: true, softDeleted: true });
-        }
-        await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
-        res.json({ ok: true, hardDeleted: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Delete failed' });
+  try {
+    if (await hasColumn('pegawai', 'deleted_at')) {
+      const payload = { deleted_at: new Date() };
+      if (await hasColumn('pegawai', 'deleted_by')) payload.deleted_by = req.user?.id_user || null;
+      await pool.query(`UPDATE pegawai SET ? WHERE id_pegawai=?`, [payload, req.params.id]);
+
+      // [NEW] Soft delete juga pegawai_unit
+      await pool.query(
+        `UPDATE pegawai_unit SET deleted_at = NOW() WHERE id_pegawai = ?`,
+        [req.params.id]
+      );
+
+      return res.json({ ok: true, softDeleted: true });
     }
+    await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
+    res.json({ ok: true, hardDeleted: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
 };
 
 export const restorePegawai = async (req, res) => {
-    try {
-        await pool.query(`UPDATE pegawai SET deleted_at=NULL WHERE id_pegawai=?`, [req.params.id]);
-        res.json({ ok: true, restored: true });
-    } catch (err) { res.status(500).json({ error: 'Restore failed' }); }
+  try {
+    await pool.query(`UPDATE pegawai SET deleted_at=NULL WHERE id_pegawai=?`, [req.params.id]);
+
+    // [NEW] Restore juga pegawai_unit
+    await pool.query(
+      `UPDATE pegawai_unit SET deleted_at=NULL WHERE id_pegawai=?`,
+      [req.params.id]
+    );
+
+    res.json({ ok: true, restored: true });
+  } catch (err) { res.status(500).json({ error: 'Restore failed' }); }
 };
 
 export const hardDeletePegawai = async (req, res) => {
-    try {
-        await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
-        res.json({ ok: true, hardDeleted: true });
-    } catch (err) { res.status(500).json({ error: 'Hard delete failed' }); }
+  try {
+    // pegawai_unit akan auto-delete karena foreign key CASCADE
+    await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
+    res.json({ ok: true, hardDeleted: true });
+  } catch (err) { res.status(500).json({ error: 'Hard delete failed' }); }
 };
