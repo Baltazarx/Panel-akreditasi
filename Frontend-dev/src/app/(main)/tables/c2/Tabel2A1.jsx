@@ -12,7 +12,7 @@ export default function Tabel2A1({ role }) {
 
   const [rowsPend, setRowsPend] = useState([]);
   const [rowsMaba, setRowsMaba] = useState([]);
-  const [rowsGabungan, setRowsGabungan] = useState([]);
+  // [REMOVED] rowsGabungan is now a useMemo computed value (line ~383)
   const [loading, setLoading] = useState(false);
   const [initialLoadingPend, setInitialLoadingPend] = useState(true);
   const [initialLoadingMaba, setInitialLoadingMaba] = useState(true);
@@ -20,7 +20,8 @@ export default function Tabel2A1({ role }) {
 
   // Filter states - Global filters
   const [selectedYear, setSelectedYear] = useState(''); // Global filter tahun
-  const [selectedUnitProdi, setSelectedUnitProdi] = useState('6'); // Default: TI
+  // [TEMPORARY FIX] Added back to prevent errors - akan dihapus setelah semua references dibersihkan
+  const [selectedUnitProdi, setSelectedUnitProdi] = useState(null);
 
   // Local states untuk show deleted
   const [showDeletedPend, setShowDeletedPend] = useState(false);
@@ -127,17 +128,14 @@ export default function Tabel2A1({ role }) {
     setOpenYearFilterDropdown(false);
   }, [selectedYear]);
 
-  useEffect(() => {
-    setOpenUnitFilterDropdown(false);
-  }, [selectedUnitProdi]);
+  // [REMOVED] useEffect for selectedUnitProdi - tidak diperlukan lagi
 
   useEffect(() => {
     setOpenGabunganYearDropdown(false);
   }, [selectedYear]);
 
-  useEffect(() => {
-    setOpenGabunganUnitDropdown(false);
-  }, [selectedUnitProdi]);
+  // [REMOVED] useEffect for selectedUnitProdi gabungan - tidak diperlukan lagi
+
 
   // Close filter dropdowns on outside click
   useEffect(() => {
@@ -276,9 +274,8 @@ export default function Tabel2A1({ role }) {
       setError("");
       const params = new URLSearchParams();
 
-      // Filter berdasarkan prodi (selalu ada karena default adalah TI)
-      const unitProdi = selectedUnitProdi || '4';
-      params.append("id_unit_prodi", unitProdi);
+      // [REMOVED] Filter berdasarkan prodi - Sekarang ambil semua data (global)
+      // Data dari semua prodi (TI, MI, dll) akan ditampilkan
 
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
@@ -323,7 +320,7 @@ export default function Tabel2A1({ role }) {
         setInitialLoadingPend(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedPend, maps?.tahun, sortRowsByLatest]);
+  }, [selectedYear, showDeletedPend, maps?.tahun, sortRowsByLatest]);
 
   const fetchMaba = useCallback(async (isToggle = false) => {
     try {
@@ -335,9 +332,8 @@ export default function Tabel2A1({ role }) {
       setError("");
       const params = new URLSearchParams();
 
-      // Filter berdasarkan prodi (selalu ada karena default adalah TI)
-      const unitProdi = selectedUnitProdi || '4';
-      params.append("id_unit_prodi", unitProdi);
+      // [REMOVED] Filter berdasarkan prodi - Sekarang ambil semua data (global)
+      // Data dari semua prodi (TI, MI, dll) akan ditampilkan
 
       // Jika ada filter tahun, ambil data untuk TS, TS-1, TS-2, TS-3, TS-4
       if (selectedYear && maps?.tahun) {
@@ -379,26 +375,12 @@ export default function Tabel2A1({ role }) {
     } finally {
       if (!isToggle) {
         setLoading(false);
-        setInitialLoadingMaba(false);
       }
     }
-  }, [selectedYear, selectedUnitProdi, showDeletedMaba, maps?.tahun, sortRowsByLatest]);
+  }, [selectedYear, showDeletedMaba, maps?.tahun, sortRowsByLatest]);
 
-  const combineRows = (pendaftaran, mabaAktif) => {
-    return pendaftaran.map((p) => {
-      const matches = mabaAktif.filter(
-        (m) => m.id_unit_prodi === p.id_unit_prodi && m.id_tahun === p.id_tahun
-      );
-      const jumlahBaru = matches.filter(m => m.jenis === "baru").reduce((s, m) => s + (m.jumlah_total || 0), 0);
-      const jumlahAktif = matches.filter(m => m.jenis === "aktif").reduce((s, m) => s + (m.jumlah_total || 0), 0);
-      return { ...p, maba_baru: jumlahBaru, maba_aktif: jumlahAktif };
-    });
-  };
-
-  useEffect(() => { setRowsGabungan(combineRows(rowsPend, rowsMaba)); }, [rowsPend, rowsMaba]);
-
-  // Fungsi untuk memproses data menjadi format TS-4, TS-3, TS-2, TS-1, TS
-  const processDataForTable = (unitProdiId) => {
+  // Compute combined rows (Pendaftaran + Mahasiswa Baru/Aktif) - aggregate all prodi per year
+  const rowsGabungan = useMemo(() => {
     if (!selectedYear || !maps?.tahun) return [];
 
     const tahunList = Object.values(maps.tahun).sort((a, b) => a.id_tahun - b.id_tahun);
@@ -440,52 +422,59 @@ export default function Tabel2A1({ role }) {
       const year = tahunList[yearIndex];
       const yearId = year.id_tahun;
 
-      // Data pendaftaran
-      const pendData = rowsPend.find(p =>
-        (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId)) &&
-        p.id_tahun === yearId &&
-        !p.deleted_at
-      );
+      // [UPDATED] Aggregate ALL prodi data for this year
+      // Data pendaftaran - aggregate all prodi
+      const pendDataArray = rowsPend.filter(p => p.id_tahun === yearId && !p.deleted_at);
+      const aggregatedPend = pendDataArray.reduce((acc, curr) => {
+        acc.dayaTampung += curr.daya_tampung || 0;
+        acc.pendaftar += curr.pendaftar || 0;
+        acc.pendaftarAfirmasi += curr.pendaftar_afirmasi || 0;
+        acc.pendaftarKebutuhanKhusus += curr.pendaftar_kebutuhan_khusus || 0;
+        return acc;
+      }, { dayaTampung: 0, pendaftar: 0, pendaftarAfirmasi: 0, pendaftarKebutuhanKhusus: 0 });
 
-      // Data mahasiswa baru dan aktif
-      const mabaData = rowsMaba.filter(m =>
-        m.id_unit_prodi === unitProdiId &&
-        m.id_tahun === yearId &&
-        !m.deleted_at
-      );
+      // Data mahasiswa baru dan aktif - aggregate all prodi
+      const mabaData = rowsMaba.filter(m => m.id_tahun === yearId && !m.deleted_at);
 
-      // Proses data mahasiswa baru
-      const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
-      const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+      const aggregateByType = (jenis, jalur) => {
+        const filtered = mabaData.filter(m => m.jenis === jenis && m.jalur === jalur);
+        return filtered.reduce((acc, curr) => {
+          acc.jumlah_total += curr.jumlah_total || 0;
+          acc.jumlah_afirmasi += curr.jumlah_afirmasi || 0;
+          acc.jumlah_kebutuhan_khusus += curr.jumlah_kebutuhan_khusus || 0;
+          return acc;
+        }, { jumlah_total: 0, jumlah_afirmasi: 0, jumlah_kebutuhan_khusus: 0 });
+      };
 
-      // Proses data mahasiswa aktif
-      const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
-      const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+      const baruReguler = aggregateByType('baru', 'reguler');
+      const baruRPL = aggregateByType('baru', 'rpl');
+      const aktifReguler = aggregateByType('aktif', 'reguler');
+      const aktifRPL = aggregateByType('aktif', 'rpl');
 
       result.push({
         ts: i === 0 ? 'TS' : `TS-${i}`,
         tahun: year.tahun,
         tahunId: yearId,
-        dayaTampung: pendData?.daya_tampung || 0,
-        pendaftar: pendData?.pendaftar || 0,
-        pendaftarAfirmasi: pendData?.pendaftar_afirmasi || 0,
-        pendaftarKebutuhanKhusus: pendData?.pendaftar_kebutuhan_khusus || 0,
-        baruRegulerDiterima: baruReguler?.jumlah_total || 0,
-        baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || 0,
-        baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || 0,
-        baruRPLDiterima: baruRPL?.jumlah_total || 0,
-        baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || 0,
-        baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || 0,
-        aktifRegulerDiterima: aktifReguler?.jumlah_total || 0,
-        aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || 0,
-        aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || 0,
-        aktifRPLDiterima: aktifRPL?.jumlah_total || 0,
-        aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || 0,
-        aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || 0,
+        dayaTampung: aggregatedPend.dayaTampung || 0,
+        pendaftar: aggregatedPend.pendaftar || 0,
+        pendaftarAfirmasi: aggregatedPend.pendaftarAfirmasi || 0,
+        pendaftarKebutuhanKhusus: aggregatedPend.pendaftarKebutuhanKhusus || 0,
+        baruRegulerDiterima: baruReguler.jumlah_total || 0,
+        baruRegulerAfirmasi: baruReguler.jumlah_afirmasi || 0,
+        baruRegulerKebutuhanKhusus: baruReguler.jumlah_kebutuhan_khusus || 0,
+        baruRPLDiterima: baruRPL.jumlah_total || 0,
+        baruRPLAfirmasi: baruRPL.jumlah_afirmasi || 0,
+        baruRPLKebutuhanKhusus: baruRPL.jumlah_kebutuhan_khusus || 0,
+        aktifRegulerDiterima: aktifReguler.jumlah_total || 0,
+        aktifRegulerAfirmasi: aktifReguler.jumlah_afirmasi || 0,
+        aktifRegulerKebutuhanKhusus: aktifReguler.jumlah_kebutuhan_khusus || 0,
+        aktifRPLDiterima: aktifRPL.jumlah_total || 0,
+        aktifRPLAfirmasi: aktifRPL.jumlah_afirmasi || 0,
+        aktifRPLKebutuhanKhusus: aktifRPL.jumlah_kebutuhan_khusus || 0,
       });
     }
 
-    // Tambahkan baris Jumlah
+    // Add total row
     const jumlah = result.reduce((acc, row) => {
       acc.dayaTampung += row.dayaTampung;
       acc.pendaftar += row.pendaftar;
@@ -527,12 +516,12 @@ export default function Tabel2A1({ role }) {
     });
 
     return [...result, jumlah];
-  };
+  }, [selectedYear, rowsPend, rowsMaba, maps?.tahun]);
+
 
   // Fungsi export Excel untuk Tabel Pendaftaran
   const exportPendaftaranToExcel = async () => {
     try {
-      setLoading(true);
 
       // Filter data berdasarkan showDeleted
       const filteredRows = rowsPend.filter(r => showDeletedPend ? r.deleted_at : !r.deleted_at);
@@ -551,46 +540,46 @@ export default function Tabel2A1({ role }) {
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
 
         if (currentYearIndex !== -1) {
-          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-
+          // [UPDATED] Export all prodi data (global) - group by year
           for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex < 0 || yearIndex >= tahunList.length) {
+              continue; // Skip years yang tidak ada
+            }
+
+            const year = tahunList[yearIndex];
+            // Get all data untuk tahun ini (semua prodi)
+            const pendDataForYear = filteredRows.filter(p => p.id_tahun === year.id_tahun);
+
+            if (pendDataForYear.length === 0) {
               exportData.push({
                 'TS': i === 0 ? 'TS' : `TS-${i}`,
-                'Tahun': '',
+                'Tahun': year.tahun || '',
+                'Unit Prodi': '',
                 'Daya Tampung': '',
                 'Pendaftar': '',
                 'Pendaftar Afirmasi': '',
                 'Pendaftar Kebutuhan Khusus': ''
               });
-              continue;
+            } else {
+              // Export setiap prodi sebagai row terpisah
+              pendDataForYear.forEach(pendData => {
+                exportData.push({
+                  'TS': i === 0 ? 'TS' : `TS-${i}`,
+                  'Tahun': year.tahun || '',
+                  'Unit Prodi': getUnitName(pendData.id_unit_prodi),
+                  'Daya Tampung': pendData?.daya_tampung || '',
+                  'Pendaftar': pendData?.pendaftar || '',
+                  'Pendaftar Afirmasi': pendData?.pendaftar_afirmasi || '',
+                  'Pendaftar Kebutuhan Khusus': pendData?.pendaftar_kebutuhan_khusus || ''
+                });
+              });
             }
-
-            const year = tahunList[yearIndex];
-            const pendData = filteredRows.find(p =>
-              p.id_tahun === year.id_tahun &&
-              (p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId))
-            );
-
-            exportData.push({
-              'TS': i === 0 ? 'TS' : `TS-${i}`,
-              'Tahun': year.tahun || '',
-              'Daya Tampung': pendData?.daya_tampung || '',
-              'Pendaftar': pendData?.pendaftar || '',
-              'Pendaftar Afirmasi': pendData?.pendaftar_afirmasi || '',
-              'Pendaftar Kebutuhan Khusus': pendData?.pendaftar_kebutuhan_khusus || ''
-            });
           }
         }
       } else {
-        // Format normal jika tidak ada filter tahun
-        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 6;
-        const filteredByProdi = filteredRows.filter(row =>
-          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
-        );
-
-        exportData.push(...filteredByProdi.map((row, index) => ({
+        // Format normal jika tidak ada filter tahun - export semua prodi
+        exportData.push(...filteredRows.map((row, index) => ({
           'No': index + 1,
           'Tahun': getTahunName(row.id_tahun),
           'Unit Prodi': getUnitName(row.id_unit_prodi),
@@ -712,35 +701,16 @@ export default function Tabel2A1({ role }) {
         const currentYearIndex = tahunList.findIndex(t => t.id_tahun === currentYearId);
 
         if (currentYearIndex !== -1) {
-          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-
+          // [UPDATED] Export all prodi data (global)
           for (let i = 0; i <= 4; i++) {
             const yearIndex = currentYearIndex - i;
             if (yearIndex < 0 || yearIndex >= tahunList.length) {
-              exportData.push({
-                'TS': i === 0 ? 'TS' : `TS-${i}`,
-                'Tahun': '',
-                'Baru Reguler - Diterima': '',
-                'Baru Reguler - Afirmasi': '',
-                'Baru Reguler - Kebutuhan Khusus': '',
-                'Baru RPL - Diterima': '',
-                'Baru RPL - Afirmasi': '',
-                'Baru RPL - Kebutuhan Khusus': '',
-                'Aktif Reguler - Diterima': '',
-                'Aktif Reguler - Afirmasi': '',
-                'Aktif Reguler - Kebutuhan Khusus': '',
-                'Aktif RPL - Diterima': '',
-                'Aktif RPL - Afirmasi': '',
-                'Aktif RPL - Kebutuhan Khusus': ''
-              });
-              continue;
+              continue; // Skip years yang tidak ada  
             }
 
             const year = tahunList[yearIndex];
-            const mabaData = filteredRows.filter(m =>
-              m.id_tahun === year.id_tahun &&
-              (m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId))
-            );
+            // Get all data untuk tahun ini (semua prodi)
+            const mabaData = filteredRows.filter(m => m.id_tahun === year.id_tahun);
 
             const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
             const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
@@ -766,15 +736,10 @@ export default function Tabel2A1({ role }) {
           }
         }
       } else {
-        // Format normal jika tidak ada filter tahun
-        const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-        const filteredByProdi = filteredRows.filter(row =>
-          row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId)
-        );
-
-        // Group by tahun
+        // Format normal jika tidak ada filter tahun - export semua prodi
+        // Group by tahun untuk semua prodi
         const groupedByYear = {};
-        filteredByProdi.forEach(row => {
+        filteredRows.forEach(row => {
           const yearId = row.id_tahun;
           if (!groupedByYear[yearId]) {
             groupedByYear[yearId] = [];
@@ -916,8 +881,9 @@ export default function Tabel2A1({ role }) {
         throw new Error('Pilih tahun TS terlebih dahulu untuk mengekspor data.');
       }
 
-      const unitProdiId = parseInt(selectedUnitProdi) || 4;
-      const tableData = processDataForTable(unitProdiId);
+      // [UPDATED] Export all prodi data - tidak lagi filter by unitProdiId
+      // Ambil semua data gabungan dari rowsGabungan (yang sudah kombinasi pendaftaran + maba)
+      const tableData = rowsGabungan;
 
       if (tableData.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
@@ -1742,19 +1708,28 @@ export default function Tabel2A1({ role }) {
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
 
-          // Filter berdasarkan prodi yang dipilih
-          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-
-          // Cari data pendaftaran untuk unit prodi tertentu
-          // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
-          const pendData = rows.find(p => {
+          // [UPDATED] Get ALL data for this year and SUM them (aggregate all prodi)
+          const pendDataArray = rows.filter(p => {
             const matchesYear = p.id_tahun === yearId;
-            const matchesProdi = p.id_unit_prodi === unitProdiId || String(p.id_unit_prodi) === String(unitProdiId);
             if (showDeleted) {
-              return matchesYear && matchesProdi && p.deleted_at;
+              return matchesYear && p.deleted_at;
             } else {
-              return matchesYear && matchesProdi && !p.deleted_at;
+              return matchesYear && !p.deleted_at;
             }
+          });
+
+          // Aggregate (sum) all prodi data for this year
+          const aggregatedData = pendDataArray.reduce((acc, curr) => {
+            acc.dayaTampung += curr.daya_tampung || 0;
+            acc.pendaftar += curr.pendaftar || 0;
+            acc.pendaftarAfirmasi += curr.pendaftar_afirmasi || 0;
+            acc.pendaftarKebutuhanKhusus += curr.pendaftar_kebutuhan_khusus || 0;
+            return acc;
+          }, {
+            dayaTampung: 0,
+            pendaftar: 0,
+            pendaftarAfirmasi: 0,
+            pendaftarKebutuhanKhusus: 0
           });
 
           displayRows.push({
@@ -1762,38 +1737,62 @@ export default function Tabel2A1({ role }) {
             tahun: year.tahun,
             tahunId: yearId,
             tahunName: year.tahun,
-            dayaTampung: pendData?.daya_tampung || '',
-            pendaftar: pendData?.pendaftar || '',
-            pendaftarAfirmasi: pendData?.pendaftar_afirmasi || '',
-            pendaftarKebutuhanKhusus: pendData?.pendaftar_kebutuhan_khusus || '',
-            rowData: pendData
+            dayaTampung: aggregatedData.dayaTampung || '',
+            pendaftar: aggregatedData.pendaftar || '',
+            pendaftarAfirmasi: aggregatedData.pendaftarAfirmasi || '',
+            pendaftarKebutuhanKhusus: aggregatedData.pendaftarKebutuhanKhusus || '',
+            rowData: pendDataArray.length > 0 ? pendDataArray[0] : null // Keep first row for actions
           });
         }
       }
     } else {
-      // Jika tidak ada filter tahun, tampilkan semua data
-      // Filter berdasarkan prodi yang dipilih dan showDeleted
-      const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+      // Jika tidak ada filter tahun, tampilkan semua data (global - all prodi) - aggregate by year
       const filteredRows = rows.filter(row => {
-        const matchesProdi = row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId);
         if (showDeleted) {
-          return matchesProdi && row.deleted_at;
+          return row.deleted_at;
         } else {
-          return matchesProdi && !row.deleted_at;
+          return !row.deleted_at;
         }
       });
 
-      displayRows = filteredRows.map(row => ({
-        ts: getTahunName(row.id_tahun),
-        tahun: row.id_tahun,
-        tahunId: row.id_tahun,
-        tahunName: getTahunName(row.id_tahun),
-        dayaTampung: row.daya_tampung || '',
-        pendaftar: row.pendaftar || '',
-        pendaftarAfirmasi: row.pendaftar_afirmasi || '',
-        pendaftarKebutuhanKhusus: row.pendaftar_kebutuhan_khusus || '',
-        rowData: row
-      }));
+      // Group by year and aggregate
+      const groupedByYear = {};
+      filteredRows.forEach(row => {
+        const yearId = row.id_tahun;
+        if (!groupedByYear[yearId]) {
+          groupedByYear[yearId] = [];
+        }
+        groupedByYear[yearId].push(row);
+      });
+
+      // Sum data per year
+      displayRows = Object.keys(groupedByYear).map(yearId => {
+        const yearRows = groupedByYear[yearId];
+        const aggregated = yearRows.reduce((acc, curr) => {
+          acc.dayaTampung += curr.daya_tampung || 0;
+          acc.pendaftar += curr.pendaftar || 0;
+          acc.pendaftarAfirmasi += curr.pendaftar_afirmasi || 0;
+          acc.pendaftarKebutuhanKhusus += curr.pendaftar_kebutuhan_khusus || 0;
+          return acc;
+        }, {
+          dayaTampung: 0,
+          pendaftar: 0,
+          pendaftarAfirmasi: 0,
+          pendaftarKebutuhanKhusus: 0
+        });
+
+        return {
+          ts: getTahunName(parseInt(yearId)),
+          tahun: parseInt(yearId),
+          tahunId: parseInt(yearId),
+          tahunName: getTahunName(parseInt(yearId)),
+          dayaTampung: aggregated.dayaTampung || '',
+          pendaftar: aggregated.pendaftar || '',
+          pendaftarAfirmasi: aggregated.pendaftarAfirmasi || '',
+          pendaftarKebutuhanKhusus: aggregated.pendaftarKebutuhanKhusus || '',
+          rowData: yearRows[0] // Keep first row for actions
+        };
+      });
     }
 
     return (
@@ -1986,60 +1985,60 @@ export default function Tabel2A1({ role }) {
           const year = tahunList[yearIndex];
           const yearId = year.id_tahun;
 
-          // Filter berdasarkan prodi yang dipilih
-          const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
-
-          // Cari data mahasiswa baru dan aktif untuk unit prodi tertentu
-          // Jika showDeleted aktif, ambil yang deleted_at, jika tidak ambil yang tidak deleted
+          // [UPDATED] Get ALL data for this year (all prodi) and aggregate
           const mabaData = rows.filter(m => {
             const matchesYear = m.id_tahun === yearId;
-            const matchesProdi = m.id_unit_prodi === unitProdiId || String(m.id_unit_prodi) === String(unitProdiId);
             if (showDeleted) {
-              return matchesYear && matchesProdi && m.deleted_at;
+              return matchesYear && m.deleted_at;
             } else {
-              return matchesYear && matchesProdi && !m.deleted_at;
+              return matchesYear && !m.deleted_at;
             }
           });
 
-          // Proses data mahasiswa baru
-          const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
-          const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+          // Aggregate data by jenis and jalur across all prodi
+          const aggregateByType = (jenis, jalur) => {
+            const filtered = mabaData.filter(m => m.jenis === jenis && m.jalur === jalur);
+            return filtered.reduce((acc, curr) => {
+              acc.jumlah_total += curr.jumlah_total || 0;
+              acc.jumlah_afirmasi += curr.jumlah_afirmasi || 0;
+              acc.jumlah_kebutuhan_khusus += curr.jumlah_kebutuhan_khusus || 0;
+              return acc;
+            }, { jumlah_total: 0, jumlah_afirmasi: 0, jumlah_kebutuhan_khusus: 0 });
+          };
 
-          // Proses data mahasiswa aktif
-          const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
-          const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+          const baruReguler = aggregateByType('baru', 'reguler');
+          const baruRPL = aggregateByType('baru', 'rpl');
+          const aktifReguler = aggregateByType('aktif', 'reguler');
+          const aktifRPL = aggregateByType('aktif', 'rpl');
 
           displayRows.push({
             ts: i === 0 ? 'TS' : `TS-${i}`,
             tahun: year.tahun,
             tahunId: yearId,
             tahunName: year.tahun,
-            baruRegulerDiterima: baruReguler?.jumlah_total || '',
-            baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || '',
-            baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || '',
-            baruRPLDiterima: baruRPL?.jumlah_total || '',
-            baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || '',
-            baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || '',
-            aktifRegulerDiterima: aktifReguler?.jumlah_total || '',
-            aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || '',
-            aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || '',
-            aktifRPLDiterima: aktifRPL?.jumlah_total || '',
-            aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || '',
-            aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || '',
+            baruRegulerDiterima: baruReguler.jumlah_total || '',
+            baruRegulerAfirmasi: baruReguler.jumlah_afirmasi || '',
+            baruRegulerKebutuhanKhusus: baruReguler.jumlah_kebutuhan_khusus || '',
+            baruRPLDiterima: baruRPL.jumlah_total || '',
+            baruRPLAfirmasi: baruRPL.jumlah_afirmasi || '',
+            baruRPLKebutuhanKhusus: baruRPL.jumlah_kebutuhan_khusus || '',
+            aktifRegulerDiterima: aktifReguler.jumlah_total || '',
+            aktifRegulerAfirmasi: aktifReguler.jumlah_afirmasi || '',
+            aktifRegulerKebutuhanKhusus: aktifReguler.jumlah_kebutuhan_khusus || '',
+            aktifRPLDiterima: aktifRPL.jumlah_total || '',
+            aktifRPLAfirmasi: aktifRPL.jumlah_afirmasi || '',
+            aktifRPLKebutuhanKhusus: aktifRPL.jumlah_kebutuhan_khusus || '',
             rowData: mabaData
           });
         }
       }
     } else {
-      // Jika tidak ada filter tahun, tampilkan semua data dalam format yang sama
-      // Filter berdasarkan prodi yang dipilih dan showDeleted
-      const unitProdiId = selectedUnitProdi ? parseInt(selectedUnitProdi) : 4;
+      // Jika tidak ada filter tahun, tampilkan semua data (global - all prodi) - aggregate by year
       const filteredRows = rows.filter(row => {
-        const matchesProdi = row.id_unit_prodi === unitProdiId || String(row.id_unit_prodi) === String(unitProdiId);
         if (showDeleted) {
-          return matchesProdi && row.deleted_at;
+          return row.deleted_at;
         } else {
-          return matchesProdi && !row.deleted_at;
+          return !row.deleted_at;
         }
       });
 
@@ -2057,28 +2056,39 @@ export default function Tabel2A1({ role }) {
         const tahunName = getTahunName(yearIdNum);
         const mabaData = groupedByYear[yearId];
 
-        const baruReguler = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
-        const baruRPL = mabaData.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
-        const aktifReguler = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
-        const aktifRPL = mabaData.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+        // Aggregate data by jenis and jalur across all prodi
+        const aggregateByType = (jenis, jalur) => {
+          const filtered = mabaData.filter(m => m.jenis === jenis && m.jalur === jalur);
+          return filtered.reduce((acc, curr) => {
+            acc.jumlah_total += curr.jumlah_total || 0;
+            acc.jumlah_afirmasi += curr.jumlah_afirmasi || 0;
+            acc.jumlah_kebutuhan_khusus += curr.jumlah_kebutuhan_khusus || 0;
+            return acc;
+          }, { jumlah_total: 0, jumlah_afirmasi: 0, jumlah_kebutuhan_khusus: 0 });
+        };
+
+        const baruReguler = aggregateByType('baru', 'reguler');
+        const baruRPL = aggregateByType('baru', 'rpl');
+        const aktifReguler = aggregateByType('aktif', 'reguler');
+        const aktifRPL = aggregateByType('aktif', 'rpl');
 
         return {
           ts: tahunName,
           tahun: yearIdNum,
           tahunId: yearIdNum,
           tahunName: tahunName,
-          baruRegulerDiterima: baruReguler?.jumlah_total || '',
-          baruRegulerAfirmasi: baruReguler?.jumlah_afirmasi || '',
-          baruRegulerKebutuhanKhusus: baruReguler?.jumlah_kebutuhan_khusus || '',
-          baruRPLDiterima: baruRPL?.jumlah_total || '',
-          baruRPLAfirmasi: baruRPL?.jumlah_afirmasi || '',
-          baruRPLKebutuhanKhusus: baruRPL?.jumlah_kebutuhan_khusus || '',
-          aktifRegulerDiterima: aktifReguler?.jumlah_total || '',
-          aktifRegulerAfirmasi: aktifReguler?.jumlah_afirmasi || '',
-          aktifRegulerKebutuhanKhusus: aktifReguler?.jumlah_kebutuhan_khusus || '',
-          aktifRPLDiterima: aktifRPL?.jumlah_total || '',
-          aktifRPLAfirmasi: aktifRPL?.jumlah_afirmasi || '',
-          aktifRPLKebutuhanKhusus: aktifRPL?.jumlah_kebutuhan_khusus || '',
+          baruRegulerDiterima: baruReguler.jumlah_total || '',
+          baruRegulerAfirmasi: baruReguler.jumlah_afirmasi || '',
+          baruRegulerKebutuhanKhusus: baruReguler.jumlah_kebutuhan_khusus || '',
+          baruRPLDiterima: baruRPL.jumlah_total || '',
+          baruRPLAfirmasi: baruRPL.jumlah_afirmasi || '',
+          baruRPLKebutuhanKhusus: baruRPL.jumlah_kebutuhan_khusus || '',
+          aktifRegulerDiterima: aktifReguler.jumlah_total || '',
+          aktifRegulerAfirmasi: aktifReguler.jumlah_afirmasi || '',
+          aktifRegulerKebutuhanKhusus: aktifReguler.jumlah_kebutuhan_khusus || '',
+          aktifRPLDiterima: aktifRPL.jumlah_total || '',
+          aktifRPLAfirmasi: aktifRPL.jumlah_afirmasi || '',
+          aktifRPLKebutuhanKhusus: aktifRPL.jumlah_kebutuhan_khusus || '',
           rowData: mabaData
         };
       });
@@ -2588,13 +2598,7 @@ export default function Tabel2A1({ role }) {
               isOpen={openYearFilterDropdown}
               setIsOpen={setOpenYearFilterDropdown}
             />
-            <UnitSelector
-              selectedUnit={selectedUnitProdi}
-              setSelectedUnit={setSelectedUnitProdi}
-              label="Prodi"
-              isOpen={openUnitFilterDropdown}
-              setIsOpen={setOpenUnitFilterDropdown}
-            />
+            {/* [REMOVED] UnitSelector - Filter prodi dihapus, data ditampilkan global */}
 
             {canDPend && role?.toLowerCase() !== "ala" && (
               <div className="inline-flex bg-gray-100 rounded-lg p-1">
@@ -2923,8 +2927,8 @@ export default function Tabel2A1({ role }) {
               Data lengkap mahasiswa berdasarkan tahun akademik (TS-4, TS-3, TS-2, TS-1, TS).
             </p>
             {!loading && (() => {
-              const unitProdiId = parseInt(selectedUnitProdi) || 4;
-              const tableData = processDataForTable(unitProdiId);
+              // [UPDATED] Display all data count (global) - tidak filter berdasarkan prodi
+              const tableData = rowsGabungan;
               return (
                 <span className="inline-flex items-center text-sm text-slate-700">
                   Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{tableData.length}</span>
@@ -2946,22 +2950,10 @@ export default function Tabel2A1({ role }) {
               containerClass="gabungan-year-dropdown-container"
               menuClass="gabungan-year-dropdown-menu"
             />
-            <UnitSelector
-              selectedUnit={selectedUnitProdi}
-              setSelectedUnit={setSelectedUnitProdi}
-              label="Prodi"
-              isOpen={openGabunganUnitDropdown}
-              setIsOpen={setOpenGabunganUnitDropdown}
-              containerClass="gabungan-unit-dropdown-container"
-              menuClass="gabungan-unit-dropdown-menu"
-            />
+            {/* [REMOVED] UnitSelector - Filter prodi dihapus, data ditampilkan global */}
             <button
               onClick={exportGabunganToExcel}
-              disabled={loading || !selectedYear || (() => {
-                const unitProdiId = parseInt(selectedUnitProdi) || 4;
-                const tableData = processDataForTable(unitProdiId);
-                return tableData.length === 0;
-              })()}
+              disabled={loading || !selectedYear || rowsGabungan.length === 0}
               className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               title="Export ke Excel"
             >
@@ -3017,8 +3009,8 @@ export default function Tabel2A1({ role }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {(() => {
-                const unitProdiId = parseInt(selectedUnitProdi) || 4;
-                const tableData = processDataForTable(unitProdiId);
+                // [UPDATED] Use rowsGabungan directly (all prodi data) instead of processDataForTable
+                const tableData = rowsGabungan;
 
                 // Filter data berdasarkan showDeleted jika diperlukan
                 // (Saat ini tabel gabungan ini hanya menampilkan data aktif)

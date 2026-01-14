@@ -15,7 +15,7 @@ const n = (v) => Number(v || 0);
 /* ---------- Year selector (TS filter) ---------- */
 function YearSelector({ maps, activeYear, setActiveYear }) {
   const tahunData = Object.values(maps.tahun || {});
-  
+
   // Dropdown state
   const [openYearDropdown, setOpenYearDropdown] = useState(false);
 
@@ -46,7 +46,7 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
     const found = tahunData.find((y) => String(y.id_tahun) === String(activeYear));
     return found ? (found.tahun || found.nama || activeYear) : activeYear;
   };
-  
+
   return (
     <div className="relative year-selector-dropdown-container w-48">
       <button
@@ -55,11 +55,10 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
           e.preventDefault();
           setOpenYearDropdown(!openYearDropdown);
         }}
-        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-          activeYear 
-            ? 'border-[#0384d6] bg-white' 
+        className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${activeYear
+            ? 'border-[#0384d6] bg-white'
             : 'border-slate-300 bg-white hover:border-gray-400'
-        }`}
+          }`}
         aria-label="Pilih tahun"
       >
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -68,15 +67,14 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
             {getSelectedYearLabel()}
           </span>
         </div>
-        <FiChevronDown 
-          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-            openYearDropdown ? 'rotate-180' : ''
-          }`} 
-          size={16} 
+        <FiChevronDown
+          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openYearDropdown ? 'rotate-180' : ''
+            }`}
+          size={16}
         />
       </button>
       {openYearDropdown && (
-        <div 
+        <div
           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-selector-dropdown-menu mt-1 w-full"
         >
           <button
@@ -85,11 +83,10 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
               setActiveYear("");
               setOpenYearDropdown(false);
             }}
-            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-              !activeYear
+            className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!activeYear
                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                 : 'text-gray-700'
-            }`}
+              }`}
           >
             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
             <span>Semua Tahun</span>
@@ -107,11 +104,10 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
                   setActiveYear(y.id_tahun.toString());
                   setOpenYearDropdown(false);
                 }}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                  activeYear === y.id_tahun.toString()
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${activeYear === y.id_tahun.toString()
                     ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                     : 'text-gray-700'
-                }`}
+                  }`}
               >
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                 <span className="truncate">{y.tahun || y.nama}</span>
@@ -174,108 +170,107 @@ function PrettyTable1A3({
               const idField = getIdField(r);
               const rowId = idField && r[idField] ? r[idField] : i;
               return (
-              <tr
-                key={`${showDeleted ? 'deleted' : 'active'}-1a3-${rowId}`}
-                className={`transition-all duration-200 ease-in-out ${
-                  i % 2 === 0 ? "bg-white" : "bg-slate-50"
-                } hover:bg-[#eaf4ff]`}
-              >
-                {showDeleted && (
-                  <td className="px-6 py-4 text-center border border-slate-200">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(r.id_penggunaan_dana)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRows([
-                            ...selectedRows,
-                            r.id_penggunaan_dana,
-                          ]);
-                        } else {
-                          setSelectedRows(
-                            selectedRows.filter(
-                              (id) => id !== r.id_penggunaan_dana
-                            )
-                          );
-                        }
-                      }}
-                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                    />
+                <tr
+                  key={`${showDeleted ? 'deleted' : 'active'}-1a3-${rowId}`}
+                  className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                    } hover:bg-[#eaf4ff]`}
+                >
+                  {showDeleted && (
+                    <td className="px-6 py-4 text-center border border-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(r.id_penggunaan_dana)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRows([
+                              ...selectedRows,
+                              r.id_penggunaan_dana,
+                            ]);
+                          } else {
+                            setSelectedRows(
+                              selectedRows.filter(
+                                (id) => id !== r.id_penggunaan_dana
+                              )
+                            );
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                      />
+                    </td>
+                  )}
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                    {getYearName(r.id_tahun)}
                   </td>
-                )}
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                  {getYearName(r.id_tahun)}
-                </td>
-                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">
-                  {r.jenis_penggunaan}
-                </td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                  {r.jumlah_dana
-                    ? new Intl.NumberFormat("id-ID", {
+                  <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">
+                    {r.jenis_penggunaan}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                    {r.jumlah_dana
+                      ? new Intl.NumberFormat("id-ID", {
                         style: "currency",
                         currency: "IDR",
                         minimumFractionDigits: 0,
                       }).format(n(r.jumlah_dana))
-                    : "-"}
-                </td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                  {r.link_bukti ? (
-                    <a
-                      href={r.link_bukti}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline text-[#0384d6] hover:text-[#043975] transition"
-                    >
-                      Lihat Bukti
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                <td className="px-6 py-4 border border-slate-200">
-                  <div className="flex items-center justify-center dropdown-container">
-                      <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                        if (openDropdownId !== rowId) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(rowId);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                      : "-"}
+                  </td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                    {r.link_bukti ? (
+                      <a
+                        href={r.link_bukti}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-[#0384d6] hover:text-[#043975] transition"
                       >
-                      <FiMoreVertical size={18} />
+                        Lihat Bukti
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td className="px-6 py-4 border border-slate-200">
+                    <div className="flex items-center justify-center dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rowId = getIdField(r) ? r[getIdField(r)] : i;
+                          if (openDropdownId !== rowId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192;
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth)
+                            });
+                            setOpenDropdownId(rowId);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : i)}
+                      >
+                        <FiMoreVertical size={18} />
                       </button>
-                  </div>
-                </td>
-              </tr>
+                    </div>
+                  </td>
+                </tr>
               );
             })}
           {rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
             .length === 0 && (
-            <tr>
-              <td
-                colSpan={showDeleted ? 6 : 5}
-                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
-              >
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">
-                  Belum ada data yang ditambahkan atau data yang cocok dengan
-                  filter.
-                </p>
-              </td>
-            </tr>
-          )}
+              <tr>
+                <td
+                  colSpan={showDeleted ? 6 : 5}
+                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                >
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">
+                    Belum ada data yang ditambahkan atau data yang cocok dengan
+                    filter.
+                  </p>
+                </td>
+              </tr>
+            )}
         </tbody>
       </table>
     </div>
@@ -310,9 +305,8 @@ function PrettyTable1A3Summary({ summaryData }) {
           {summaryData.map((row, i) => (
             <tr
               key={`summary-${i}`}
-              className={`transition-all duration-200 ease-in-out ${
-                i % 2 === 0 ? "bg-white" : "bg-slate-50"
-              } hover:bg-[#eaf4ff]`}
+              className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                } hover:bg-[#eaf4ff]`}
             >
               <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">
                 {row.jenis_penggunaan}
@@ -379,11 +373,11 @@ export default function Tabel1A3({ role }) {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeYear, setActiveYear] = useState("");
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Tahun dropdown state (for form)
   const [openNewTahunDropdown, setOpenNewTahunDropdown] = useState(false);
   const [openEditTahunDropdown, setOpenEditTahunDropdown] = useState(false);
@@ -457,7 +451,7 @@ export default function Tabel1A3({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -494,7 +488,7 @@ export default function Tabel1A3({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -503,7 +497,7 @@ export default function Tabel1A3({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idField = getIdField(a) || getIdField(b);
       if (idField) {
@@ -511,7 +505,7 @@ export default function Tabel1A3({ role }) {
         const idB = b[idField] || 0;
         return idB - idA; // ID terbesar di atas
       }
-      
+
       return 0;
     });
   };
@@ -623,56 +617,56 @@ export default function Tabel1A3({ role }) {
       confirmButtonText: 'Ya, Hapus Permanen!',
       cancelButtonText: 'Batal'
     }).then(async (result) => {
-        if (result.isConfirmed) {
-            setLoading(true);
-            try {
-                const idField = getIdField(row);
-                await apiFetch(`${ENDPOINT}/${row?.[idField]}/hard-delete`, {
-                    method: "DELETE",
-                });
-                fetchRows();
-                fetchSummary();
-                Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
-            } catch (e) {
-                Swal.fire('Gagal!', `Gagal menghapus data secara permanen: ${e.message}`, 'error');
-            } finally {
-                setLoading(false);
-            }
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          const idField = getIdField(row);
+          await apiFetch(`${ENDPOINT}/${row?.[idField]}/hard-delete`, {
+            method: "DELETE",
+          });
+          fetchRows();
+          fetchSummary();
+          Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal menghapus data secara permanen: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
         }
+      }
     });
   };
 
   const doRestore = (row) => {
     Swal.fire({
-        title: 'Pulihkan Data?',
-        text: "Data ini akan dikembalikan ke daftar aktif.",
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, pulihkan!',
-        cancelButtonText: 'Batal'
+      title: 'Pulihkan Data?',
+      text: "Data ini akan dikembalikan ke daftar aktif.",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
     }).then(async (result) => {
-        if (result.isConfirmed) {
-            setLoading(true);
-            try {
-                const idField = getIdField(row);
-                await apiFetch(`${ENDPOINT}/${row?.[idField]}/restore`, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        restored_by: role?.user?.name || role?.user?.username || "Unknown User",
-                        restored_at: new Date().toISOString(),
-                    }),
-                });
-                fetchRows();
-                fetchSummary();
-                Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
-            } catch (e) {
-                Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
-            } finally {
-                setLoading(false);
-            }
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          const idField = getIdField(row);
+          await apiFetch(`${ENDPOINT}/${row?.[idField]}/restore`, {
+            method: "POST",
+            body: JSON.stringify({
+              restored_by: role?.user?.name || role?.user?.username || "Unknown User",
+              restored_at: new Date().toISOString(),
+            }),
+          });
+          fetchRows();
+          fetchSummary();
+          Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
         }
+      }
     });
   };
 
@@ -682,36 +676,36 @@ export default function Tabel1A3({ role }) {
       return;
     }
     Swal.fire({
-        title: `Pulihkan ${selectedRows.length} Data?`,
-        text: "Semua data yang dipilih akan dikembalikan ke daftar aktif.",
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, pulihkan!',
-        cancelButtonText: 'Batal'
+      title: `Pulihkan ${selectedRows.length} Data?`,
+      text: "Semua data yang dipilih akan dikembalikan ke daftar aktif.",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
     }).then(async (result) => {
-        if (result.isConfirmed) {
-            setLoading(true);
-            try {
-                await apiFetch(`${ENDPOINT}/restore-multiple`, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        ids: selectedRows,
-                        restored_by: role?.user?.name || role?.user?.username || "Unknown User",
-                        restored_at: new Date().toISOString(),
-                    }),
-                });
-                setSelectedRows([]);
-                fetchRows();
-                fetchSummary();
-                Swal.fire('Dipulihkan!', 'Data yang dipilih telah berhasil dipulihkan.', 'success');
-            } catch (e) {
-                Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
-            } finally {
-                setLoading(false);
-            }
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          await apiFetch(`${ENDPOINT}/restore-multiple`, {
+            method: "POST",
+            body: JSON.stringify({
+              ids: selectedRows,
+              restored_by: role?.user?.name || role?.user?.username || "Unknown User",
+              restored_at: new Date().toISOString(),
+            }),
+          });
+          setSelectedRows([]);
+          fetchRows();
+          fetchSummary();
+          Swal.fire('Dipulihkan!', 'Data yang dipilih telah berhasil dipulihkan.', 'success');
+        } catch (e) {
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+        } finally {
+          setLoading(false);
         }
+      }
     });
   };
 
@@ -736,8 +730,8 @@ export default function Tabel1A3({ role }) {
         <h1 className="text-2xl font-bold text-slate-800">{LABEL}</h1>
         <div className="flex justify-between items-center mt-1">
           <p className="text-sm text-slate-500">
-          Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
-        </p>
+            Kelola data penggunaan dana UPPS/PS dan distribusi per tahun.
+          </p>
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
               Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">{rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length}</span>
@@ -748,9 +742,9 @@ export default function Tabel1A3({ role }) {
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <YearSelector 
-            maps={maps} 
-            activeYear={activeYear} 
+          <YearSelector
+            maps={maps}
+            activeYear={activeYear}
             setActiveYear={setActiveYear}
           />
           {canDelete && (
@@ -758,11 +752,10 @@ export default function Tabel1A3({ role }) {
               <button
                 onClick={() => setShowDeleted(false)}
                 disabled={loading}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  !showDeleted
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                     ? "bg-white text-[#0384d6] shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
-                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data aktif"
               >
                 Data
@@ -770,11 +763,10 @@ export default function Tabel1A3({ role }) {
               <button
                 onClick={() => setShowDeleted(true)}
                 disabled={loading}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  showDeleted
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                     ? "bg-white text-[#0384d6] shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
-                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data terhapus"
               >
                 Data Terhapus
@@ -797,18 +789,18 @@ export default function Tabel1A3({ role }) {
               onClick={async () => {
                 try {
                   setLoading(true);
-                  
+
                   // Helper function untuk get year name
                   const getYearName = (id) =>
                     maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
-                  
+
                   // Prepare data untuk export (hanya data yang aktif, tidak yang dihapus)
                   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-                  
+
                   if (filteredRows.length === 0) {
                     throw new Error('Tidak ada data untuk diekspor.');
                   }
-                  
+
                   const exportData = filteredRows.map((row, index) => ({
                     'No': index + 1,
                     'Tahun': getYearName(row.id_tahun),
@@ -816,7 +808,7 @@ export default function Tabel1A3({ role }) {
                     'Jumlah Dana': Number(String(row.jumlah_dana || '0').replace(/[^\d.-]/g, '')) || 0,
                     'Link Bukti': row.link_bukti || ''
                   }));
-                  
+
                   // Coba import xlsx library
                   let XLSX;
                   try {
@@ -832,7 +824,7 @@ export default function Tabel1A3({ role }) {
                       }
                       return strValue;
                     };
-                    
+
                     const headers = ['No', 'Tahun', 'Jenis Penggunaan', 'Jumlah Dana', 'Link Bukti'];
                     const csvRows = [
                       headers.map(escapeCsv).join(','),
@@ -845,7 +837,7 @@ export default function Tabel1A3({ role }) {
                       ].map(escapeCsv).join(','))
                     ];
                     const csvContent = '\ufeff' + csvRows.join('\n');
-                    
+
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -855,7 +847,7 @@ export default function Tabel1A3({ role }) {
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-                    
+
                     Swal.fire({
                       icon: 'success',
                       title: 'Berhasil!',
@@ -865,13 +857,13 @@ export default function Tabel1A3({ role }) {
                     });
                     return;
                   }
-                  
+
                   // Buat workbook baru
                   const wb = XLSX.utils.book_new();
-                  
+
                   // Buat worksheet dari data
                   const ws = XLSX.utils.json_to_sheet(exportData);
-                  
+
                   // Set column widths
                   ws['!cols'] = [
                     { wch: 5 },   // No
@@ -880,10 +872,10 @@ export default function Tabel1A3({ role }) {
                     { wch: 20 },  // Jumlah Dana
                     { wch: 40 }   // Link Bukti
                   ];
-                  
+
                   // Tambahkan worksheet ke workbook
                   XLSX.utils.book_append_sheet(wb, ws, 'Tabel 1A3');
-                  
+
                   // Generate file dan download
                   const fileName = `Tabel_1A3_Penggunaan_Dana_${new Date().toISOString().split('T')[0]}.xlsx`;
                   XLSX.writeFile(wb, fileName);
@@ -911,7 +903,7 @@ export default function Tabel1A3({ role }) {
               aria-label="Export Tabel Per Tahun to Excel"
             >
               <FiFileText className="w-4 h-4" />
-              Export Tabel Per Tahun
+              Export
             </button>
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -966,9 +958,9 @@ export default function Tabel1A3({ role }) {
           return rowId === openDropdownId;
         });
         if (!currentRow) return null;
-        
+
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -1038,8 +1030,8 @@ export default function Tabel1A3({ role }) {
       <div className="mt-8">
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-slate-700">
-          Ringkasan Penggunaan Dana
-        </h2>
+            Ringkasan Penggunaan Dana
+          </h2>
           <div className="flex items-center gap-3">
             {!loading && (
               <span className="inline-flex items-center text-sm text-slate-700">
@@ -1051,12 +1043,12 @@ export default function Tabel1A3({ role }) {
                 onClick={async () => {
                   try {
                     setLoading(true);
-                    
+
                     // Prepare data untuk export ringkasan
                     if (summaryData.length === 0) {
                       throw new Error('Tidak ada data ringkasan untuk diekspor.');
                     }
-                    
+
                     const exportData = summaryData.map((row) => ({
                       'Jenis Penggunaan': row.jenis_penggunaan || '',
                       'TS-4': Number(String(n(row.ts_minus_4) || '0').replace(/[^\d.-]/g, '')) || 0,
@@ -1066,7 +1058,7 @@ export default function Tabel1A3({ role }) {
                       'TS': Number(String(n(row.ts) || '0').replace(/[^\d.-]/g, '')) || 0,
                       'Link Bukti': row.link_bukti || ''
                     }));
-                    
+
                     // Coba import xlsx library
                     let XLSX;
                     try {
@@ -1082,7 +1074,7 @@ export default function Tabel1A3({ role }) {
                         }
                         return strValue;
                       };
-                      
+
                       const headers = ['Jenis Penggunaan', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'];
                       const csvRows = [
                         headers.map(escapeCsv).join(','),
@@ -1097,7 +1089,7 @@ export default function Tabel1A3({ role }) {
                         ].map(escapeCsv).join(','))
                       ];
                       const csvContent = '\ufeff' + csvRows.join('\n');
-                      
+
                       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                       const url = window.URL.createObjectURL(blob);
                       const a = document.createElement('a');
@@ -1107,7 +1099,7 @@ export default function Tabel1A3({ role }) {
                       a.click();
                       window.URL.revokeObjectURL(url);
                       document.body.removeChild(a);
-                      
+
                       Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
@@ -1117,13 +1109,13 @@ export default function Tabel1A3({ role }) {
                       });
                       return;
                     }
-                    
+
                     // Buat workbook baru
                     const wb = XLSX.utils.book_new();
-                    
+
                     // Buat worksheet dari data
                     const ws = XLSX.utils.json_to_sheet(exportData);
-                    
+
                     // Set column widths
                     ws['!cols'] = [
                       { wch: 30 },  // Jenis Penggunaan
@@ -1134,10 +1126,10 @@ export default function Tabel1A3({ role }) {
                       { wch: 15 },  // TS
                       { wch: 40 }   // Link Bukti
                     ];
-                    
+
                     // Tambahkan worksheet ke workbook
                     XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan 1A3');
-                    
+
                     // Generate file dan download
                     const fileName = `Tabel_1A3_Ringkasan_${new Date().toISOString().split('T')[0]}.xlsx`;
                     XLSX.writeFile(wb, fileName);
@@ -1165,7 +1157,7 @@ export default function Tabel1A3({ role }) {
                 aria-label="Export Ringkasan to Excel"
               >
                 <FiFileText className="w-4 h-4" />
-                Export Ringkasan
+                Export
               </button>
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -1191,7 +1183,7 @@ export default function Tabel1A3({ role }) {
               className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
-                
+
                 // Validasi tahun harus dipilih
                 if (!newIdTahun || newIdTahun === "") {
                   Swal.fire({
@@ -1201,7 +1193,7 @@ export default function Tabel1A3({ role }) {
                   });
                   return;
                 }
-                
+
                 setLoading(true);
                 setOpenNewTahunDropdown(false);
                 try {
@@ -1231,33 +1223,31 @@ export default function Tabel1A3({ role }) {
                       setOpenNewTahunDropdown(!openNewTahunDropdown);
                       setOpenEditTahunDropdown(false);
                     }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      newIdTahun 
-                        ? 'border-[#0384d6] bg-white' 
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdTahun
+                        ? 'border-[#0384d6] bg-white'
                         : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
+                      }`}
                     aria-label="Pilih tahun"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                       <span className={`truncate ${newIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {newIdTahun 
+                        {newIdTahun
                           ? (() => {
-                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(newIdTahun));
-                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
-                            })()
+                            const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(newIdTahun));
+                            return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                          })()
                           : "Pilih tahun..."}
                       </span>
                     </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openNewTahunDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
+                    <FiChevronDown
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openNewTahunDropdown ? 'rotate-180' : ''
+                        }`}
+                      size={18}
                     />
                   </button>
                   {openNewTahunDropdown && (
-                    <div 
+                    <div
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto new-tahun-dropdown-menu mt-1 w-full"
                     >
                       {Object.values(maps.tahun || {}).length === 0 ? (
@@ -1273,11 +1263,10 @@ export default function Tabel1A3({ role }) {
                               setNewIdTahun(y.id_tahun.toString());
                               setOpenNewTahunDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              newIdTahun === y.id_tahun.toString()
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdTahun === y.id_tahun.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
-                            }`}
+                              }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span className="truncate">{y.tahun || y.nama}</span>
@@ -1338,12 +1327,12 @@ export default function Tabel1A3({ role }) {
                   type="submit"
                 >
                   {loading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                          <span>Menyimpan...</span>
-                      </div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                      <span>Menyimpan...</span>
+                    </div>
                   ) : (
-                      'Simpan'
+                    'Simpan'
                   )}
                 </button>
               </div>
@@ -1363,7 +1352,7 @@ export default function Tabel1A3({ role }) {
               className="p-8 space-y-6 overflow-y-auto flex-1"
               onSubmit={async (e) => {
                 e.preventDefault();
-                
+
                 // Validasi tahun harus dipilih
                 if (!editIdTahun || editIdTahun === "") {
                   Swal.fire({
@@ -1373,7 +1362,7 @@ export default function Tabel1A3({ role }) {
                   });
                   return;
                 }
-                
+
                 setLoading(true);
                 setOpenEditTahunDropdown(false);
                 try {
@@ -1404,33 +1393,31 @@ export default function Tabel1A3({ role }) {
                       setOpenEditTahunDropdown(!openEditTahunDropdown);
                       setOpenNewTahunDropdown(false);
                     }}
-                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      editIdTahun 
-                        ? 'border-[#0384d6] bg-white' 
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdTahun
+                        ? 'border-[#0384d6] bg-white'
                         : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
+                      }`}
                     aria-label="Pilih tahun"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                       <span className={`truncate ${editIdTahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                        {editIdTahun 
+                        {editIdTahun
                           ? (() => {
-                              const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(editIdTahun));
-                              return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
-                            })()
+                            const found = Object.values(maps.tahun || {}).find((y) => String(y.id_tahun) === String(editIdTahun));
+                            return found ? (found.tahun || found.nama || "Pilih...") : "Pilih tahun...";
+                          })()
                           : "Pilih tahun..."}
                       </span>
                     </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openEditTahunDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={18} 
+                    <FiChevronDown
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openEditTahunDropdown ? 'rotate-180' : ''
+                        }`}
+                      size={18}
                     />
                   </button>
                   {openEditTahunDropdown && (
-                    <div 
+                    <div
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-tahun-dropdown-menu mt-1 w-full"
                     >
                       {Object.values(maps.tahun || {}).length === 0 ? (
@@ -1446,11 +1433,10 @@ export default function Tabel1A3({ role }) {
                               setEditIdTahun(y.id_tahun.toString());
                               setOpenEditTahunDropdown(false);
                             }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                              editIdTahun === y.id_tahun.toString()
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdTahun === y.id_tahun.toString()
                                 ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                 : 'text-gray-700'
-                            }`}
+                              }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                             <span className="truncate">{y.tahun || y.nama}</span>
@@ -1511,12 +1497,12 @@ export default function Tabel1A3({ role }) {
                   type="submit"
                 >
                   {loading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                          <span>Menyimpan...</span>
-                      </div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                      <span>Menyimpan...</span>
+                    </div>
                   ) : (
-                      'Simpan'
+                    'Simpan'
                   )}
                 </button>
               </div>
