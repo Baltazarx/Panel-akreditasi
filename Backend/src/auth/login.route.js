@@ -25,15 +25,15 @@ loginRouter.post('/login', async (req, res) => {
         u.username,
         u.password,
         u.is_active,
+        u.id_unit,
         p.id_pegawai,
         p.nama_lengkap,
         p.id_jabatan,
-        p.id_unit,
         uk.nama_unit,
         uk.kode_role
       FROM users u
       LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
-      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
       WHERE u.username = ? AND u.deleted_at IS NULL
       LIMIT 1
     `;
@@ -60,12 +60,12 @@ loginRouter.post('/login', async (req, res) => {
     // [VALIDASI KETUA UNIT]
     // Hanya ketua unit yang diizinkan login
     if (user.id_jabatan !== 1) {
-       return res.status(403).json({ error: 'Akses Ditolak. Hanya Ketua Unit yang diizinkan login.' });
+      return res.status(403).json({ error: 'Akses Ditolak. Hanya Ketua Unit yang diizinkan login.' });
     }
 
     // [VALIDASI ROLE]
     if (!user.kode_role) {
-       return res.status(403).json({ error: `Unit Kerja '${user.nama_unit}' belum memiliki hak akses (kode_role). Hubungi Admin.` });
+      return res.status(403).json({ error: `Unit Kerja '${user.nama_unit}' belum memiliki hak akses (kode_role). Hubungi Admin.` });
     }
 
     // Payload Token
@@ -73,7 +73,7 @@ loginRouter.post('/login', async (req, res) => {
       id_user: user.id_user,
       id_pegawai: user.id_pegawai,
       username: user.username,
-      
+
       // Data Dinamis dari Pegawai/Unit
       id_unit: user.id_unit,
       role: user.kode_role,
@@ -85,7 +85,7 @@ loginRouter.post('/login', async (req, res) => {
     });
 
     res.cookie('token', token, { httpOnly: true });
-    
+
     res.json({
       message: 'Login berhasil',
       token,
@@ -100,7 +100,7 @@ loginRouter.post('/login', async (req, res) => {
       stack: err.stack,
       name: err.name
     });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       message: process.env.NODE_ENV === 'development' ? err.message : undefined
     });

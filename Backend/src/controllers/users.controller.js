@@ -11,10 +11,10 @@ export const listUsers = async (req, res) => {
     // [MODIFIKASI FILTER]
     // Secara default, buildWhere mungkin menyembunyikan soft-deleted records.
     // Jika kita ingin admin bisa melihat user nonaktif/terhapus, kita sesuaikan filter di sini.
-    
+
     // Kita filter manual kondisi deleted_at agar lebih fleksibel
-    let finalWhere = where.filter(w => !w.includes('deleted_at')); 
-    
+    let finalWhere = where.filter(w => !w.includes('deleted_at'));
+
     const statusFilter = req.query?.status;
     if (statusFilter === 'active') {
       finalWhere.push('u.is_active = 1 AND u.deleted_at IS NULL');
@@ -43,14 +43,14 @@ export const listUsers = async (req, res) => {
         u.id_pegawai, 
         p.nama_lengkap AS pegawai_name,
         
-        -- Info Unit & Role (Dari Pegawai -> Unit)
-        p.id_unit, 
+        -- Info Unit & Role (Dari users.id_unit, bukan pegawai.id_unit)
+        u.id_unit, 
         uk.nama_unit AS unit_name,
-        uk.kode_role AS role  -- Role diambil dari Unit Kerja
+        uk.kode_role AS role  -- Role diambil dari users.id_unit
         
       FROM users u
       LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
-      LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+      LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
       
       ${finalWhere.length ? `WHERE ${finalWhere.join(' AND ')}` : ''}
       ORDER BY ${orderBy}
@@ -87,7 +87,7 @@ export const getUserById = async (req, res) => {
     `;
 
     const [rows] = await pool.query(sql, [req.params.id]);
-    
+
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
@@ -99,13 +99,79 @@ export const getUserById = async (req, res) => {
 // ===== CREATE =====
 export const createUser = async (req, res) => {
   try {
-    // [UPDATE] Input menjadi lebih ringkas
-    // Tidak perlu input id_unit atau role manual.
-    // Cukup username, password, id_pegawai.
-    const { username, password, id_pegawai, is_active } = req.body;
+    // [UPDATE] Accept id_unit from request body for multi-unit support
+    const { username, password, id_pegawai, id_unit, is_active } = req.body;
 
     if (!username || !password || !id_pegawai) {
-        return res.status(400).json({ error: 'Username, Password, dan Pegawai wajib diisi.' });
+      return res.status(400).json({ error: 'Username, Password, dan Pegawai wajib diisi.' });
+    }
+
+    // [NEW] Validate id_unit - check if pegawai has this unit (either primary or in pegawai_unit)
+    let validatedUnit = null;
+
+    if (id_unit) {
+      // Check if unit exists in pegawai_unit table
+      const [unitCheck] = await pool.query(
+        `SELECT pu.id_unit, uk.nama_unit 
+         FROM pegawai_unit pu
+         JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
+         WHERE pu.id_pegawai = ? AND pu.id_unit = ?`,
+        [id_pegawai, id_unit]
+      );
+
+      if (unitCheck.length > 0) {
+        validatedUnit = unitCheck[0].id_unit;
+      } else {
+        return res.status(400).json({ error: 'Unit kerja yang dipilih tidak terdaftar untuk pegawai ini.' });
+      }
+    } else {
+      // If no id_unit provided, use primary unit from pegawai table
+      const [pegawaiRows] = await pool.query(
+        `SELECT id_unit FROM pegawai WHERE id_pegawai = ? AND deleted_at IS NULL`,
+        [id_pegawai]
+      );
+
+      if (pegawaiRows.length === 0) {
+        return res.status(404).json({ error: 'Pegawai tidak ditemukan atau sudah dihapus.' });
+      }
+
+      validatedUnit = pegawaiRows[0].id_unit;
+
+      if (!validatedUnit) {
+        return res.status(400).json({ error: 'Pegawai ini belum memiliki unit kerja. Silakan atur unit kerja pegawai terlebih dahulu.' });
+      }
+    }
+
+    // [NEW] Validasi: Cek apakah kombinasi pegawai + unit sudah ada
+    // Now using users.id_unit for direct validation
+    console.log('=== VALIDATION START ===');
+    console.log('Input:', { id_pegawai, validatedUnit });
+
+    const [existingUser] = await pool.query(
+      `SELECT u.id_user, u.username, u.id_unit,
+              p.nama_lengkap, 
+              uk.nama_unit
+       FROM users u
+       JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
+       WHERE u.id_pegawai = ? 
+         AND u.id_unit = ?
+         AND u.deleted_at IS NULL`,
+      [id_pegawai, validatedUnit]
+    );
+
+    console.log('Query result:', JSON.stringify(existingUser, null, 2));
+    console.log('=== VALIDATION END ===');
+
+    if (existingUser.length > 0) {
+      const existing = existingUser[0];
+      const unitName = existing.nama_unit || 'unit tidak diketahui';
+      console.log('CONFLICT DETECTED:', { existing, unitName });
+      return res.status(409).json({
+        error: `Pegawai "${existing.nama_lengkap}" sudah memiliki akun untuk unit "${unitName}" dengan username "${existing.username}". Jika ingin mengubah data user ini, silakan EDIT user yang sudah ada (ID: ${existing.id_user}) alih-alih membuat user baru.`,
+        existingUserId: existing.id_user,
+        existingUsername: existing.username
+      });
     }
 
     // Hash password
@@ -115,6 +181,7 @@ export const createUser = async (req, res) => {
       username,
       password: hashedPassword,
       id_pegawai,
+      id_unit: validatedUnit, // [NEW] Save unit in users table
       is_active: is_active !== undefined ? is_active : 1,
     };
 
@@ -123,24 +190,24 @@ export const createUser = async (req, res) => {
     }
 
     const [r] = await pool.query(`INSERT INTO users SET ?`, [data]);
-    
+
     // Return data lengkap (termasuk role yang didapat otomatis)
     const [row] = await pool.query(
       `SELECT 
-         u.id_user, u.username, u.is_active,
+         u.id_user, u.username, u.is_active, u.id_unit,
          p.nama_lengkap AS pegawai_name,
          uk.nama_unit AS unit_name,
          uk.kode_role AS role
        FROM users u
        LEFT JOIN pegawai p ON u.id_pegawai = p.id_pegawai
-       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
+       LEFT JOIN unit_kerja uk ON u.id_unit = uk.id_unit
        WHERE u.id_user=?`,
       [r.insertId]
     );
     res.status(201).json(row[0]);
   } catch (err) {
     console.error("Error createUser:", err);
-    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Username atau Pegawai sudah terdaftar.' });
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Username sudah digunakan. Silakan gunakan username lain.' });
     res.status(500).json({ error: 'Create failed', details: err.message });
   }
 };
@@ -148,11 +215,83 @@ export const createUser = async (req, res) => {
 // ===== UPDATE =====
 export const updateUser = async (req, res) => {
   try {
-    const { username, password, id_pegawai, is_active } = req.body;
+    const { username, password, id_pegawai, id_unit, is_active } = req.body;
+
+    // [NEW] Validate id_unit if provided (for multi-unit support)
+    let validatedUnit = null;
+
+    if (id_pegawai) {
+      if (id_unit) {
+        // Check if unit exists in pegawai_unit table
+        const [unitCheck] = await pool.query(
+          `SELECT pu.id_unit FROM pegawai_unit pu
+           WHERE pu.id_pegawai = ? AND pu.id_unit = ?`,
+          [id_pegawai, id_unit]
+        );
+
+        if (unitCheck.length > 0) {
+          validatedUnit = unitCheck[0].id_unit;
+        } else {
+          return res.status(400).json({ error: 'Unit kerja yang dipilih tidak terdaftar untuk pegawai ini.' });
+        }
+      } else {
+        // Fallback to primary unit
+        const [pegawaiRows] = await pool.query(
+          `SELECT id_unit FROM pegawai WHERE id_pegawai = ? AND deleted_at IS NULL`,
+          [id_pegawai]
+        );
+
+        if (pegawaiRows.length === 0) {
+          return res.status(404).json({ error: 'Pegawai tidak ditemukan atau sudah dihapus.' });
+        }
+
+        validatedUnit = pegawaiRows[0].id_unit;
+
+        if (!validatedUnit) {
+          return res.status(400).json({ error: 'Pegawai ini belum memiliki unit kerja.' });
+        }
+      }
+
+      // Validate: Check if another user already has this pegawai+unit combination
+      console.log('=== UPDATE VALIDATION START ===');
+      console.log('Input:', { id_pegawai, validatedUnit, currentUserId: req.params.id });
+
+      const [existingUser] = await pool.query(
+        `SELECT u.id_user, u.username, p.nama_lengkap, 
+                COALESCE(uk_pu.nama_unit, uk_p.nama_unit) as nama_unit,
+                pu.id_unit as pu_id_unit,
+                p.id_unit as p_id_unit,
+                uk_pu.nama_unit as pu_nama_unit,
+                uk_p.nama_unit as p_nama_unit
+         FROM users u
+         JOIN pegawai p ON u.id_pegawai = p.id_pegawai
+         LEFT JOIN pegawai_unit pu ON u.id_pegawai = pu.id_pegawai AND pu.id_unit = ?
+         LEFT JOIN unit_kerja uk_pu ON pu.id_unit = uk_pu.id_unit
+         LEFT JOIN unit_kerja uk_p ON p.id_unit = uk_p.id_unit
+         WHERE u.id_pegawai = ? 
+           AND ((pu.id_unit IS NOT NULL AND pu.id_unit = ?) OR (pu.id_unit IS NULL AND p.id_unit = ?))
+           AND u.id_user != ?
+           AND u.deleted_at IS NULL`,
+        [validatedUnit, id_pegawai, validatedUnit, validatedUnit, req.params.id]
+      );
+
+      console.log('Query result:', JSON.stringify(existingUser, null, 2));
+      console.log('=== UPDATE VALIDATION END ===');
+
+      if (existingUser.length > 0) {
+        const existing = existingUser[0];
+        const unitName = existing.nama_unit || 'unit tidak diketahui';
+        console.log('UPDATE CONFLICT DETECTED:', { existing, unitName });
+        return res.status(409).json({
+          error: `Pegawai "${existing.nama_lengkap}" sudah memiliki akun untuk unit "${unitName}" dengan username "${existing.username}".`
+        });
+      }
+    }
 
     const data = {
       username,
-      id_pegawai, // Jika ingin ganti pemilik akun
+      id_pegawai,
+      id_unit: validatedUnit, // [NEW] Update unit in users table
       is_active
     };
 
@@ -190,6 +329,7 @@ export const updateUser = async (req, res) => {
     res.json(row[0]);
   } catch (err) {
     console.error("Error updateUser:", err);
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Username sudah digunakan. Silakan gunakan username lain.' });
     res.status(500).json({ error: 'Update failed', details: err.message });
   }
 };
@@ -200,10 +340,10 @@ export const softDeleteUser = async (req, res) => {
     const userId = req.params.id;
     const [existing] = await pool.query(`SELECT id_user FROM users WHERE id_user = ?`, [userId]);
     if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
-    
+
     const payload = { deleted_at: new Date(), is_active: 0 };
     if (await hasColumn('users', 'deleted_by')) payload.deleted_by = req.user?.id_user || null;
-    
+
     await pool.query(`UPDATE users SET ? WHERE id_user = ?`, [payload, userId]);
     res.json({ ok: true, softDeleted: true, message: 'User deleted successfully' });
   } catch (err) {
@@ -265,7 +405,7 @@ export const verifyPassword = async (req, res) => {
   try {
     // Ambil id_user dari JWT token (user yang sedang login)
     const userId = req.user?.id_user;
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
     }
@@ -296,8 +436,8 @@ export const verifyPassword = async (req, res) => {
     }
 
     // Password benar, return success
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       message: 'Password berhasil diverifikasi.',
       verified: true
     });
@@ -312,7 +452,7 @@ export const changePassword = async (req, res) => {
   try {
     // Ambil id_user dari JWT token (user yang sedang login)
     const userId = req.user?.id_user;
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized: User ID not found in token' });
     }
@@ -352,7 +492,7 @@ export const changePassword = async (req, res) => {
 
     // Update password
     const updateData = { password: hashedPassword };
-    
+
     if (await hasColumn('users', 'updated_by') && req.user?.id_user) {
       updateData.updated_by = req.user.id_user;
     }
@@ -362,9 +502,9 @@ export const changePassword = async (req, res) => {
       [updateData, userId]
     );
 
-    res.json({ 
-      ok: true, 
-      message: 'Kata sandi berhasil diubah.' 
+    res.json({
+      ok: true,
+      message: 'Kata sandi berhasil diubah.'
     });
   } catch (err) {
     console.error("Error changePassword:", err);

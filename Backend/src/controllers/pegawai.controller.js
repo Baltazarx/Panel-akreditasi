@@ -30,14 +30,11 @@ export const listPegawai = async (req, res) => {
             pu.id,
             pu.id_unit,
             pu.is_primary,
-            pu.tanggal_mulai,
-            pu.tanggal_selesai,
-            pu.keterangan,
             uk.nama_unit
           FROM pegawai_unit pu
           LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
-          WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
-          ORDER BY pu.is_primary DESC, pu.tanggal_mulai ASC`,
+          WHERE pu.id_pegawai = ?
+          ORDER BY pu.is_primary DESC`,
           [pegawai.id_pegawai]
         );
         pegawai.units = units;
@@ -75,13 +72,10 @@ export const getPegawaiById = async (req, res) => {
         pu.id,
         pu.id_unit,
         pu.is_primary,
-        pu.tanggal_mulai,
-        pu.tanggal_selesai,
-        pu.keterangan,
         uk.nama_unit
       FROM pegawai_unit pu
       LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
-      WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
+      WHERE pu.id_pegawai = ?
       ORDER BY pu.is_primary DESC`,
       [req.params.id]
     );
@@ -107,6 +101,23 @@ export const createPegawai = async (req, res) => {
       id_unit: req.body.id_unit || null, // Unit utama untuk backward compatibility
       id_jabatan: req.body.id_jabatan || null,
     };
+
+    // Validation: Hanya boleh satu Ketua (id_jabatan = 1) per unit
+    if (data.id_jabatan == 1 && data.id_unit) {
+      const [existing] = await connection.query(
+        `SELECT p.nama_lengkap, uk.nama_unit 
+         FROM pegawai p 
+         JOIN unit_kerja uk ON p.id_unit = uk.id_unit 
+         WHERE p.id_unit = ? AND p.id_jabatan = 1 AND p.deleted_at IS NULL`,
+        [data.id_unit]
+      );
+      if (existing.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+          error: `Gagal: Unit ${existing[0].nama_unit} sudah memiliki Ketua (${existing[0].nama_lengkap}).`
+        });
+      }
+    }
 
     if (await hasColumn('pegawai', 'created_by') && req.user?.id_user) {
       data.created_by = req.user.id_user;
@@ -157,7 +168,7 @@ export const createPegawai = async (req, res) => {
       `SELECT pu.*, uk.nama_unit 
        FROM pegawai_unit pu 
        LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
-       WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL`,
+       WHERE pu.id_pegawai = ?`,
       [id_pegawai]
     );
 
@@ -188,6 +199,23 @@ export const updatePegawai = async (req, res) => {
       id_jabatan: req.body.id_jabatan || null,
     };
 
+    // Validation: Hanya boleh satu Ketua (id_jabatan = 1) per unit
+    if (data.id_jabatan == 1 && data.id_unit) {
+      const [existing] = await connection.query(
+        `SELECT p.nama_lengkap, uk.nama_unit 
+         FROM pegawai p 
+         JOIN unit_kerja uk ON p.id_unit = uk.id_unit 
+         WHERE p.id_unit = ? AND p.id_jabatan = 1 AND p.id_pegawai != ? AND p.deleted_at IS NULL`,
+        [data.id_unit, req.params.id]
+      );
+      if (existing.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({
+          error: `Gagal: Unit ${existing[0].nama_unit} sudah memiliki Ketua (${existing[0].nama_lengkap}).`
+        });
+      }
+    }
+
     if (await hasColumn('pegawai', 'updated_by') && req.user?.id_user) {
       data.updated_by = req.user.id_user;
     }
@@ -200,42 +228,51 @@ export const updatePegawai = async (req, res) => {
 
     // [NEW] Update pegawai_unit jika ada units array
     if (req.body.units && Array.isArray(req.body.units)) {
-      // Soft delete semua unit existing
-      await connection.query(
-        `UPDATE pegawai_unit SET deleted_at = NOW() WHERE id_pegawai = ?`,
+      // Ambil unit existing
+      const [existingUnits] = await connection.query(
+        `SELECT id, id_unit FROM pegawai_unit WHERE id_pegawai = ?`,
         [req.params.id]
       );
 
-      // Insert units baru
+      const existingUnitIds = existingUnits.map(u => u.id_unit);
+      const newUnitIds = req.body.units.map(u => u.id_unit || u);
+
+      // Cari unit yang dihapus (ada di existing tapi tidak di new)
+      const unitsToDelete = existingUnits.filter(u => !newUnitIds.includes(u.id_unit));
+
+      // Hapus unit yang dihapus
+      for (const unit of unitsToDelete) {
+        await connection.query(
+          `DELETE FROM pegawai_unit WHERE id = ?`,
+          [unit.id]
+        );
+      }
+
+      // Insert atau update unit
       for (let i = 0; i < req.body.units.length; i++) {
         const unit = req.body.units[i];
         const id_unit = unit.id_unit || unit;
 
-        // Cek apakah sudah ada (mungkin soft deleted), restore jika ada
-        const [existing] = await connection.query(
-          `SELECT id FROM pegawai_unit WHERE id_pegawai = ? AND id_unit = ? LIMIT 1`,
-          [req.params.id, id_unit]
-        );
+        // Cek apakah unit ini sudah ada
+        const existingUnit = existingUnits.find(u => u.id_unit === id_unit);
 
-        if (existing.length > 0) {
-          // Restore yang sudah ada
+        if (existingUnit) {
+          // Update yang sudah ada (update is_primary)
           await connection.query(
             `UPDATE pegawai_unit 
-             SET deleted_at = NULL, is_primary = ?, tanggal_mulai = COALESCE(tanggal_mulai, ?)
+             SET is_primary = ?
              WHERE id = ?`,
-            [i === 0 ? 1 : 0, new Date().toISOString().split('T')[0], existing[0].id]
+            [i === 0 ? 1 : 0, existingUnit.id]
           );
         } else {
           // Insert baru
           await connection.query(
-            `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai, keterangan) 
-             VALUES (?, ?, ?, ?, ?)`,
+            `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary) 
+             VALUES (?, ?, ?)`,
             [
               req.params.id,
               id_unit,
-              i === 0 ? 1 : 0,
-              new Date().toISOString().split('T')[0],
-              unit.keterangan || null
+              i === 0 ? 1 : 0
             ]
           );
         }
@@ -260,7 +297,7 @@ export const updatePegawai = async (req, res) => {
       `SELECT pu.*, uk.nama_unit 
        FROM pegawai_unit pu 
        LEFT JOIN unit_kerja uk ON pu.id_unit = uk.id_unit
-       WHERE pu.id_pegawai = ? AND pu.deleted_at IS NULL
+       WHERE pu.id_pegawai = ?
        ORDER BY pu.is_primary DESC`,
       [req.params.id]
     );
