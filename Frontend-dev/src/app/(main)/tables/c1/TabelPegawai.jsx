@@ -144,7 +144,9 @@ export default function TabelPegawai({ role }) {
       setLoading(true);
     }
     try {
-      const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
+      const url = showDeleted
+        ? `${table.path}?include_deleted=1&include=units`
+        : `${table.path}?include=units`;
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
 
