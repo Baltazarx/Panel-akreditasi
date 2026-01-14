@@ -132,23 +132,21 @@ export const createPegawai = async (req, res) => {
       for (let i = 0; i < req.body.units.length; i++) {
         const unit = req.body.units[i];
         await connection.query(
-          `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai, keterangan) 
-           VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary) 
+           VALUES (?, ?, ?)`,
           [
             id_pegawai,
             unit.id_unit || unit,
-            i === 0 ? 1 : 0, // Unit pertama sebagai primary
-            new Date().toISOString().split('T')[0],
-            unit.keterangan || null
+            i === 0 ? 1 : 0 // Unit pertama sebagai primary
           ]
         );
       }
     } else if (data.id_unit) {
       // Fallback: Jika tidak ada units array tapi ada id_unit, create single unit
       await connection.query(
-        `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary, tanggal_mulai) 
-         VALUES (?, ?, 1, ?)`,
-        [id_pegawai, data.id_unit, new Date().toISOString().split('T')[0]]
+        `INSERT INTO pegawai_unit (id_pegawai, id_unit, is_primary) 
+         VALUES (?, ?, 1)`,
+        [id_pegawai, data.id_unit]
       );
     }
 
