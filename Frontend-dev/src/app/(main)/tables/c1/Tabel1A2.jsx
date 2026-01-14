@@ -4,7 +4,7 @@ import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload } from 'react-icons/fi';
 
 /* ---------- Format Rupiah ---------- */
 const formatRupiah = (value) => {
@@ -1269,11 +1269,11 @@ export default function Tabel1A2({ role }) {
                 }
               }}
               disabled={loading || rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length === 0}
-              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              aria-label="Export Tabel Per Tahun to Excel"
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              <FiFileText className="w-4 h-4" />
-              Export Tabel Per Tahun
+              <FiDownload size={18} />
+              <span>Export Tabel Per Tahun</span>
             </button>
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -1517,11 +1517,11 @@ export default function Tabel1A2({ role }) {
                 }
               }}
               disabled={loading || summaryRows.length === 0}
-              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              aria-label="Export Ringkasan to Excel"
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export Ringkasan ke Excel"
             >
-              <FiFileText className="w-4 h-4" />
-              Export Ringkasan
+              <FiDownload size={18} />
+              <span>Export Ringkasan</span>
             </button>
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">

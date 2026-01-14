@@ -90,7 +90,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -99,7 +99,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -176,32 +176,30 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                     setOpenKepemilikanDropdown(!openKepemilikanDropdown);
                     setOpenLisensiDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.kepemilikan
-                      ? 'border-[#0384d6] bg-white' 
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.kepemilikan
+                      ? 'border-[#0384d6] bg-white'
                       : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                    }`}
                   aria-label="Pilih kepemilikan"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiHome className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.kepemilikan ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.kepemilikan === "M" 
-                        ? "Milik Sendiri (M)" 
+                      {form.kepemilikan === "M"
+                        ? "Milik Sendiri (M)"
                         : form.kepemilikan === "W"
-                        ? "Sewa (W)"
-                        : "-- Pilih Kepemilikan --"}
+                          ? "Sewa (W)"
+                          : "-- Pilih Kepemilikan --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openKepemilikanDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openKepemilikanDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openKepemilikanDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto kepemilikan-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -210,11 +208,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("kepemilikan", "");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.kepemilikan
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.kepemilikan
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>-- Pilih Kepemilikan --</span>
@@ -225,11 +222,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("kepemilikan", "M");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.kepemilikan === "M"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.kepemilikan === "M"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Milik Sendiri (M)</span>
@@ -240,11 +236,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("kepemilikan", "W");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.kepemilikan === "W"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.kepemilikan === "W"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Sewa (W)</span>
@@ -267,34 +262,32 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                     setOpenLisensiDropdown(!openLisensiDropdown);
                     setOpenKepemilikanDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.lisensi
-                      ? 'border-[#0384d6] bg-white' 
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.lisensi
+                      ? 'border-[#0384d6] bg-white'
                       : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                    }`}
                   aria-label="Pilih lisensi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.lisensi ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.lisensi === "L" 
-                        ? "Berlisensi (L)" 
+                      {form.lisensi === "L"
+                        ? "Berlisensi (L)"
                         : form.lisensi === "P"
-                        ? "Public Domain (P)"
-                        : form.lisensi === "T"
-                        ? "Tidak Berlisensi (T)"
-                        : "-- Pilih Lisensi --"}
+                          ? "Public Domain (P)"
+                          : form.lisensi === "T"
+                            ? "Tidak Berlisensi (T)"
+                            : "-- Pilih Lisensi --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openLisensiDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openLisensiDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openLisensiDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto lisensi-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -303,11 +296,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("lisensi", "");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.lisensi
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.lisensi
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>-- Pilih Lisensi --</span>
@@ -318,11 +310,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("lisensi", "L");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "L"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "L"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Berlisensi (L)</span>
@@ -333,11 +324,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("lisensi", "P");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "P"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "P"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Public Domain (P)</span>
@@ -348,11 +338,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("lisensi", "T");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "T"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "T"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Tidak Berlisensi (T)</span>
@@ -422,24 +411,24 @@ export default function Tabel52({ auth, role: propRole }) {
   const { authUser } = useAuth();
   const role = propRole || authUser?.role;
   const { maps } = useMaps(auth?.user || authUser || true);
-  
+
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -451,7 +440,7 @@ export default function Tabel52({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -460,14 +449,14 @@ export default function Tabel52({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);
     });
   };
-  
+
   // Lock body scroll and add modal-open class when modal is open
   useEffect(() => {
     if (showForm) {
@@ -477,7 +466,7 @@ export default function Tabel52({ auth, role: propRole }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -490,7 +479,7 @@ export default function Tabel52({ auth, role: propRole }) {
       document.body.classList.remove('modal-open');
     }
   }, [showForm]);
-  
+
   // Fetch data
   const fetchRows = async () => {
     try {
@@ -652,7 +641,7 @@ export default function Tabel52({ auth, role: propRole }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       Swal.fire('Berhasil!', 'Data berhasil diekspor.', 'success');
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal mengekspor data", 'error');
@@ -706,11 +695,10 @@ export default function Tabel52({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -718,11 +706,10 @@ export default function Tabel52({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -749,10 +736,11 @@ export default function Tabel52({ auth, role: propRole }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
             <FiDownload size={18} />
-            Export Excel
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
@@ -801,7 +789,7 @@ export default function Tabel52({ auth, role: propRole }) {
               filteredRows.map((r, i) => {
                 const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
                 const isDeleted = r.deleted_at;
-                
+
                 return (
                   <tr
                     key={rowId}
@@ -820,10 +808,10 @@ export default function Tabel52({ auth, role: propRole }) {
                     </td>
                     <td className="px-6 py-4 border border-slate-200 text-slate-700">
                       {r.link_bukti ? (
-                        <a 
-                          href={r.link_bukti} 
-                          target="_blank" 
-                          rel="noreferrer" 
+                        <a
+                          href={r.link_bukti}
+                          target="_blank"
+                          rel="noreferrer"
                           className="text-[#0384d6] underline hover:text-[#043975]"
                         >
                           Lihat
@@ -878,7 +866,7 @@ export default function Tabel52({ auth, role: propRole }) {
         const isDeleted = currentRow.deleted_at;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,

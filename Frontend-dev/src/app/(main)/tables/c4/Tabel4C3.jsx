@@ -218,8 +218,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                   setOpenTahunDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih dosen"
               >
@@ -258,8 +258,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                           setOpenDosenDropdown(false);
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === d.id_dosen.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -319,8 +319,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                     setOpenDosenDropdown(false);
                   }}
                   className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun_perolehan
-                      ? 'border-[#0384d6] bg-white'
-                      : 'border-gray-300 bg-white hover:border-gray-400'
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
                     }`}
                   aria-label="Pilih tahun perolehan"
                 >
@@ -404,8 +404,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                               setOpenTahunDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun_perolehan === t.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
                               }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -855,8 +855,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
                 setOpenTahunFilterDropdown(!openTahunFilterDropdown);
               }}
               className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
-                  ? 'border-[#0384d6] bg-white text-black'
-                  : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                ? 'border-[#0384d6] bg-white text-black'
+                : 'border-gray-300 bg-white text-black hover:border-gray-400'
                 }`}
               aria-label="Pilih tahun"
             >
@@ -892,8 +892,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
                         setOpenTahunFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -914,8 +914,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -925,8 +925,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -954,10 +954,11 @@ export default function Tabel4C3({ auth, role: propRole }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
             <FiDownload size={18} />
-            Export Excel
+            <span>Export Excel</span>
           </button>
         </div>
       </div>

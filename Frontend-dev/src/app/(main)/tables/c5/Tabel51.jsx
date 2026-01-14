@@ -101,7 +101,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -110,7 +110,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -168,11 +168,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                     setOpenAksesDropdown(!openAksesDropdown);
                     setOpenUnitDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.akses
-                      ? 'border-[#0384d6] bg-white' 
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.akses
+                      ? 'border-[#0384d6] bg-white'
                       : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                    }`}
                   aria-label="Pilih akses"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -181,15 +180,14 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                       {form.akses || "-- Pilih Akses --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openAksesDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openAksesDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openAksesDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto akses-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -198,11 +196,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("akses", "");
                         setOpenAksesDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.akses
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.akses
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>-- Pilih Akses --</span>
@@ -213,11 +210,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("akses", "Lokal");
                         setOpenAksesDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.akses === "Lokal"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.akses === "Lokal"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Lokal</span>
@@ -228,11 +224,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                         handleChange("akses", "Internet");
                         setOpenAksesDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.akses === "Internet"
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.akses === "Internet"
                           ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                           : 'text-gray-700'
-                      }`}
+                        }`}
                     >
                       <FiGlobe className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Internet</span>
@@ -255,33 +250,31 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                     setOpenUnitDropdown(!openUnitDropdown);
                     setOpenAksesDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_unit_pengelola
-                      ? 'border-[#0384d6] bg-white' 
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_unit_pengelola
+                      ? 'border-[#0384d6] bg-white'
                       : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                    }`}
                   aria-label="Pilih unit kerja"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_unit_pengelola ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_unit_pengelola 
+                      {form.id_unit_pengelola
                         ? (() => {
-                            const found = unitList.find((u) => String(u.id_unit) === String(form.id_unit_pengelola));
-                            return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Pilih Unit Kerja --";
-                          })()
+                          const found = unitList.find((u) => String(u.id_unit) === String(form.id_unit_pengelola));
+                          return found ? (found.nama_unit || found.nama || found.id_unit) : "-- Pilih Unit Kerja --";
+                        })()
                         : "-- Pilih Unit Kerja --"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openUnitDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openUnitDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-dropdown-menu mt-1 w-full"
                   >
                     {unitList.length === 0 ? (
@@ -297,11 +290,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser }) {
                             handleChange("id_unit_pengelola", u.id_unit.toString());
                             setOpenUnitDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_unit_pengelola === u.id_unit.toString()
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_unit_pengelola === u.id_unit.toString()
                               ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                               : 'text-gray-700'
-                          }`}
+                            }`}
                         >
                           <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{u.nama_unit || u.nama || u.id_unit}</span>
@@ -358,24 +350,24 @@ export default function Tabel51({ auth, role: propRole }) {
   const { authUser } = useAuth();
   const role = propRole || authUser?.role;
   const { maps } = useMaps(auth?.user || authUser || true);
-  
+
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
-  
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -387,7 +379,7 @@ export default function Tabel51({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -396,14 +388,14 @@ export default function Tabel51({ auth, role: propRole }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);
     });
   };
-  
+
   // Lock body scroll and add modal-open class when modal is open
   useEffect(() => {
     if (showForm) {
@@ -413,7 +405,7 @@ export default function Tabel51({ auth, role: propRole }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -426,7 +418,7 @@ export default function Tabel51({ auth, role: propRole }) {
       document.body.classList.remove('modal-open');
     }
   }, [showForm]);
-  
+
   // Fetch data
   const fetchRows = async () => {
     try {
@@ -588,7 +580,7 @@ export default function Tabel51({ auth, role: propRole }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       Swal.fire('Berhasil!', 'Data berhasil diekspor.', 'success');
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal mengekspor data", 'error');
@@ -627,11 +619,10 @@ export default function Tabel51({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -639,11 +630,10 @@ export default function Tabel51({ auth, role: propRole }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                   ? "bg-white text-[#0384d6] shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -670,10 +660,11 @@ export default function Tabel51({ auth, role: propRole }) {
           )}
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
             <FiDownload size={18} />
-            Export Excel
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
@@ -720,7 +711,7 @@ export default function Tabel51({ auth, role: propRole }) {
               filteredRows.map((r, i) => {
                 const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
                 const isDeleted = r.deleted_at;
-                
+
                 return (
                   <tr
                     key={rowId}
@@ -733,10 +724,10 @@ export default function Tabel51({ auth, role: propRole }) {
                     <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.nama_unit_pengelola || "-"}</td>
                     <td className="px-6 py-4 border border-slate-200 text-slate-700">
                       {r.link_bukti ? (
-                        <a 
-                          href={r.link_bukti} 
-                          target="_blank" 
-                          rel="noreferrer" 
+                        <a
+                          href={r.link_bukti}
+                          target="_blank"
+                          rel="noreferrer"
                           className="text-[#0384d6] underline hover:text-[#043975]"
                         >
                           Lihat
@@ -791,7 +782,7 @@ export default function Tabel51({ auth, role: propRole }) {
         const isDeleted = currentRow.deleted_at;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,

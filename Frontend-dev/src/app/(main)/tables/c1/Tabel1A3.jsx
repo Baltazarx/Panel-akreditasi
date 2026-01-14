@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload } from 'react-icons/fi';
 
 const ENDPOINT = "/penggunaan-dana";
 const TABLE_KEY = "tabel_1a3";
@@ -56,8 +56,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
           setOpenYearDropdown(!openYearDropdown);
         }}
         className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${activeYear
-            ? 'border-[#0384d6] bg-white'
-            : 'border-slate-300 bg-white hover:border-gray-400'
+          ? 'border-[#0384d6] bg-white'
+          : 'border-slate-300 bg-white hover:border-gray-400'
           }`}
         aria-label="Pilih tahun"
       >
@@ -84,8 +84,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
               setOpenYearDropdown(false);
             }}
             className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!activeYear
-                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                : 'text-gray-700'
+              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+              : 'text-gray-700'
               }`}
           >
             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -105,8 +105,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
                   setOpenYearDropdown(false);
                 }}
                 className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${activeYear === y.id_tahun.toString()
-                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                    : 'text-gray-700'
+                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                  : 'text-gray-700'
                   }`}
               >
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -753,8 +753,8 @@ export default function Tabel1A3({ role }) {
                 onClick={() => setShowDeleted(false)}
                 disabled={loading}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                    ? "bg-white text-[#0384d6] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
                   } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data aktif"
               >
@@ -764,8 +764,8 @@ export default function Tabel1A3({ role }) {
                 onClick={() => setShowDeleted(true)}
                 disabled={loading}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                    ? "bg-white text-[#0384d6] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
                   } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 aria-label="Tampilkan data terhapus"
               >
@@ -899,11 +899,11 @@ export default function Tabel1A3({ role }) {
                 }
               }}
               disabled={loading || rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at)).length === 0}
-              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              aria-label="Export Tabel Per Tahun to Excel"
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              <FiFileText className="w-4 h-4" />
-              Export
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -1153,11 +1153,11 @@ export default function Tabel1A3({ role }) {
                   }
                 }}
                 disabled={loading || summaryData.length === 0}
-                className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                aria-label="Export Ringkasan to Excel"
+                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                title="Export Ringkasan ke Excel"
               >
-                <FiFileText className="w-4 h-4" />
-                Export
+                <FiDownload size={18} />
+                <span>Export Ringkasan</span>
               </button>
               {/* Tooltip */}
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -1224,8 +1224,8 @@ export default function Tabel1A3({ role }) {
                       setOpenEditTahunDropdown(false);
                     }}
                     className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${newIdTahun
-                        ? 'border-[#0384d6] bg-white'
-                        : 'border-gray-300 bg-white hover:border-gray-400'
+                      ? 'border-[#0384d6] bg-white'
+                      : 'border-gray-300 bg-white hover:border-gray-400'
                       }`}
                     aria-label="Pilih tahun"
                   >
@@ -1264,8 +1264,8 @@ export default function Tabel1A3({ role }) {
                               setOpenNewTahunDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${newIdTahun === y.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
                               }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1394,8 +1394,8 @@ export default function Tabel1A3({ role }) {
                       setOpenNewTahunDropdown(false);
                     }}
                     className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editIdTahun
-                        ? 'border-[#0384d6] bg-white'
-                        : 'border-gray-300 bg-white hover:border-gray-400'
+                      ? 'border-[#0384d6] bg-white'
+                      : 'border-gray-300 bg-white hover:border-gray-400'
                       }`}
                     aria-label="Pilih tahun"
                   >
@@ -1434,8 +1434,8 @@ export default function Tabel1A3({ role }) {
                               setOpenEditTahunDropdown(false);
                             }}
                             className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editIdTahun === y.id_tahun.toString()
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
                               }`}
                           >
                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />

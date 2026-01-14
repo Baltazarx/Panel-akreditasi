@@ -108,22 +108,20 @@ export default function Tabel1A5() {
           <div className="flex items-center gap-2 bg-white border border-slate-300 rounded-lg p-1">
             <button
               onClick={() => setViewMode("table")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                viewMode === "table"
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${viewMode === "table"
                   ? "bg-[#0384d6] text-white"
                   : "text-slate-600 hover:bg-slate-100"
-              }`}
+                }`}
             >
               <FiTable className="w-4 h-4" />
               Table
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                viewMode === "grid"
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${viewMode === "grid"
                   ? "bg-[#0384d6] text-white"
                   : "text-slate-600 hover:bg-slate-100"
-              }`}
+                }`}
             >
               <FiGrid className="w-4 h-4" />
               Grid
@@ -143,11 +141,11 @@ export default function Tabel1A5() {
           <button
             onClick={handleExport}
             disabled={loading || rows.length === 0}
-            className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            aria-label="Export to Excel"
+            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Export ke Excel"
           >
-            <FiDownload className="w-4 h-4" />
-            Export Excel
+            <FiDownload size={18} />
+            <span>Export Excel</span>
           </button>
         </div>
       </div>
