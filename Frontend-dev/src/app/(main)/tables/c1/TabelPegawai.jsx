@@ -144,12 +144,18 @@ export default function TabelPegawai({ role }) {
       setLoading(true);
     }
     try {
+<<<<<<< HEAD
       // [FIX] Add include=units parameter to fetch pegawai_unit data
       const includeUnits = 'include=units';
       const includeDeleted = showDeleted ? 'include_deleted=1' : '';
       const queryParams = [includeUnits, includeDeleted].filter(Boolean).join('&');
       const url = `${table.path}?${queryParams}`;
 
+=======
+      const url = showDeleted
+        ? `${table.path}?include_deleted=1&include=units`
+        : `${table.path}?include=units`;
+>>>>>>> 904090d4c09fffa386cf936e7a82657f327ab6d9
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
 

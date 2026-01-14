@@ -12,7 +12,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle, FiFileText, FiUser } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiAlertCircle, FiFileText, FiUser, FiDownload } from 'react-icons/fi';
 
 // // --- MOCKS FOR PREVIEW (DELETE THIS BLOCK IN YOUR PROJECT) ---
 // import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, RotateCw, XCircle, MoreVertical } from 'lucide-react';
@@ -299,14 +299,19 @@ export default function Tabel1A1({ role }) {
   }, [openUnitDropdown, openEditUnitDropdown]);
 
   const [newIdUnit, setNewIdUnit] = useState("");
+  const [newIdPegawai, setNewIdPegawai] = useState(""); // Auto-filled from unit
   const [newPeriodeMulai, setNewPeriodeMulai] = useState("");
   const [newPeriodeSelesai, setNewPeriodeSelesai] = useState("");
   const [newTupoksi, setNewTupoksi] = useState("");
 
   const [editIdUnit, setEditIdUnit] = useState("");
+  const [editIdPegawai, setEditIdPegawai] = useState(""); // Auto-filled from unit
   const [editPeriodeMulai, setEditPeriodeMulai] = useState("");
   const [editPeriodeSelesai, setEditPeriodeSelesai] = useState("");
   const [editTupoksi, setEditTupoksi] = useState("");
+
+  // State untuk data pegawai (untuk auto-fill)
+  const [pegawaiList, setPegawaiList] = useState([]);
 
   const canCreate = roleCan(role, table.key, "C");
   const canUpdate = roleCan(role, table.key, "U");
@@ -382,9 +387,77 @@ export default function Tabel1A1({ role }) {
     }
   }, [showDeleted]);
 
+  // Fetch pegawai list untuk auto-fill
+  useEffect(() => {
+    const fetchPegawai = async () => {
+      try {
+        const data = await apiFetch('/pegawai?include=units');
+        setPegawaiList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch pegawai:', err);
+      }
+    };
+    fetchPegawai();
+  }, []);
+
+  // Auto-fill pegawai ketika unit dipilih (NEW mode)
+  useEffect(() => {
+    if (newIdUnit && pegawaiList.length > 0) {
+      // Cari pegawai yang punya unit ini dan is_primary = 1
+      const pegawaiDenganUnit = pegawaiList.find(p => {
+        if (!p.units || !Array.isArray(p.units)) return false;
+        return p.units.some(u =>
+          String(u.id_unit) === String(newIdUnit) && u.is_primary === 1
+        );
+      });
+
+      if (pegawaiDenganUnit) {
+        setNewIdPegawai(String(pegawaiDenganUnit.id_pegawai));
+      } else {
+        // Fallback: cari pegawai dengan unit ini meskipun bukan primary
+        const anyPegawai = pegawaiList.find(p => {
+          if (!p.units || !Array.isArray(p.units)) return false;
+          return p.units.some(u => String(u.id_unit) === String(newIdUnit));
+        });
+        if (anyPegawai) {
+          setNewIdPegawai(String(anyPegawai.id_pegawai));
+        } else {
+          setNewIdPegawai("");
+        }
+      }
+    }
+  }, [newIdUnit, pegawaiList]);
+
+  // Auto-fill pegawai ketika unit dipilih (EDIT mode)
+  useEffect(() => {
+    if (editIdUnit && pegawaiList.length > 0) {
+      const pegawaiDenganUnit = pegawaiList.find(p => {
+        if (!p.units || !Array.isArray(p.units)) return false;
+        return p.units.some(u =>
+          String(u.id_unit) === String(editIdUnit) && u.is_primary === 1
+        );
+      });
+
+      if (pegawaiDenganUnit) {
+        setEditIdPegawai(String(pegawaiDenganUnit.id_pegawai));
+      } else {
+        const anyPegawai = pegawaiList.find(p => {
+          if (!p.units || !Array.isArray(p.units)) return false;
+          return p.units.some(u => String(u.id_unit) === String(editIdUnit));
+        });
+        if (anyPegawai) {
+          setEditIdPegawai(String(anyPegawai.id_pegawai));
+        } else {
+          setEditIdPegawai("");
+        }
+      }
+    }
+  }, [editIdUnit, pegawaiList]);
+
   useEffect(() => {
     if (editing) {
       setEditIdUnit(editing.id_unit ?? "");
+      setEditIdPegawai(editing.id_pegawai ?? "");
       setEditPeriodeMulai(editing.periode_mulai?.split('T')[0] ?? "");
       setEditPeriodeSelesai(editing.periode_selesai?.split('T')[0] ?? "");
       setEditTupoksi(editing.tupoksi ?? "");
@@ -483,6 +556,7 @@ export default function Tabel1A1({ role }) {
         setLoading(true);
         const payload = {
           id_unit: parseInt(selectedUnit),
+          id_pegawai: parseInt(isEdit ? editIdPegawai : newIdPegawai), // Auto-filled dari unit
           periode_mulai: isEdit ? editPeriodeMulai : newPeriodeMulai,
           periode_selesai: isEdit ? editPeriodeSelesai : newPeriodeSelesai,
           tupoksi: (isEdit ? editTupoksi : newTupoksi || "").trim(),
@@ -497,7 +571,11 @@ export default function Tabel1A1({ role }) {
         } else {
           await apiFetch(table.path, { method: "POST", body: JSON.stringify(payload) });
           setShowCreateModal(false);
-          setNewIdUnit(""); setNewPeriodeMulai(""); setNewPeriodeSelesai(""); setNewTupoksi("");
+          setNewIdUnit("");
+          setNewIdPegawai("");
+          setNewPeriodeMulai("");
+          setNewPeriodeSelesai("");
+          setNewTupoksi("");
           setOpenUnitDropdown(false);
         }
 
@@ -551,8 +629,8 @@ export default function Tabel1A1({ role }) {
                   }
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${(isEdit ? editIdUnit : newIdUnit)
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih unit kerja"
               >
@@ -604,8 +682,8 @@ export default function Tabel1A1({ role }) {
                           e.preventDefault(); // Prevent blur event from closing dropdown
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${(isEdit ? editIdUnit : newIdUnit) === u.id_unit.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiFileText className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -687,8 +765,8 @@ export default function Tabel1A1({ role }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -698,8 +776,8 @@ export default function Tabel1A1({ role }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -824,11 +902,11 @@ export default function Tabel1A1({ role }) {
                 }
               }}
               disabled={loading || processedRows.length === 0}
-              className="px-4 py-2 bg-white border border-green-600 text-green-600 font-semibold rounded-lg shadow-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              aria-label="Export to Excel"
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
             >
-              <FiFileText className="w-4 h-4" />
-              Export Excel
+              <FiDownload size={18} />
+              <span>Export Excel</span>
             </button>
             {/* Tooltip */}
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none whitespace-nowrap z-50">
