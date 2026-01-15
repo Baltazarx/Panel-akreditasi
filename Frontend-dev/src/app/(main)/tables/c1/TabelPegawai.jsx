@@ -18,7 +18,7 @@ export default function TabelPegawai({ role }) {
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const { maps } = useMaps(true);
+  const { maps, refreshMaps } = useMaps(true);
   const [formState, setFormState] = useState({});
 
   // Dropdown menu state
@@ -212,6 +212,19 @@ export default function TabelPegawai({ role }) {
     }
   }, [editing]);
 
+  const handleAddNew = () => {
+    setEditing(null);
+    setFormState({
+      nama_lengkap: "",
+      pendidikan_terakhir: "",
+      unit_kerja: [],
+      id_jabatan: "",
+      nikp: "",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpenFormPendidikanDropdown(false);
@@ -299,6 +312,7 @@ export default function TabelPegawai({ role }) {
       setShowModal(false);
       setEditing(null);
       fetchRows();
+      if (refreshMaps) refreshMaps();
 
       Swal.fire({
         icon: 'success',
@@ -338,6 +352,7 @@ export default function TabelPegawai({ role }) {
         await apiFetch(`${table.path}/${row[idField]}`, { method: "DELETE" });
         await Swal.fire('Dihapus!', 'Data telah dipindahkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus data: ${err.message}`, 'error');
         setError(err.message);
@@ -363,6 +378,7 @@ export default function TabelPegawai({ role }) {
         await apiFetch(`${table.path}/${row[idField]}/restore`, { method: "POST" });
         await Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal memulihkan data: ${err.message}`, 'error');
         setError(err.message);
@@ -388,6 +404,7 @@ export default function TabelPegawai({ role }) {
         await apiFetch(`${table.path}/${row[idField]}/hard-delete`, { method: "DELETE" });
         await Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus permanen data: ${err.message}`, 'error');
         setError(err.message);
@@ -449,7 +466,7 @@ export default function TabelPegawai({ role }) {
           </div>
         </div>
         {canCreate && (
-          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
+          <button onClick={handleAddNew} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
             + Tambah Data
           </button>
         )}

@@ -12,7 +12,9 @@ export const listPegawai = async (req, res) => {
         p.*,
         uk.nama_unit,
         rjs.nama_jabatan AS jabatan_struktural,
-        TRIM(CONCAT(COALESCE(rjs.nama_jabatan, ''), ' ', COALESCE(uk.nama_unit, ''))) AS jabatan_display
+        TRIM(CONCAT(COALESCE(rjs.nama_jabatan, ''), ' ', COALESCE(uk.nama_unit, ''))) AS jabatan_display,
+        EXISTS(SELECT 1 FROM dosen d WHERE d.id_pegawai = p.id_pegawai AND d.deleted_at IS NULL) AS is_dosen,
+        EXISTS(SELECT 1 FROM tenaga_kependidikan tk WHERE tk.id_pegawai = p.id_pegawai AND tk.deleted_at IS NULL) AS is_tendik
       FROM pegawai p
       LEFT JOIN unit_kerja uk ON p.id_unit = uk.id_unit
       LEFT JOIN ref_jabatan_struktural rjs ON p.id_jabatan = rjs.id_jabatan

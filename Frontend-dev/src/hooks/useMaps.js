@@ -28,7 +28,10 @@ export function useMaps(authUser = true) {
     mata_kuliah: {},
   });
   const [ready, setReady] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const mounted = useRef(true);
+
+  const refreshMaps = () => setRefreshTrigger(prev => prev + 1);
 
   useEffect(() => {
     mounted.current = true;
@@ -51,13 +54,13 @@ export function useMaps(authUser = true) {
                 "Content-Type": "application/json",
               },
             });
-            
+
             if (!res.ok) {
               // Silent fail untuk semua endpoint di useMaps
               // Error sudah ditangani dengan return []
               return [];
             }
-            
+
             const contentType = res.headers.get("content-type") || "";
             if (contentType.includes("application/json")) {
               return await res.json();
@@ -125,11 +128,11 @@ export function useMaps(authUser = true) {
     return () => {
       mounted.current = false;
     };
-  }, [authUser]);
+  }, [authUser, refreshTrigger]);
 
   // Helper untuk menampilkan teks tahun dari id
   const toYearText = (id) =>
     maps.tahun[id]?.nama ?? maps.tahun[id]?.tahun ?? id;
 
-  return { maps, toYearText, ready };
+  return { maps, toYearText, ready, refreshMaps };
 }

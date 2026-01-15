@@ -18,7 +18,7 @@ export default function TabelDosen({ role, search }) {
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const { maps } = useMaps(true);
+  const { maps, refreshMaps } = useMaps(true);
   const [formState, setFormState] = useState({});
 
   // Dropdown menu state
@@ -282,6 +282,23 @@ export default function TabelDosen({ role, search }) {
     }
   }, [editing]);
 
+  const handleAddNew = () => {
+    setEditing(null);
+    setFormState({
+      id_pegawai: "",
+      nidn: "",
+      nuptk: "",
+      homebase: "",
+      pt: "",
+      id_jafung: "",
+      beban_sks: "",
+    });
+    setPtCustom("");
+    setShowPtInput(false);
+    setError("");
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpenFormPegawaiDropdown(false);
@@ -353,6 +370,7 @@ export default function TabelDosen({ role, search }) {
       setPtCustom("");
       setShowPtInput(false);
       fetchRows();
+      if (refreshMaps) refreshMaps();
 
       Swal.fire({
         icon: 'success',
@@ -392,6 +410,7 @@ export default function TabelDosen({ role, search }) {
         await apiFetch(`${table.path}/${row[idField]}`, { method: "DELETE" });
         await Swal.fire('Dihapus!', 'Data telah dipindahkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus data: ${err.message}`, 'error');
         setError(err.message);
@@ -417,6 +436,7 @@ export default function TabelDosen({ role, search }) {
         await apiFetch(`${table.path}/${row[idField]}/restore`, { method: "POST" });
         await Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal memulihkan data: ${err.message}`, 'error');
         setError(err.message);
@@ -442,6 +462,7 @@ export default function TabelDosen({ role, search }) {
         await apiFetch(`${table.path}/${row[idField]}/hard-delete`, { method: "DELETE" });
         await Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus permanen data: ${err.message}`, 'error');
         setError(err.message);
@@ -523,7 +544,7 @@ export default function TabelDosen({ role, search }) {
           </div>
         </div>
         {canCreate && (
-          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
+          <button onClick={handleAddNew} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
             + Tambah Data
           </button>
         )}
@@ -757,7 +778,19 @@ export default function TabelDosen({ role, search }) {
                         >
                           {maps?.pegawai && Object.values(maps.pegawai).length > 0 ? (
                             Object.values(maps.pegawai)
-                              .filter(p => !p.deleted_at) // Hanya tampilkan pegawai yang tidak dihapus
+                              .filter(p => !p.deleted_at)
+                              .filter(p => {
+                                // Sembunyi jika sudah jadi TENDIK
+                                if (p.is_tendik) return false;
+
+                                // Sembunyi jika sudah jadi DOSEN (kecuali yang sedang diedit)
+                                if (p.is_dosen) {
+                                  if (editing && String(p.id_pegawai) === String(editing.id_pegawai)) return true;
+                                  return false;
+                                }
+
+                                return true;
+                              })
                               .sort((a, b) => {
                                 const namaA = (a.nama_lengkap || a.nama || '').toLowerCase();
                                 const namaB = (b.nama_lengkap || b.nama || '').toLowerCase();

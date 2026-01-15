@@ -151,6 +151,24 @@ export const createDosen = async (req, res) => {
       data.created_by = req.user.id_user;
     }
 
+    // [VALIDASI] Cek duplikasi di tabel dosen
+    const [existDosen] = await pool.query(
+      `SELECT id_dosen FROM dosen WHERE id_pegawai = ? AND deleted_at IS NULL`,
+      [data.id_pegawai]
+    );
+    if (existDosen.length > 0) {
+      return res.status(409).json({ error: 'Pegawai ini sudah terdaftar sebagai Dosen.' });
+    }
+
+    // [VALIDASI] Pembatas: Dosen tidak boleh terdaftar sebagai Tendik
+    const [existTendik] = await pool.query(
+      `SELECT id_tendik FROM tenaga_kependidikan WHERE id_pegawai = ? AND deleted_at IS NULL`,
+      [data.id_pegawai]
+    );
+    if (existTendik.length > 0) {
+      return res.status(400).json({ error: 'Pegawai ini sudah terdaftar sebagai Tenaga Kependidikan. Harap hapus data Tendik terlebih dahulu jika ingin menjadikannya Dosen.' });
+    }
+
     const [r] = await pool.query(`INSERT INTO dosen SET ?`, [data]);
 
     const [row] = await pool.query(

@@ -4,14 +4,17 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useApi } from "../hooks/useApi";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiKey, FiChevronDown, FiBriefcase, FiShield, FiUser } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiKey, FiChevronDown, FiBriefcase, FiShield, FiUser, FiRefreshCw } from 'react-icons/fi';
+import { useMaps } from "../hooks/useMaps";
 
 export default function UserManagementPage() {
   const api = useApi();
   const { authUser } = useAuth();
   const loweredRole = authUser?.role?.toLowerCase();
   const isReadOnlyRole = loweredRole === "ketua";
+  const { refreshMaps } = useMaps(true);
   const [users, setUsers] = useState([]);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [units, setUnits] = useState([]);
   const [allPegawai, setAllPegawai] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +76,8 @@ export default function UserManagementPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await api.get("/users");
+      const endpoint = showDeleted ? "/users?status=deleted" : "/users";
+      const data = await api.get(endpoint);
       const usersArray = Array.isArray(data) ? data : [];
 
       // Urutkan berdasarkan username secara alfabetis (case-insensitive)
@@ -142,7 +146,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []); // Fetch sekali saat mount
+  }, [showDeleted]); // Re-fetch when showDeleted changes
 
   useEffect(() => {
     fetchUnits();
@@ -271,6 +275,7 @@ export default function UserManagementPage() {
       setEditMode(false);
       resetForm();
       await fetchUsers();
+      if (refreshMaps) refreshMaps();
     } catch (err) {
       console.error("Gagal simpan user:", err);
       const errorMessage = err?.response?.data?.error || err?.message || 'Terjadi kesalahan saat menyimpan akun.';
@@ -326,6 +331,7 @@ export default function UserManagementPage() {
           await api.delete(`/users/${id}`);
           // Refresh data setelah delete
           await fetchUsers();
+          if (refreshMaps) refreshMaps();
           Swal.fire({
             icon: 'success',
             title: 'Berhasil!',
@@ -337,6 +343,39 @@ export default function UserManagementPage() {
           console.error("Gagal hapus user:", err);
           const errorMessage = err?.response?.data?.error || err?.message || 'Gagal menghapus akun.';
           Swal.fire('Gagal!', errorMessage, 'error');
+        }
+      }
+    });
+  };
+
+  // Pulihkan user (restore)
+  const handleRestore = (id) => {
+    if (isReadOnlyRole) return;
+    Swal.fire({
+      title: 'Pulihkan Akun?',
+      text: "Anda yakin ingin mengaktifkan kembali akun ini?",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.post(`/users/${id}/restore`);
+          await fetchUsers();
+          if (refreshMaps) refreshMaps();
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Akun telah dipulihkan.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } catch (err) {
+          console.error("Gagal pulihkan user:", err);
+          Swal.fire('Gagal!', `Gagal memulihkan akun: ${err.message}`, 'error');
         }
       }
     });
@@ -358,7 +397,8 @@ export default function UserManagementPage() {
       if (result.isConfirmed) {
         try {
           await api.delete(`/users/${id}/hard-delete`);
-          fetchUsers();
+          await fetchUsers();
+          if (refreshMaps) refreshMaps();
           Swal.fire('Terhapus!', 'Akun telah dihapus secara permanen.', 'success');
         } catch (err) {
           console.error("Gagal hapus permanen user:", err);
@@ -433,6 +473,32 @@ export default function UserManagementPage() {
       </header>
 
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setShowDeleted(false)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data aktif"
+            >
+              Data
+            </button>
+            <button
+              onClick={() => setShowDeleted(true)}
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              aria-label="Tampilkan data terhapus"
+            >
+              Data Terhapus
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           {!isReadOnlyRole && (
             <button
@@ -538,55 +604,84 @@ export default function UserManagementPage() {
               left: `${dropdownPosition.left}px`
             }}
           >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEdit(currentUser);
-                setOpenDropdownId(null);
-              }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-              aria-label="Edit akun"
-            >
-              <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
-              <span>Edit</span>
-            </button>
-            {(() => {
-              // Cek apakah user yang sedang login adalah superadmin (waket1, waket2, tpm, superadmin)
-              const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
-              const currentUserRole = authUser?.role?.toLowerCase();
-              const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
+            {!showDeleted ? (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(currentUser);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                  aria-label="Edit akun"
+                >
+                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                  <span>Edit</span>
+                </button>
+                {(() => {
+                  const superAdminRoles = ['waket1', 'waket2', 'tpm', 'superadmin'];
+                  const currentUserRole = authUser?.role?.toLowerCase();
+                  const isCurrentUserSuperAdmin = superAdminRoles.includes(currentUserRole);
 
-              // Super admin bisa reset password untuk semua user
-              if (isCurrentUserSuperAdmin) {
-                return (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleResetPassword(currentUser);
-                      setOpenDropdownId(null);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left"
-                    aria-label="Reset password"
-                  >
-                    <FiKey size={16} className="flex-shrink-0 text-orange-600" />
-                    <span>Reset Password</span>
-                  </button>
-                );
-              }
-              return null;
-            })()}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(currentUser.id_user);
-                setOpenDropdownId(null);
-              }}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-              aria-label="Hapus akun"
-            >
-              <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
-              <span>Hapus</span>
-            </button>
+                  if (isCurrentUserSuperAdmin) {
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResetPassword(currentUser);
+                          setOpenDropdownId(null);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 hover:text-orange-700 transition-colors text-left"
+                        aria-label="Reset password"
+                      >
+                        <FiKey size={16} className="flex-shrink-0 text-orange-600" />
+                        <span>Reset Password</span>
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(currentUser.id_user);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                  aria-label="Hapus akun"
+                >
+                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                  <span>Hapus</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRestore(currentUser.id_user);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                  aria-label="Pulihkan akun"
+                >
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHardDelete(currentUser.id_user);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left"
+                  aria-label="Hapus permanen"
+                >
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
+                </button>
+              </>
+            )}
           </div>
         );
       })()}

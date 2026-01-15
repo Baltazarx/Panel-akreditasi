@@ -16,14 +16,11 @@ export const listUsers = async (req, res) => {
     let finalWhere = where.filter(w => !w.includes('deleted_at'));
 
     const statusFilter = req.query?.status;
-    if (statusFilter === 'active') {
-      finalWhere.push('u.is_active = 1 AND u.deleted_at IS NULL');
-    } else if (statusFilter === 'inactive') {
-      finalWhere.push('(u.is_active = 0 OR u.deleted_at IS NOT NULL)');
+    if (statusFilter === 'deleted') {
+      finalWhere.push('u.deleted_at IS NOT NULL');
     } else {
-      // Default: Tampilkan semua yang belum di-hard delete (soft delete tetap muncul di list admin biasanya)
-      // Atau jika Anda ingin defaultnya hanya aktif:
-      // finalWhere.push('u.deleted_at IS NULL'); 
+      // Default: Hanya yang belum dihapus (soft delete)
+      finalWhere.push('u.deleted_at IS NULL');
     }
 
     // [UPDATE QUERY]

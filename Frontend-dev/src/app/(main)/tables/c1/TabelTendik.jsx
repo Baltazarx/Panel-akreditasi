@@ -5,11 +5,11 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser, FiBriefcase } from 'react-icons/fi';
 
 export default function TabelTendik({ role }) {
   const table = { key: "tenaga_kependidikan", label: "Manajemen Data Tenaga Kependidikan", path: "/tendik" };
-  
+
   // State management
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,13 +18,13 @@ export default function TabelTendik({ role }) {
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const { maps } = useMaps(true);
+  const { maps, refreshMaps } = useMaps(true);
   const [formState, setFormState] = useState({});
-  
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  
+
   // Form dropdown state
   const [openFormPegawaiDropdown, setOpenFormPegawaiDropdown] = useState(false);
 
@@ -95,7 +95,7 @@ export default function TabelTendik({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -112,7 +112,7 @@ export default function TabelTendik({ role }) {
   const canUpdate = roleCan(role, table.key, "U");
   const canDelete = roleCan(role, table.key, "D");
   const canRestore = roleCan(role, table.key, "H");
-  
+
   // Debug permissions
   console.log('TabelTendik permissions:', {
     role,
@@ -125,7 +125,7 @@ export default function TabelTendik({ role }) {
     showModal,
     editing
   });
-  
+
 
   // Fungsi fetchRows
   const fetchRows = async (isToggle = false) => {
@@ -135,16 +135,16 @@ export default function TabelTendik({ role }) {
     }
     try {
       setError("");
-      const url = showDeleted ? `${table.path}?include_deleted=1` : table.path;
+      const url = showDeleted ? `${table.path}?include_deleted=1&include=units` : `${table.path}?include=units`;
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
-      
+
       // Urutkan berdasarkan nama_lengkap secara alfabetis (case-insensitive)
       // Menggunakan localeCompare dengan locale 'id' untuk sorting bahasa Indonesia
       const sortedRows = [...rowsArray].sort((a, b) => {
         const namaA = (a.nama_lengkap || '').trim().toLowerCase();
         const namaB = (b.nama_lengkap || '').trim().toLowerCase();
-        
+
         // Jika nama sama, urutkan berdasarkan id_tendik sebagai secondary sort
         if (namaA === namaB) {
           const idFieldA = getIdField(a);
@@ -153,18 +153,18 @@ export default function TabelTendik({ role }) {
           const idB = idFieldB && b[idFieldB] !== undefined && b[idFieldB] !== null ? b[idFieldB] : 0;
           return idA - idB;
         }
-        
-        return namaA.localeCompare(namaB, 'id', { 
+
+        return namaA.localeCompare(namaB, 'id', {
           sensitivity: 'base',
-          numeric: true 
+          numeric: true
         });
       });
-      
+
       setRows(sortedRows);
     } catch (err) {
       console.error('Error fetching tendik data:', err);
       let errorMessage = err.message || 'Gagal memuat data';
-      
+
       // Handle specific error messages
       if (err.status === 404) {
         errorMessage = 'Endpoint tidak ditemukan. Pastikan backend berjalan dan route sudah terdaftar.';
@@ -173,7 +173,7 @@ export default function TabelTendik({ role }) {
       } else if (err.status === 401) {
         errorMessage = 'Sesi Anda telah berakhir. Silakan login kembali.';
       }
-      
+
       setError(errorMessage);
       setRows([]);
     } finally {
@@ -181,17 +181,17 @@ export default function TabelTendik({ role }) {
       setInitialLoading(false);
     }
   };
-  
+
   // useEffects
   // Initial load
-  useEffect(() => { 
-    fetchRows(false); 
+  useEffect(() => {
+    fetchRows(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
   // Toggle between active and deleted data
-  useEffect(() => { 
+  useEffect(() => {
     if (!initialLoading) {
-      fetchRows(true); 
+      fetchRows(true);
     }
   }, [showDeleted]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -208,6 +208,16 @@ export default function TabelTendik({ role }) {
     }
   }, [editing]);
 
+  const handleAddNew = () => {
+    setEditing(null);
+    setFormState({
+      id_pegawai: "",
+      jenis_tendik: "",
+    });
+    setError("");
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpenFormPegawaiDropdown(false);
@@ -216,19 +226,19 @@ export default function TabelTendik({ role }) {
       const idField = getIdField(editing);
       const url = editing ? `${table.path}/${editing[idField]}` : table.path;
       const method = editing ? "PUT" : "POST";
-      
+
       // Prepare payload
       const payload = {
         jenis_tendik: formState.jenis_tendik || "",
       };
-      
+
       // Untuk create: ambil dari formState, untuk update: ambil dari editing (karena field disabled)
       if (editing) {
         payload.id_pegawai = editing.id_pegawai;
       } else {
         payload.id_pegawai = formState.id_pegawai ? parseInt(formState.id_pegawai) : null;
       }
-      
+
       // Validasi
       if (!payload.id_pegawai || !payload.jenis_tendik) {
         Swal.fire({
@@ -239,7 +249,7 @@ export default function TabelTendik({ role }) {
         setLoading(false);
         return;
       }
-      
+
       console.log('Submit tendik data:', {
         url,
         method,
@@ -247,17 +257,18 @@ export default function TabelTendik({ role }) {
         editingId: editing ? editing[idField] : null,
         payload
       });
-      
+
       await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      
+
       setShowModal(false);
       setEditing(null);
       fetchRows();
-      
+      if (refreshMaps) refreshMaps();
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -268,7 +279,7 @@ export default function TabelTendik({ role }) {
     } catch (err) {
       console.error('Submit tendik error:', err);
       let errorMessage = err.message || 'Terjadi kesalahan saat menyimpan data';
-      
+
       // Handle specific error messages from backend
       if (err.response) {
         const responseError = typeof err.response === 'string' ? JSON.parse(err.response) : err.response;
@@ -276,14 +287,14 @@ export default function TabelTendik({ role }) {
           errorMessage = responseError.error;
         }
       }
-      
+
       // Handle HTTP status codes
       if (err.status === 409) {
         errorMessage = errorMessage || 'Data duplikat atau pegawai sudah terdaftar sebagai tenaga kependidikan';
       } else if (err.status === 400) {
         errorMessage = errorMessage || 'Data yang dikirim tidak valid';
       }
-      
+
       Swal.fire({
         icon: 'error',
         title: `Gagal ${editing ? 'memperbarui' : 'menambah'} data`,
@@ -294,7 +305,7 @@ export default function TabelTendik({ role }) {
       setLoading(false);
     }
   };
-  
+
   const doDelete = async (row) => {
     const idField = getIdField(row);
     const result = await Swal.fire({
@@ -313,6 +324,7 @@ export default function TabelTendik({ role }) {
         await apiFetch(`${table.path}/${row[idField]}`, { method: "DELETE" });
         await Swal.fire('Dihapus!', 'Data telah dipindahkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus data: ${err.message}`, 'error');
         setError(err.message);
@@ -338,6 +350,7 @@ export default function TabelTendik({ role }) {
         await apiFetch(`${table.path}/${row[idField]}/restore`, { method: "POST" });
         await Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal memulihkan data: ${err.message}`, 'error');
         setError(err.message);
@@ -363,6 +376,7 @@ export default function TabelTendik({ role }) {
         await apiFetch(`${table.path}/${row[idField]}/hard-delete`, { method: "DELETE" });
         await Swal.fire('Terhapus Permanen!', 'Data telah dihapus selamanya.', 'success');
         fetchRows();
+        if (refreshMaps) refreshMaps();
       } catch (err) {
         Swal.fire('Gagal!', `Gagal menghapus permanen data: ${err.message}`, 'error');
         setError(err.message);
@@ -426,11 +440,10 @@ export default function TabelTendik({ role }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -438,11 +451,10 @@ export default function TabelTendik({ role }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -450,7 +462,7 @@ export default function TabelTendik({ role }) {
           </div>
         </div>
         {canCreate && (
-          <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
+          <button onClick={handleAddNew} className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
             + Tambah Data
           </button>
         )}
@@ -465,76 +477,97 @@ export default function TabelTendik({ role }) {
       <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
         <div className="relative transition-opacity duration-200 ease-in-out">
           <table className="w-full text-sm text-left">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            <tr className="sticky top-0">
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Tendik</th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-            {rows
-              .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
-              .map((row, index) => {
-              const idField = getIdField(row);
-              const rowId = row[idField];
-              return (
-              <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${rowId || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_unit || '-'}</td>
-                <td className="px-6 py-4 text-slate-600 border border-slate-200">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                    {row.pendidikan_terakhir || '-'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jenis_tendik || '-'}</td>
-                <td className="px-6 py-4 text-center border border-slate-200">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="flex items-center justify-center dropdown-container">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (openDropdownId !== rowId) {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const dropdownWidth = 192;
-                            setDropdownPosition({
-                              top: rect.bottom + 4,
-                              left: Math.max(8, rect.right - dropdownWidth)
-                            });
-                            setOpenDropdownId(rowId);
-                          } else {
-                            setOpenDropdownId(null);
-                          }
-                        }}
-                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                        aria-label="Menu aksi"
-                        aria-expanded={openDropdownId === rowId}
-                      >
-                        <FiMoreVertical size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </td>
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              <tr className="sticky top-0">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Lengkap</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit Kerja</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Pendidikan Terakhir</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Tendik</th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
               </tr>
-            )})}
-            {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">
-                    {showDeleted 
-                      ? 'Belum ada data yang dihapus.' 
-                      : 'Belum ada data yang ditambahkan atau data yang cocok dengan filter.'}
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+              {rows
+                .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
+                .map((row, index) => {
+                  const idField = getIdField(row);
+                  const rowId = row[idField];
+                  return (
+                    <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${rowId || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                      <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                        {row.units && row.units.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5 justify-start">
+                            {row.units.map((unit, idx) => (
+                              <span
+                                key={`${row.id_tendik}-unit-${idx}`}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium"
+                              >
+                                <FiBriefcase size={12} />
+                                {unit.nama_unit}
+                                {unit.is_primary === 1 && <span className="text-yellow-600 ml-0.5" title="Unit Utama">★</span>}
+                              </span>
+                            ))}
+                          </div>
+                        ) : row.nama_unit ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium">
+                            <FiBriefcase size={12} />
+                            {row.nama_unit}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 border border-slate-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                          {row.pendidikan_terakhir || '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jenis_tendik || '-'}</td>
+                      <td className="px-6 py-4 text-center border border-slate-200">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openDropdownId !== rowId) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownId(rowId);
+                                } else {
+                                  setOpenDropdownId(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi"
+                              aria-expanded={openDropdownId === rowId}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">
+                      {showDeleted
+                        ? 'Belum ada data yang dihapus.'
+                        : 'Belum ada data yang ditambahkan atau data yang cocok dengan filter.'}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -545,9 +578,9 @@ export default function TabelTendik({ role }) {
           return row[idField] === openDropdownId;
         });
         if (!currentRow) return null;
-        
+
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -616,7 +649,7 @@ export default function TabelTendik({ role }) {
       })()}
 
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -627,7 +660,7 @@ export default function TabelTendik({ role }) {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
@@ -651,62 +684,68 @@ export default function TabelTendik({ role }) {
                           }
                         }}
                         disabled={editing !== null}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          formState.id_pegawai
-                            ? 'border-[#0384d6] bg-white' 
-                            : 'border-gray-300 bg-white hover:border-gray-400'
-                        } ${editing !== null ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.id_pegawai
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                          } ${editing !== null ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
                         aria-label="Pilih pegawai"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${formState.id_pegawai ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_pegawai 
+                            {formState.id_pegawai
                               ? (() => {
-                                  const selectedPegawai = maps && maps.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
-                                  if (selectedPegawai) {
-                                    const unitName = selectedPegawai.id_unit && maps.units ? `(${maps.units[selectedPegawai.id_unit]?.nama_unit || maps.units[selectedPegawai.id_unit]?.nama || ''})` : '';
-                                    return `${selectedPegawai.nama_lengkap || selectedPegawai.nama} ${unitName}`;
-                                  }
-                                  return formState.id_pegawai;
-                                })()
+                                const selectedPegawai = maps && maps.pegawai ? Object.values(maps.pegawai).find(p => String(p.id_pegawai) === String(formState.id_pegawai)) : null;
+                                if (selectedPegawai) {
+                                  const unitName = selectedPegawai.id_unit && maps.units ? `(${maps.units[selectedPegawai.id_unit]?.nama_unit || maps.units[selectedPegawai.id_unit]?.nama || ''})` : '';
+                                  return `${selectedPegawai.nama_lengkap || selectedPegawai.nama} ${unitName}`;
+                                }
+                                return formState.id_pegawai;
+                              })()
                               : '-- Pilih Pegawai --'}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openFormPegawaiDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormPegawaiDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openFormPegawaiDropdown && !editing && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-pegawai-dropdown-menu mt-1 w-full"
                         >
                           {maps && maps.pegawai && Object.values(maps.pegawai).length > 0 ? (
-                            Object.values(maps.pegawai).map(p => {
-                              const unitName = p.id_unit && maps.units ? `(${maps.units[p.id_unit]?.nama_unit || maps.units[p.id_unit]?.nama || ''})` : '';
-                              const displayName = `${p.nama_lengkap || p.nama} ${unitName}`;
-                              return (
-                                <button
-                                  key={p.id_pegawai}
-                                  type="button"
-                                  onClick={() => {
-                                    setFormState({...formState, id_pegawai: String(p.id_pegawai)});
-                                    setOpenFormPegawaiDropdown(false);
-                                  }}
-                                  className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                    formState.id_pegawai === String(p.id_pegawai)
+                            Object.values(maps.pegawai)
+                              .filter(p => !p.deleted_at)
+                              .filter(p => {
+                                // Sembunyi jika sudah jadi DOSEN (NIDN)
+                                if (p.is_dosen) return false;
+                                // Sembunyi jika sudah jadi TENDIK (kecuali yang sedang diedit - tapi di Tendik pegawai di-lock saat edit)
+                                if (p.is_tendik) return false;
+                                return true;
+                              })
+                              .map(p => {
+                                const unitName = p.id_unit && maps.units ? `(${maps.units[p.id_unit]?.nama_unit || maps.units[p.id_unit]?.nama || ''})` : '';
+                                const displayName = `${p.nama_lengkap || p.nama} ${unitName}`;
+                                return (
+                                  <button
+                                    key={p.id_pegawai}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormState({ ...formState, id_pegawai: String(p.id_pegawai) });
+                                      setOpenFormPegawaiDropdown(false);
+                                    }}
+                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_pegawai === String(p.id_pegawai)
                                       ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                       : 'text-gray-700'
-                                  }`}
-                                >
-                                  <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                                  <span className="truncate">{displayName}</span>
-                                </button>
-                              );
-                            })
+                                      }`}
+                                  >
+                                    <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                                    <span className="truncate">{displayName}</span>
+                                  </button>
+                                );
+                              })
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500 text-center">
                               Tidak ada data pegawai
@@ -719,13 +758,13 @@ export default function TabelTendik({ role }) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jenis Tendik <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formState.jenis_tendik || ""}
-                      onChange={(e) => setFormState({...formState, jenis_tendik: e.target.value})}
+                      onChange={(e) => setFormState({ ...formState, jenis_tendik: e.target.value })}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="Masukkan jenis tendik (contoh: Administrasi, Teknisi, dll)"
@@ -733,30 +772,30 @@ export default function TabelTendik({ role }) {
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                  <button 
-                      type="button" 
-                      onClick={() => {
-                        setOpenFormPegawaiDropdown(false);
-                        setShowModal(false);
-                        setEditing(null);
-                      }} 
-                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenFormPegawaiDropdown(false);
+                      setShowModal(false);
+                      setEditing(null);
+                    }}
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      Batal
+                    Batal
                   </button>
-                  <button 
-                      type="submit" 
-                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-                      disabled={loading}
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                      {loading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                          <span>Menyimpan...</span>
-                        </div>
-                      ) : (
-                        'Simpan'
-                      )}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      'Simpan'
+                    )}
                   </button>
                 </div>
               </form>
