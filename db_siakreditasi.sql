@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Waktu pembuatan: 14 Jan 2026 pada 20.00
+-- Waktu pembuatan: 15 Jan 2026 pada 10.26
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.0.30
 
@@ -249,18 +249,23 @@ INSERT INTO `dosen` (`id_dosen`, `id_pegawai`, `nidn`, `nuptk`, `id_unit_homebas
 (1, 1, '0701018001', NULL, 6, NULL, 3, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (2, 2, '0701018002', NULL, 6, NULL, 3, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (3, 3, '0701018003', NULL, 7, NULL, 3, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
-(4, 4, '0701018004', '-', 6, 'STIKOM PGRI Banyuwangi', 1, 0, '2025-12-17 21:37:18', '2026-01-12 07:10:12', NULL, NULL),
-(5, 5, '0701018005', NULL, 7, NULL, 4, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
+(4, 4, '0701018004', '-', 6, 'STIKOM PGRI Banyuwangi', 1, 12, '2025-12-17 21:37:18', '2026-01-15 04:06:13', NULL, NULL),
+(5, 5, '0701018005', '-', 6, 'STIKOM PGRI Banyuwangi', 4, 12, '2025-12-17 21:37:18', '2026-01-15 04:06:35', NULL, NULL),
 (6, 6, '0701018006', NULL, 6, NULL, 3, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (7, 7, '0701018007', NULL, 7, NULL, 3, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
-(8, 28, '0701018028', NULL, 7, NULL, 4, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
+(8, 28, '0701018028', '-', 6, 'STIKOM PGRI Banyuwangi', 4, 12, '2025-12-17 21:37:18', '2026-01-15 04:05:54', NULL, NULL),
 (9, 29, '0701018029', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (10, 30, '0701018030', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (11, 31, '0701018038', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (12, 32, '0701018039', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (13, 33, '0701018040', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
 (14, 34, '0701018041', NULL, 7, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
-(15, 35, '0701018042', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL);
+(15, 35, '0701018042', NULL, 6, NULL, 2, 0, '2025-12-17 21:37:18', '2026-01-09 11:55:04', NULL, NULL),
+(16, 9, '0718128501', '-', 6, 'STIKOM PGRI Banyuwangi', 2, 12, '2026-01-15 08:16:06', '2026-01-15 08:16:06', NULL, NULL),
+(17, 13, '0718029002', '-', 6, 'STIKOM PGRI Banyuwangi', 2, 12, '2026-01-15 08:18:02', '2026-01-15 08:18:02', NULL, NULL),
+(18, 12, '0721017404', '-', 6, 'STIKOM PGRI Banyuwangi', 3, 12, '2026-01-15 08:18:50', '2026-01-15 08:18:50', NULL, NULL),
+(19, 53, '0724107301', '-', 6, 'STIKOM PGRI Banyuwangi', 2, 12, '2026-01-15 08:19:34', '2026-01-15 08:19:34', NULL, NULL),
+(23, 10, '0715096904', '-', 7, 'STIKOM PGRI Banyuwangi', 2, 12, '2026-01-15 08:44:25', '2026-01-15 08:50:53', NULL, 2);
 
 -- --------------------------------------------------------
 
@@ -509,7 +514,8 @@ INSERT INTO `pegawai` (`id_pegawai`, `nama_lengkap`, `nikp`, `id_unit`, `id_jaba
 (47, 'Adi Saputra', '20250047', 17, 2, 'SMA', '2025-12-17 21:36:57', '2025-12-17 21:36:57', NULL, NULL),
 (48, 'Ahmad Muizzun Nuha', '20250048', 17, 2, 'SMA', '2025-12-17 21:36:57', '2025-12-17 21:36:57', NULL, NULL),
 (49, 'Dewa Adinantira Putra', '20250049', 17, 2, 'SMA', '2025-12-17 21:36:57', '2025-12-17 21:36:57', NULL, NULL),
-(50, 'Ibnu Mas\'ud', '20250050', 17, 2, 'SMA', '2025-12-17 21:36:57', '2025-12-17 21:36:57', NULL, NULL);
+(50, 'Ibnu Mas\'ud', '20250050', 17, 2, 'SMA', '2025-12-17 21:36:57', '2025-12-17 21:36:57', NULL, NULL),
+(53, 'Nur Ahmadi Indartono, M.Kom', '20250016', 16, 1, 'S2', '2026-01-15 08:09:13', '2026-01-15 08:09:13', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -573,7 +579,8 @@ INSERT INTO `pegawai_unit` (`id`, `id_pegawai`, `id_unit`, `is_primary`, `create
 (40, 48, 17, 1, '2025-12-17 21:36:57', '2025-12-17 21:36:57'),
 (41, 49, 17, 1, '2025-12-17 21:36:57', '2025-12-17 21:36:57'),
 (42, 50, 17, 1, '2025-12-17 21:36:57', '2025-12-17 21:36:57'),
-(68, 12, 18, 0, '2026-01-14 15:09:03', '2026-01-14 15:09:03');
+(68, 12, 18, 0, '2026-01-14 15:09:03', '2026-01-14 15:09:03'),
+(74, 53, 16, 1, '2026-01-15 08:09:13', '2026-01-15 08:09:13');
 
 -- --------------------------------------------------------
 
@@ -2404,11 +2411,7 @@ CREATE TABLE `tenaga_kependidikan` (
 
 INSERT INTO `tenaga_kependidikan` (`id_tendik`, `id_pegawai`, `jenis_tendik`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
 (1, 8, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
-(2, 9, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
-(3, 10, 'Pustakawan', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
 (4, 11, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
-(5, 12, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
-(6, 13, 'Pranata Komputer', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
 (7, 14, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
 (8, 15, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
 (10, 17, 'Administrasi', '2025-12-17 21:37:35', '2025-12-17 21:37:35', NULL, NULL),
@@ -2507,7 +2510,7 @@ INSERT INTO `users` (`id_user`, `id_pegawai`, `id_unit`, `username`, `password`,
 (12, 13, 13, 'sisfo', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 1, '2025-12-17 21:38:35', '2026-01-14 15:33:00', NULL, NULL),
 (13, 14, 14, 'kerjasama', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 1, '2025-12-17 21:38:35', '2026-01-14 15:33:00', NULL, NULL),
 (14, 15, 15, 'promosi', '$2a$10$9diXzH2UIw9kVoyQuxaN/u/7QvBgS/9BajNAt84IvaEN41jxV5zqG', 1, '2025-12-17 21:38:35', '2026-01-14 15:33:00', NULL, NULL),
-(18, 12, 18, 'kepegawaian', '$2b$10$r8Jm8UvNVdoMGwpJOrKllOQPt7CFsv1ZODfsEpr8UzwhyIvVNb8xi', 1, '2026-01-14 15:38:54', '2026-01-14 15:38:54', NULL, NULL);
+(18, 12, 18, 'kepegawaian', '$2b$10$r8Jm8UvNVdoMGwpJOrKllOQPt7CFsv1ZODfsEpr8UzwhyIvVNb8xi', 1, '2026-01-14 15:38:54', '2026-01-15 09:13:50', NULL, 2);
 
 --
 -- Indexes for dumped tables
@@ -3013,7 +3016,7 @@ ALTER TABLE `cpmk`
 -- AUTO_INCREMENT untuk tabel `dosen`
 --
 ALTER TABLE `dosen`
-  MODIFY `id_dosen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_dosen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT untuk tabel `fleksibilitas_pembelajaran_tahunan`
@@ -3037,13 +3040,13 @@ ALTER TABLE `mata_kuliah`
 -- AUTO_INCREMENT untuk tabel `pegawai`
 --
 ALTER TABLE `pegawai`
-  MODIFY `id_pegawai` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id_pegawai` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT untuk tabel `pegawai_unit`
 --
 ALTER TABLE `pegawai_unit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT untuk tabel `penggunaan_dana`
