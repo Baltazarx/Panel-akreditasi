@@ -4,7 +4,7 @@ import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import { useAuth } from "../../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 /* ---------- Format Rupiah ---------- */
 const formatRupiah = (value) => {
@@ -380,143 +380,252 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, activeYear, tah
 }
 
 /* ---------- Tabel Per Tahun (CRUD) ---------- */
-function TablePerYear({ rows, onEdit, onDelete, onRestore, onHardDelete, canUpdate, canDelete, getYearLabel, showDeleted, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition }) {
+function TablePerYear({ rows, onEdit, onDelete, onRestore, onHardDelete, canUpdate, canDelete, getYearLabel, showDeleted, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition, currentPage = 1, itemsPerPage = 5, setCurrentPage, setItemsPerPage }) {
   // Hanya tampilkan data yang dihapus jika showDeleted true
   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            {showDeleted && (
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                />
-              </th>
-            )}
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber Dana</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Dana</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {filteredRows.map((r, i) => (
-            <tr key={`${showDeleted ? 'deleted' : 'active'}-1a2-${r.id_sumber || i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
               {showDeleted && (
-                <td className="px-6 py-4 text-center border border-slate-200">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
                   <input
                     type="checkbox"
-                    checked={selectedRows.includes(r.id_sumber)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRows([...selectedRows, r.id_sumber]);
-                      } else {
-                        setSelectedRows(selectedRows.filter(id => id !== r.id_sumber));
-                      }
-                    }}
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
                     className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
                   />
-                </td>
+                </th>
               )}
-              <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getYearLabel ? getYearLabel(r.id_tahun) : r.id_tahun}</td>
-              <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{r.sumber_dana}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.jumlah_dana)}</td>
-              <td className="px-6 py-4 text-slate-NF700 border border-slate-200">
-                {r.link_bukti ? (
-                  <a href={r.link_bukti} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975]">
-                    Lihat Bukti
-                  </a>
-                ) : (
-                  "-"
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber Dana</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Dana</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+
+            {currentItems.map((r, i) => (
+              <tr key={`${showDeleted ? 'deleted' : 'active'}-1a2-${r.id_sumber || i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                {showDeleted && (
+                  <td className="px-6 py-4 text-center border border-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.includes(r.id_sumber)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRows([...selectedRows, r.id_sumber]);
+                        } else {
+                          setSelectedRows(selectedRows.filter(id => id !== r.id_sumber));
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                    />
+                  </td>
                 )}
-              </td>
-              <td className="px-6 py-4 border border-slate-200">
-                <div className="flex items-center justify-center dropdown-container">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const rowId = r.id_sumber || i;
-                      if (openDropdownId !== rowId) {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const dropdownWidth = 192;
-                        setDropdownPosition({
-                          top: rect.bottom + 4,
-                          left: Math.max(8, rect.right - dropdownWidth)
-                        });
-                        setOpenDropdownId(rowId);
-                      } else {
-                        setOpenDropdownId(null);
-                      }
-                    }}
-                    className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                    aria-label="Menu aksi"
-                    aria-expanded={openDropdownId === (r.id_sumber || i)}
-                  >
-                    <FiMoreVertical size={18} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          {filteredRows.length === 0 && (
-            <tr>
-              <td colSpan={showDeleted ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getYearLabel ? getYearLabel(r.id_tahun) : r.id_tahun}</td>
+                <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{r.sumber_dana}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.jumlah_dana)}</td>
+                <td className="px-6 py-4 text-slate-NF700 border border-slate-200">
+                  {r.link_bukti ? (
+                    <a href={r.link_bukti} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975]">
+                      Lihat Bukti
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                <td className="px-6 py-4 border border-slate-200">
+                  <div className="flex items-center justify-center dropdown-container">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rowId = r.id_sumber || i;
+                        if (openDropdownId !== rowId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownWidth = 192;
+                          setDropdownPosition({
+                            top: rect.bottom + 4,
+                            left: Math.max(8, rect.right - dropdownWidth)
+                          });
+                          setOpenDropdownId(rowId);
+                        } else {
+                          setOpenDropdownId(null);
+                        }
+                      }}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                      aria-label="Menu aksi"
+                      aria-expanded={openDropdownId === (r.id_sumber || i)}
+                    >
+                      <FiMoreVertical size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filteredRows.length === 0 && (
+              <tr>
+                <td colSpan={showDeleted ? 6 : 5} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls - TablePerYear */}
+      {filteredRows.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(filteredRows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{filteredRows.length}</span> data
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(filteredRows.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(filteredRows.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------- Tabel Ringkasan Semua Tahun ---------- */
-function TableSummary({ rows }) {
+function TableSummary({ rows, currentPage = 1, itemsPerPage = 5, setCurrentPage, setItemsPerPage }) {
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = rows.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className="mt-8 overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber Pendanaan</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {rows.map((r, i) => (
-            <tr key={`summary-${i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-              <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{r.sumber_dana}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts4)}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts3)}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts2)}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts1)}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts)}</td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                {r.link_bukti ? (
-                  <a href={r.link_bukti} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975]">
-                    Bukti
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </td>
+    <div className="flex flex-col gap-4">
+      <div className="mt-8 overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Sumber Pendanaan</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {currentItems.map((r, i) => (
+              <tr key={`summary-${i}`} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{r.sumber_dana}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts4)}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts3)}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts2)}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts1)}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">{formatRupiah(r.ts)}</td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                  {r.link_bukti ? (
+                    <a href={r.link_bukti} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975]">
+                      Bukti
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls - TableSummary */}
+      {rows.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(rows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{rows.length}</span> data
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(rows.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(rows.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -538,6 +647,20 @@ export default function Tabel1A2({ role }) {
   const [selectedRows, setSelectedRows] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  // Pagination State - Table Per Tahun
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Pagination State - Table Summary
+  const [currentSummaryPage, setCurrentSummaryPage] = useState(1);
+  const [itemsSummaryPerPage, setItemsSummaryPerPage] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setCurrentSummaryPage(1);
+  }, [activeYear]);
 
   // Modal state & editing row
   const [modalOpen, setModalOpen] = useState(false);
@@ -1295,29 +1418,36 @@ export default function Tabel1A2({ role }) {
         </div>
       </div>
 
-      {/* Tabel per tahun */}
+      {/* Tabel Per Tahun */}
+      <h3 className="section-title mb-4">Detail Per Tahun</h3>
       <TablePerYear
         rows={rows}
-        onEdit={(r) => { setEditingRow(r); setModalOpen(true); }}
+        onEdit={(row) => {
+          setEditingRow(row);
+          setModalOpen(true);
+        }}
         onDelete={handleDelete}
         onRestore={handleRestore}
         onHardDelete={handleHardDelete}
         canUpdate={canUpdate}
         canDelete={canDelete}
+        getYearLabel={(id) => {
+          const found = maps?.tahun && Object.values(maps.tahun).find(y => String(y.id_tahun) === String(id));
+          return found ? found.tahun : id;
+        }}
         showDeleted={showDeleted}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
-        isAllSelected={isAllSelected}
+        isAllSelected={rows.length > 0 && rows.every(r => selectedRows.includes(r.id_sumber))}
         handleSelectAll={handleSelectAll}
         openDropdownId={openDropdownId}
         setOpenDropdownId={setOpenDropdownId}
         setDropdownPosition={setDropdownPosition}
-        getYearLabel={(id) => {
-          // Ambil label tahun dari maps.tahun atau fallback tahunList
-          const tahunData = Object.keys(maps.tahun || {}).length > 0 ? Object.values(maps.tahun) : tahunList;
-          const found = tahunData.find((y) => String(y.id_tahun) === String(id));
-          return found ? (found.tahun || found.nama || id) : id;
-        }}
+        // Pagination Props
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        setCurrentPage={setCurrentPage}
+        setItemsPerPage={setItemsPerPage}
       />
 
       {/* Dropdown Menu - Fixed Position */}

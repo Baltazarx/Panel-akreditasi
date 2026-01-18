@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiUser, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiUser, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const ENDPOINT = "/beban-kerja-dosen";
 const TABLE_KEY = "tabel_1a4";
@@ -12,7 +12,7 @@ const LABEL = "1.A.4 Rata-rata Beban DTPR (EWMP) TS";
 
 const n = (v) => Number(v || 0);
 
-function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, doRestoreSingle, showDeleted, openDropdownId, setOpenDropdownId, setDropdownPosition, dosenList }) {
+function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, doRestoreSingle, showDeleted, openDropdownId, setOpenDropdownId, setDropdownPosition, dosenList, currentPage = 1, itemsPerPage = 5, setCurrentPage, setItemsPerPage }) {
   // [FIX] Use dosenList for lookup by id_dosen, fallback to maps.pegawai by id_pegawai
   const getDosenName = (id_dosen, id_pegawai) => {
     // First try dosenList (by id_dosen)
@@ -25,118 +25,177 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          {/* header bertingkat */}
-          <tr className="sticky top-0">
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR</th>
-            <th colSpan={3} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
-              SKS Pengajaran<sup>1)</sup> Pada
-            </th>
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-              SKS Penelitian<sup>2)</sup>
-            </th>
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-              SKS Pengabdian kepada Masyarakat<sup>2)</sup>
-            </th>
-            <th colSpan={2} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
-              SKS Manajemen<sup>3)</sup>
-            </th>
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Total SKS</th>
-            <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-          </tr>
-          <tr className="sticky top-0">
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PS Sendiri</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PS Lain, PT Sendiri</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Lain</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Sendiri</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Lain</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {rows.map((r, i) => {
-            // [UPDATED] Using 5 separate columns directly (no fallback to totals)
-            const pengajaranPsSendiri = n(r.sks_pengajaran_ps_sendiri) || 0;
-            const pengajaranPsLainPtSendiri = n(r.sks_pengajaran_ps_lain_pt_sendiri) || 0;
-            const pengajaranPtLain = n(r.sks_pengajaran_pt_lain) || 0;
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            {/* header bertingkat */}
+            <tr className="sticky top-0">
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama DTPR</th>
+              <th colSpan={3} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
+                SKS Pengajaran<sup>1)</sup> Pada
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                SKS Penelitian<sup>2)</sup>
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                SKS Pengabdian kepada Masyarakat<sup>2)</sup>
+              </th>
+              <th colSpan={2} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
+                SKS Manajemen<sup>3)</sup>
+              </th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Total SKS</th>
+              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            </tr>
+            <tr className="sticky top-0">
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PS Sendiri</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PS Lain, PT Sendiri</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Lain</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Sendiri</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">PT Lain</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {(() => {
+              const indexOfLastItem = currentPage * itemsPerPage;
+              const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+              const currentItems = rows.slice(indexOfFirstItem, indexOfLastItem);
 
-            const penelitian = n(r.sks_penelitian);
-            const pkm = n(r.sks_pkm);
+              return currentItems.map((r, i) => {
+                // Calculate actual index for display (1-based)
+                const displayIndex = indexOfFirstItem + i + 1;
+                // [UPDATED] Using 5 separate columns directly (no fallback to totals)
+                const pengajaranPsSendiri = n(r.sks_pengajaran_ps_sendiri) || 0;
+                const pengajaranPsLainPtSendiri = n(r.sks_pengajaran_ps_lain_pt_sendiri) || 0;
+                const pengajaranPtLain = n(r.sks_pengajaran_pt_lain) || 0;
 
-            const manajemenPtSendiri = n(r.sks_manajemen_pt_sendiri) || 0;
-            const manajemenPtLain = n(r.sks_manajemen_pt_lain) || 0;
+                const penelitian = n(r.sks_penelitian);
+                const pkm = n(r.sks_pkm);
 
-            const total = (
-              n(pengajaranPsSendiri) +
-              n(pengajaranPsLainPtSendiri) +
-              n(pengajaranPtLain) +
-              n(penelitian) +
-              n(pkm) +
-              n(manajemenPtSendiri) +
-              n(manajemenPtLain)
-            ).toFixed(2);
+                const manajemenPtSendiri = n(r.sks_manajemen_pt_sendiri) || 0;
+                const manajemenPtLain = n(r.sks_manajemen_pt_lain) || 0;
 
-            const idField = getIdField(r);
-            const rowId = idField && r[idField] ? r[idField] : i;
-            // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
-            const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+                const total = (
+                  n(pengajaranPsSendiri) +
+                  n(pengajaranPsLainPtSendiri) +
+                  n(pengajaranPtLain) +
+                  n(penelitian) +
+                  n(pkm) +
+                  n(manajemenPtSendiri) +
+                  n(manajemenPtLain)
+                ).toFixed(2);
 
-            return (
-              <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
-                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen, r.id_pegawai)}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsLainPtSendiri}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPtLain}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{penelitian}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pkm}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtSendiri}</td>
-                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtLain}</td>
-                <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">{total}</td>
-                <td className="px-6 py-4 border border-slate-200">
-                  <div className="flex items-center justify-center dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
-                        const rowId = getIdField(r) ? r[getIdField(r)] : i;
-                        const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
-                        if (openDropdownId !== uniqueRowId) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(uniqueRowId);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  </div>
+                const idField = getIdField(r);
+                const rowId = idField && r[idField] ? r[idField] : i;
+                // Membuat key yang unik dengan menggabungkan ID, index, dan field lainnya untuk menghindari duplicate
+                const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-1a4-${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+
+                return (
+                  <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200">{displayIndex}.</td>
+                    <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getDosenName(r.id_dosen, r.id_pegawai)}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsSendiri}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPsLainPtSendiri}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pengajaranPtLain}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{penelitian}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{pkm}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtSendiri}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">{manajemenPtLain}</td>
+                    <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">{total}</td>
+                    <td className="px-6 py-4 border border-slate-200">
+                      <div className="flex items-center justify-center dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Gunakan uniqueKey yang sama dengan key row untuk konsistensi
+                            const rowId = getIdField(r) ? r[getIdField(r)] : i;
+                            const uniqueRowId = `${rowId}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`;
+                            if (openDropdownId !== uniqueRowId) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const dropdownWidth = 192;
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: Math.max(8, rect.right - dropdownWidth)
+                              });
+                              setOpenDropdownId(uniqueRowId);
+                            } else {
+                              setOpenDropdownId(null);
+                            }
+                          }}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                          aria-label="Menu aksi"
+                          aria-expanded={openDropdownId === `${getIdField(r) ? r[getIdField(r)] : i}-${i}-${r.id_dosen || ''}-${r.id_tahun || ''}`}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              });
+            })()}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={10} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
               </tr>
-            );
-          })}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={10} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls */}
+      {
+        rows.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4 pt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Baris per halaman:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(rows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{rows.length}</span> data
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(Math.ceil(rows.length / itemsPerPage), currentPage + 1))}
+                  disabled={currentPage === Math.ceil(rows.length / itemsPerPage)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }
 
@@ -165,6 +224,15 @@ export default function Tabel1A4({ role }) {
   // Dosen dropdown state (for form)
   const [openNewDosenDropdown, setOpenNewDosenDropdown] = useState(false);
   const [openEditDosenDropdown, setOpenEditDosenDropdown] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYear, showDeleted]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -902,6 +970,11 @@ export default function Tabel1A4({ role }) {
         doRestoreSingle={doRestoreSingle}
         showDeleted={showDeleted}
         dosenList={dosenList}
+        // Pagination Props
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        setCurrentPage={setCurrentPage}
+        setItemsPerPage={setItemsPerPage}
       />
 
       {/* Dropdown Menu - Fixed Position */}

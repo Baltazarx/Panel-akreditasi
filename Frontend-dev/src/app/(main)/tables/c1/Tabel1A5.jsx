@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../../../lib/api";
-import { FiRotateCw, FiDownload, FiTable, FiGrid } from 'react-icons/fi';
+import { FiRotateCw, FiDownload, FiTable, FiGrid, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
 const ENDPOINT = "/kualifikasi-tendik";
@@ -13,6 +13,8 @@ export default function Tabel1A5() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("table"); // "table" or "grid"
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   async function fetchRows() {
     try {
@@ -109,8 +111,8 @@ export default function Tabel1A5() {
             <button
               onClick={() => setViewMode("table")}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${viewMode === "table"
-                  ? "bg-[#0384d6] text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#0384d6] text-white"
+                : "text-slate-600 hover:bg-slate-100"
                 }`}
             >
               <FiTable className="w-4 h-4" />
@@ -119,8 +121,8 @@ export default function Tabel1A5() {
             <button
               onClick={() => setViewMode("grid")}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${viewMode === "grid"
-                  ? "bg-[#0384d6] text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#0384d6] text-white"
+                : "text-slate-600 hover:bg-slate-100"
                 }`}
             >
               <FiGrid className="w-4 h-4" />
@@ -157,123 +159,183 @@ export default function Tabel1A5() {
       )}
 
       {/* Table View */}
-      {viewMode === "table" && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <tr className="sticky top-0">
-                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                  No.
-                </th>
-                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                  Jenis Tenaga Kependidikan
-                </th>
-                <th colSpan={educationLevels.length} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
-                  Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir
-                </th>
-                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                  Unit Kerja
-                </th>
-              </tr>
-              <tr className="sticky top-0">
-                {educationLevels.map((level) => (
-                  <th
-                    key={level}
-                    className="px-6 py-2 text-center text-xs font-semibold tracking-wide uppercase border border-white/20"
-                  >
-                    {level.toUpperCase()}
+      {viewMode === "table" && (() => {
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const currentItems = rows.slice(indexOfFirstItem, indexOfLastItem);
+
+        return (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                <tr className="sticky top-0">
+                  <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                    No.
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {rows.map((r, i) => (
-                <tr
-                  key={i}
-                  className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}
-                >
-                  <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">
-                    {i + 1}.
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">
-                    {r.jenis_tendik || "-"}
-                  </td>
+                  <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                    Jenis Tenaga Kependidikan
+                  </th>
+                  <th colSpan={educationLevels.length} className="px-6 py-4 text-center text-xs font-semibold tracking-wide uppercase border border-white/20">
+                    Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir
+                  </th>
+                  <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                    Unit Kerja
+                  </th>
+                </tr>
+                <tr className="sticky top-0">
                   {educationLevels.map((level) => (
-                    <td key={level} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                      {r[level] || 0}
-                    </td>
+                    <th
+                      key={level}
+                      className="px-6 py-2 text-center text-xs font-semibold tracking-wide uppercase border border-white/20"
+                    >
+                      {level.toUpperCase()}
+                    </th>
                   ))}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                    {r.unit_kerja || "-"}
-                  </td>
                 </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={educationLevels.length + 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                    <p className="font-medium">Data tidak ditemukan</p>
-                    <p className="text-sm">
-                      Belum ada data yang tersedia untuk tabel ini.
-                    </p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {currentItems.map((r, i) => (
+                  <tr
+                    key={i}
+                    className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}
+                  >
+                    <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">
+                      {indexOfFirstItem + i + 1}.
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">
+                      {r.jenis_tendik || "-"}
+                    </td>
+                    {educationLevels.map((level) => (
+                      <td key={level} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                        {r[level] || 0}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                      {r.unit_kerja || "-"}
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={educationLevels.length + 3} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                      <p className="font-medium">Data tidak ditemukan</p>
+                      <p className="text-sm">
+                        Belum ada data yang tersedia untuk tabel ini.
+                      </p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
 
       {/* Grid View */}
-      {viewMode === "grid" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rows.length === 0 ? (
-            <div className="col-span-full p-16 text-center text-slate-500 border border-slate-200 rounded-lg bg-white">
-              <p className="font-medium">Data tidak ditemukan</p>
-              <p className="text-sm">
-                Belum ada data yang tersedia untuk tabel ini.
-              </p>
-            </div>
-          ) : (
-            rows.map((r, i) => (
-              <div
-                key={i}
-                className="bg-white border border-slate-200 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6"
-              >
-                <div className="mb-4 pb-4 border-b border-slate-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-500">No.</span>
-                    <span className="text-lg font-bold text-[#0384d6]">{i + 1}</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800 mb-1">
-                    {r.jenis_tendik || "-"}
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    Unit: <span className="font-semibold">{r.unit_kerja || "-"}</span>
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-700 mb-2">
-                    Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {educationLevels.map((level) => (
-                      <div
-                        key={level}
-                        className="bg-slate-50 rounded-md p-2 border border-slate-200"
-                      >
-                        <p className="text-xs font-semibold text-slate-600 uppercase mb-1">
-                          {level}
-                        </p>
-                        <p className="text-lg font-bold text-[#0384d6]">
-                          {r[level] || 0}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+      {viewMode === "grid" && (() => {
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const currentItems = rows.slice(indexOfFirstItem, indexOfLastItem);
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {rows.length === 0 ? (
+              <div className="col-span-full p-16 text-center text-slate-500 border border-slate-200 rounded-lg bg-white">
+                <p className="font-medium">Data tidak ditemukan</p>
+                <p className="text-sm">
+                  Belum ada data yang tersedia untuk tabel ini.
+                </p>
               </div>
-            ))
-          )}
+            ) : (
+              currentItems.map((r, i) => {
+                const displayIndex = indexOfFirstItem + i + 1;
+                return (
+                  <div
+                    key={i}
+                    className="bg-white border border-slate-200 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6"
+                  >
+                    <div className="mb-4 pb-4 border-b border-slate-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-slate-500">No.</span>
+                        <span className="text-lg font-bold text-[#0384d6]">{displayIndex}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-1">
+                        {r.jenis_tendik || "-"}
+                      </h3>
+                      <p className="text-sm text-slate-600">
+                        Unit: <span className="font-semibold">{r.unit_kerja || "-"}</span>
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-slate-700 mb-2">
+                        Jumlah Tenaga Kependidikan dengan Pendidikan Terakhir:
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {educationLevels.map((level) => (
+                          <div
+                            key={level}
+                            className="bg-slate-50 rounded-md p-2 border border-slate-200"
+                          >
+                            <p className="text-xs font-semibold text-slate-600 uppercase mb-1">
+                              {level}
+                            </p>
+                            <p className="text-lg font-bold text-[#0384d6]">
+                              {r[level] || 0}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        );
+      })()}
+      {/* Pagination Controls - Shared for both views */}
+      {rows.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 pt-6">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(rows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{rows.length}</span> data
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(rows.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(rows.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

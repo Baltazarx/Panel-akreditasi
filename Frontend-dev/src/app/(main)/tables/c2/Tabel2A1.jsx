@@ -3,7 +3,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 export default function Tabel2A1({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
@@ -58,6 +58,25 @@ export default function Tabel2A1({ role }) {
   // State untuk 4 dropdown aksi di tabel Maba (baru-reguler, baru-rpl, aktif-reguler, aktif-rpl)
   const [openDropdownMaba, setOpenDropdownMaba] = useState(null); // Format: "baru-reguler-{id}" atau "baru-rpl-{id}" atau "aktif-reguler-{id}" atau "aktif-rpl-{id}"
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Pagination State - Gabungan / Utama
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Pagination State - Pendaftaran
+  const [currentPagePend, setCurrentPagePend] = useState(1);
+  const [itemsPerPagePend, setItemsPerPagePend] = useState(5);
+
+  // Pagination State - Maba
+  const [currentPageMaba, setCurrentPageMaba] = useState(1);
+  const [itemsPerPageMaba, setItemsPerPageMaba] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setCurrentPagePend(1);
+    setCurrentPageMaba(1);
+  }, [selectedYear]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -1795,147 +1814,201 @@ export default function Tabel2A1({ role }) {
       });
     }
 
+    // Pagination Logic - Pendaftaran
+    const indexOfLastItem = currentPagePend * itemsPerPagePend;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPagePend;
+    const currentItems = displayRows.slice(indexOfFirstItem, indexOfLastItem);
+
     return (
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md transition-opacity duration-300 ease-in-out">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            {/* Row 1: Header utama */}
-            <tr className="sticky top-0">
-              {showDeleted && (
-                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={(e) => handleSelectAll(tablePend, e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                  />
-                </th>
-              )}
-              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                TAHUN
-              </th>
-              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                TS
-              </th>
-              <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                DAYA TAMPUNG
-              </th>
-              <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                JUMLAH CALON MAHASISWA
-              </th>
-              {role?.toLowerCase() !== "ala" && (
+      <div className="flex flex-col gap-4 transition-opacity duration-300 ease-in-out">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              {/* Row 1: Header utama */}
+              <tr className="sticky top-0">
+                {showDeleted && (
+                  <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={(e) => handleSelectAll(tablePend, e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                    />
+                  </th>
+                )}
                 <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                  AKSI
+                  TAHUN
                 </th>
-              )}
-            </tr>
-            {/* Row 2: Sub-header */}
-            <tr className="sticky top-0">
-              {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                PENDAFTAR
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                PENDAFTAR AFIRMASI
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                PENDAFTAR KEBUTUHAN KHUSUS
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {displayRows.map((row, idx) => {
-              const isSelected = row.rowData && selectedRows.includes(row.rowData[getIdField(row.rowData)]);
-              const idField = row.rowData ? getIdField(row.rowData) : null;
-              const rowId = idField && row.rowData ? row.rowData[idField] : null;
-              // Pastikan key selalu unik dengan menggabungkan rowId dan idx
-              const uniqueKey = `pend-${showDeleted ? 'deleted' : 'active'}-${rowId !== null ? rowId : 'no-id'}-${idx}`;
-              return (
-                <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  {showDeleted && (
-                    <td className="px-6 py-4 text-center border border-slate-200">
-                      {row.rowData && (
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            const idField = getIdField(row.rowData);
-                            const id = row.rowData[idField];
-                            if (e.target.checked) {
-                              setSelectedRows([...selectedRows, id]);
-                            } else {
-                              setSelectedRows(selectedRows.filter(rowId => rowId !== id));
-                            }
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                        />
-                      )}
-                    </td>
-                  )}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
-                    {row.tahunName || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
-                    {row.ts}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.dayaTampung || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.pendaftar || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.pendaftarAfirmasi || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.pendaftarKebutuhanKhusus || '-'}
-                  </td>
-                  {role?.toLowerCase() !== "ala" && (
-                    <td className="px-6 py-4 border border-slate-200">
-                      {row.rowData && !row.rowData.deleted_at && (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const rowId = getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx;
-                              if (openDropdownIdPend !== rowId) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
-                                setOpenDropdownIdPend(rowId);
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  TS
+                </th>
+                <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  DAYA TAMPUNG
+                </th>
+                <th colSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  JUMLAH CALON MAHASISWA
+                </th>
+                {role?.toLowerCase() !== "ala" && (
+                  <th rowSpan={2} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                    AKSI
+                  </th>
+                )}
+              </tr>
+              {/* Row 2: Sub-header */}
+              <tr className="sticky top-0">
+                {/* TAHUN, TS, dan AKSI sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  PENDAFTAR
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  PENDAFTAR AFIRMASI
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  PENDAFTAR KEBUTUHAN KHUSUS
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {currentItems.map((row, idx) => {
+                const isSelected = row.rowData && selectedRows.includes(row.rowData[getIdField(row.rowData)]);
+                const idField = row.rowData ? getIdField(row.rowData) : null;
+                const rowId = idField && row.rowData ? row.rowData[idField] : null;
+                // Pastikan key selalu unik dengan menggabungkan rowId dan idx
+                const uniqueKey = `pend-${showDeleted ? 'deleted' : 'active'}-${rowId !== null ? rowId : 'no-id'}-${idx}`;
+                return (
+                  <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                    {showDeleted && (
+                      <td className="px-6 py-4 text-center border border-slate-200">
+                        {row.rowData && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const idField = getIdField(row.rowData);
+                              const id = row.rowData[idField];
+                              if (e.target.checked) {
+                                setSelectedRows([...selectedRows, id]);
                               } else {
-                                setOpenDropdownIdPend(null);
+                                setSelectedRows(selectedRows.filter(rowId => rowId !== id));
                               }
                             }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                            aria-label="Menu aksi"
-                            aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
-                      )}
-                      {row.rowData && row.rowData.deleted_at && (
-                        <div className="text-center italic text-red-600">Dihapus</div>
-                      )}
+                            className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                          />
+                        )}
+                      </td>
+                    )}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
+                      {row.tahunName || '-'}
                     </td>
-                  )}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
+                      {row.ts}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.dayaTampung || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.pendaftar || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.pendaftarAfirmasi || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.pendaftarKebutuhanKhusus || '-'}
+                    </td>
+                    {role?.toLowerCase() !== "ala" && (
+                      <td className="px-6 py-4 border border-slate-200">
+                        {row.rowData && !row.rowData.deleted_at && (
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rowId = getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx;
+                                if (openDropdownIdPend !== rowId) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownIdPend(rowId);
+                                } else {
+                                  setOpenDropdownIdPend(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi"
+                              aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        )}
+                        {row.rowData && row.rowData.deleted_at && (
+                          <div className="text-center italic text-red-600">Dihapus</div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+              {displayRows.length === 0 && (
+                <tr>
+                  <td colSpan={showDeleted ? (role?.toLowerCase() === "ala" ? 7 : 8) : (role?.toLowerCase() === "ala" ? 6 : 7)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                  </td>
                 </tr>
-              );
-            })}
-            {displayRows.length === 0 && (
-              <tr>
-                <td colSpan={showDeleted ? (role?.toLowerCase() === "ala" ? 7 : 8) : (role?.toLowerCase() === "ala" ? 6 : 7)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls - Pendaftaran */}
+        {displayRows.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Data per halaman:</span>
+              <select
+                value={itemsPerPagePend}
+                onChange={(e) => {
+                  setItemsPerPagePend(Number(e.target.value));
+                  setCurrentPagePend(1);
+                }}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPagePend}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(displayRows.length / itemsPerPagePend)}</span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPagePend(Math.max(1, currentPagePend - 1))}
+                  disabled={currentPagePend === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPagePend(Math.min(Math.ceil(displayRows.length / itemsPerPagePend), currentPagePend + 1))}
+                  disabled={currentPagePend === Math.ceil(displayRows.length / itemsPerPagePend)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -2094,338 +2167,392 @@ export default function Tabel2A1({ role }) {
       });
     }
 
-    return (
-      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md transition-opacity duration-300 ease-in-out">
-        <table className="w-full text-sm text-left border-collapse">
-          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-            {/* Row 1: Header utama */}
-            <tr className="sticky top-0">
-              {showDeleted && (
-                <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={(e) => handleSelectAll(tableMaba, e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                  />
-                </th>
-              )}
-              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                TAHUN
-              </th>
-              <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                TS
-              </th>
-              <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                JUMLAH MAHASISWA BARU
-              </th>
-              <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                JUMLAH MAHASISWA AKTIF
-              </th>
-            </tr>
-            {/* Row 2: Sub-header */}
-            <tr className="sticky top-0">
-              {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
-              {/* Di bawah "Jumlah Mahasiswa Baru" */}
-              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                REGULER
-              </th>
-              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                RPL
-              </th>
-              {/* Di bawah "Jumlah Mahasiswa Aktif" */}
-              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                REGULER
-              </th>
-              <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                RPL
-              </th>
-            </tr>
-            {/* Row 3: Header detail */}
-            <tr className="sticky top-0">
-              {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
-              {/* Di bawah "Reguler" (Mahasiswa Baru) */}
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                DITERIMA
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AFIRMASI
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                KEBUTUHAN KHUSUS
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
-              </th>
-              {/* Di bawah "RPL" (Mahasiswa Baru) */}
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                DITERIMA
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AFIRMASI
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                KEBUTUHAN KHUSUS
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
-              </th>
-              {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                DITERIMA
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AFIRMASI
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                KEBUTUHAN KHUSUS
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
-              </th>
-              {/* Di bawah "RPL" (Mahasiswa Aktif) */}
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                DITERIMA
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AFIRMASI
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                KEBUTUHAN KHUSUS
-              </th>
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                AKSI
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {displayRows.map((row, idx) => {
-              // Untuk checkbox, cek apakah ada rowData yang terpilih
-              const rowDataIds = row.rowData && row.rowData.length > 0
-                ? row.rowData.map(r => r[getIdField(r)])
-                : [];
-              const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
-              const firstDataId = row.rowData && row.rowData.length > 0
-                ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : null)
-                : null;
-              // Pastikan key selalu unik dengan menggabungkan firstDataId dan idx
-              const uniqueKey = `maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId !== null ? firstDataId : 'no-id'}-${idx}`;
+    // Pagination Logic - Maba
+    const indexOfLastItem = currentPageMaba * itemsPerPageMaba;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPageMaba;
+    const currentItems = displayRows.slice(indexOfFirstItem, indexOfLastItem);
 
-              return (
-                <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                  {showDeleted && (
-                    <td className="px-6 py-4 text-center border border-slate-200">
-                      {row.rowData && row.rowData.length > 0 && (
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedRows([...selectedRows, ...rowDataIds]);
-                            } else {
-                              setSelectedRows(selectedRows.filter(rowId => !rowDataIds.includes(rowId)));
-                            }
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                        />
-                      )}
+    return (
+      <div className="flex flex-col gap-4 transition-opacity duration-300 ease-in-out">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+              {/* Row 1: Header utama */}
+              <tr className="sticky top-0">
+                {showDeleted && (
+                  <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={(e) => handleSelectAll(tableMaba, e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                    />
+                  </th>
+                )}
+                <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  TAHUN
+                </th>
+                <th rowSpan={3} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  TS
+                </th>
+                <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  JUMLAH MAHASISWA BARU
+                </th>
+                <th colSpan={8} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  JUMLAH MAHASISWA AKTIF
+                </th>
+              </tr>
+              {/* Row 2: Sub-header */}
+              <tr className="sticky top-0">
+                {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+                {/* Di bawah "Jumlah Mahasiswa Baru" */}
+                <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  REGULER
+                </th>
+                <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  RPL
+                </th>
+                {/* Di bawah "Jumlah Mahasiswa Aktif" */}
+                <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  REGULER
+                </th>
+                <th colSpan={4} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  RPL
+                </th>
+              </tr>
+              {/* Row 3: Header detail */}
+              <tr className="sticky top-0">
+                {/* TAHUN, TS sudah di rowSpan, jadi tidak perlu th lagi di row ini */}
+                {/* Di bawah "Reguler" (Mahasiswa Baru) */}
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  DITERIMA
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AFIRMASI
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  KEBUTUHAN KHUSUS
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AKSI
+                </th>
+                {/* Di bawah "RPL" (Mahasiswa Baru) */}
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  DITERIMA
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AFIRMASI
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  KEBUTUHAN KHUSUS
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AKSI
+                </th>
+                {/* Di bawah "Reguler" (Mahasiswa Aktif) */}
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  DITERIMA
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AFIRMASI
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  KEBUTUHAN KHUSUS
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AKSI
+                </th>
+                {/* Di bawah "RPL" (Mahasiswa Aktif) */}
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  DITERIMA
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AFIRMASI
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  KEBUTUHAN KHUSUS
+                </th>
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                  AKSI
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {currentItems.map((row, idx) => {
+                // Untuk checkbox, cek apakah ada rowData yang terpilih
+                const rowDataIds = row.rowData && row.rowData.length > 0
+                  ? row.rowData.map(r => r[getIdField(r)])
+                  : [];
+                const isSelected = rowDataIds.length > 0 && rowDataIds.every(id => selectedRows.includes(id));
+                const firstDataId = row.rowData && row.rowData.length > 0
+                  ? (getIdField(row.rowData[0]) ? row.rowData[0][getIdField(row.rowData[0])] : null)
+                  : null;
+                // Pastikan key selalu unik dengan menggabungkan firstDataId dan idx
+                const uniqueKey = `maba-${showDeleted ? 'deleted' : 'active'}-${firstDataId !== null ? firstDataId : 'no-id'}-${idx}`;
+
+                return (
+                  <tr key={uniqueKey} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                    {showDeleted && (
+                      <td className="px-6 py-4 text-center border border-slate-200">
+                        {row.rowData && row.rowData.length > 0 && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedRows([...selectedRows, ...rowDataIds]);
+                              } else {
+                                setSelectedRows(selectedRows.filter(rowId => !rowDataIds.includes(rowId)));
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                          />
+                        )}
+                      </td>
+                    )}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
+                      {row.tahunName || '-'}
                     </td>
-                  )}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium">
-                    {row.tahunName || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
-                    {row.ts}
-                  </td>
-                  {/* Mahasiswa Baru - Reguler */}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRegulerDiterima || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRegulerAfirmasi || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRegulerKebutuhanKhusus || '-'}
-                  </td>
-                  {/* Aksi Mahasiswa Baru - Reguler */}
-                  <td className="px-6 py-4 border border-slate-200">
-                    {(() => {
-                      const baruRegulerData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
-                      if (!baruRegulerData || baruRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
-                      const rowId = getIdField(baruRegulerData) ? baruRegulerData[getIdField(baruRegulerData)] : null;
-                      const dropdownKey = `baru-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
-                      return (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (openDropdownMaba !== dropdownKey) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
-                                setOpenDropdownMaba(dropdownKey);
-                              } else {
-                                setOpenDropdownMaba(null);
-                              }
-                            }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                            aria-label="Menu aksi Mahasiswa Baru Reguler"
-                            aria-expanded={openDropdownMaba === dropdownKey}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  {/* Mahasiswa Baru - RPL */}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRPLDiterima || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRPLAfirmasi || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.baruRPLKebutuhanKhusus || '-'}
-                  </td>
-                  {/* Aksi Mahasiswa Baru - RPL */}
-                  <td className="px-6 py-4 border border-slate-200">
-                    {(() => {
-                      const baruRPLData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
-                      if (!baruRPLData || baruRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
-                      const rowId = getIdField(baruRPLData) ? baruRPLData[getIdField(baruRPLData)] : null;
-                      const dropdownKey = `baru-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
-                      return (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (openDropdownMaba !== dropdownKey) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
-                                setOpenDropdownMaba(dropdownKey);
-                              } else {
-                                setOpenDropdownMaba(null);
-                              }
-                            }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                            aria-label="Menu aksi Mahasiswa Baru RPL"
-                            aria-expanded={openDropdownMaba === dropdownKey}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  {/* Mahasiswa Aktif - Reguler */}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRegulerDiterima || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRegulerAfirmasi || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRegulerKebutuhanKhusus || '-'}
-                  </td>
-                  {/* Aksi Mahasiswa Aktif - Reguler */}
-                  <td className="px-6 py-4 border border-slate-200">
-                    {(() => {
-                      const aktifRegulerData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
-                      if (!aktifRegulerData || aktifRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
-                      const rowId = getIdField(aktifRegulerData) ? aktifRegulerData[getIdField(aktifRegulerData)] : null;
-                      const dropdownKey = `aktif-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
-                      return (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (openDropdownMaba !== dropdownKey) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
-                                setOpenDropdownMaba(dropdownKey);
-                              } else {
-                                setOpenDropdownMaba(null);
-                              }
-                            }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                            aria-label="Menu aksi Mahasiswa Aktif Reguler"
-                            aria-expanded={openDropdownMaba === dropdownKey}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  {/* Mahasiswa Aktif - RPL */}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRPLDiterima || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRPLAfirmasi || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
-                    {row.aktifRPLKebutuhanKhusus || '-'}
-                  </td>
-                  {/* Aksi Mahasiswa Aktif - RPL */}
-                  <td className="px-6 py-4 border border-slate-200">
-                    {(() => {
-                      const aktifRPLData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
-                      if (!aktifRPLData || aktifRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
-                      const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
-                      const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
-                      return (
-                        <div className="flex items-center justify-center dropdown-container">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (openDropdownMaba !== dropdownKey) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const dropdownWidth = 192;
-                                setDropdownPosition({
-                                  top: rect.bottom + 4,
-                                  left: Math.max(8, rect.right - dropdownWidth)
-                                });
-                                setOpenDropdownMaba(dropdownKey);
-                              } else {
-                                setOpenDropdownMaba(null);
-                              }
-                            }}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                            aria-label="Menu aksi Mahasiswa Aktif RPL"
-                            aria-expanded={openDropdownMaba === dropdownKey}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                        </div>
-                      );
-                    })()}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center font-medium whitespace-nowrap">
+                      {row.ts}
+                    </td>
+                    {/* Mahasiswa Baru - Reguler */}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRegulerDiterima || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRegulerAfirmasi || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRegulerKebutuhanKhusus || '-'}
+                    </td>
+                    {/* Aksi Mahasiswa Baru - Reguler */}
+                    <td className="px-6 py-4 border border-slate-200">
+                      {(() => {
+                        const baruRegulerData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
+                        if (!baruRegulerData || baruRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        const rowId = getIdField(baruRegulerData) ? baruRegulerData[getIdField(baruRegulerData)] : null;
+                        const dropdownKey = `baru-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                        return (
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openDropdownMaba !== dropdownKey) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownMaba(dropdownKey);
+                                } else {
+                                  setOpenDropdownMaba(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi Mahasiswa Baru Reguler"
+                              aria-expanded={openDropdownMaba === dropdownKey}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    {/* Mahasiswa Baru - RPL */}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRPLDiterima || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRPLAfirmasi || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.baruRPLKebutuhanKhusus || '-'}
+                    </td>
+                    {/* Aksi Mahasiswa Baru - RPL */}
+                    <td className="px-6 py-4 border border-slate-200">
+                      {(() => {
+                        const baruRPLData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
+                        if (!baruRPLData || baruRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        const rowId = getIdField(baruRPLData) ? baruRPLData[getIdField(baruRPLData)] : null;
+                        const dropdownKey = `baru-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                        return (
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openDropdownMaba !== dropdownKey) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownMaba(dropdownKey);
+                                } else {
+                                  setOpenDropdownMaba(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi Mahasiswa Baru RPL"
+                              aria-expanded={openDropdownMaba === dropdownKey}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    {/* Mahasiswa Aktif - Reguler */}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRegulerDiterima || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRegulerAfirmasi || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRegulerKebutuhanKhusus || '-'}
+                    </td>
+                    {/* Aksi Mahasiswa Aktif - Reguler */}
+                    <td className="px-6 py-4 border border-slate-200">
+                      {(() => {
+                        const aktifRegulerData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
+                        if (!aktifRegulerData || aktifRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        const rowId = getIdField(aktifRegulerData) ? aktifRegulerData[getIdField(aktifRegulerData)] : null;
+                        const dropdownKey = `aktif-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                        return (
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openDropdownMaba !== dropdownKey) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownMaba(dropdownKey);
+                                } else {
+                                  setOpenDropdownMaba(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi Mahasiswa Aktif Reguler"
+                              aria-expanded={openDropdownMaba === dropdownKey}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    {/* Mahasiswa Aktif - RPL */}
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRPLDiterima || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRPLAfirmasi || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200 text-center">
+                      {row.aktifRPLKebutuhanKhusus || '-'}
+                    </td>
+                    {/* Aksi Mahasiswa Aktif - RPL */}
+                    <td className="px-6 py-4 border border-slate-200">
+                      {(() => {
+                        const aktifRPLData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
+                        if (!aktifRPLData || aktifRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
+                        const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
+                        return (
+                          <div className="flex items-center justify-center dropdown-container">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openDropdownMaba !== dropdownKey) {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const dropdownWidth = 192;
+                                  setDropdownPosition({
+                                    top: rect.bottom + 4,
+                                    left: Math.max(8, rect.right - dropdownWidth)
+                                  });
+                                  setOpenDropdownMaba(dropdownKey);
+                                } else {
+                                  setOpenDropdownMaba(null);
+                                }
+                              }}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              aria-label="Menu aksi Mahasiswa Aktif RPL"
+                              aria-expanded={openDropdownMaba === dropdownKey}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                );
+              })}
+              {displayRows.length === 0 && (
+                <tr>
+                  <td colSpan={showDeleted ? 19 : 18} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                   </td>
                 </tr>
-              );
-            })}
-            {displayRows.length === 0 && (
-              <tr>
-                <td colSpan={showDeleted ? 19 : 18} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls - Maba */}
+        {displayRows.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Data per halaman:</span>
+              <select
+                value={itemsPerPageMaba}
+                onChange={(e) => {
+                  setItemsPerPageMaba(Number(e.target.value));
+                  setCurrentPageMaba(1);
+                }}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPageMaba}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(displayRows.length / itemsPerPageMaba)}</span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPageMaba(Math.max(1, currentPageMaba - 1))}
+                  disabled={currentPageMaba === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPageMaba(Math.min(Math.ceil(displayRows.length / itemsPerPageMaba), currentPageMaba + 1))}
+                  disabled={currentPageMaba === Math.ceil(displayRows.length / itemsPerPageMaba)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -3009,13 +3136,14 @@ export default function Tabel2A1({ role }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {(() => {
-                // [UPDATED] Use rowsGabungan directly (all prodi data) instead of processDataForTable
-                const tableData = rowsGabungan;
+                // Pagination Logic
+                const indexOfLastItem = currentPage * itemsPerPage;
+                const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                const currentItems = rowsGabungan.slice(indexOfFirstItem, indexOfLastItem);
+                const totalItems = rowsGabungan.length;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-                // Filter data berdasarkan showDeleted jika diperlukan
-                // (Saat ini tabel gabungan ini hanya menampilkan data aktif)
-
-                if (tableData.length === 0) {
+                if (currentItems.length === 0) {
                   return (
                     <tr>
                       <td colSpan={17} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
@@ -3026,7 +3154,7 @@ export default function Tabel2A1({ role }) {
                   );
                 }
 
-                return tableData.map((row, idx) => (
+                return currentItems.map((row, idx) => (
                   <tr key={idx} className={`transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${row.ts === 'Jumlah' ? 'bg-slate-100 font-semibold' : ''}`}>
                     <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center font-medium bg-gray-50 whitespace-nowrap">{row.ts}</td>
                     <td className="px-4 py-3 text-slate-700 border border-slate-200 text-center">{row.dayaTampung || ''}</td>
@@ -3050,6 +3178,51 @@ export default function Tabel2A1({ role }) {
               })()}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(rowsGabungan.length / itemsPerPage)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(rowsGabungan.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(rowsGabungan.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Dropdown Menu Gabungan - Fixed Position */}

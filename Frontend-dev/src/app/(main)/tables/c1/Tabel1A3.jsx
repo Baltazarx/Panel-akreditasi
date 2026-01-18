@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const ENDPOINT = "/penggunaan-dana";
 const TABLE_KEY = "tabel_1a3";
@@ -137,36 +137,48 @@ function PrettyTable1A3({
   openDropdownId,
   setOpenDropdownId,
   setDropdownPosition,
+
+  currentPage = 1,
+  itemsPerPage = 5,
+  setCurrentPage,
+  setItemsPerPage
 }) {
   const getYearName = (id) =>
     maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
 
+  // Filter Data
+  const filteredRows = rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at));
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            {showDeleted && (
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                />
-              </th>
-            )}
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Penggunaan</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Dana</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {rows
-            .filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
-            .map((r, i) => {
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              {showDeleted && (
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                  />
+                </th>
+              )}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jenis Penggunaan</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Dana</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {currentItems.map((r, i) => {
               const idField = getIdField(r);
               const rowId = idField && r[idField] ? r[idField] : i;
               return (
@@ -256,105 +268,210 @@ function PrettyTable1A3({
                 </tr>
               );
             })}
-          {rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
-            .length === 0 && (
-              <tr>
-                <td
-                  colSpan={showDeleted ? 6 : 5}
-                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+            {rows.filter((r) => (showDeleted ? r.deleted_at : !r.deleted_at))
+              .length === 0 && (
+                <tr>
+                  <td
+                    colSpan={showDeleted ? 6 : 5}
+                    className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                  >
+                    <p className="font-medium">Data tidak ditemukan</p>
+                    <p className="text-sm">
+                      Belum ada data yang ditambahkan atau data yang cocok dengan
+                      filter.
+                    </p>
+                  </td>
+                </tr>
+              )}
+          </tbody>
+
+        </table>
+      </div>
+
+      {/* Pagination Controls - PrettyTable1A3 */}
+      {
+        filteredRows.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Baris per halaman:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(filteredRows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{filteredRows.length}</span> data
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
                 >
-                  <p className="font-medium">Data tidak ditemukan</p>
-                  <p className="text-sm">
-                    Belum ada data yang ditambahkan atau data yang cocok dengan
-                    filter.
-                  </p>
-                </td>
-              </tr>
-            )}
-        </tbody>
-      </table>
-    </div>
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(Math.ceil(filteredRows.length / itemsPerPage), currentPage + 1))}
+                  disabled={currentPage === Math.ceil(filteredRows.length / itemsPerPage)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }
 
-function PrettyTable1A3Summary({ summaryData }) {
+function PrettyTable1A3Summary({ summaryData, currentPage = 1, itemsPerPage = 5, setCurrentPage, setItemsPerPage }) {
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = summaryData.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            {[
-              "Jenis Penggunaan",
-              "TS-4",
-              "TS-3",
-              "TS-2",
-              "TS-1",
-              "TS",
-              "Link Bukti",
-            ].map((h) => (
-              <th
-                key={h}
-                className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"
+    <div className="flex flex-col gap-4">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              {[
+                "Jenis Penggunaan",
+                "TS-4",
+                "TS-3",
+                "TS-2",
+                "TS-1",
+                "TS",
+                "Link Bukti",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {currentItems.map((row, i) => (
+              <tr
+                key={`summary-${i}`}
+                className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  } hover:bg-[#eaf4ff]`}
               >
-                {h}
-              </th>
+                <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">
+                  {row.jenis_penggunaan}
+                </td>
+                <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_4))}
+                </td>
+                <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_3))}
+                </td>
+                <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_2))}
+                </td>
+                <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_1))}
+                </td>
+                <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts))}
+                </td>
+                <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                  {row.link_bukti ? (
+                    <a
+                      href={row.link_bukti}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-[#0384d6] hover:text-[#043975] transition"
+                    >
+                      Lihat Bukti
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+              </tr>
             ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {summaryData.map((row, i) => (
-            <tr
-              key={`summary-${i}`}
-              className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
-                } hover:bg-[#eaf4ff]`}
+            {summaryData.length === 0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                >
+                  <p className="font-medium">Data ringkasan tidak tersedia</p>
+                  <p className="text-sm">Belum ada data penggunaan dana.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls - Summary */}
+      {summaryData.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
             >
-              <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">
-                {row.jenis_penggunaan}
-              </td>
-              <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_4))}
-              </td>
-              <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_3))}
-              </td>
-              <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_2))}
-              </td>
-              <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts_minus_1))}
-              </td>
-              <td className="px-6 py-4 text-slate-700 text-right border border-slate-200">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n(row.ts))}
-              </td>
-              <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                {row.link_bukti ? (
-                  <a
-                    href={row.link_bukti}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline text-[#0384d6] hover:text-[#043975] transition"
-                  >
-                    Lihat Bukti
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </td>
-            </tr>
-          ))}
-          {summaryData.length === 0 && (
-            <tr>
-              <td
-                colSpan={7}
-                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(summaryData.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{summaryData.length}</span> data
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
               >
-                <p className="font-medium">Data ringkasan tidak tersedia</p>
-                <p className="text-sm">Belum ada data penggunaan dana.</p>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(summaryData.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(summaryData.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -373,6 +490,20 @@ export default function Tabel1A3({ role }) {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeYear, setActiveYear] = useState("");
+
+  // Pagination State - PrettyTable1A3
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Pagination State - Summary
+  const [currentSummaryPage, setCurrentSummaryPage] = useState(1);
+  const [itemsSummaryPerPage, setItemsSummaryPerPage] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setCurrentSummaryPage(1);
+  }, [activeYear, showDeleted]);
 
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -948,6 +1079,11 @@ export default function Tabel1A3({ role }) {
         openDropdownId={openDropdownId}
         setOpenDropdownId={setOpenDropdownId}
         setDropdownPosition={setDropdownPosition}
+        // Pagination Props
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        setCurrentPage={setCurrentPage}
+        setItemsPerPage={setItemsPerPage}
       />
 
       {/* Dropdown Menu - Fixed Position */}
@@ -1169,7 +1305,14 @@ export default function Tabel1A3({ role }) {
             </div>
           </div>
         </div>
-        <PrettyTable1A3Summary summaryData={summaryData} />
+        <PrettyTable1A3Summary
+          summaryData={summaryData}
+          // Pagination Props
+          currentPage={currentSummaryPage}
+          itemsPerPage={itemsSummaryPerPage}
+          setCurrentPage={setCurrentSummaryPage}
+          setItemsPerPage={setItemsSummaryPerPage}
+        />
       </div>
 
       {showCreateModal && (

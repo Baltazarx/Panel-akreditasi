@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2'; // Penambahan notifikasi
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiFileText, FiCalendar, FiChevronDown, FiBriefcase, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const ENDPOINT = "/audit-mutu-internal";
 const TABLE_KEY = "tabel_1b";
@@ -56,8 +56,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
           setOpenYearDropdown(!openYearDropdown);
         }}
         className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${activeYear
-            ? 'border-[#0384d6] bg-white'
-            : 'border-slate-300 bg-white hover:border-gray-400'
+          ? 'border-[#0384d6] bg-white'
+          : 'border-slate-300 bg-white hover:border-gray-400'
           }`}
         aria-label="Pilih tahun"
       >
@@ -84,8 +84,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
               setOpenYearDropdown(false);
             }}
             className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!activeYear
-                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                : 'text-gray-700'
+              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+              : 'text-gray-700'
               }`}
           >
             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -105,8 +105,8 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
                   setOpenYearDropdown(false);
                 }}
                 className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${activeYear === y.id_tahun.toString()
-                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                    : 'text-gray-700'
+                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                  : 'text-gray-700'
                   }`}
               >
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -120,43 +120,47 @@ function YearSelector({ maps, activeYear, setActiveYear }) {
   );
 }
 
-function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, showDeleted, doRestore, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition }) {
+function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, doHardDelete, showDeleted, doRestore, selectedRows, setSelectedRows, isAllSelected, handleSelectAll, openDropdownId, setOpenDropdownId, setDropdownPosition, currentPage = 1, itemsPerPage = 5, setCurrentPage, setItemsPerPage }) {
   const getUnitName = (id) => maps.units[id]?.nama_unit || id;
   const getYearName = (id) => maps.tahun[id]?.tahun || maps.tahun[id]?.nama || id;
 
+  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            {showDeleted && (
-              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                />
-              </th>
-            )}
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit SPMI</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Unit SPMI</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Dokumen SPMI</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Auditor Mutu Internal</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Certified</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Non Certified</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Frekuensi audit/monev per tahun</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Bukti Certified Auditor</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Laporan Audit</th>
-            <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-          {rows
-            .filter(r => showDeleted ? r.deleted_at : !r.deleted_at)
-            .map((r, i) => {
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              {showDeleted && (
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                  />
+                </th>
+              )}
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No.</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Tahun</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Unit SPMI</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Unit SPMI</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Dokumen SPMI</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Auditor Mutu Internal</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Certified</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Non Certified</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Frekuensi audit/monev per tahun</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Bukti Certified Auditor</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Laporan Audit</th>
+              <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+            {currentItems.map((r, i) => {
               const totalAuditors = (r.jumlah_auditor_certified || 0) + (r.jumlah_auditor_noncertified || 0);
               const idField = getIdField(r);
               const rowId = idField && r[idField] ? r[idField] : i;
@@ -178,7 +182,7 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                       />
                     </td>
                   )}
-                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{i + 1}.</td>
+                  <td className="px-6 py-4 text-slate-700 border border-slate-200">{indexOfFirstItem + i + 1}.</td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{getYearName(r.id_tahun)}</td>
                   <td className="px-6 py-4 text-slate-700 border border-slate-200">{r.id_unit}</td>
                   <td className="px-6 py-4 font-semibold text-slate-700 border border-slate-200">{getUnitName(r.id_unit)}</td>
@@ -230,16 +234,63 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
                 </tr>
               );
             })}
-          {rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at).length === 0 && (
-            <tr>
-              <td colSpan={showDeleted ? 13 : 12} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            {filteredRows.length === 0 && (
+              <tr>
+                <td colSpan={showDeleted ? 13 : 12} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {/* Pagination Controls */}
+      {filteredRows.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 px-2 pb-4 pt-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Baris per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(filteredRows.length / itemsPerPage)}</span> | Total <span className="font-semibold text-slate-900">{filteredRows.length}</span> data
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(filteredRows.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(filteredRows.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -247,6 +298,11 @@ function PrettyTable({ rows, maps, canUpdate, canDelete, setEditing, doDelete, d
 export default function Tabel1B({ role }) {
   const { maps } = useMaps(true);
   const [rows, setRows] = useState([]);
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -256,6 +312,11 @@ export default function Tabel1B({ role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeYear, setActiveYear] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeYear, showDeleted]);
 
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -697,8 +758,8 @@ export default function Tabel1B({ role }) {
                   }
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${(isEdit ? editIdUnit : newIdUnit)
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih unit SPMI"
               >
@@ -742,8 +803,8 @@ export default function Tabel1B({ role }) {
                           }
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${(isEdit ? editIdUnit : newIdUnit) === u.id_unit.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -771,8 +832,8 @@ export default function Tabel1B({ role }) {
                   }
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${(isEdit ? editIdTahun : newIdTahun)
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih tahun"
               >
@@ -816,8 +877,8 @@ export default function Tabel1B({ role }) {
                           }
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${(isEdit ? editIdTahun : newIdTahun) === y.id_tahun.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -927,8 +988,8 @@ export default function Tabel1B({ role }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -938,8 +999,8 @@ export default function Tabel1B({ role }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -1141,6 +1202,11 @@ export default function Tabel1B({ role }) {
         openDropdownId={openDropdownId}
         setOpenDropdownId={setOpenDropdownId}
         setDropdownPosition={setDropdownPosition}
+        // Pagination Props
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        setCurrentPage={setCurrentPage}
+        setItemsPerPage={setItemsPerPage}
       />
 
       {/* Dropdown Menu - Fixed Position */}

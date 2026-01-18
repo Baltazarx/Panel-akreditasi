@@ -90,7 +90,7 @@ import { FiChevronUp, FiChevronDown, FiChevronLeft, FiChevronRight, FiEdit2, FiT
 
 export default function Tabel1A1({ role }) {
   const table = { key: "tabel_1a1", label: "1.A.1 Pimpinan & Tupoksi UPPS/PS", path: "/pimpinan-upps-ps" };
-  const COLUMN_COUNT = 7; // Jumlah kolom untuk colSpan
+  const COLUMN_COUNT = 8; // Jumlah kolom untuk colSpan
 
   const { maps: mapsFromHook } = useMaps(true);
   const maps = mapsFromHook ?? { units: {}, pegawai: {}, tahun: {}, ref_jabatan_struktural: {} };
@@ -940,6 +940,7 @@ export default function Tabel1A1({ role }) {
           <table className="w-full text-sm text-left">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr className="sticky top-0">
+                <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">No.</th>
                 <th
                   className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-left border border-white/20 cursor-pointer hover:bg-white/10 transition-colors"
                   onClick={() => handleSort('unit')}
@@ -1024,6 +1025,9 @@ export default function Tabel1A1({ role }) {
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={`skeleton-${i}`} className="bg-white">
                     <td className="px-6 py-4 border border-slate-200">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-8"></div>
+                    </td>
+                    <td className="px-6 py-4 border border-slate-200">
                       <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
                     </td>
                     <td className="px-6 py-4 border border-slate-200">
@@ -1060,6 +1064,9 @@ export default function Tabel1A1({ role }) {
                   const uniqueKey = `${showDeleted ? 'deleted' : 'active'}-${rowId !== null && rowId !== undefined ? rowId : `idx-${i}`}-${i}`;
                   return (
                     <tr key={uniqueKey} className={`transition-all duration-200 ease-in-out ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                      <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">
+                        {(currentPage - 1) * itemsPerPage + i + 1}.
+                      </td>
                       <td className="px-6 py-4 font-semibold text-slate-800 border border-slate-200">{getUnitName(r)}</td>
                       <td className="px-6 py-4 text-slate-700 border border-slate-200">{getKetuaName(r)}</td>
                       <td className="px-6 py-4 text-slate-600 border border-slate-200">
@@ -1199,46 +1206,55 @@ export default function Tabel1A1({ role }) {
       )}
 
       {/* Pagination */}
-      {!loading && processedRows.length > 0 && totalPages > 1 && (
-        <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Baris per halaman:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              aria-label="Pilih jumlah baris per halaman"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+      {!loading && processedRows.length > 0 && (
+        <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-600">Baris per halaman:</span>
+            <div className="relative">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="appearance-none pl-4 pr-10 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 font-medium hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:border-[#0384d6] transition-all cursor-pointer shadow-sm"
+                aria-label="Pilih jumlah baris per halaman"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                <FiChevronDown size={14} />
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">
-              Halaman {currentPage} dari {totalPages} ({processedRows.length} data)
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-600 font-medium">
+              Halaman <span className="text-slate-900 font-bold">{currentPage}</span> dari <span className="text-slate-900 font-bold">{totalPages}</span>
+              <span className="mx-2 text-slate-300">|</span>
+              Total <span className="text-slate-900 font-bold">{processedRows.length}</span> data
             </span>
-            <div className="flex items-center gap-1">
+
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
                 aria-label="Halaman sebelumnya"
               >
-                <FiChevronLeft size={20} />
+                <FiChevronLeft size={18} />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
                 aria-label="Halaman berikutnya"
               >
-                <FiChevronRight size={20} />
+                <FiChevronRight size={18} />
               </button>
             </div>
           </div>
