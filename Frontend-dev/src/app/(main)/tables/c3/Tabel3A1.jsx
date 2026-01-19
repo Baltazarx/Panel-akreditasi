@@ -4,7 +4,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiShield, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiHome, FiShield, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3a1-sarpras-penelitian";
@@ -86,7 +86,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -96,7 +96,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -172,32 +172,30 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                     setOpenKepemilikanDropdown(!openKepemilikanDropdown);
                     setOpenLisensiDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.kepemilikan
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.kepemilikan
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih kepemilikan"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiHome className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.kepemilikan ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.kepemilikan === "M" 
-                        ? "Milik sendiri (M)" 
-                        : form.kepemilikan === "W" 
-                        ? "Sewa (W)" 
-                        : "Pilih Kepemilikan"}
+                      {form.kepemilikan === "M"
+                        ? "Milik sendiri (M)"
+                        : form.kepemilikan === "W"
+                          ? "Sewa (W)"
+                          : "Pilih Kepemilikan"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openKepemilikanDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openKepemilikanDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openKepemilikanDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto kepemilikan-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -206,11 +204,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("kepemilikan", "");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.kepemilikan
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.kepemilikan
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Pilih Kepemilikan</span>
@@ -221,11 +218,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("kepemilikan", "M");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.kepemilikan === "M"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.kepemilikan === "M"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Milik sendiri (M)</span>
@@ -236,11 +232,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("kepemilikan", "W");
                         setOpenKepemilikanDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.kepemilikan === "W"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.kepemilikan === "W"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiHome className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Sewa (W)</span>
@@ -263,34 +258,32 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                     setOpenLisensiDropdown(!openLisensiDropdown);
                     setOpenKepemilikanDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.lisensi
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.lisensi
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih lisensi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.lisensi ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.lisensi === "L" 
-                        ? "Berlisensi (L)" 
-                        : form.lisensi === "P" 
-                        ? "Public Domain (P)" 
-                        : form.lisensi === "T"
-                        ? "Tidak Berlisensi (T)"
-                        : "Pilih Lisensi"}
+                      {form.lisensi === "L"
+                        ? "Berlisensi (L)"
+                        : form.lisensi === "P"
+                          ? "Public Domain (P)"
+                          : form.lisensi === "T"
+                            ? "Tidak Berlisensi (T)"
+                            : "Pilih Lisensi"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openLisensiDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openLisensiDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openLisensiDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto lisensi-dropdown-menu mt-1 w-full"
                   >
                     <button
@@ -299,11 +292,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("lisensi", "");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        !form.lisensi
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.lisensi
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Pilih Lisensi</span>
@@ -314,11 +306,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("lisensi", "L");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "L"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "L"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Berlisensi (L)</span>
@@ -329,11 +320,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("lisensi", "P");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "P"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "P"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Public Domain (P)</span>
@@ -344,11 +334,10 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
                         handleChange("lisensi", "T");
                         setOpenLisensiDropdown(false);
                       }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                        form.lisensi === "T"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.lisensi === "T"
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span>Tidak Berlisensi (T)</span>
@@ -391,19 +380,19 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
                 setOpenKepemilikanDropdown(false);
                 setOpenLisensiDropdown(false);
                 onClose();
-              }} 
+              }}
               className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               Batal
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
             >
               Simpan
@@ -429,10 +418,16 @@ function DataTable({
   selectedRows,
   setSelectedRows,
   isAllSelected,
+
   handleSelectAll,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  onPageChange,
+  onItemsPerPageChange
 }) {
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-  
+  // filteredRows logic moved to parent
+
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -470,204 +465,251 @@ function DataTable({
   }, [openDropdownId]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-      <table className="w-full text-sm text-left border-collapse">
-        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          <tr className="sticky top-0">
-            {showDeleted && (
-              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                />
-              </th>
-            )}
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Prasarana</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Luas Ruang (m²)</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Milik sendiri (M)/Sewa (W)</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.length === 0 ? (
-            <tr>
-              <td 
-                colSpan={showDeleted ? 10 : 9} 
-                className="px-6 py-16 text-center text-slate-500 border border-slate-200"
-              >
-                <p className="font-medium">Data tidak ditemukan</p>
-                <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-              </td>
+    <div className="rounded-lg border border-slate-200 shadow-md">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+            <tr className="sticky top-0">
+              {showDeleted && (
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                  />
+                </th>
+              )}
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">No</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Nama Prasarana</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Daya Tampung</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Luas Ruang (m²)</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Milik sendiri (M)/Sewa (W)</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Perangkat</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Aksi</th>
             </tr>
-          ) : (
-            filteredRows.map((r, i) => (
-              <tr
-                key={r.id || i}
-                className={`transition-colors ${
-                  i % 2 === 0 ? "bg-white" : "bg-slate-50"
-                } hover:bg-[#eaf4ff]`}
-              >
-                {showDeleted && (
-                  <td className="px-4 py-3 text-center border border-slate-200">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(r.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRows([...selectedRows, r.id]);
-                        } else {
-                          setSelectedRows(selectedRows.filter(id => id !== r.id));
-                        }
-                      }}
-                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                    />
-                  </td>
-                )}
-                <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
-                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_sarpras || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.daya_tampung || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.luas_ruang_m2 || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
-                  {r.kepemilikan === "M" ? "Milik sendiri (M)" : r.kepemilikan === "W" ? "Sewa (W)" : "-"}
-                </td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
-                  {r.lisensi === "L" ? "Berlisensi (L)" : r.lisensi === "P" ? "Public Domain (P)" : r.lisensi === "T" ? "Tidak Berlisensi (T)" : "-"}
-                </td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">
-                  <div className="max-w-xs truncate" title={r.perangkat_detail || ""}>
-                    {r.perangkat_detail || "-"}
-                  </div>
-                </td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">
-                  {r.link_bukti ? (
-                    <a 
-                      href={r.link_bukti} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-[#0384d6] underline hover:text-[#043975]"
-                    >
-                      Lihat Bukti
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">-</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 border border-slate-200">
-                  <div className="flex items-center justify-center dropdown-container">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
-                        if (openDropdownId !== rowId) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const dropdownWidth = 192;
-                          setDropdownPosition({
-                            top: rect.bottom + 4,
-                            left: Math.max(8, rect.right - dropdownWidth)
-                          });
-                          setOpenDropdownId(rowId);
-                        } else {
-                          setOpenDropdownId(null);
-                        }
-                      }}
-                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                      aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : r.id || i)}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  </div>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={showDeleted ? 10 : 9}
+                  className="px-6 py-16 text-center text-slate-500 border border-slate-200"
+                >
+                  <p className="font-medium">Data tidak ditemukan</p>
+                  <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              rows.map((r, i) => (
+                <tr
+                  key={r.id || i}
+                  className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                    } hover:bg-[#eaf4ff]`}
+                >
+                  {showDeleted && (
+                    <td className="px-4 py-3 text-center border border-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(r.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRows([...selectedRows, r.id]);
+                          } else {
+                            setSelectedRows(selectedRows.filter(id => id !== r.id));
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                      />
+                    </td>
+                  )}
+                  <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+                  <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_sarpras || "-"}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.daya_tampung || "-"}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.luas_ruang_m2 || "-"}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+                    {r.kepemilikan === "M" ? "Milik sendiri (M)" : r.kepemilikan === "W" ? "Sewa (W)" : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">
+                    {r.lisensi === "L" ? "Berlisensi (L)" : r.lisensi === "P" ? "Public Domain (P)" : r.lisensi === "T" ? "Tidak Berlisensi (T)" : "-"}
+                  </td>
+                  <td className="px-4 py-3 border border-slate-200 text-slate-700">
+                    <div className="max-w-xs truncate" title={r.perangkat_detail || ""}>
+                      {r.perangkat_detail || "-"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 border border-slate-200 text-slate-700">
+                    {r.link_bukti ? (
+                      <a
+                        href={r.link_bukti}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#0384d6] underline hover:text-[#043975]"
+                      >
+                        Lihat Bukti
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 border border-slate-200">
+                    <div className="flex items-center justify-center dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
+                          if (openDropdownId !== rowId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const dropdownWidth = 192;
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: Math.max(8, rect.right - dropdownWidth)
+                            });
+                            setOpenDropdownId(rowId);
+                          } else {
+                            setOpenDropdownId(null);
+                          }
+                        }}
+                        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                        aria-label="Menu aksi"
+                        aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : r.id || i)}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
 
-      {/* Dropdown Menu - Fixed Position */}
-      {openDropdownId !== null && (() => {
-        const currentRow = filteredRows.find((r, idx) => {
-          const rowId = getIdField(r) ? r[getIdField(r)] : r.id || idx;
-          return rowId === openDropdownId;
-        });
-        if (!currentRow) return null;
+        {/* Dropdown Menu - Fixed Position */}
+        {openDropdownId !== null && (() => {
+          const currentRow = rows.find((r, idx) => {
+            const rowId = getIdField(r) ? r[getIdField(r)] : r.id || idx;
+            return rowId === openDropdownId;
+          });
+          if (!currentRow) return null;
 
-        const isDeleted = currentRow.deleted_at;
+          const isDeleted = currentRow.deleted_at;
 
-        return (
-          <div 
-            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`
-            }}
-          >
-            {!isDeleted && canUpdate && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                aria-label={`Edit data ${currentRow.nama_sarpras || ''}`}
+          return (
+            <div
+              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`
+              }}
+            >
+              {!isDeleted && canUpdate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(currentRow);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
+                  aria-label={`Edit data ${currentRow.nama_sarpras || ''}`}
+                >
+                  <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                  <span>Edit</span>
+                </button>
+              )}
+              {!isDeleted && canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(currentRow);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
+                  aria-label={`Hapus data ${currentRow.nama_sarpras || ''}`}
+                >
+                  <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                  <span>Hapus</span>
+                </button>
+              )}
+              {isDeleted && canUpdate && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRestore(currentRow);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                  aria-label={`Pulihkan data ${currentRow.nama_sarpras || ''}`}
+                >
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
+                </button>
+              )}
+              {isDeleted && canDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onHardDelete(currentRow);
+                    setOpenDropdownId(null);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                  aria-label={`Hapus permanen data ${currentRow.nama_sarpras || ''}`}
+                >
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Pagination Controls */}
+      {
+        totalItems > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4 px-4 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Data per halaman:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
               >
-                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
-                <span>Edit</span>
-              </button>
-            )}
-            {!isDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                aria-label={`Hapus data ${currentRow.nama_sarpras || ''}`}
-              >
-                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
-                <span>Hapus</span>
-              </button>
-            )}
-            {isDeleted && canUpdate && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRestore(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
-                aria-label={`Pulihkan data ${currentRow.nama_sarpras || ''}`}
-              >
-                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
-                <span>Pulihkan</span>
-              </button>
-            )}
-            {isDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onHardDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label={`Hapus permanen data ${currentRow.nama_sarpras || ''}`}
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(totalItems / itemsPerPage)}</span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => onPageChange(Math.min(Math.ceil(totalItems / itemsPerPage), currentPage + 1))}
+                  disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
           </div>
-        );
-      })()}
+        )
+      }
     </div>
   );
 }
@@ -712,6 +754,10 @@ export default function Tabel3A1({ auth, role }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
   // Modal state & editing row
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
@@ -725,7 +771,7 @@ export default function Tabel3A1({ auth, role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -755,7 +801,7 @@ export default function Tabel3A1({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -764,7 +810,7 @@ export default function Tabel3A1({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID terbesar jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
@@ -800,6 +846,7 @@ export default function Tabel3A1({ auth, role }) {
 
     fetchData();
     setSelectedRows([]);
+    setCurrentPage(1); // Reset page on filter change
   }, [showDeleted]);
 
   // Create / Update handler
@@ -808,11 +855,11 @@ export default function Tabel3A1({ auth, role }) {
       // Backend mengambil id_unit_prodi dari req.user (session/token), bukan dari payload
       // Jadi kita tidak perlu mengirim id_unit di payload
       // Tapi kita tetap perlu memastikan user memiliki id_unit_prodi untuk validasi di frontend
-      
+
       if (!editingRow) {
         // Validasi: pastikan user memiliki id_unit_prodi
         let userUnit = authUser?.id_unit_prodi || authUser?.id_unit || authUser?.unit || authUser?.id_unit_kerja;
-        
+
         // Jika masih tidak ada, coba decode dari token
         if (!userUnit && authUser?.token) {
           try {
@@ -830,7 +877,7 @@ export default function Tabel3A1({ auth, role }) {
             console.error("Gagal decode token:", e);
           }
         }
-        
+
         // Validasi: jika user tidak memiliki id_unit_prodi, tampilkan error
         if (!userUnit) {
           console.error("Tabel3A1 - User tidak memiliki id_unit_prodi:", {
@@ -840,7 +887,7 @@ export default function Tabel3A1({ auth, role }) {
             unit: authUser?.unit,
             id_unit_kerja: authUser?.id_unit_kerja
           });
-          
+
           Swal.fire({
             icon: 'error',
             title: 'Unit/Prodi Tidak Ditemukan',
@@ -921,7 +968,7 @@ export default function Tabel3A1({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`${ENDPOINT}/${row.id}`, { method: "DELETE" });
-          
+
           // Refresh data
           const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
           const data = await apiFetch(url);
@@ -951,7 +998,7 @@ export default function Tabel3A1({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`${ENDPOINT}/${row.id}/hard`, { method: "DELETE" });
-          
+
           // Refresh data
           const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
           const data = await apiFetch(url);
@@ -983,13 +1030,13 @@ export default function Tabel3A1({ auth, role }) {
           // Gunakan getIdField untuk mendapatkan ID yang benar
           const idField = getIdField(row);
           const rowId = idField ? row[idField] : row.id;
-          
+
           if (!rowId) {
             throw new Error('ID data tidak valid. Silakan refresh halaman dan coba lagi.');
           }
 
           await apiFetch(`${ENDPOINT}/${rowId}/restore`, { method: "POST" });
-          
+
           // Refresh data
           const url = showDeleted ? `${ENDPOINT}?include_deleted=1` : ENDPOINT;
           const data = await apiFetch(url);
@@ -1009,6 +1056,11 @@ export default function Tabel3A1({ auth, role }) {
   const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
   const isAllSelected = filteredRows.length > 0 && selectedRows.length === filteredRows.length;
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const allDeletedIds = filteredRows.map(r => r.id);
@@ -1027,7 +1079,7 @@ export default function Tabel3A1({ auth, role }) {
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Tambahkan header
       const headerRow = [
         'No',
@@ -1040,7 +1092,7 @@ export default function Tabel3A1({ auth, role }) {
         'Link Bukti'
       ];
       exportData.push(headerRow);
-      
+
       // Tambahkan data rows
       filteredRows.forEach((row, idx) => {
         const rowData = [
@@ -1058,10 +1110,10 @@ export default function Tabel3A1({ auth, role }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari array data
       const ws = XLSX.utils.aoa_to_sheet(exportData);
-      
+
       // Set column widths
       const colWidths = [
         { wch: 5 },   // No
@@ -1074,11 +1126,11 @@ export default function Tabel3A1({ auth, role }) {
         { wch: 40 }   // Link Bukti
       ];
       ws['!cols'] = colWidths;
-      
+
       // Tambahkan worksheet ke workbook
       const sheetName = showDeleted ? 'Data Terhapus' : 'Data Sarana Prasarana';
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      
+
       // Generate file dan download
       const fileName = `Tabel_3A1_Sarana_Prasarana_Penelitian_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -1092,7 +1144,7 @@ export default function Tabel3A1({ auth, role }) {
       });
     } catch (err) {
       console.error("Error exporting data:", err);
-      
+
       // Fallback ke CSV jika xlsx gagal
       try {
         const escapeCsv = (str) => {
@@ -1103,7 +1155,7 @@ export default function Tabel3A1({ auth, role }) {
           }
           return strValue;
         };
-        
+
         const csvRows = [
           ['No', 'Nama Prasarana', 'Daya Tampung', 'Luas Ruang (m²)', 'Milik sendiri (M)/Sewa (W)', 'Berlisensi (L)/Public Domain (P)/Tidak Berlisensi (T)', 'Perangkat', 'Link Bukti'],
           ...filteredRows.map((row, idx) => [
@@ -1117,7 +1169,7 @@ export default function Tabel3A1({ auth, role }) {
             row.link_bukti || ''
           ])
         ].map(row => row.map(cell => escapeCsv(cell)).join(','));
-        
+
         const csvContent = '\ufeff' + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
@@ -1128,7 +1180,7 @@ export default function Tabel3A1({ auth, role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -1171,11 +1223,10 @@ export default function Tabel3A1({ auth, role }) {
             <button
               onClick={() => setShowDeleted(false)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                !showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
               Data
@@ -1183,11 +1234,10 @@ export default function Tabel3A1({ auth, role }) {
             <button
               onClick={() => setShowDeleted(true)}
               disabled={loading}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+                } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
               Data Terhapus
@@ -1237,7 +1287,7 @@ export default function Tabel3A1({ auth, role }) {
       {/* Data Table */}
       {!loading && (
         <DataTable
-          rows={rows}
+          rows={currentItems}
           maps={maps}
           canUpdate={canUpdate}
           canDelete={canDelete}
@@ -1250,6 +1300,14 @@ export default function Tabel3A1({ auth, role }) {
           setSelectedRows={setSelectedRows}
           isAllSelected={isAllSelected}
           handleSelectAll={handleSelectAll}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredRows.length}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={(val) => {
+            setItemsPerPage(val);
+            setCurrentPage(1);
+          }}
         />
       )}
 

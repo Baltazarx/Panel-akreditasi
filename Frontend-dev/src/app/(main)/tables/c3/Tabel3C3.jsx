@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiUser, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiUser, FiShield, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3c3-hki";
@@ -218,8 +218,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                   setOpenTahunDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih dosen"
               >
@@ -258,8 +258,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                           setOpenDosenDropdown(false);
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === d.id_dosen.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -303,8 +303,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                   setOpenTahunDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.jenis_hki
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih jenis HKI"
               >
@@ -338,8 +338,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                         setOpenJenisDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_hki === opt.value
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -366,8 +366,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                   setOpenJenisDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun_perolehan
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih tahun perolehan"
               >
@@ -407,8 +407,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                           setOpenTahunDropdown(false);
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun_perolehan === t.id.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -477,16 +477,17 @@ function DataTable({
   setSelectedRows,
   isAllSelected,
   handleSelectAll,
+
   tahunLaporan,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  onPageChange,
+  onItemsPerPageChange,
+  summaryData
 }) {
-  const filteredRows = rows.filter(r => {
-    const hasDeletedAt = r.deleted_at !== null && r.deleted_at !== undefined;
-    if (showDeleted) {
-      return hasDeletedAt; // Tampilkan hanya data yang terhapus
-    } else {
-      return !hasDeletedAt; // Tampilkan hanya data yang tidak terhapus
-    }
-  });
+  // filteredRows is now just the rows passed (paginated)
+  const filteredRows = rows;
 
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -632,7 +633,7 @@ function DataTable({
                       />
                     </td>
                   )}
-                  <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{index + 1}</td>
+                  <td className="px-4 py-3 text-center border border-slate-200 font-medium text-slate-800">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800 max-w-xs">
                     <div className="truncate" title={row.judul_hki || ""}>
                       {row.judul_hki || "-"}
@@ -689,8 +690,8 @@ function DataTable({
               );
             })
           )}
-          {/* Summary Row */}
-          {filteredRows.length > 0 && (
+          {/* Summary Row using summaryData prop */}
+          {summaryData && (
             <tr className="bg-white">
               {showDeleted && <td className="px-4 py-3 border border-slate-200 bg-white"></td>}
               <td
@@ -700,19 +701,19 @@ function DataTable({
                 Jumlah HKI
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
-                {filteredRows.filter(r => r.tahun_ts4 === '√').length}
+                {summaryData.total_ts4}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
-                {filteredRows.filter(r => r.tahun_ts3 === '√').length}
+                {summaryData.total_ts3}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
-                {filteredRows.filter(r => r.tahun_ts2 === '√').length}
+                {summaryData.total_ts2}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
-                {filteredRows.filter(r => r.tahun_ts1 === '√').length}
+                {summaryData.total_ts1}
               </td>
               <td className="px-4 py-3 text-center border border-slate-200 font-semibold text-slate-800 bg-white">
-                {filteredRows.filter(r => r.tahun_ts === '√').length}
+                {summaryData.total_ts}
               </td>
               <td
                 colSpan={2}
@@ -794,6 +795,50 @@ function DataTable({
           </div>
         );
       })()}
+
+      {/* Pagination Controls */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4 px-4 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(totalItems / itemsPerPage)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => onPageChange(Math.min(Math.ceil(totalItems / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -813,6 +858,10 @@ export default function Tabel3C3({ auth, role }) {
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [tahunLaporan, setTahunLaporan] = useState(null);
   const [openTahunFilterDropdown, setOpenTahunFilterDropdown] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
@@ -935,6 +984,8 @@ export default function Tabel3C3({ auth, role }) {
     };
 
     fetchData();
+    setSelectedRows([]);
+    setCurrentPage(1); // Reset page on filter change
   }, [selectedTahun, showDeleted]);
 
   const handleSave = async (formData) => {
@@ -1325,6 +1376,21 @@ export default function Tabel3C3({ auth, role }) {
     }
   });
 
+  // Calculate Summary Data from ALL filtered rows (before pagination)
+  const summaryData = {
+    total_ts4: filteredRows.filter(r => r.tahun_ts4 === '√').length,
+    total_ts3: filteredRows.filter(r => r.tahun_ts3 === '√').length,
+    total_ts2: filteredRows.filter(r => r.tahun_ts2 === '√').length,
+    total_ts1: filteredRows.filter(r => r.tahun_ts1 === '√').length,
+    total_ts: filteredRows.filter(r => r.tahun_ts === '√').length,
+    total_items: filteredRows.length
+  };
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl overflow-visible">
       <header className="pb-6 mb-6 border-b border-slate-200">
@@ -1361,8 +1427,8 @@ export default function Tabel3C3({ auth, role }) {
               }}
               disabled={loading}
               className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
-                  ? 'border-[#0384d6] bg-white'
-                  : 'border-slate-300 bg-white hover:border-gray-400'
+                ? 'border-[#0384d6] bg-white'
+                : 'border-slate-300 bg-white hover:border-gray-400'
                 } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Pilih tahun"
             >
@@ -1398,8 +1464,8 @@ export default function Tabel3C3({ auth, role }) {
                         setOpenTahunFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1419,8 +1485,8 @@ export default function Tabel3C3({ auth, role }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -1430,8 +1496,8 @@ export default function Tabel3C3({ auth, role }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -1474,7 +1540,7 @@ export default function Tabel3C3({ auth, role }) {
           </div>
         ) : (
           <DataTable
-            rows={rows}
+            rows={currentItems}
             maps={maps}
             canUpdate={canUpdate}
             canDelete={canDelete}
@@ -1491,6 +1557,17 @@ export default function Tabel3C3({ auth, role }) {
             isAllSelected={isAllSelected}
             handleSelectAll={handleSelectAll}
             tahunLaporan={tahunLaporan}
+
+            // Pagination Props
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredRows.length}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(val) => {
+              setItemsPerPage(val);
+              setCurrentPage(1);
+            }}
+            summaryData={summaryData}
           />
         )}
       </div>

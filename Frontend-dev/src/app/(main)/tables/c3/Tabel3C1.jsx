@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiChevronDown, FiCalendar, FiShield, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 const ENDPOINT = "/tabel-3c1-kerjasama";
@@ -220,8 +220,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                     setOpenTahunDropdown({});
                   }}
                   className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.sumber
-                      ? 'border-[#0384d6] bg-white'
-                      : 'border-gray-300 bg-white hover:border-gray-400'
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
                     }`}
                   aria-label="Pilih sumber"
                 >
@@ -254,8 +254,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                         setOpenSumberDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.sumber
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -268,8 +268,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                         setOpenSumberDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber === "L"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -282,8 +282,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                         setOpenSumberDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber === "N"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -296,8 +296,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                         setOpenSumberDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber === "I"
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -363,8 +363,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                           setOpenSumberDropdown(false);
                         }}
                         className={`w-full px-3 py-2 border rounded-lg text-black text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${item.id_tahun
-                            ? 'border-[#0384d6] bg-white'
-                            : 'border-gray-300 bg-white hover:border-gray-400'
+                          ? 'border-[#0384d6] bg-white'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
                           }`}
                         aria-label="Pilih tahun"
                       >
@@ -407,8 +407,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
                                   }));
                                 }}
                                 className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors text-sm ${item.id_tahun === t.id.toString()
-                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                    : 'text-gray-700'
+                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                  : 'text-gray-700'
                                   }`}
                               >
                                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={12} />
@@ -494,10 +494,18 @@ function DataTable({
   setSelectedRows,
   isAllSelected,
   handleSelectAll,
+
   tahunList,
   tahunTS,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  onPageChange,
+  onItemsPerPageChange,
+  summaryData
 }) {
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  // filteredRows is now just the rows passed (paginated)
+  const filteredRows = rows;
 
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -602,7 +610,7 @@ function DataTable({
                 className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-white"
                   } hover:bg-[#eaf4ff]`}
               >
-                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{i + 1}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{(currentPage - 1) * itemsPerPage + i + 1}</td>
                 <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
                   <div className="truncate" title={r.judul_kerjasama || ""}>
                     {r.judul_kerjasama || "-"}
@@ -661,8 +669,8 @@ function DataTable({
               </tr>
             ))
           )}
-          {/* Summary Rows */}
-          {filteredRows.length > 0 && (
+          {/* Summary Rows using summaryData prop */}
+          {summaryData && (
             <>
               {/* Jumlah Dana */}
               <tr className="bg-white">
@@ -673,19 +681,19 @@ function DataTable({
                   Jumlah Dana
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts4) || 0), 0))}
+                  {formatJuta(summaryData.total_ts4 || 0)}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts3) || 0), 0))}
+                  {formatJuta(summaryData.total_ts3 || 0)}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0))}
+                  {formatJuta(summaryData.total_ts2 || 0)}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0))}
+                  {formatJuta(summaryData.total_ts1 || 0)}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {formatJuta(filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0))}
+                  {formatJuta(summaryData.total_ts || 0)}
                 </td>
                 <td className="px-4 py-3 border border-slate-300 bg-white"></td>
                 <td className="px-4 py-3 border border-slate-300 bg-white"></td>
@@ -699,7 +707,7 @@ function DataTable({
                   Jumlah Mitra Kerjasama
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
-                  {filteredRows.length}
+                  {summaryData.total_items}
                 </td>
                 <td
                   colSpan={9}
@@ -788,6 +796,50 @@ function DataTable({
           </div>
         );
       })()}
+
+      {/* Pagination Controls */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4 px-4 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(totalItems / itemsPerPage)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => onPageChange(Math.min(Math.ceil(totalItems / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -804,6 +856,10 @@ export default function Tabel3C1({ auth, role }) {
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [openTahunFilterDropdown, setOpenTahunFilterDropdown] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Modal state & editing row
   const [modalOpen, setModalOpen] = useState(false);
@@ -946,6 +1002,7 @@ export default function Tabel3C1({ auth, role }) {
 
     fetchData();
     setSelectedRows([]);
+    setCurrentPage(1); // Reset page on filter change
   }, [showDeleted, tahunTS]);
 
   // Create / Update handler
@@ -1341,8 +1398,8 @@ export default function Tabel3C1({ auth, role }) {
               }}
               disabled={loading}
               className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
-                  ? 'border-[#0384d6] bg-white'
-                  : 'border-slate-300 bg-white hover:border-gray-400'
+                ? 'border-[#0384d6] bg-white'
+                : 'border-slate-300 bg-white hover:border-gray-400'
                 } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Pilih tahun"
             >
@@ -1378,8 +1435,8 @@ export default function Tabel3C1({ auth, role }) {
                         setOpenTahunFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun.toString()
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1399,8 +1456,8 @@ export default function Tabel3C1({ auth, role }) {
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -1410,8 +1467,8 @@ export default function Tabel3C1({ auth, role }) {
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -1457,7 +1514,7 @@ export default function Tabel3C1({ auth, role }) {
           </div>
         ) : (
           <DataTable
-            rows={rows}
+            rows={filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
             maps={maps}
             canUpdate={canUpdate}
             canDelete={canDelete}
@@ -1472,6 +1529,24 @@ export default function Tabel3C1({ auth, role }) {
             handleSelectAll={handleSelectAll}
             tahunList={tahunList}
             tahunTS={tahunTS}
+
+            // Pagination Logic
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredRows.length}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(val) => {
+              setItemsPerPage(val);
+              setCurrentPage(1);
+            }}
+            summaryData={{
+              total_ts4: filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts4) || 0), 0),
+              total_ts3: filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts3) || 0), 0),
+              total_ts2: filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts2) || 0), 0),
+              total_ts1: filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts1) || 0), 0),
+              total_ts: filteredRows.reduce((sum, r) => sum + (parseFloat(r.pendanaan_ts) || 0), 0),
+              total_items: filteredRows.length
+            }}
           />
         )}
       </div>

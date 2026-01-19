@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiUser, FiBriefcase, FiShield, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiUser, FiBriefcase, FiShield, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 const ENDPOINT_BASE = "/tabel-3a3-pengembangan-dtpr";
@@ -87,7 +87,7 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -96,7 +96,7 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -125,33 +125,31 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
                     }
                   }}
                   disabled={!!initialData}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_unit
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_unit
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Pilih unit/prodi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_unit 
+                      {form.id_unit
                         ? (() => {
-                            const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
-                            return found ? found.nama_unit : "Pilih Unit/Prodi...";
-                          })()
+                          const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
+                          return found ? found.nama_unit : "Pilih Unit/Prodi...";
+                        })()
                         : "Pilih Unit/Prodi"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openUnitDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openUnitDropdown && !initialData && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-dropdown-menu mt-1 w-full"
                   >
                     {unitOptions.length === 0 ? (
@@ -167,11 +165,10 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
                             handleChange("id_unit", unit.id_unit.toString());
                             setOpenUnitDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_unit === unit.id_unit.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_unit === unit.id_unit.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
                         >
                           <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{unit.nama_unit}</span>
@@ -196,33 +193,31 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
                     setOpenTahunDropdown(!openTahunDropdown);
                     setOpenUnitDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_tahun
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih tahun akademik"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_tahun 
+                      {form.id_tahun
                         ? (() => {
-                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
-                            return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
-                          })()
+                          const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                          return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
+                        })()
                         : "Pilih Tahun"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openTahunDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openTahunDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu mt-1 w-full"
                     style={{ minWidth: '200px' }}
                   >
@@ -239,11 +234,10 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
                             handleChange("id_tahun", tahun.id_tahun.toString());
                             setOpenTahunDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_tahun === tahun.id_tahun.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === tahun.id_tahun.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
                         >
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
@@ -352,7 +346,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
             });
           }
         });
-        
+
         setDosenList(Array.from(dosenMap.values()).sort((a, b) => (a.nama || "").localeCompare(b.nama || "")));
       } catch (err) {
         console.error("Error fetching dosen:", err);
@@ -441,7 +435,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
   ];
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
       style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
       onClick={(e) => {
@@ -450,7 +444,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
         }
       }}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
         style={{ zIndex: 10000 }}
         onClick={(e) => e.stopPropagation()}
@@ -481,33 +475,31 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                     }
                   }}
                   disabled={!!initialData}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_unit
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_unit
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Pilih unit/prodi"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_unit 
+                      {form.id_unit
                         ? (() => {
-                            const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
-                            return found ? found.nama_unit : "Pilih Unit/Prodi...";
-                          })()
+                          const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
+                          return found ? found.nama_unit : "Pilih Unit/Prodi...";
+                        })()
                         : "Pilih Unit/Prodi"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openUnitDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openUnitDropdown && !initialData && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-detail-dropdown-menu mt-1 w-full"
                   >
                     {unitOptions.length === 0 ? (
@@ -523,11 +515,10 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                             handleChange("id_unit", unit.id_unit.toString());
                             setOpenUnitDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_unit === unit.id_unit.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_unit === unit.id_unit.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
                         >
                           <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{unit.nama_unit}</span>
@@ -554,33 +545,31 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                     setOpenJenisDropdown(false);
                     setOpenTahunDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_dosen
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih dosen DTPR"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_dosen ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_dosen 
+                      {form.id_dosen
                         ? (() => {
-                            const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
-                            return found ? (found.nama || `Dosen ${d.id_dosen}`) : "Pilih Dosen...";
-                          })()
+                          const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
+                          return found ? (found.nama || `Dosen ${d.id_dosen}`) : "Pilih Dosen...";
+                        })()
                         : "Pilih Dosen"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openDosenDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openDosenDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openDosenDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto dosen-dropdown-menu mt-1 w-full"
                   >
                     {dosenList.length === 0 ? (
@@ -596,11 +585,10 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                             handleChange("id_dosen", dosen.id_dosen.toString());
                             setOpenDosenDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_dosen === dosen.id_dosen.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === dosen.id_dosen.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
                         >
                           <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{dosen.nama || `Dosen ${dosen.id_dosen}`}</span>
@@ -627,11 +615,10 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                     setOpenDosenDropdown(false);
                     setOpenTahunDropdown(false);
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.jenis_pengembangan
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.jenis_pengembangan
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   aria-label="Pilih jenis pengembangan"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -640,15 +627,14 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                       {form.jenis_pengembangan || "Pilih Jenis Pengembangan"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openJenisDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openJenisDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openJenisDropdown && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto jenis-dropdown-menu mt-1 w-full"
                   >
                     {jenisPengembanganOptions.map((jenis) => (
@@ -659,11 +645,10 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                           handleChange("jenis_pengembangan", jenis);
                           setOpenJenisDropdown(false);
                         }}
-                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                          form.jenis_pengembangan === jenis
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                        }`}
+                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_pengembangan === jenis
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                          }`}
                       >
                         <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
                         <span className="truncate">{jenis}</span>
@@ -692,33 +677,31 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                     }
                   }}
                   disabled={!!initialData}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                    form.id_tahun
-                      ? 'border-[#0384d6] bg-white' 
-                      : 'border-gray-300 bg-white hover:border-gray-400'
-                  } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
                   aria-label="Pilih tahun akademik"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                     <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_tahun 
+                      {form.id_tahun
                         ? (() => {
-                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
-                            return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
-                          })()
+                          const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                          return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
+                        })()
                         : "Pilih Tahun"}
                     </span>
                   </div>
-                  <FiChevronDown 
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                      openTahunDropdown ? 'rotate-180' : ''
-                    }`} 
-                    size={18} 
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
                   />
                 </button>
                 {openTahunDropdown && !initialData && (
-                  <div 
+                  <div
                     className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-detail-dropdown-menu mt-1 w-full"
                     style={{ minWidth: '200px' }}
                   >
@@ -735,11 +718,10 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                             handleChange("id_tahun", tahun.id_tahun.toString());
                             setOpenTahunDropdown(false);
                           }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                            form.id_tahun === tahun.id_tahun.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                          }`}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === tahun.id_tahun.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
                         >
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                           <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
@@ -957,7 +939,7 @@ function SummaryTable({
         if (openDropdownId !== rowId) return null;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -1013,10 +995,17 @@ function DetailTable({
   selectedRows,
   setSelectedRows,
   isAllSelected,
+
   handleSelectAll,
+  currentPage,
+  itemsPerPage,
+  totalItems,
+  onPageChange,
+  onItemsPerPageChange
 }) {
-  const filteredRows = rows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
-  
+  // filteredRows is now just the rows passed (paginated)
+  const filteredRows = rows;
+
   // Dropdown menu state for DetailTable
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -1114,9 +1103,8 @@ function DetailTable({
             filteredRows.map((r, i) => (
               <tr
                 key={r.id_pengembangan || i}
-                className={`transition-colors ${
-                  i % 2 === 0 ? "bg-white" : "bg-slate-50"
-                } hover:bg-[#eaf4ff]`}
+                className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  } hover:bg-[#eaf4ff]`}
               >
                 {showDeleted && (
                   <td className="px-4 py-3 text-center border border-slate-200">
@@ -1198,7 +1186,7 @@ function DetailTable({
         const isDeleted = currentRow.deleted_at;
 
         return (
-          <div 
+          <div
             className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
             style={{
               top: `${dropdownPosition.top}px`,
@@ -1264,6 +1252,50 @@ function DetailTable({
           </div>
         );
       })()}
+
+      {/* Pagination Controls */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4 px-4 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(totalItems / itemsPerPage)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => onPageChange(Math.min(Math.ceil(totalItems / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(totalItems / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1273,20 +1305,24 @@ export default function Tabel3A3({ auth, role }) {
   const { authUser } = useAuth();
   const { maps: mapsFromHook } = useMaps(auth?.user || authUser || true);
   const maps = mapsFromHook ?? { units: {}, unit_kerja: {}, tahun: {} };
-  
+
   // Summary state
   const [summaryData, setSummaryData] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  
+
   // Detail state
   const [detailRows, setDetailRows] = useState([]);
   const [detailLoading, setDetailLoading] = useState(false);
-  
+
   const [showDeleted, setShowDeleted] = useState(false);
   const [showDeletedSummary, setShowDeletedSummary] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [openTahunFilterDropdown, setOpenTahunFilterDropdown] = useState(false);
+
+  // Pagination State (Detail Table)
+  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
+  const [detailItemsPerPage, setDetailItemsPerPage] = useState(5);
 
   // Modal state
   const [modalSummaryOpen, setModalSummaryOpen] = useState(false);
@@ -1303,7 +1339,7 @@ export default function Tabel3A3({ auth, role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -1333,7 +1369,7 @@ export default function Tabel3A3({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -1342,7 +1378,7 @@ export default function Tabel3A3({ auth, role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback ke ID terbesar jika tidak ada timestamp
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
@@ -1364,7 +1400,7 @@ export default function Tabel3A3({ auth, role }) {
 
     const sortedTahunList = [...tahunList].sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0));
     const selectedIndex = sortedTahunList.findIndex(t => t.id_tahun === parseInt(selectedTahun));
-    
+
     if (selectedIndex === -1) {
       return { tahunTS: null, tahunTS1: null, tahunTS2: null, tahunTS3: null, tahunTS4: null };
     }
@@ -1441,7 +1477,7 @@ export default function Tabel3A3({ auth, role }) {
       }
     };
 
-      fetchSummary();
+    fetchSummary();
   }, [showDeletedSummary, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
 
   // Fetch Detail data
@@ -1472,14 +1508,16 @@ export default function Tabel3A3({ auth, role }) {
       }
     };
 
-      fetchDetail();
+    fetchDetail();
+    setSelectedRows([]);
+    setDetailCurrentPage(1); // Reset page on filter change
   }, [showDeleted, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
 
   // Handle Save Summary
   const handleSaveSummary = async (form) => {
     try {
       let finalIdUnit = form.id_unit;
-      
+
       if (!editingSummary) {
         let userUnit = authUser?.unit || authUser?.id_unit_prodi || authUser?.id_unit;
         if (!userUnit && authUser?.token) {
@@ -1513,7 +1551,7 @@ export default function Tabel3A3({ auth, role }) {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
@@ -1543,7 +1581,7 @@ export default function Tabel3A3({ auth, role }) {
   const handleSaveDetail = async (form) => {
     try {
       let finalIdUnit = form.id_unit;
-      
+
       if (!editingDetail) {
         let userUnit = authUser?.unit || authUser?.id_unit_prodi || authUser?.id_unit;
         if (!userUnit && authUser?.token) {
@@ -1649,27 +1687,27 @@ export default function Tabel3A3({ auth, role }) {
           // Ambil data RAW mode untuk mendapatkan ID per tahun
           const rawUrl = `${ENDPOINT_SUMMARY}?id_unit=${data.id_unit}`;
           const rawData = await apiFetch(rawUrl);
-          
+
           // Filter hanya tahun yang relevan (TS, TS-1, TS-2, TS-3, TS-4)
           const tahunList = [tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4].filter(Boolean);
-          const relevantData = Array.isArray(rawData) 
+          const relevantData = Array.isArray(rawData)
             ? rawData.filter(item => tahunList.includes(item.id_tahun) && !item.deleted_at)
             : [];
-          
+
           if (relevantData.length === 0) {
             Swal.fire('Info', 'Tidak ada data yang bisa dihapus.', 'info');
             return;
           }
-          
+
           // Hapus setiap record
           const deletePromises = relevantData.map(async (item) => {
             if (item.id) {
               await apiFetch(`${ENDPOINT_SUMMARY}/${item.id}`, { method: "DELETE" });
             }
           });
-          
+
           await Promise.all(deletePromises);
-          
+
           // Refresh data
           const refreshUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&include_deleted=1" : ""}`;
           const refreshedData = await apiFetch(refreshUrl);
@@ -1715,7 +1753,7 @@ export default function Tabel3A3({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}`, { method: "DELETE" });
-          
+
           const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
@@ -1744,7 +1782,7 @@ export default function Tabel3A3({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/hard`, { method: "DELETE" });
-          
+
           const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
@@ -1773,7 +1811,7 @@ export default function Tabel3A3({ auth, role }) {
       if (result.isConfirmed) {
         try {
           await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/restore`, { method: "POST" });
-          
+
           const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
@@ -1790,6 +1828,12 @@ export default function Tabel3A3({ auth, role }) {
   // Select all logic
   const filteredDetailRows = detailRows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
   const isAllSelected = filteredDetailRows.length > 0 && selectedRows.length === filteredDetailRows.length;
+
+  // Pagination Logic (Detail Table)
+  const indexOfLastItem = detailCurrentPage * detailItemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - detailItemsPerPage;
+  const currentDetailRows = filteredDetailRows.slice(indexOfFirstItem, indexOfLastItem);
+
   const handleSelectAll = () => {
     if (isAllSelected) {
       setSelectedRows([]);
@@ -1803,15 +1847,15 @@ export default function Tabel3A3({ auth, role }) {
     try {
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Export Summary Table
       if (summaryData) {
         const summaryDataExport = [];
-        
+
         // Header
         const summaryHeader = ['Tahun Akademik', 'TS-4', 'TS-3', 'TS-2', 'TS-1', 'TS', 'Link Bukti'];
         summaryDataExport.push(summaryHeader);
-        
+
         // Data
         const summaryRow = [
           'Jumlah Dosen DTPR',
@@ -1823,7 +1867,7 @@ export default function Tabel3A3({ auth, role }) {
           summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 || ''
         ];
         summaryDataExport.push(summaryRow);
-        
+
         const wsSummary = XLSX.utils.aoa_to_sheet(summaryDataExport);
         wsSummary['!cols'] = [
           { wch: 25 },  // Tahun Akademik
@@ -1836,11 +1880,11 @@ export default function Tabel3A3({ auth, role }) {
         ];
         XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
       }
-      
+
       // Export Detail Table
       if (filteredDetailRows && filteredDetailRows.length > 0) {
         const detailDataExport = [];
-        
+
         // Header
         const detailHeader = [
           'Jenis Pengembangan DTPR',
@@ -1853,7 +1897,7 @@ export default function Tabel3A3({ auth, role }) {
           'Link Bukti'
         ];
         detailDataExport.push(detailHeader);
-        
+
         // Data rows
         filteredDetailRows.forEach((row) => {
           const detailRow = [
@@ -1868,7 +1912,7 @@ export default function Tabel3A3({ auth, role }) {
           ];
           detailDataExport.push(detailRow);
         });
-        
+
         const wsDetail = XLSX.utils.aoa_to_sheet(detailDataExport);
         wsDetail['!cols'] = [
           { wch: 30 },  // Jenis Pengembangan DTPR
@@ -1883,12 +1927,12 @@ export default function Tabel3A3({ auth, role }) {
         const detailSheetName = showDeleted ? 'Detail Terhapus' : 'Detail';
         XLSX.utils.book_append_sheet(wb, wsDetail, detailSheetName);
       }
-      
+
       // Jika tidak ada data sama sekali
       if (!summaryData && (!filteredDetailRows || filteredDetailRows.length === 0)) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
-      
+
       // Generate file dan download
       const fileName = `Tabel_3A3_Pengembangan_DTPR_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -1902,7 +1946,7 @@ export default function Tabel3A3({ auth, role }) {
       });
     } catch (err) {
       console.error("Error exporting data:", err);
-      
+
       // Fallback ke CSV jika xlsx gagal
       try {
         const escapeCsv = (str) => {
@@ -1913,9 +1957,9 @@ export default function Tabel3A3({ auth, role }) {
           }
           return strValue;
         };
-        
+
         let csvContent = '\ufeff';
-        
+
         // Export Summary
         if (summaryData) {
           csvContent += '=== SUMMARY ===\n';
@@ -1930,7 +1974,7 @@ export default function Tabel3A3({ auth, role }) {
             summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 || ''
           ].map(escapeCsv).join(',') + '\n\n';
         }
-        
+
         // Export Detail
         if (filteredDetailRows && filteredDetailRows.length > 0) {
           csvContent += '=== DETAIL ===\n';
@@ -1948,7 +1992,7 @@ export default function Tabel3A3({ auth, role }) {
             ].map(escapeCsv).join(',') + '\n';
           });
         }
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1958,7 +2002,7 @@ export default function Tabel3A3({ auth, role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -2011,33 +2055,31 @@ export default function Tabel3A3({ auth, role }) {
                 }
               }}
               disabled={detailLoading || summaryLoading}
-              className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                selectedTahun 
-                  ? 'border-[#0384d6] bg-white' 
-                  : 'border-slate-300 bg-white hover:border-gray-400'
-              } ${(detailLoading || summaryLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full px-3 py-2 rounded-lg border text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
+                ? 'border-[#0384d6] bg-white'
+                : 'border-slate-300 bg-white hover:border-gray-400'
+                } ${(detailLoading || summaryLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Pilih tahun"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                 <span className={`truncate ${selectedTahun ? 'text-slate-700' : 'text-slate-500'}`}>
-                  {selectedTahun 
+                  {selectedTahun
                     ? (() => {
-                        const found = tahunList.find((y) => String(y.id_tahun) === String(selectedTahun));
-                        return found ? (found.tahun || found.nama) : selectedTahun;
-                      })()
+                      const found = tahunList.find((y) => String(y.id_tahun) === String(selectedTahun));
+                      return found ? (found.tahun || found.nama) : selectedTahun;
+                    })()
                     : "Pilih Tahun"}
                 </span>
               </div>
-              <FiChevronDown 
-                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                  openTahunFilterDropdown ? 'rotate-180' : ''
-                }`} 
-                size={16} 
+              <FiChevronDown
+                className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunFilterDropdown ? 'rotate-180' : ''
+                  }`}
+                size={16}
               />
             </button>
             {openTahunFilterDropdown && !detailLoading && !summaryLoading && (
-              <div 
+              <div
                 className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-filter-dropdown-menu mt-1 w-full"
                 style={{ minWidth: '200px' }}
               >
@@ -2054,11 +2096,10 @@ export default function Tabel3A3({ auth, role }) {
                         setSelectedTahun(y.id_tahun.toString());
                         setOpenTahunFilterDropdown(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                        selectedTahun === y.id_tahun.toString()
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                      }`}
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun.toString()
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
+                        }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                       <span>{y.tahun || y.nama || y.id_tahun}</span>
@@ -2117,11 +2158,10 @@ export default function Tabel3A3({ auth, role }) {
                   <button
                     onClick={() => setShowDeletedSummary(false)}
                     disabled={summaryLoading}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      !showDeletedSummary
-                        ? "bg-white text-[#0384d6] shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeletedSummary
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     aria-label="Tampilkan data aktif"
                   >
                     Data
@@ -2129,11 +2169,10 @@ export default function Tabel3A3({ auth, role }) {
                   <button
                     onClick={() => setShowDeletedSummary(true)}
                     disabled={summaryLoading}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      showDeletedSummary
-                        ? "bg-white text-[#0384d6] shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeletedSummary
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      } ${summaryLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     aria-label="Tampilkan data terhapus"
                   >
                     Data Terhapus
@@ -2146,11 +2185,10 @@ export default function Tabel3A3({ auth, role }) {
                     setEditingSummary(null);
                     setModalSummaryOpen(true);
                   }}
-                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                    !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
-                  }`}
+                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
+                    }`}
                   disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 || summaryLoading}
                   aria-label="Tambah jumlah DTPR"
                 >
@@ -2199,11 +2237,10 @@ export default function Tabel3A3({ auth, role }) {
                   <button
                     onClick={() => setShowDeleted(false)}
                     disabled={detailLoading}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      !showDeleted
-                        ? "bg-white text-[#0384d6] shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     aria-label="Tampilkan data aktif"
                   >
                     Data
@@ -2211,11 +2248,10 @@ export default function Tabel3A3({ auth, role }) {
                   <button
                     onClick={() => setShowDeleted(true)}
                     disabled={detailLoading}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      showDeleted
-                        ? "bg-white text-[#0384d6] shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                      ? "bg-white text-[#0384d6] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                      } ${detailLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     aria-label="Tampilkan data terhapus"
                   >
                     Data Terhapus
@@ -2228,11 +2264,10 @@ export default function Tabel3A3({ auth, role }) {
                     setEditingDetail(null);
                     setModalDetailOpen(true);
                   }}
-                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-                    !tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
-                  }`}
+                  className={`px-4 py-2 rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed ${!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#0384d6] text-white hover:bg-[#043975] shadow-md"
+                    }`}
                   disabled={!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4 || detailLoading}
                   aria-label="Tambah pengembangan DTPR"
                 >
@@ -2253,7 +2288,7 @@ export default function Tabel3A3({ auth, role }) {
             </div>
           ) : (
             <DetailTable
-              rows={detailRows}
+              rows={currentDetailRows}
               maps={maps}
               canUpdate={canUpdate}
               canDelete={canDelete}
@@ -2266,6 +2301,16 @@ export default function Tabel3A3({ auth, role }) {
               setSelectedRows={setSelectedRows}
               isAllSelected={isAllSelected}
               handleSelectAll={handleSelectAll}
+
+              // Pagination Props
+              currentPage={detailCurrentPage}
+              itemsPerPage={detailItemsPerPage}
+              totalItems={filteredDetailRows.length}
+              onPageChange={setDetailCurrentPage}
+              onItemsPerPageChange={(val) => {
+                setDetailItemsPerPage(val);
+                setDetailCurrentPage(1);
+              }}
             />
           )}
         </div>
