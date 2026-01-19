@@ -964,7 +964,11 @@ export default function Tabel1A2({ role }) {
 
       // Fetch summary (always use backend's dynamic TS calculation)
       try {
-        await fetchSummaryAll();
+        if (activeYear) {
+          await computeSummaryFromBaseYear(activeYear);
+        } else {
+          await fetchSummaryAll();
+        }
       } catch (summaryErr) {
         console.error("Summary fetch error:", summaryErr);
         setSummaryRows([]);

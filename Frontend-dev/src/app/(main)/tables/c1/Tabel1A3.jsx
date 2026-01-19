@@ -667,12 +667,88 @@ export default function Tabel1A3({ role }) {
     }
   }
 
+  // Helper: sort years descending by label string
+  const getSortedYearsDesc = () => {
+    const tahunData = Object.values(maps.tahun || {});
+    return [...tahunData].sort((a, b) => String(b.tahun || b.nama || "").localeCompare(String(a.tahun || a.nama || "")));
+  };
+
+  // Helper: get 5 relative year ids from a base year id (TS..TS-4)
+  const getRelativeYearIdsFromBase = (baseYearId) => {
+    if (!baseYearId) return [];
+    const sorted = getSortedYearsDesc();
+    const idx = sorted.findIndex((y) => String(y.id_tahun) === String(baseYearId));
+    if (idx === -1) return [];
+    const slice = sorted.slice(idx, idx + 5);
+    return slice.map((y) => y.id_tahun);
+  };
+
+  const computeSummaryFromBaseYear = async (baseYearId) => {
+    const yearIds = getRelativeYearIdsFromBase(baseYearId);
+    if (!yearIds.length) return;
+    const [ts, ts1, ts2, ts3, ts4] = yearIds;
+
+    // Fetch data for 5 years
+    const fetches = [ts, ts1, ts2, ts3, ts4].map((id) =>
+      id ? apiFetch(`${ENDPOINT}?id_tahun=${encodeURIComponent(id)}`) : Promise.resolve([])
+    );
+
+    try {
+      const [tsData, ts1Data, ts2Data, ts3Data, ts4Data] = await Promise.all(fetches);
+      const normalize = (d) => (Array.isArray(d) ? d : d?.items || []);
+
+      // Filter non-deleted data
+      const tsRows = normalize(tsData).filter(r => !r.deleted_at);
+      const ts1Rows = normalize(ts1Data).filter(r => !r.deleted_at);
+      const ts2Rows = normalize(ts2Data).filter(r => !r.deleted_at);
+      const ts3Rows = normalize(ts3Data).filter(r => !r.deleted_at);
+      const ts4Rows = normalize(ts4Data).filter(r => !r.deleted_at);
+
+      const jenisToRow = new Map();
+      const addRows = (rowsArr, keyName) => {
+        rowsArr.forEach((r) => {
+          const key = String(r.jenis_penggunaan || "");
+          if (!jenisToRow.has(key)) {
+            jenisToRow.set(key, {
+              jenis_penggunaan: key,
+              ts: 0,
+              ts_minus_1: 0,
+              ts_minus_2: 0,
+              ts_minus_3: 0,
+              ts_minus_4: 0,
+              link_bukti: r.link_bukti || "",
+            });
+          }
+          const agg = jenisToRow.get(key);
+          agg[keyName] = Number(r.jumlah_dana || 0);
+          if (keyName === 'ts' && r.link_bukti) agg.link_bukti = r.link_bukti;
+          else if (!agg.link_bukti && r.link_bukti) agg.link_bukti = r.link_bukti;
+        });
+      };
+
+      addRows(tsRows, "ts");
+      addRows(ts1Rows, "ts_minus_1");
+      addRows(ts2Rows, "ts_minus_2");
+      addRows(ts3Rows, "ts_minus_3");
+      addRows(ts4Rows, "ts_minus_4");
+
+      setSummaryData(Array.from(jenisToRow.values()));
+    } catch (err) {
+      console.error("Error computing summary:", err);
+    }
+  };
+
   async function fetchSummary() {
     try {
-      const data = await apiFetch(`${ENDPOINT}/summary`);
-      setSummaryData(Array.isArray(data) ? data : data?.items || []);
+      if (activeYear) {
+        await computeSummaryFromBaseYear(activeYear);
+      } else {
+        const data = await apiFetch(`${ENDPOINT}/summary`);
+        setSummaryData(Array.isArray(data) ? data : data?.items || []);
+      }
     } catch (e) {
       console.error("Gagal memuat summary:", e);
+      setSummaryData([]);
     }
   }
 

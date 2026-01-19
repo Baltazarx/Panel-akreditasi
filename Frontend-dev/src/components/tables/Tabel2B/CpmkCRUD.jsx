@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import { FiChevronDown, FiBriefcase, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 // ============================================================
@@ -30,6 +30,10 @@ export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 
   // Dropdown state for filter
   const [openProdiFilterDropdown, setOpenProdiFilterDropdown] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
   // Set selectedProdi untuk user prodi
   useEffect(() => {
     if (!isSuperAdmin && userProdiId && !selectedProdi) {
@@ -45,6 +49,16 @@ export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 
   useEffect(() => {
     setOpenProdiFilterDropdown(false);
   }, [selectedProdi]);
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = rows.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedProdi, rows]);
 
   // Close filter dropdown on outside click
   useEffect(() => {
@@ -349,7 +363,7 @@ export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {rows.map((row, idx) => (
+            {currentItems.map((row, idx) => (
               <tr key={row.id_cpmk} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200">{row.id_cpmk}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_cpmk}</td>
@@ -361,6 +375,55 @@ export default function CpmkCRUD({ role, maps, onDataChange, refreshTrigger = 0 
           </tbody>
         </table>
       </div>
-    </div>
+
+      {/* Pagination Controls */}
+      {
+        rows.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Data per halaman:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-slate-600">
+                Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(rows.length / itemsPerPage)}</span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(Math.ceil(rows.length / itemsPerPage), currentPage + 1))}
+                  disabled={currentPage === Math.ceil(rows.length / itemsPerPage)}
+                  className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }

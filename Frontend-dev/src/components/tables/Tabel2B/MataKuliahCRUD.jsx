@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase, FiDownload } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 // ============================================================
@@ -45,6 +45,10 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
     id_unit_prodi: "",
     cpmk: [{ kode_cpmk: "", deskripsi: "" }] // Default 1 baris
   });
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const canCreate = !readOnly && roleCan(role, "mata_kuliah", "C");
   const canUpdate = !readOnly && roleCan(role, "mata_kuliah", "U");
@@ -92,6 +96,16 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
   const filteredRows = selectedProdi
     ? rows.filter(row => String(row.id_unit_prodi) === selectedProdi)
     : rows;
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedProdi, rows]);
 
   const fetchRows = async () => {
     setLoading(true);
@@ -614,7 +628,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {filteredRows.map((row, idx) => (
+            {currentItems.map((row, idx) => (
               <tr key={row.id_mk} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
                 <td className="px-4 py-3 font-semibold text-slate-800 border border-slate-200">{row.id_mk}</td>
                 <td className="px-4 py-3 text-slate-700 border border-slate-200">{row.kode_mk}</td>
@@ -655,6 +669,53 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {filteredRows.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-700 mt-4">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] transition-shadow text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              Halaman <span className="font-semibold text-slate-900">{currentPage}</span> dari <span className="font-semibold text-slate-900">{Math.ceil(filteredRows.length / itemsPerPage)}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman sebelumnya"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(Math.ceil(filteredRows.length / itemsPerPage), currentPage + 1))}
+                disabled={currentPage === Math.ceil(filteredRows.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6]"
+                aria-label="Halaman berikutnya"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
