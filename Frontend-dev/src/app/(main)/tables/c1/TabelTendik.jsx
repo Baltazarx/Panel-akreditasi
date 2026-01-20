@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser, FiBriefcase } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiUser, FiBriefcase, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 export default function TabelTendik({ role }) {
   const table = { key: "tenaga_kependidikan", label: "Manajemen Data Tenaga Kependidikan", path: "/tendik" };
@@ -18,6 +18,10 @@ export default function TabelTendik({ role }) {
   const [editing, setEditing] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const { maps, refreshMaps } = useMaps(true);
   const [formState, setFormState] = useState({});
 
@@ -384,6 +388,17 @@ export default function TabelTendik({ role }) {
     }
   };
 
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showDeleted]);
+
+  // Filter and pagination logic
+  const filteredRows = rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
   // Render component
   // Show loading only on initial load
   if (initialLoading && loading) {
@@ -427,7 +442,7 @@ export default function TabelTendik({ role }) {
           {!loading && (
             <span className="inline-flex items-center text-sm text-slate-700">
               Total Data: <span className="ml-1 text-[#0384d6] font-bold text-base">
-                {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length}
+                {filteredRows.length}
               </span>
             </span>
           )}
@@ -488,73 +503,71 @@ export default function TabelTendik({ role }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-              {rows
-                .filter(row => showDeleted ? row.deleted_at : !row.deleted_at)
-                .map((row, index) => {
-                  const idField = getIdField(row);
-                  const rowId = row[idField];
-                  return (
-                    <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${rowId || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                      <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{index + 1}.</td>
-                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
-                      <td className="px-6 py-4 text-slate-700 border border-slate-200">
-                        {row.units && row.units.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5 justify-start">
-                            {row.units.map((unit, idx) => (
-                              <span
-                                key={`${row.id_tendik}-unit-${idx}`}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium"
-                              >
-                                <FiBriefcase size={12} />
-                                {unit.nama_unit}
-                                {unit.is_primary === 1 && <span className="text-yellow-600 ml-0.5" title="Unit Utama">★</span>}
-                              </span>
-                            ))}
-                          </div>
-                        ) : row.nama_unit ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium">
-                            <FiBriefcase size={12} />
-                            {row.nama_unit}
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-600 border border-slate-200">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                          {row.pendidikan_terakhir || '-'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jenis_tendik || '-'}</td>
-                      <td className="px-6 py-4 text-center border border-slate-200">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex items-center justify-center dropdown-container">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (openDropdownId !== rowId) {
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const dropdownWidth = 192;
-                                  setDropdownPosition({
-                                    top: rect.bottom + 4,
-                                    left: Math.max(8, rect.right - dropdownWidth)
-                                  });
-                                  setOpenDropdownId(rowId);
-                                } else {
-                                  setOpenDropdownId(null);
-                                }
-                              }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                              aria-label="Menu aksi"
-                              aria-expanded={openDropdownId === rowId}
+              {currentItems.map((row, index) => {
+                const idField = getIdField(row);
+                const rowId = row[idField];
+                return (
+                  <tr key={`${showDeleted ? 'deleted' : 'active'}-tendik-${rowId || index}`} className={`transition-all duration-200 ease-in-out ${index % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                    <td className="px-6 py-4 font-semibold text-slate-800 text-center border border-slate-200">{(currentPage - 1) * itemsPerPage + index + 1}.</td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.nama_lengkap || '-'}</td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200">
+                      {row.units && row.units.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5 justify-start">
+                          {row.units.map((unit, idx) => (
+                            <span
+                              key={`${row.id_tendik}-unit-${idx}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium"
                             >
-                              <FiMoreVertical size={18} />
-                            </button>
-                          </div>
+                              <FiBriefcase size={12} />
+                              {unit.nama_unit}
+                              {unit.is_primary === 1 && <span className="text-yellow-600 ml-0.5" title="Unit Utama">★</span>}
+                            </span>
+                          ))}
                         </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              {rows.filter(row => showDeleted ? row.deleted_at : !row.deleted_at).length === 0 && (
+                      ) : row.nama_unit ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf4ff] border border-[#0384d6]/30 text-[#043975] rounded-md text-xs font-medium">
+                          <FiBriefcase size={12} />
+                          {row.nama_unit}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 border border-slate-200">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                        {row.pendidikan_terakhir || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 border border-slate-200">{row.jenis_tendik || '-'}</td>
+                    <td className="px-6 py-4 text-center border border-slate-200">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center dropdown-container">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openDropdownId !== rowId) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const dropdownWidth = 192;
+                                setDropdownPosition({
+                                  top: rect.bottom + 4,
+                                  left: Math.max(8, rect.right - dropdownWidth)
+                                });
+                                setOpenDropdownId(rowId);
+                              } else {
+                                setOpenDropdownId(null);
+                              }
+                            }}
+                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                            aria-label="Menu aksi"
+                            aria-expanded={openDropdownId === rowId}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {filteredRows.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
                     <p className="font-medium">Data tidak ditemukan</p>
@@ -570,6 +583,66 @@ export default function TabelTendik({ role }) {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && filteredRows.length > 0 && (() => {
+        const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+
+        return (
+          <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-600">Baris per halaman:</span>
+              <div className="relative">
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none pl-4 pr-10 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 font-medium hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:border-[#0384d6] transition-all cursor-pointer shadow-sm"
+                  aria-label="Pilih jumlah baris per halaman"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                  <FiChevronDown size={14} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-slate-600 font-medium">
+                Halaman <span className="text-slate-900 font-bold">{currentPage}</span> dari <span className="text-slate-900 font-bold">{totalPages}</span>
+                <span className="mx-2 text-slate-300">|</span>
+                Total <span className="text-slate-900 font-bold">{filteredRows.length}</span> data
+              </span>
+
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
