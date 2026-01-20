@@ -6,7 +6,7 @@ import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus, FiChevronDown, FiCalendar, FiUser, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiDownload, FiPlus, FiChevronDown, FiCalendar, FiUser, FiShield, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const ENDPOINT = "/tabel-4a2-pkm";
 const TABLE_KEY = "tabel_4a2_pkm";
@@ -344,8 +344,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                   setOpenTahunPendanaanDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen_ketua
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih dosen"
               >
@@ -384,8 +384,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                           setOpenDosenDropdown(false);
                         }}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen_ketua === d.id_dosen.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
                           }`}
                       >
                         <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -478,8 +478,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                   setOpenTahunPendanaanDropdown(false);
                 }}
                 className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.sumber_dana
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-[#0384d6] bg-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
                   }`}
                 aria-label="Pilih sumber dana"
               >
@@ -512,8 +512,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                       setOpenSumberDropdown(false);
                     }}
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!form.sumber_dana
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
                       }`}
                   >
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -526,8 +526,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                       setOpenSumberDropdown(false);
                     }}
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber_dana === "L"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
                       }`}
                   >
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -540,8 +540,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                       setOpenSumberDropdown(false);
                     }}
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber_dana === "N"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
                       }`}
                   >
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -554,8 +554,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                       setOpenSumberDropdown(false);
                     }}
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.sumber_dana === "I"
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
+                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                      : 'text-gray-700'
                       }`}
                   >
                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -588,8 +588,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         setOpenSumberDropdown(false);
                       }}
                       className={`w-full px-3 py-2 border rounded-lg text-black text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahunPendanaan
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
+                        ? 'border-[#0384d6] bg-white'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
                         }`}
                       aria-label="Pilih tahun"
                     >
@@ -629,8 +629,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                                 setOpenTahunPendanaanDropdown(false);
                               }}
                               className={`w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors text-sm ${selectedTahunPendanaan === t.id_tahun.toString()
-                                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                  : 'text-gray-700'
+                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                : 'text-gray-700'
                                 }`}
                             >
                               <FiCalendar className="text-[#0384d6] flex-shrink-0" size={12} />
@@ -755,6 +755,10 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
   const [tahunList, setTahunList] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
   const [linkRoadmap, setLinkRoadmap] = useState("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -1075,6 +1079,16 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
     return rows.filter(r => r.deleted_at === null || r.deleted_at === undefined);
   }, [rows, showDeleted]);
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedTahun, showDeleted]);
+
   // Calculate summary (hanya dari data yang tidak dihapus)
   const summary = useMemo(() => {
     // Selalu hitung dari data yang tidak dihapus, bukan dari filteredRows
@@ -1128,8 +1142,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                 setOpenTahunFilterDropdown(!openTahunFilterDropdown);
               }}
               className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
-                  ? 'border-[#0384d6] bg-white text-black'
-                  : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                ? 'border-[#0384d6] bg-white text-black'
+                : 'border-gray-300 bg-white text-black hover:border-gray-400'
                 }`}
               aria-label="Pilih tahun"
             >
@@ -1165,8 +1179,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                         setOpenTahunFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === y.id_tahun
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1187,8 +1201,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
               onClick={() => setShowDeleted(false)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data aktif"
             >
@@ -1198,8 +1212,8 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
               onClick={() => setShowDeleted(true)}
               disabled={loading}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                  ? "bg-white text-[#0384d6] shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-[#0384d6] shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
                 } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               aria-label="Tampilkan data terhapus"
             >
@@ -1337,7 +1351,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
               </tr>
             ) : (
               <>
-                {filteredRows.map((r, i) => {
+                {currentItems.map((r, i) => {
                   const rowId = getIdField(r) ? r[getIdField(r)] : r.id || i;
                   const isDeleted = r.deleted_at;
 
@@ -1352,7 +1366,7 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       key={rowId}
                       className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff] ${isDeleted ? "opacity-60" : ""}`}
                     >
-                      <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{i + 1}</td>
+                      <td className="px-6 py-4 text-center border border-slate-200 font-medium text-slate-800">{(currentPage - 1) * itemsPerPage + i + 1}</td>
                       <td className="px-6 py-4 border border-slate-200 text-slate-700">{r.nama_dtpr || "-"}</td>
                       <td className="px-6 py-4 border border-slate-200 text-slate-700 max-w-xs">
                         <div className="truncate" title={r.judul_pkm || ""}>
@@ -1481,6 +1495,66 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && filteredRows.length > 0 && (() => {
+        const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+
+        return (
+          <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-600">Baris per halaman:</span>
+              <div className="relative">
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none pl-4 pr-10 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 font-medium hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0384d6]/20 focus:border-[#0384d6] transition-all cursor-pointer shadow-sm"
+                  aria-label="Pilih jumlah baris per halaman"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                  <FiChevronDown size={14} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-slate-600 font-medium">
+                Halaman <span className="text-slate-900 font-bold">{currentPage}</span> dari <span className="text-slate-900 font-bold">{totalPages}</span>
+                <span className="mx-2 text-slate-300">|</span>
+                Total <span className="text-slate-900 font-bold">{filteredRows.length}</span> data
+              </span>
+
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <FiChevronLeft size={18} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-md bg-white text-slate-600 shadow-sm border border-slate-200 hover:bg-slate-50 hover:text-[#0384d6] hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 active:scale-95"
+                  aria-label="Halaman berikutnya"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Dropdown Menu - Fixed Position */}
       {openDropdownId !== null && (() => {
