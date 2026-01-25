@@ -746,10 +746,10 @@ function DataTable({
                   onEdit(currentRow);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] flex items-center gap-2"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
               >
-                <FiEdit2 className="w-4 h-4 text-[#0384d6]" />
-                Edit
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
               </button>
             )}
             {canDelete && !currentRow.deleted_at && (
@@ -759,10 +759,10 @@ function DataTable({
                   onDelete(currentRow.id);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
               >
-                <FiTrash2 className="w-4 h-4" />
-                Hapus
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Hapus</span>
               </button>
             )}
             {currentRow.deleted_at && (
@@ -773,10 +773,10 @@ function DataTable({
                     onRestore(currentRow.id);
                     setOpenDropdownId(null);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
                 >
-                  <FiRotateCw className="w-4 h-4" />
-                  Restore
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -784,10 +784,10 @@ function DataTable({
                     onHardDelete(currentRow.id);
                     setOpenDropdownId(null);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
                 >
-                  <FiXCircle className="w-4 h-4" />
-                  Hard Delete
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
                 </button>
               </>
             )}
@@ -867,31 +867,33 @@ export default function Tabel3C2({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  // Helper function untuk sorting data berdasarkan terbaru
+  // Helper function untuk sorting data berdasarkan Nama DTPR (A-Z)
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
-      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      // 1. Prioritaskan Nama DTPR (A-Z) sesuai request terbaru
+      const namaA = (a.nama_dtpr || "").toLowerCase();
+      const namaB = (b.nama_dtpr || "").toLowerCase();
+      if (namaA !== namaB) {
+        return namaA.localeCompare(namaB);
+      }
+
+      // 2. Jika nama sama, urutkan berdasarkan Tahun Terbit (TS) terbaru
+      const tahunA = parseInt(a.id_tahun_terbit) || 0;
+      const tahunB = parseInt(b.id_tahun_terbit) || 0;
+      if (tahunA !== tahunB) {
+        return tahunB - tahunA;
+      }
+
+      // 3. Fallback ke created_at terbaru
       if (a.created_at && b.created_at) {
         const dateA = new Date(a.created_at);
         const dateB = new Date(b.created_at);
         if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+          return dateB.getTime() - dateA.getTime();
         }
       }
 
-      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
-      if (a.updated_at && b.updated_at) {
-        const dateA = new Date(a.updated_at);
-        const dateB = new Date(b.updated_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Fallback ke ID terbesar jika tidak ada timestamp
-      const idFieldA = getIdField(a);
-      const idFieldB = getIdField(b);
-      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
+      return 0;
     });
   };
 

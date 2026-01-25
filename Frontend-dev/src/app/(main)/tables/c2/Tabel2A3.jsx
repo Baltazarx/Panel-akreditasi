@@ -66,33 +66,56 @@ function KondisiMahasiswaForm({ initialData, onSubmit, onClose }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Jumlah Lulus pada saat TS
-        </label>
-        <input
-          type="number"
-          name="jml_lulus"
-          value={formData.jml_lulus}
-          onChange={handleChange}
-          placeholder="Masukkan jumlah"
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-1">
+            Mhs Baru (Referensi 2.A.1)
+          </label>
+          <div className="px-4 py-3 bg-white/80 border border-blue-200 rounded-lg text-slate-800 font-semibold shadow-sm">
+            {formData.jml_baru}
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">Total maba dari Jalur Reguler + RPL</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-1">
+            Mhs Aktif (Referensi 2.A.1)
+          </label>
+          <div className="px-4 py-3 bg-white/80 border border-blue-200 rounded-lg text-slate-800 font-semibold shadow-sm">
+            {formData.jml_aktif}
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">Total mhs aktif pada tahun TS</p>
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Jumlah Mengundurkan Diri/DO pada saat TS
-        </label>
-        <input
-          type="number"
-          name="jml_do"
-          value={formData.jml_do}
-          onChange={handleChange}
-          placeholder="Masukkan jumlah"
-          required
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
-        />
+
+      <div className="space-y-4 pt-2">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Jumlah Lulus pada saat TS
+          </label>
+          <input
+            type="number"
+            name="jml_lulus"
+            value={formData.jml_lulus}
+            onChange={handleChange}
+            placeholder="Masukkan jumlah"
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            Jumlah Mengundurkan Diri/DO pada saat TS
+          </label>
+          <input
+            type="number"
+            name="jml_do"
+            value={formData.jml_do}
+            onChange={handleChange}
+            placeholder="Masukkan jumlah"
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] text-black"
+          />
+        </div>
       </div>
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
         <button
@@ -259,16 +282,25 @@ export default function Tabel2A3() {
     const record = searchData.find(d => d.id_tahun === selectedTahun);
     if (!record) return null;
 
-    // Jika ada jml_lulus atau jml_do, berarti data sudah ada di tabel_2a3
-    const hasData = (record.jml_lulus && record.jml_lulus > 0) || (record.jml_do && record.jml_do > 0);
-
-    return hasData ? {
+    // Gunakan record ID sebagai penanda apakah data sudah ada di 2A3
+    // Record dari join backend akan punya ID jika ada baris di tabel_2a3
+    return record.id ? {
       id: record.id,
       id_tahun: selectedTahun,
       id_unit_prodi: record.id_unit_prodi,
+      jml_baru: record.jml_baru || 0,
+      jml_aktif: record.jml_aktif || 0,
       jml_lulus: record.jml_lulus || 0,
       jml_do: record.jml_do || 0,
-    } : null;
+    } : {
+      // Jika belum ada ID, tetap siapkan info referensi dari 2A1 (jml_baru/jml_aktif)
+      id_tahun: selectedTahun,
+      id_unit_prodi: record.id_unit_prodi || authUser.unit,
+      jml_baru: record.jml_baru || 0,
+      jml_aktif: record.jml_aktif || 0,
+      jml_lulus: 0,
+      jml_do: 0,
+    };
   }, [mahasiswaConditions, selectedTahun, authUser?.unit, authUser?.role]);
 
   const handleOpenAddModal = () => {
@@ -299,7 +331,16 @@ export default function Tabel2A3() {
     }
 
     setModalMode('add');
-    setEditingData({ id_tahun: selectedTahun, id_unit_prodi: authUser.unit, jml_lulus: 0, jml_do: 0 });
+    // Bawa data referensi 2A1 jika ada
+    const refData = currentYearLulusDoData || { jml_baru: 0, jml_aktif: 0 };
+    setEditingData({
+      id_tahun: selectedTahun,
+      id_unit_prodi: authUser.unit,
+      jml_baru: refData.jml_baru,
+      jml_aktif: refData.jml_aktif,
+      jml_lulus: 0,
+      jml_do: 0
+    });
     setIsModalOpen(true);
   };
 
@@ -653,8 +694,8 @@ export default function Tabel2A3() {
               }}
               disabled={loading}
               className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
-                  ? 'border-[#0384d6] bg-white text-black'
-                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                ? 'border-[#0384d6] bg-white text-black'
+                : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                 } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Pilih tahun"
             >
@@ -690,8 +731,8 @@ export default function Tabel2A3() {
                         setOpenYearFilterDropdown(false);
                       }}
                       className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === Number(tahun.id_tahun)
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
+                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                        : 'text-gray-700'
                         }`}
                     >
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -718,14 +759,14 @@ export default function Tabel2A3() {
             <FiDownload size={18} />
             <span>Export Excel</span>
           </button>
-          {currentYearLulusDoData ? (
+          {currentYearLulusDoData?.id ? (
             <>
               <button
                 onClick={handleOpenEditModal}
                 disabled={loading}
                 className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Edit Data
+                Edit Isian Lulus/DO
               </button>
               <button
                 onClick={handleHapus}
@@ -781,7 +822,7 @@ export default function Tabel2A3() {
           >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h2 className="text-xl font-bold">
-                {modalMode === 'add' ? 'Tambah' : 'Edit'} Data Lulus & DO untuk Tahun {selectedTahun}
+                {modalMode === 'add' ? 'Tambah' : 'Edit'} Data Lulus & DO (Ref. 2.A.1, Tahun {selectedTahun})
               </h2>
               <p className="text-white/80 mt-1 text-sm">
                 Lengkapi data jumlah mahasiswa lulus dan mengundurkan diri.

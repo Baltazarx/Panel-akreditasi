@@ -11,7 +11,8 @@ import {
     softDeleteTabel4a2Pkm,
     restoreTabel4a2Pkm,
     hardDeleteTabel4a2Pkm,
-    exportTabel4a2Pkm
+    exportTabel4a2Pkm,
+    updateRoadmapGlobal
 } from '../controllers/tabel4a2Pkm.controller.js';
 
 const router = express.Router();
@@ -38,5 +39,6 @@ router.put('/:id', requireAuth, permit(resourceKey, 'U'), updateTabel4a2Pkm);
 router.delete('/:id', requireAuth, permit(resourceKey, 'D'), softDeleteTabel4a2Pkm);
 router.post('/:id/restore', requireAuth, permit(resourceKey, 'U'), restoreTabel4a2Pkm);
 router.delete('/:id/hard', requireAuth, permit(resourceKey, 'H'), hardDeleteTabel4a2Pkm);
+router.post('/roadmap-global', requireAuth, permit(resourceKey, 'U'), updateRoadmapGlobal);
 
 export default router;

@@ -159,10 +159,6 @@ export default function Pemetaan2B2({ role, refreshTrigger, onDataChange, maps }
       targetProdiId = selectedProdi;
     }
 
-    // Map ID frontend ke backend - HAPUS MAPPING INI KARENA ID 6&7 SUDAH BENAR DI DB
-    // let saveId = String(targetProdiId);
-    // if (saveId === '6') saveId = '4';
-    // else if (saveId === '7') saveId = '5';
     let saveId = String(targetProdiId);
 
     // Query parameter untuk filter

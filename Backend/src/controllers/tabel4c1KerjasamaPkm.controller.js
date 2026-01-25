@@ -149,6 +149,11 @@ export const listTabel4c1KerjasamaPkm = async (req, res) => {
       LEFT JOIN tabel_4c1_pendanaan_pkm p ON k.id = p.id_kerjasama_pkm
       LEFT JOIN tahun_akademik t ON p.id_tahun = t.id_tahun
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      AND EXISTS (
+        SELECT 1 FROM tabel_4c1_pendanaan_pkm p2 
+        WHERE p2.id_kerjasama_pkm = k.id 
+        AND p2.id_tahun IN (${tahunIds.id_ts4}, ${tahunIds.id_ts3}, ${tahunIds.id_ts2}, ${tahunIds.id_ts1}, ${tahunIds.id_ts})
+      )
       GROUP BY 
         k.id, k.id_unit, uk.nama_unit, k.judul_kerjasama, 
         k.mitra_kerja_sama, k.sumber, k.durasi_tahun, k.link_bukti, k.deleted_at
@@ -519,6 +524,11 @@ export const exportTabel4c1KerjasamaPkm = async (req, res) => {
           LEFT JOIN tabel_4c1_pendanaan_pkm p ON k.id = p.id_kerjasama_pkm
           LEFT JOIN tahun_akademik t ON p.id_tahun = t.id_tahun
           ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+          AND EXISTS (
+            SELECT 1 FROM tabel_4c1_pendanaan_pkm p2 
+            WHERE p2.id_kerjasama_pkm = k.id 
+            AND p2.id_tahun IN (${tahunIds.id_ts4}, ${tahunIds.id_ts3}, ${tahunIds.id_ts2}, ${tahunIds.id_ts1}, ${tahunIds.id_ts})
+          )
           GROUP BY 
             k.id, k.id_unit, uk.nama_unit, k.judul_kerjasama, 
             k.mitra_kerja_sama, k.sumber, k.durasi_tahun, k.link_bukti, k.deleted_at

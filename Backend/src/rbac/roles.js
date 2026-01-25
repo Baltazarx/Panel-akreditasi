@@ -29,6 +29,7 @@ export const AccessMatrix = {
     'isi_pembelajaran': { C: true, R: true, U: true, D: true },
     'beban_kerja_dosen': { C: true, R: true, U: true, D: true },
     'mahasiswa_kondisi': { C: true, R: true, U: true, D: true },
+    'tabel_2c_fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'fleksibilitas_pembelajaran': { C: true, R: true, U: true, D: true },
     'bentuk_pembelajaran_master': { C: true, R: true, U: true, D: true },
     'sumber_rekognisi_master': { C: true, R: true, U: true, D: true },
@@ -123,6 +124,9 @@ export const AccessMatrix = {
     'tabel_2b4_masa_tunggu': { C: true, R: true, U: true, D: true },
     'tabel_2b5_kesesuaian_kerja': { C: true, R: true, U: true, D: true },
     'tabel_2b6_kepuasan_pengguna': { C: true, R: true, U: true, D: true },
+    // Tabel 2.D
+    'tabel_2d_rekognisi_lulusan': { C: true, R: true, U: true, D: true },
+    'tabel_2d_sumber_rekognisi': { C: true, R: true, U: true, D: true },
     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
     'unit_kerja': { R: true },
     'pegawai': { R: true },

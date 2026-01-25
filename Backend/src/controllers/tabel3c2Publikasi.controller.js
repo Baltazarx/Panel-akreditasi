@@ -147,10 +147,11 @@ export const listTabel3c2Publikasi = async (req, res) => {
       }
     }
 
+
     const customOrder = req.query?.order_by;
     const orderBy = customOrder
       ? buildOrderBy(customOrder, 'nama_dtpr', 'pg')
-      : 'pg.nama_lengkap ASC, p.id_tahun_terbit DESC'; // Order by nama, lalu tahun terbaru
+      : 'pg.nama_lengkap ASC, p.id_tahun_terbit DESC'; // Kembali ke order by nama (A-Z), lalu tahun terbaru
 
     // 1. Ambil ts_id dari query parameter
     const { ts_id } = req.query;
@@ -178,6 +179,8 @@ export const listTabel3c2Publikasi = async (req, res) => {
         p.jenis_publikasi,
         p.id_unit,
         uk.nama_unit,
+        p.id_tahun_terbit, -- [FIX] Tambah id_tahun_terbit untuk modal edit
+        p.deleted_at, -- [FIX] Tambah deleted_at agar frontend bisa filter tab 'Data Terhapus'
         p.link_bukti,
         
         -- [FIX] Panggil helper PIVOT Checkmark (5 tahun)

@@ -155,10 +155,7 @@ export default function PemetaanCpmkCpl({ role, refreshTrigger, onDataChange, ma
       targetProdiId = selectedProdi;
     }
 
-    // Map ID frontend (6/7) ke backend (4/5) untuk save
     let saveId = String(targetProdiId);
-    if (saveId === '6') saveId = '4';
-    else if (saveId === '7') saveId = '5';
 
     // Query parameter untuk filter (opsional, untuk konsistensi dengan fetch)
     const queryParams = new URLSearchParams();

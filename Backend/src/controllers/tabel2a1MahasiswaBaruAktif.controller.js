@@ -60,19 +60,36 @@ export const getMahasiswaBaruAktifById = async (req, res) => {
 
 export const createMahasiswaBaruAktif = async (req, res) => {
   try {
+    const { id_unit_prodi, id_tahun, jenis, jalur, jumlah_total, jumlah_afirmasi, jumlah_kebutuhan_khusus } = req.body;
+
+    // [FIX] Validasi duplikasi: Cek apakah sudah ada data dengan kombinasi tahun + jenis + jalur yang sama
+    const [existing] = await pool.query(
+      `SELECT id FROM tabel_2a1_mahasiswa_baru_aktif 
+       WHERE id_tahun = ? AND jenis = ? AND jalur = ? AND deleted_at IS NULL`,
+      [id_tahun, jenis, jalur]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        error: `Data untuk tahun ${id_tahun}, jenis "${jenis}", jalur "${jalur}" sudah ada. Silakan edit data yang sudah ada.`,
+        existingId: existing[0].id
+      });
+    }
+
     const data = {
-      id_unit_prodi: req.body.id_unit_prodi,
-      id_tahun: req.body.id_tahun,
-      jenis: req.body.jenis, // baru | aktif
-      jalur: req.body.jalur, // reguler | rpl
-      jumlah_total: req.body.jumlah_total || 0,
-      jumlah_afirmasi: req.body.jumlah_afirmasi || 0,
-      jumlah_kebutuhan_khusus: req.body.jumlah_kebutuhan_khusus || 0
+      id_unit_prodi,
+      id_tahun,
+      jenis, // baru | aktif
+      jalur, // reguler | rpl
+      jumlah_total: jumlah_total || 0,
+      jumlah_afirmasi: jumlah_afirmasi || 0,
+      jumlah_kebutuhan_khusus: jumlah_kebutuhan_khusus || 0
     };
     const [r] = await pool.query(`INSERT INTO tabel_2a1_mahasiswa_baru_aktif SET ?`, [data]);
     const [row] = await pool.query(`SELECT * FROM tabel_2a1_mahasiswa_baru_aktif WHERE id=?`, [r.insertId]);
     res.status(201).json(row[0]);
   } catch (err) {
+    console.error('Create MahasiswaBaruAktif error:', err);
     res.status(500).json({ error: "Create failed" });
   }
 };
@@ -143,5 +160,18 @@ export const hardDeleteMahasiswaBaruAktif = async (req, res) => {
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
     res.status(500).json({ error: "Hard delete failed" });
+  }
+};
+export const hardDeleteMultipleMahasiswaBaruAktif = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty array of IDs' });
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(`DELETE FROM tabel_2a1_mahasiswa_baru_aktif WHERE id IN (${placeholders})`, ids);
+    res.json({ ok: true, hardDeleted: true, count: ids.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Hard delete multiple failed' });
   }
 };

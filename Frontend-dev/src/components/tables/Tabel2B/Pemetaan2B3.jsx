@@ -203,13 +203,19 @@ export default function Pemetaan2B3({ role, refreshTrigger, maps }) {
   };
 
   useEffect(() => {
-    // Hanya fetch jika:
-    // - User prodi dan userProdiId sudah ada, ATAU
-    // - Superadmin (bisa fetch tanpa filter atau dengan filter)
-    if ((!isSuperAdmin && userProdiId) || isSuperAdmin) {
+    if (canRead) {
+      if ((!isSuperAdmin && userProdiId) || isSuperAdmin) {
+        fetchData();
+      }
+    }
+  }, [canRead, selectedProdi, isSuperAdmin, userProdiId]);
+
+  // Handle refresh from other components
+  useEffect(() => {
+    if (refreshTrigger > 0 && canRead) {
       fetchData();
     }
-  }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]);
+  }, [refreshTrigger]);
 
   if (!canRead) {
     return (

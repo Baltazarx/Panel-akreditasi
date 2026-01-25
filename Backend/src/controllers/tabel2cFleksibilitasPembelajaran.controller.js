@@ -69,11 +69,11 @@ export const createOrUpdateFleksibilitas = async (req, res) => {
 
     // Determine id_unit_prodi: dari body untuk superadmin, atau dari user untuk prodi
     const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(req.user?.role?.toLowerCase());
-    let id_unit_prodi = body_id_unit_prodi || req.user?.id_unit_prodi;
+    let id_unit_prodi = body_id_unit_prodi || req.user?.id_unit;
 
     // Jika bukan superadmin dan tidak ada id_unit_prodi, gunakan dari user (jika role prodi)
     if (!isSuperAdmin && !id_unit_prodi && req.user?.role === 'prodi') {
-      id_unit_prodi = req.user.id_unit_prodi;
+      id_unit_prodi = req.user.id_unit;
     }
 
     if (!id_unit_prodi) {
@@ -82,9 +82,9 @@ export const createOrUpdateFleksibilitas = async (req, res) => {
     if (!id_tahun) {
       return res.status(400).json({ error: 'Tahun Akademik wajib diisi.' });
     }
-
+    // [FIX] Cek data existing yang belum di-soft delete
     const [existing] = await conn.query(
-      'SELECT id FROM fleksibilitas_pembelajaran_tahunan WHERE id_unit_prodi = ? AND id_tahun = ?',
+      'SELECT id FROM fleksibilitas_pembelajaran_tahunan WHERE id_unit_prodi = ? AND id_tahun = ? AND deleted_at IS NULL',
       [id_unit_prodi, id_tahun]
     );
 

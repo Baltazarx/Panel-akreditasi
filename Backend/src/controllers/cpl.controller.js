@@ -55,7 +55,7 @@ export const createCpl = async (req, res) => {
     const { id_unit_prodi, kode_cpl, deskripsi } = req.body;
 
     if (!kode_cpl || !deskripsi) {
-      return res.status(400).json({ error: 'Field `kode_cpl` dan `deskripsi` wajib diisi.'});
+      return res.status(400).json({ error: 'Field `kode_cpl` dan `deskripsi` wajib diisi.' });
     }
 
     const data = {
@@ -67,11 +67,11 @@ export const createCpl = async (req, res) => {
 
     // multi-prodi aware
     if (!data.id_unit_prodi && req.user?.role === 'prodi') {
-      data.id_unit_prodi = req.user.id_unit_prodi;
+      data.id_unit_prodi = req.user.id_unit;
     }
 
     if (!data.id_unit_prodi) {
-        return res.status(400).json({ error: 'Field `id_unit_prodi` wajib diisi.'});
+      return res.status(400).json({ error: 'Field `id_unit_prodi` wajib diisi.' });
     }
 
     if (await hasColumn('cpl', 'created_by') && req.user?.id_user) {
@@ -111,7 +111,7 @@ export const updateCpl = async (req, res) => {
     Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     if (Object.keys(data).length === 0) {
-        return res.status(400).json({ error: 'Tidak ada data untuk diupdate.'});
+      return res.status(400).json({ error: 'Tidak ada data untuk diupdate.' });
     }
 
     if (await hasColumn('cpl', 'updated_by') && req.user?.id_user) {
@@ -160,13 +160,28 @@ export const restoreCpl = async (req, res) => {
   }
 };
 
-// === HARD DELETE ===
+// === HARD DELETE (hapus juga mapping) ===
 export const hardDeleteCpl = async (req, res) => {
+  const conn = await pool.getConnection();
   try {
-    await pool.query(`DELETE FROM cpl WHERE id_cpl=?`, [req.params.id]);
+    await conn.beginTransaction();
+
+    // 1. Hapus mapping CPL ke Profil Lulusan (2B.2)
+    await conn.query(`DELETE FROM map_cpl_pl WHERE id_cpl=?`, [req.params.id]);
+
+    // 2. Hapus mapping CPMK ke CPL (Pemetaan)
+    await conn.query(`DELETE FROM map_cpmk_cpl WHERE id_cpl=?`, [req.params.id]);
+
+    // 3. Hapus CPL
+    await conn.query(`DELETE FROM cpl WHERE id_cpl=?`, [req.params.id]);
+
+    await conn.commit();
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
+    await conn.rollback();
     console.error("Error hardDeleteCpl:", err);
-    res.status(500).json({ error: 'Hard delete failed' });
+    res.status(500).json({ error: 'Hard delete failed', details: err.sqlMessage || err.message });
+  } finally {
+    conn.release();
   }
 };

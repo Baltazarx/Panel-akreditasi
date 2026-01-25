@@ -605,6 +605,16 @@ export default function Tabel2C({ role }) {
       return;
     }
 
+    // [FIX] Validasi duplikasi di frontend
+    if (!isEditMode && dataByYear[editingYear]?.hasData) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Sudah Ada',
+        text: `Data untuk tahun ${getTahunName(editingYear)} sudah ada. Silakan edit data yang sudah ada.`
+      });
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -1203,7 +1213,7 @@ export default function Tabel2C({ role }) {
             <FiDownload size={18} />
             <span>Export Excel</span>
           </button>
-          {canCreate && canManageData && !showDeleted && (
+          {canCreate && canManageData && !showDeleted && !dataByYear[selectedYear || yearOrder[4]]?.hasData && (
             <button
               onClick={() => handleOpenModal()}
               disabled={loading}

@@ -138,6 +138,7 @@ export const listTabel4c3HkiPkm = async (req, res) => {
         h.id_unit,
         uk.nama_unit,
         h.link_bukti,
+        h.id_tahun_perolehan, -- [FIX] Tambahkan id_tahun_perolehan untuk mode edit
         h.deleted_at, -- [FIX] Tambahkan deleted_at untuk frontend filtering
         
         -- Panggil helper PIVOT Checkmark (5 tahun)

@@ -118,7 +118,7 @@ export const updateCpmk = async (req, res) => {
     };
 
     if (!data.id_unit_prodi && req.user?.role === 'prodi') {
-      data.id_unit_prodi = req.user.id_unit_prodi;
+      data.id_unit_prodi = req.user.id_unit;
     }
 
     if (await hasColumn('cpmk', 'updated_by') && req.user?.id_user) {

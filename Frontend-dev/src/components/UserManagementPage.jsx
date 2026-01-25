@@ -69,7 +69,7 @@ export default function UserManagementPage() {
     password: "",
     id_unit: "",
     id_pegawai: "",
-    role: "PRODI",
+    role: "",
   });
 
   // Ambil data users
@@ -293,7 +293,7 @@ export default function UserManagementPage() {
       password: "", // Tidak digunakan lagi, tapi tetap di state untuk kompatibilitas
       id_unit: "",
       id_pegawai: "",
-      role: "PRODI",
+      role: "",
     });
     setEditMode(false);
   };
@@ -307,7 +307,7 @@ export default function UserManagementPage() {
       password: "", // Tidak digunakan lagi, tapi tetap di state untuk kompatibilitas
       id_unit: user.id_unit || "",
       id_pegawai: user.id_pegawai || "",
-      role: user.role || "PRODI",
+      role: user.role || "",
     });
     setEditMode(true);
     setShowForm(true);
@@ -833,10 +833,7 @@ export default function UserManagementPage() {
                       Anda dapat membuat akun terpisah untuk setiap unit dengan username yang berbeda.
                       Setiap akun akan memiliki role sesuai dengan unit kerjanya.
                     </p>
-                    <p className="text-xs text-blue-600 mt-1.5">
-                      <strong>Contoh:</strong> <code className="bg-blue-100 px-1.5 py-0.5 rounded">rachman.tpm</code>,
-                      <code className="bg-blue-100 px-1.5 py-0.5 rounded ml-1">rachman.ketua</code>
-                    </p>
+
                   </div>
                 </div>
 

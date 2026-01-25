@@ -2,11 +2,13 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { apiFetch, getIdField } from "../../../../lib/api";
 import { roleCan } from "../../../../lib/role";
 import { useMaps } from "../../../../hooks/useMaps";
+import { useAuth } from "../../../../context/AuthContext";
 import Swal from 'sweetalert2';
 import { FiEdit2, FiTrash2, FiRotateCw, FiXCircle, FiMoreVertical, FiChevronDown, FiCalendar, FiBriefcase, FiUser, FiShield, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 export default function Tabel2A1({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
+  const { authUser } = useAuth();
   const tablePend = { key: "tabel_2a1_pendaftaran", label: "2.A.1 Pendaftaran", path: "/tabel2a1-pendaftaran" };
   const tableMaba = { key: "tabel_2a1_mahasiswa_baru_aktif", label: "2.A.1 Mahasiswa Baru & Aktif", path: "/tabel2a1-mahasiswa-baru-aktif" };
 
@@ -536,6 +538,57 @@ export default function Tabel2A1({ role }) {
 
     return [...result, jumlah];
   }, [selectedYear, rowsPend, rowsMaba, maps?.tahun]);
+
+  // Helper untuk mendapatkan batasan pendaftaran & sisa kuota untuk Mahasiswa Baru
+  const mabaQuotaInfo = useMemo(() => {
+    if (!showModalMaba) return null;
+
+    const unitId = editingMaba ? Number(formMaba.id_unit_prodi) : Number(authUser?.id_unit_prodi || 8);
+    const tahunId = Number(formMaba.id_tahun);
+
+    if (!tahunId) return null;
+
+    // [FIX] Tabel 2A.1 bersifat UNIFIED - tidak terkait dengan prodi tertentu
+    // Cukup cek berdasarkan tahun saja, tanpa filter id_unit_prodi
+    const pendRow = rowsPend.find(r =>
+      Number(r.id_tahun) === tahunId &&
+      !r.deleted_at
+    );
+
+    if (!pendRow) return { found: false };
+
+    // [FIX] Hitung SEMUA data mahasiswa baru untuk tahun ini (Reguler + RPL)
+    // agar sisa kuota akurat dan real-time
+    const allMabaRows = rowsMaba.filter(row => {
+      const isSameContext = Number(row.id_tahun) === tahunId &&
+        row.jenis === 'baru';
+      // Jika sedang edit, exclude data yang sedang di-edit agar tidak double count
+      const isNotEditing = !editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)];
+      return isSameContext && isNotEditing && !row.deleted_at;
+    });
+
+    const existingTotal = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_total || 0), 0);
+    const existingAfirmasi = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_afirmasi || 0), 0);
+    const existingKhusus = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_kebutuhan_khusus || 0), 0);
+
+    const currentTotal = Number(formMaba.jumlah_total || 0);
+    const currentAfirmasi = Number(formMaba.jumlah_afirmasi || 0);
+    const currentKhusus = Number(formMaba.jumlah_kebutuhan_khusus || 0);
+
+    return {
+      found: true,
+      limits: {
+        total: Number(pendRow.pendaftar || 0),
+        afirmasi: Number(pendRow.pendaftar_afirmasi || 0),
+        khusus: Number(pendRow.pendaftar_kebutuhan_khusus || 0)
+      },
+      remaining: {
+        total: Number(pendRow.pendaftar || 0) - existingTotal - currentTotal,
+        afirmasi: Number(pendRow.pendaftar_afirmasi || 0) - existingAfirmasi - currentAfirmasi,
+        khusus: Number(pendRow.pendaftar_kebutuhan_khusus || 0) - existingKhusus - currentKhusus
+      }
+    };
+  }, [showModalMaba, formMaba.id_tahun, formMaba.id_unit_prodi, formMaba.jalur, formMaba.jumlah_total, formMaba.jumlah_afirmasi, formMaba.jumlah_kebutuhan_khusus, rowsPend, rowsMaba, editingMaba, authUser]);
 
 
   // Fungsi export Excel untuk Tabel Pendaftaran
@@ -1109,10 +1162,11 @@ export default function Tabel2A1({ role }) {
     // Convert to number untuk konsistensi
     const numId = parseInt(id);
 
-    // Mapping untuk prodi TI dan MI
-    if (numId === 1) return "Teknik Informatika (TI)"; // Legacy support
-    if (numId === 4) return "Teknik Informatika (TI)";
-    if (numId === 5) return "Manajemen Informatika (MI)";
+    // Mapping untuk prodi TI dan MI serta unit pusat
+    if (numId === 6) return "Teknik Informatika (TI)";
+    if (numId === 7) return "Manajemen Informatika (MI)";
+    if (numId === 15) return "PMB (Promosi & Publikasi)";
+    if (numId === 8) return "ALA (Administrasi Akademik)";
 
     // Fallback ke maps jika ada
     if (maps?.unit_kerja && maps.unit_kerja[numId]) {
@@ -1233,27 +1287,19 @@ export default function Tabel2A1({ role }) {
   // Bulk restore dengan SweetAlert2
   const doRestoreMultiple = async (table) => {
     const selectedRows = table.key === tablePend.key ? selectedRowsPend : selectedRowsMaba;
-    console.log('doRestoreMultiple called:', {
-      tableKey: table.key,
-      selectedRows,
-      selectedRowsCount: selectedRows.length,
-      selectedRowsPend,
-      selectedRowsMaba
-    });
     if (!selectedRows.length) {
-      console.log('No rows selected for bulk restore');
       Swal.fire('Perhatian', 'Pilih setidaknya satu baris untuk dipulihkan.', 'info');
       return;
     }
 
     const result = await Swal.fire({
-      title: `Pulihkan ${selectedRows.length} Data?`,
-      text: "Semua data yang dipilih akan dikembalikan ke daftar aktif.",
+      title: 'Pulihkan Data Terpilih?',
+      text: `${selectedRows.length} data akan dikembalikan ke daftar aktif.`,
       icon: 'info',
       showCancelButton: true,
       confirmButtonColor: '#28a745',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Ya, pulihkan!',
+      confirmButtonText: `Ya, pulihkan ${selectedRows.length} data!`,
       cancelButtonText: 'Batal'
     });
 
@@ -1262,11 +1308,7 @@ export default function Tabel2A1({ role }) {
         setLoading(true);
         await apiFetch(`${table.path}/restore-multiple`, {
           method: "POST",
-          body: JSON.stringify({
-            ids: selectedRows,
-            restored_by: "Unknown User",
-            restored_at: new Date().toISOString()
-          }),
+          body: JSON.stringify({ ids: selectedRows })
         });
         if (table.key === tablePend.key) {
           setSelectedRowsPend([]);
@@ -1275,9 +1317,53 @@ export default function Tabel2A1({ role }) {
           setSelectedRowsMaba([]);
           fetchMaba();
         }
-        Swal.fire('Dipulihkan!', 'Data yang dipilih telah berhasil dipulihkan.', 'success');
+        Swal.fire('Dipulihkan!', 'Data telah berhasil dipulihkan.', 'success');
       } catch (e) {
+        console.error('Bulk Restore Error:', e);
         Swal.fire('Gagal!', `Gagal memulihkan data: ${e.message}`, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Bulk hard delete dengan SweetAlert2
+  const doHardDeleteMultiple = async (table) => {
+    const selectedRows = table.key === tablePend.key ? selectedRowsPend : selectedRowsMaba;
+    if (!selectedRows.length) {
+      Swal.fire('Perhatian', 'Pilih setidaknya satu baris untuk dihapus permanen.', 'info');
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Hapus Permanen Terpilih?',
+      text: `PERINGATAN: ${selectedRows.length} data ini akan dihapus selamanya dan tidak dapat dibatalkan!`,
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: `Ya, Hapus Permanen ${selectedRows.length} data!`,
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setLoading(true);
+        await apiFetch(`${table.path}/hard-delete-multiple`, {
+          method: "DELETE",
+          body: JSON.stringify({ ids: selectedRows })
+        });
+        if (table.key === tablePend.key) {
+          setSelectedRowsPend([]);
+          fetchPend();
+        } else {
+          setSelectedRowsMaba([]);
+          fetchMaba();
+        }
+        Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
+      } catch (e) {
+        console.error('Bulk Hard Delete Error:', e);
+        Swal.fire('Gagal!', `Gagal menghapus permanen data: ${e.message}`, 'error');
       } finally {
         setLoading(false);
       }
@@ -1310,14 +1396,15 @@ export default function Tabel2A1({ role }) {
     setOpenPendTahunDropdown(false);
     try {
       // Validasi field wajib
-      const unitProdiId = Number(formPend.id_unit_prodi || selectedUnitProdi || 0);
+      // [OWNERSHIP] Gunakan unit ID dari user yang sedang login jika data baru
+      const unitProdiId = editingPend ? Number(formPend.id_unit_prodi) : Number(authUser?.id_unit_prodi || 15);
       const tahunId = Number(formPend.id_tahun);
 
-      if (!unitProdiId || !tahunId) {
+      if (!tahunId) {
         Swal.fire({
           icon: 'warning',
           title: 'Validasi Gagal',
-          text: 'Unit prodi dan tahun wajib dipilih.'
+          text: 'Tahun wajib dipilih.'
         });
         return;
       }
@@ -1342,11 +1429,10 @@ export default function Tabel2A1({ role }) {
         return;
       }
 
-      // Cek duplikat: tidak boleh ada data dengan kombinasi id_unit_prodi dan id_tahun yang sama
+      // [FIX] Cek duplikat: Tabel 2A.1 bersifat UNIFIED, hanya 1 data per tahun
       if (!editingPend) {
         const existingRow = rowsPend.find(row =>
-          row.id_unit_prodi === unitProdiId &&
-          row.id_tahun === tahunId &&
+          Number(row.id_tahun) === tahunId &&
           !row.deleted_at
         );
 
@@ -1354,7 +1440,7 @@ export default function Tabel2A1({ role }) {
           Swal.fire({
             icon: 'warning',
             title: 'Data Sudah Ada',
-            text: 'Data dengan kombinasi unit prodi dan tahun yang sama sudah ada. Silakan edit data yang sudah ada atau pilih kombinasi yang berbeda.'
+            html: `Data pendaftaran untuk tahun <b>${maps?.tahun?.[tahunId]?.tahun || tahunId}</b> sudah ada.<br><br>Silakan edit data yang sudah ada jika ingin mengubahnya.`
           });
           return;
         }
@@ -1429,65 +1515,104 @@ export default function Tabel2A1({ role }) {
     setOpenMabaJenisDropdown(false);
     setOpenMabaJalurDropdown(false);
     try {
-      const unitProdiId = Number(formMaba.id_unit_prodi || selectedUnitProdi || 0);
+      // [OWNERSHIP] Gunakan unit ID dari user yang sedang login jika data baru
+      const unitProdiId = editingMaba ? Number(formMaba.id_unit_prodi) : Number(authUser?.id_unit_prodi || 8);
       const tahunId = Number(formMaba.id_tahun);
       const jenisMaba = formMaba.jenis || 'baru';
+      const jalurMaba = formMaba.jalur || 'reguler';
 
-      if (!unitProdiId || !tahunId) {
+      if (!tahunId) {
         Swal.fire({
           icon: 'warning',
           title: 'Validasi Gagal',
-          text: 'Unit prodi dan tahun wajib dipilih.'
+          text: 'Tahun wajib dipilih.'
         });
         return;
       }
 
-      // Validasi hanya untuk mahasiswa baru, tidak untuk mahasiswa aktif
-      if (jenisMaba === 'baru') {
-        const pendRow = rowsPend.find(row =>
-          row.id_unit_prodi === unitProdiId &&
-          row.id_tahun === tahunId &&
+      // [FIX] Validasi duplikasi: Cek apakah sudah ada data dengan kombinasi tahun + jenis + jalur yang sama
+      if (!editingMaba) {
+        const existingData = rowsMaba.find(row =>
+          Number(row.id_tahun) === tahunId &&
+          row.jenis === jenisMaba &&
+          row.jalur === jalurMaba &&
           !row.deleted_at
         );
 
-        const pendaftarLimit = Number(pendRow?.pendaftar || 0);
+        if (existingData) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Data Sudah Ada',
+            html: `Data untuk tahun <b>${maps?.tahun?.[tahunId]?.tahun || tahunId}</b>, jenis <b>"${jenisMaba}"</b>, jalur <b>"${jalurMaba}"</b> sudah ada.<br><br>Silakan edit data yang sudah ada jika ingin mengubahnya.`
+          });
+          return;
+        }
+      }
 
-        if (!pendRow || pendaftarLimit <= 0) {
+      // Validasi hanya untuk mahasiswa baru, tidak untuk mahasiswa aktif
+      if (jenisMaba === 'baru') {
+        // [FIX] Tabel 2A.1 bersifat UNIFIED - tidak terkait dengan prodi tertentu
+        // Cukup cek berdasarkan tahun saja, tanpa filter id_unit_prodi
+        const pendRow = rowsPend.find(row =>
+          Number(row.id_tahun) === tahunId &&
+          !row.deleted_at
+        );
+
+        if (!pendRow) {
           Swal.fire({
             icon: 'error',
             title: 'Data Pendaftaran Tidak Ditemukan',
-            text: 'Silakan lengkapi data pendaftaran (Jumlah Calon Mahasiswa) terlebih dahulu.'
+            text: 'Silakan lengkapi data pendaftaran untuk tahun ini terlebih dahulu.'
           });
           return;
         }
 
-        const newContribution =
-          Number(formMaba.jumlah_total || 0) +
-          Number(formMaba.jumlah_afirmasi || 0) +
-          Number(formMaba.jumlah_kebutuhan_khusus || 0);
+        // [FIX] Hitung SEMUA data mahasiswa baru untuk tahun ini (Reguler + RPL)
+        // agar validasi konsisten dengan tampilan sisa kuota
+        const allMabaRows = rowsMaba.filter(row => {
+          const isSameContext = Number(row.id_tahun) === tahunId &&
+            row.jenis === 'baru';
+          // Jika sedang edit, exclude data yang sedang di-edit agar tidak double count
+          const isNotEditing = !editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)];
+          return isSameContext && isNotEditing && !row.deleted_at;
+        });
 
-        const existingContribution = rowsMaba
-          .filter(row =>
-            row.id_unit_prodi === unitProdiId &&
-            row.id_tahun === tahunId &&
-            row.jenis === 'baru' &&
-            !row.deleted_at &&
-            (!editingMaba || row[getIdField(row)] !== editingMaba[getIdField(editingMaba)])
-          )
-          .reduce((sum, row) => {
-            const base = Number(row.jumlah_total || 0);
-            const afirm = Number(row.jumlah_afirmasi || 0);
-            const khusus = Number(row.jumlah_kebutuhan_khusus || 0);
-            return sum + base + afirm + khusus;
-          }, 0);
+        const existingTotal = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_total || 0), 0);
+        const existingAfirmasi = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_afirmasi || 0), 0);
+        const existingKhusus = allMabaRows.reduce((sum, r) => sum + Number(r.jumlah_kebutuhan_khusus || 0), 0);
 
-        if (existingContribution + newContribution > pendaftarLimit) {
+        const currentTotal = Number(formMaba.jumlah_total || 0);
+        const currentAfirmasi = Number(formMaba.jumlah_afirmasi || 0);
+        const currentKhusus = Number(formMaba.jumlah_kebutuhan_khusus || 0);
+
+        const limitTotal = Number(pendRow.pendaftar || 0);
+        const limitAfirmasi = Number(pendRow.pendaftar_afirmasi || 0);
+        const limitKhusus = Number(pendRow.pendaftar_kebutuhan_khusus || 0);
+
+        // Validasi per kolom
+        if (currentTotal + existingTotal > limitTotal) {
           Swal.fire({
             icon: 'warning',
-            title: 'Validasi Gagal',
-            html: `
-              Total Mahasiswa Baru (${existingContribution + newContribution}) tidak boleh melebihi
-              Jumlah Calon Mahasiswa (${pendaftarLimit}).`
+            title: 'Kuota Terlampaui: Diterima',
+            html: `Total mahasiswa baru <b>Diterima</b> (${currentTotal + existingTotal}) melebihi kuota Pendaftaran (${limitTotal}).`
+          });
+          return;
+        }
+
+        if (currentAfirmasi + existingAfirmasi > limitAfirmasi) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Kuota Terlampaui: Afirmasi',
+            html: `Total mahasiswa baru <b>Afirmasi</b> (${currentAfirmasi + existingAfirmasi}) melebihi kuota Pendaftaran (${limitAfirmasi}).`
+          });
+          return;
+        }
+
+        if (currentKhusus + existingKhusus > limitKhusus) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Kuota Terlampaui: Kebutuhan Khusus',
+            html: `Total mahasiswa baru <b>Kebutuhan Khusus</b> (${currentKhusus + existingKhusus}) melebihi kuota Pendaftaran (${limitKhusus}).`
           });
           return;
         }
@@ -1498,14 +1623,20 @@ export default function Tabel2A1({ role }) {
       const target = editingMaba ? `${tableMaba.path}/${editingMaba[getIdField(editingMaba)]}` : tableMaba.path;
       const method = editingMaba ? "PUT" : "POST";
       const body = {
-        ...formMaba,
+        id_unit_prodi: unitProdiId,
+        id_tahun: tahunId,
+        jenis: formMaba.jenis || 'baru',
+        jalur: formMaba.jalur || 'reguler',
+        jumlah_total: Number(formMaba.jumlah_total || 0),
+        jumlah_afirmasi: Number(formMaba.jumlah_afirmasi || 0),
+        jumlah_kebutuhan_khusus: Number(formMaba.jumlah_kebutuhan_khusus || 0),
         created_by: "Unknown User",
         created_at: new Date().toISOString(),
         updated_by: "Unknown User",
         updated_at: new Date().toISOString()
       };
       console.log('Submitting Maba:', { target, method, body });
-      console.log('Unit Prodi value:', formMaba.id_unit_prodi);
+      console.log('Unit Prodi value:', unitProdiId);
       const response = await apiFetch(target, { method, body: JSON.stringify(body) });
       console.log('API Response:', response);
       setShowModalMaba(false);
@@ -1523,10 +1654,29 @@ export default function Tabel2A1({ role }) {
         showConfirmButton: false
       });
     } catch (e) {
+      console.error('Error submitting Maba:', e);
+      let errorMessage = e.message || 'Terjadi kesalahan saat menyimpan data';
+
+      if (e.response) {
+        const responseError = typeof e.response === 'string' ? JSON.parse(e.response) : e.response;
+        if (responseError?.error) {
+          errorMessage = responseError.error;
+        }
+      }
+
+      if (e.status === 409) {
+        errorMessage = 'Data dengan kombinasi unit, tahun, jenis, dan jalur yang sama sudah ada';
+      } else if (e.status === 400) {
+        errorMessage = errorMessage || 'Data yang dikirim tidak valid';
+      } else if (e.status === 500) {
+        errorMessage = errorMessage || 'Terjadi kesalahan di server. Silakan coba lagi.';
+      }
+
       Swal.fire({
         icon: 'error',
         title: editingMaba ? 'Gagal Memperbarui Data' : 'Gagal Menambah Data',
-        text: e.message
+        text: errorMessage,
+        footer: e.status ? `Error ${e.status}` : ''
       });
     } finally {
       setLoading(false);
@@ -1917,7 +2067,7 @@ export default function Tabel2A1({ role }) {
                     </td>
                     {role?.toLowerCase() !== "ala" && (
                       <td className="px-6 py-4 border border-slate-200">
-                        {row.rowData && !row.rowData.deleted_at && (
+                        {row.rowData && (
                           <div className="flex items-center justify-center dropdown-container">
                             <button
                               onClick={(e) => {
@@ -1935,16 +2085,19 @@ export default function Tabel2A1({ role }) {
                                   setOpenDropdownIdPend(null);
                                 }
                               }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 ${row.rowData.deleted_at
+                                ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
                               aria-label="Menu aksi"
                               aria-expanded={openDropdownIdPend === (getIdField(row.rowData) ? row.rowData[getIdField(row.rowData)] : idx)}
                             >
                               <FiMoreVertical size={18} />
                             </button>
+                            {row.rowData.deleted_at && (
+                              <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-tight">Terhapus</span>
+                            )}
                           </div>
-                        )}
-                        {row.rowData && row.rowData.deleted_at && (
-                          <div className="text-center italic text-red-600">Dihapus</div>
                         )}
                       </td>
                     )}
@@ -2330,11 +2483,11 @@ export default function Tabel2A1({ role }) {
                     <td className="px-6 py-4 border border-slate-200">
                       {(() => {
                         const baruRegulerData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'reguler');
-                        if (!baruRegulerData || baruRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        if (!baruRegulerData) return <span className="text-center text-slate-400">-</span>;
                         const rowId = getIdField(baruRegulerData) ? baruRegulerData[getIdField(baruRegulerData)] : null;
                         const dropdownKey = `baru-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                         return (
-                          <div className="flex items-center justify-center dropdown-container">
+                          <div className="flex items-center justify-center dropdown-container gap-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2350,12 +2503,18 @@ export default function Tabel2A1({ role }) {
                                   setOpenDropdownMaba(null);
                                 }
                               }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 ${baruRegulerData.deleted_at
+                                ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
                               aria-label="Menu aksi Mahasiswa Baru Reguler"
                               aria-expanded={openDropdownMaba === dropdownKey}
                             >
                               <FiMoreVertical size={18} />
                             </button>
+                            {baruRegulerData.deleted_at && (
+                              <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-bold uppercase tracking-tight">Del</span>
+                            )}
                           </div>
                         );
                       })()}
@@ -2374,11 +2533,11 @@ export default function Tabel2A1({ role }) {
                     <td className="px-6 py-4 border border-slate-200">
                       {(() => {
                         const baruRPLData = row.rowData?.find(m => m.jenis === 'baru' && m.jalur === 'rpl');
-                        if (!baruRPLData || baruRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        if (!baruRPLData) return <span className="text-center text-slate-400">-</span>;
                         const rowId = getIdField(baruRPLData) ? baruRPLData[getIdField(baruRPLData)] : null;
                         const dropdownKey = `baru-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                         return (
-                          <div className="flex items-center justify-center dropdown-container">
+                          <div className="flex items-center justify-center dropdown-container gap-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2394,12 +2553,18 @@ export default function Tabel2A1({ role }) {
                                   setOpenDropdownMaba(null);
                                 }
                               }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 ${baruRPLData.deleted_at
+                                ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
                               aria-label="Menu aksi Mahasiswa Baru RPL"
                               aria-expanded={openDropdownMaba === dropdownKey}
                             >
                               <FiMoreVertical size={18} />
                             </button>
+                            {baruRPLData.deleted_at && (
+                              <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-bold uppercase tracking-tight">Del</span>
+                            )}
                           </div>
                         );
                       })()}
@@ -2418,11 +2583,11 @@ export default function Tabel2A1({ role }) {
                     <td className="px-6 py-4 border border-slate-200">
                       {(() => {
                         const aktifRegulerData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'reguler');
-                        if (!aktifRegulerData || aktifRegulerData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        if (!aktifRegulerData) return <span className="text-center text-slate-400">-</span>;
                         const rowId = getIdField(aktifRegulerData) ? aktifRegulerData[getIdField(aktifRegulerData)] : null;
                         const dropdownKey = `aktif-reguler-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                         return (
-                          <div className="flex items-center justify-center dropdown-container">
+                          <div className="flex items-center justify-center dropdown-container gap-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2438,12 +2603,18 @@ export default function Tabel2A1({ role }) {
                                   setOpenDropdownMaba(null);
                                 }
                               }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 ${aktifRegulerData.deleted_at
+                                ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
                               aria-label="Menu aksi Mahasiswa Aktif Reguler"
                               aria-expanded={openDropdownMaba === dropdownKey}
                             >
                               <FiMoreVertical size={18} />
                             </button>
+                            {aktifRegulerData.deleted_at && (
+                              <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-bold uppercase tracking-tight">Del</span>
+                            )}
                           </div>
                         );
                       })()}
@@ -2462,11 +2633,11 @@ export default function Tabel2A1({ role }) {
                     <td className="px-6 py-4 border border-slate-200">
                       {(() => {
                         const aktifRPLData = row.rowData?.find(m => m.jenis === 'aktif' && m.jalur === 'rpl');
-                        if (!aktifRPLData || aktifRPLData.deleted_at) return <span className="text-center text-slate-400">-</span>;
+                        if (!aktifRPLData) return <span className="text-center text-slate-400">-</span>;
                         const rowId = getIdField(aktifRPLData) ? aktifRPLData[getIdField(aktifRPLData)] : null;
                         const dropdownKey = `aktif-rpl-${rowId !== null && rowId !== undefined ? rowId : idx}`;
                         return (
-                          <div className="flex items-center justify-center dropdown-container">
+                          <div className="flex items-center justify-center dropdown-container gap-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2482,12 +2653,18 @@ export default function Tabel2A1({ role }) {
                                   setOpenDropdownMaba(null);
                                 }
                               }}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
+                              className={`p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1 ${aktifRPLData.deleted_at
+                                ? "text-red-400 hover:bg-red-50 hover:text-red-600"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                }`}
                               aria-label="Menu aksi Mahasiswa Aktif RPL"
                               aria-expanded={openDropdownMaba === dropdownKey}
                             >
                               <FiMoreVertical size={18} />
                             </button>
+                            {aktifRPLData.deleted_at && (
+                              <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-bold uppercase tracking-tight">Del</span>
+                            )}
                           </div>
                         );
                       })()}
@@ -2754,13 +2931,24 @@ export default function Tabel2A1({ role }) {
               </div>
             )}
             {canUPend && showDeletedPend && selectedRowsPend.length > 0 && (
-              <button
-                onClick={() => doRestoreMultiple(tablePend)}
-                className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                Pulihkan ({selectedRowsPend.length})
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => doRestoreMultiple(tablePend)}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={loading}
+                >
+                  <FiRotateCw size={16} />
+                  <span>Pulihkan ({selectedRowsPend.length})</span>
+                </button>
+                <button
+                  onClick={() => doHardDeleteMultiple(tablePend)}
+                  className="px-4 py-2 bg-red-700 text-white font-semibold rounded-lg shadow-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-700/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={loading}
+                >
+                  <FiXCircle size={16} />
+                  <span>Hapus Permanen ({selectedRowsPend.length})</span>
+                </button>
+              </div>
             )}
 
           </div>
@@ -2777,7 +2965,13 @@ export default function Tabel2A1({ role }) {
             </button>
             {canCPend && role?.toLowerCase() !== "ala" && (
               <button
-                onClick={() => setShowModalPend(true)}
+                onClick={() => {
+                  setEditingPend(null);
+                  setFormPend({
+                    id_unit_prodi: "", id_tahun: "", daya_tampung: "", pendaftar: "", pendaftar_afirmasi: "", pendaftar_kebutuhan_khusus: ""
+                  });
+                  setShowModalPend(true);
+                }}
                 className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
@@ -2917,13 +3111,24 @@ export default function Tabel2A1({ role }) {
                 </div>
               )}
               {canUMaba && showDeletedMaba && selectedRowsMaba.length > 0 && (
-                <button
-                  onClick={() => doRestoreMultiple(tableMaba)}
-                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  Pulihkan ({selectedRowsMaba.length})
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => doRestoreMultiple(tableMaba)}
+                    className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    disabled={loading}
+                  >
+                    <FiRotateCw size={16} />
+                    <span>Pulihkan ({selectedRowsMaba.length})</span>
+                  </button>
+                  <button
+                    onClick={() => doHardDeleteMultiple(tableMaba)}
+                    className="px-4 py-2 bg-red-700 text-white font-semibold rounded-lg shadow-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-700/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    disabled={loading}
+                  >
+                    <FiXCircle size={16} />
+                    <span>Hapus Permanen ({selectedRowsMaba.length})</span>
+                  </button>
+                </div>
               )}
 
             </div>
@@ -2940,7 +3145,13 @@ export default function Tabel2A1({ role }) {
               </button>
               {canCMaba && role?.toLowerCase() !== "pmb" && (
                 <button
-                  onClick={() => setShowModalMaba(true)}
+                  onClick={() => {
+                    setEditingMaba(null);
+                    setFormMaba({
+                      id_unit_prodi: "", id_tahun: "", jenis: "baru", jalur: "reguler", jumlah_total: "", jumlah_afirmasi: "", jumlah_kebutuhan_khusus: ""
+                    });
+                    setShowModalMaba(true);
+                  }}
                   className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
@@ -3313,13 +3524,18 @@ export default function Tabel2A1({ role }) {
         })()}
       </section>
 
-      {/* Modal Form Pendaftaran - Hidden for role ala */}
       {showModalPend && role?.toLowerCase() !== "ala" && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
+              setEditingPend(null);
+              setFormPend({
+                id_unit_prodi: "", id_tahun: "", daya_tampung: "", pendaftar: "", pendaftar_afirmasi: "", pendaftar_kebutuhan_khusus: ""
+              });
+              setOpenPendUnitDropdown(false);
+              setOpenPendTahunDropdown(false);
               setShowModalPend(false);
             }
           }}
@@ -3336,69 +3552,7 @@ export default function Tabel2A1({ role }) {
             <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={submitPend} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-1 space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Unit Prodi <span className="text-red-500">*</span></label>
-                    <div className="relative pend-unit-dropdown-container">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenPendUnitDropdown(!openPendUnitDropdown);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formPend.id_unit_prodi
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                          }`}
-                        aria-label="Pilih unit prodi"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                          <span className={`truncate ${formPend.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formPend.id_unit_prodi === '4' ? 'Teknik Informatika (TI)' : formPend.id_unit_prodi === '5' ? 'Manajemen Informatika (MI)' : '-- Pilih Unit Prodi --'}
-                          </span>
-                        </div>
-                        <FiChevronDown
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openPendUnitDropdown ? 'rotate-180' : ''
-                            }`}
-                          size={18}
-                        />
-                      </button>
-                      {openPendUnitDropdown && (
-                        <div
-                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto pend-unit-dropdown-menu mt-1 w-full"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormPend({ ...formPend, id_unit_prodi: "4" });
-                              setOpenPendUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formPend.id_unit_prodi === "4"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Teknik Informatika (TI)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormPend({ ...formPend, id_unit_prodi: "5" });
-                              setOpenPendUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formPend.id_unit_prodi === "5"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Manajemen Informatika (MI)</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* [CENTRALIZED] Unit Prodi selection hidden for all roles, defaults to current user's unit ID */}
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
                     <div className="relative pend-tahun-dropdown-container">
@@ -3483,6 +3637,10 @@ export default function Tabel2A1({ role }) {
                   <button
                     type="button"
                     onClick={() => {
+                      setEditingPend(null);
+                      setFormPend({
+                        id_unit_prodi: "", id_tahun: "", daya_tampung: "", pendaftar: "", pendaftar_afirmasi: "", pendaftar_kebutuhan_khusus: ""
+                      });
                       setOpenPendUnitDropdown(false);
                       setOpenPendTahunDropdown(false);
                       setShowModalPend(false);
@@ -3519,7 +3677,15 @@ export default function Tabel2A1({ role }) {
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
-              setShowModalPend(false);
+              setEditingMaba(null);
+              setFormMaba({
+                id_unit_prodi: "", id_tahun: "", jenis: "baru", jalur: "reguler", jumlah_total: "", jumlah_afirmasi: "", jumlah_kebutuhan_khusus: ""
+              });
+              setOpenMabaUnitDropdown(false);
+              setOpenMabaTahunDropdown(false);
+              setOpenMabaJenisDropdown(false);
+              setOpenMabaJalurDropdown(false);
+              setShowModalMaba(false);
             }
           }}
         >
@@ -3535,86 +3701,7 @@ export default function Tabel2A1({ role }) {
             <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={submitMaba} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-1 space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Unit Prodi <span className="text-red-500">*</span></label>
-                    <div className="relative maba-unit-dropdown-container">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenMabaUnitDropdown(!openMabaUnitDropdown);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formMaba.id_unit_prodi
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                          }`}
-                        aria-label="Pilih unit prodi"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                          <span className={`truncate ${formMaba.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formMaba.id_unit_prodi === '4' ? 'Teknik Informatika (TI)' : formMaba.id_unit_prodi === '5' ? 'Manajemen Informatika (MI)' : formMaba.id_unit_prodi ? (maps?.unit_kerja && Object.values(maps.unit_kerja).find(u => String(u.id_unit) === String(formMaba.id_unit_prodi))?.nama_unit) || formMaba.id_unit_prodi : '-- Pilih Unit Prodi --'}
-                          </span>
-                        </div>
-                        <FiChevronDown
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openMabaUnitDropdown ? 'rotate-180' : ''
-                            }`}
-                          size={18}
-                        />
-                      </button>
-                      {openMabaUnitDropdown && (
-                        <div
-                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto maba-unit-dropdown-menu mt-1 w-full"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormMaba({ ...formMaba, id_unit_prodi: "4" });
-                              setOpenMabaUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === "4"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Teknik Informatika (TI)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormMaba({ ...formMaba, id_unit_prodi: "5" });
-                              setOpenMabaUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === "5"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Manajemen Informatika (MI)</span>
-                          </button>
-                          {maps?.unit_kerja && Object.values(maps.unit_kerja).filter(u => u.id_unit !== 4 && u.id_unit !== 5).map((u) => (
-                            <button
-                              key={u.id_unit}
-                              type="button"
-                              onClick={() => {
-                                setFormMaba({ ...formMaba, id_unit_prodi: String(u.id_unit) });
-                                setOpenMabaUnitDropdown(false);
-                              }}
-                              className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formMaba.id_unit_prodi === String(u.id_unit)
-                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                : 'text-gray-700'
-                                }`}
-                            >
-                              <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                              <span>{u.nama_unit}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* [CENTRALIZED] Unit Prodi selection hidden for all roles, defaults to current user's unit ID */}
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
                     <div className="relative maba-tahun-dropdown-container">
@@ -3807,20 +3894,48 @@ export default function Tabel2A1({ role }) {
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Total <span className="text-red-500">*</span></label>
                     <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_total} onChange={e => setFormMaba({ ...formMaba, jumlah_total: e.target.value })} required />
+                    {mabaQuotaInfo && formMaba.jenis === 'baru' && (
+                      <div className="text-[11px] mt-1 space-y-0.5">
+                        {!mabaQuotaInfo.found ? (
+                          <p className="text-red-500 italic">Data pendaftaran tidak ditemukan!</p>
+                        ) : (
+                          <div className="flex justify-between text-slate-500 bg-slate-50 px-2 py-1 rounded">
+                            <span>Kuota: <span className="font-semibold text-slate-700">{mabaQuotaInfo.limits.total}</span></span>
+                            <span>Sisa: <span className={`font-bold ${mabaQuotaInfo.remaining.total <= 0 ? 'text-red-600' : 'text-[#0384d6]'}`}>{mabaQuotaInfo.remaining.total}</span></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Afirmasi</label>
                     <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_afirmasi} onChange={e => setFormMaba({ ...formMaba, jumlah_afirmasi: e.target.value })} />
+                    {mabaQuotaInfo && formMaba.jenis === 'baru' && mabaQuotaInfo.found && (
+                      <div className="flex justify-between text-[11px] text-slate-500 bg-slate-50 px-2 py-1 rounded mt-1">
+                        <span>Kuota: <span className="font-semibold text-slate-700">{mabaQuotaInfo.limits.afirmasi}</span></span>
+                        <span>Sisa: <span className={`font-bold ${mabaQuotaInfo.remaining.afirmasi <= 0 ? 'text-red-600' : 'text-[#0384d6]'}`}>{mabaQuotaInfo.remaining.afirmasi}</span></span>
+                      </div>
+                    )}
                   </div>
                   <div className="md:col-span-1 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Jumlah Kebutuhan Khusus</label>
                     <input type="number" min="0" className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]" value={formMaba.jumlah_kebutuhan_khusus} onChange={e => setFormMaba({ ...formMaba, jumlah_kebutuhan_khusus: e.target.value })} />
+                    {mabaQuotaInfo && formMaba.jenis === 'baru' && mabaQuotaInfo.found && (
+                      <div className="flex justify-between text-[11px] text-slate-500 bg-slate-50 px-2 py-1 rounded mt-1">
+                        <span>Kuota: <span className="font-semibold text-slate-700">{mabaQuotaInfo.limits.khusus}</span></span>
+                        <span>Sisa: <span className={`font-bold ${mabaQuotaInfo.remaining.khusus <= 0 ? 'text-red-600' : 'text-[#0384d6]'}`}>{mabaQuotaInfo.remaining.khusus}</span></span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
+                      setEditingMaba(null);
+                      setFormMaba({
+                        id_unit_prodi: "", id_tahun: "", jenis: "baru", jalur: "reguler", jumlah_total: "", jumlah_afirmasi: "", jumlah_kebutuhan_khusus: ""
+                      });
                       setOpenMabaUnitDropdown(false);
                       setOpenMabaTahunDropdown(false);
                       setOpenMabaJenisDropdown(false);

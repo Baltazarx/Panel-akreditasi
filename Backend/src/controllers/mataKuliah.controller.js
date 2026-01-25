@@ -75,12 +75,12 @@ export const createMataKuliah = async (req, res) => {
 
     // --- Multi-prodi aware ---
     if (!dataMK.id_unit_prodi && req.user?.role === 'prodi') {
-      dataMK.id_unit_prodi = req.user.id_unit_prodi;
+      dataMK.id_unit_prodi = req.user.id_unit;
     }
 
     if (!dataMK.id_unit_prodi || !dataMK.kode_mk || !dataMK.nama_mk) {
       await conn.rollback();
-      return res.status(400).json({ error: 'Field `id_unit_prodi`, `kode_mk`, dan `nama_mk` wajib diisi.'});
+      return res.status(400).json({ error: 'Field `id_unit_prodi`, `kode_mk`, dan `nama_mk` wajib diisi.' });
     }
 
     if (await hasColumn('mata_kuliah', 'created_by') && req.user?.id_user) {
@@ -98,12 +98,12 @@ export const createMataKuliah = async (req, res) => {
         id_unit_prodi: dataMK.id_unit_prodi, // Memastikan id_unit_prodi diteruskan
         kode_cpmk: cpmk.kode_cpmk,
         // === PERBAIKAN 2: Petakan 'deskripsi' dari body ke 'deskripsi_cpmk' ===
-        deskripsi_cpmk: cpmk.deskripsi, 
+        deskripsi_cpmk: cpmk.deskripsi,
       };
 
       if (!dataCpmk.kode_cpmk || !dataCpmk.deskripsi_cpmk) {
         await conn.rollback();
-        return res.status(400).json({ error: `CPMK dalam list harus punya 'kode_cpmk' dan 'deskripsi'.`});
+        return res.status(400).json({ error: `CPMK dalam list harus punya 'kode_cpmk' dan 'deskripsi'.` });
       }
 
       if (await hasColumn('cpmk', 'created_by') && req.user?.id_user) {
@@ -129,7 +129,7 @@ export const createMataKuliah = async (req, res) => {
        WHERE mk.id_mk=?`,
       [mkId]
     );
-     const [cpmkRows] = await pool.query(
+    const [cpmkRows] = await pool.query(
       `SELECT c.* FROM cpmk c JOIN map_cpmk_mk map ON c.id_cpmk = map.id_cpmk WHERE map.id_mk=?`,
       [mkId]
     );
@@ -161,7 +161,7 @@ export const updateMataKuliah = async (req, res) => {
       sks: req.body.sks,
       semester: req.body.semester,
     };
-    
+
     Object.keys(dataMK).forEach(key => dataMK[key] === undefined && delete dataMK[key]);
 
     if (await hasColumn('mata_kuliah', 'updated_by') && req.user?.id_user) {
@@ -172,16 +172,16 @@ export const updateMataKuliah = async (req, res) => {
 
     // === UPDATE CPMK ===
     const cpmkList = req.body.cpmk || [];
-    
+
     // Hapus semua CPMK yang terhubung dengan MK ini dulu
     await conn.query(`DELETE c FROM cpmk c JOIN map_cpmk_mk m ON c.id_cpmk = m.id_cpmk WHERE m.id_mk = ?`, [req.params.id]);
-    
+
     // Insert ulang CPMK yang baru
     for (const cpmk of cpmkList) {
       if (!cpmk.kode_cpmk || !cpmk.deskripsi) {
         continue; // Skip CPMK kosong
       }
-      
+
       const dataCpmk = {
         id_unit_prodi: dataMK.id_unit_prodi,
         kode_cpmk: cpmk.kode_cpmk,
@@ -260,16 +260,18 @@ export const hardDeleteMataKuliah = async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    // Hapus relasi MK ke CPMK
     await conn.query(`DELETE FROM map_cpmk_mk WHERE id_mk=?`, [req.params.id]);
-    // Sebaiknya hapus juga CPMK-nya jika mereka eksklusif milik MK ini
-    // Untuk sekarang, kita asumsikan CPMK bisa dipakai ulang, jadi hanya map-nya yang dihapus
+
+    // Hapus Mata Kuliah
     await conn.query(`DELETE FROM mata_kuliah WHERE id_mk=?`, [req.params.id]);
+
     await conn.commit();
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
     await conn.rollback();
     console.error("Error hardDeleteMataKuliah:", err);
-    res.status(500).json({ error: 'Hard delete failed' });
+    res.status(500).json({ error: 'Hard delete failed', details: err.sqlMessage || err.message });
   } finally {
     conn.release();
   }

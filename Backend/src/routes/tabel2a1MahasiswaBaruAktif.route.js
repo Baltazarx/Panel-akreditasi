@@ -10,7 +10,8 @@ import {
   softDeleteMahasiswaBaruAktif,
   restoreMahasiswaBaruAktif,
   hardDeleteMahasiswaBaruAktif,
-  restoreMultipleMahasiswaBaruAktif
+  restoreMultipleMahasiswaBaruAktif,
+  hardDeleteMultipleMahasiswaBaruAktif
 } from '../controllers/tabel2a1MahasiswaBaruAktif.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
@@ -45,6 +46,9 @@ router.post('/restore-multiple', requireAuth, permit('tabel_2a1_mahasiswa_baru_a
 
 // HARD DELETE — hanya Superadmin (WAKET1/WAKET2)
 router.delete('/:id/hard-delete', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'H'), hardDeleteMahasiswaBaruAktif);
+
+// HARD DELETE MULTIPLE — batch permanent delete
+router.delete('/hard-delete-multiple', requireAuth, permit('tabel_2a1_mahasiswa_baru_aktif', 'H'), hardDeleteMultipleMahasiswaBaruAktif);
 
 /**
  * ==========================================

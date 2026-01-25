@@ -55,25 +55,25 @@ export const createProfilLulusan = async (req, res) => {
     // === PERBAIKAN DI SINI ===
     // Baca 'deskripsi' dari body, bukan 'deskripsi_pl'
     const { id_unit_prodi, kode_pl, deskripsi } = req.body;
-    
+
     if (!kode_pl || !deskripsi) {
-      return res.status(400).json({ error: 'Field `kode_pl` dan `deskripsi` wajib diisi.'});
+      return res.status(400).json({ error: 'Field `kode_pl` dan `deskripsi` wajib diisi.' });
     }
 
     const data = {
       id_unit_prodi: id_unit_prodi,
       kode_pl: kode_pl,
       // Petakan 'deskripsi' dari body ke kolom 'deskripsi_pl'
-      deskripsi_pl: deskripsi, 
+      deskripsi_pl: deskripsi,
     };
 
     // ===== PATCH: auto isi id_unit_prodi kalau role prodi =====
     if (!data.id_unit_prodi && req.user?.role === 'prodi') {
-      data.id_unit_prodi = req.user.id_unit_prodi;
+      data.id_unit_prodi = req.user.id_unit;
     }
-    
+
     if (!data.id_unit_prodi) {
-        return res.status(400).json({ error: 'Field `id_unit_prodi` wajib diisi.'});
+      return res.status(400).json({ error: 'Field `id_unit_prodi` wajib diisi.' });
     }
 
     if (await hasColumn('profil_lulusan', 'created_by') && req.user?.id_user) {
@@ -103,19 +103,19 @@ export const updateProfilLulusan = async (req, res) => {
     // === PERBAIKAN DI SINI JUGA ===
     // Baca 'deskripsi' dari body, bukan 'deskripsi_pl'
     const { id_unit_prodi, kode_pl, deskripsi } = req.body;
-    
+
     const data = {
       id_unit_prodi: id_unit_prodi,
       kode_pl: kode_pl,
       // Petakan 'deskripsi' dari body ke kolom 'deskripsi_pl'
       deskripsi_pl: deskripsi,
     };
-    
+
     // Hapus properti yang tidak didefinisikan agar tidak menimpa data yang ada dengan NULL
     Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     if (Object.keys(data).length === 0) {
-        return res.status(400).json({ error: 'Tidak ada data untuk diupdate.'});
+      return res.status(400).json({ error: 'Tidak ada data untuk diupdate.' });
     }
 
     if (await hasColumn('profil_lulusan', 'updated_by') && req.user?.id_user) {
@@ -171,13 +171,25 @@ export const restoreProfilLulusan = async (req, res) => {
   }
 };
 
-// HARD DELETE
+// HARD DELETE (hapus juga mapping)
 export const hardDeleteProfilLulusan = async (req, res) => {
+  const conn = await pool.getConnection();
   try {
-    await pool.query(`DELETE FROM profil_lulusan WHERE id_pl = ?`, [req.params.id]);
+    await conn.beginTransaction();
+
+    // 1. Hapus mapping CPL ke Profil Lulusan (2B.2)
+    await conn.query(`DELETE FROM map_cpl_pl WHERE id_pl = ?`, [req.params.id]);
+
+    // 2. Hapus Profil Lulusan
+    await conn.query(`DELETE FROM profil_lulusan WHERE id_pl = ?`, [req.params.id]);
+
+    await conn.commit();
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
+    await conn.rollback();
     console.error('Error hardDeleteProfilLulusan:', err);
-    res.status(500).json({ error: 'Hard delete failed' });
+    res.status(500).json({ error: 'Hard delete failed', details: err.sqlMessage || err.message });
+  } finally {
+    conn.release();
   }
 };

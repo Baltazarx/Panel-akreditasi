@@ -11,24 +11,24 @@ export default function Tabel2A2({ role }) {
   const { maps, loading: mapsLoading } = useMaps(true);
   const { authUser } = useAuth();
   const userRole = role || authUser?.role;
-  
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [kabupatenKotaList, setKabupatenKotaList] = useState([]);
   const [loadingKabupatenKota, setLoadingKabupatenKota] = useState(false);
-  
+
   const [selectedTahun, setSelectedTahun] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
   const [isEditTSMode, setIsEditTSMode] = useState(false);
   const [daerahSearchTerm, setDaerahSearchTerm] = useState("");
   const [showDaerahDropdown, setShowDaerahDropdown] = useState(false);
   const daerahInputRef = useRef(null);
-  
+
   // Dropdown states
   const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
   const [openEditDataDropdown, setOpenEditDataDropdown] = useState(false);
@@ -43,7 +43,7 @@ export default function Tabel2A2({ role }) {
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.classList.add('modal-open');
-      
+
       return () => {
         document.body.style.position = '';
         document.body.style.top = '';
@@ -75,7 +75,7 @@ export default function Tabel2A2({ role }) {
       subcategories: []
     },
     {
-      name: "Provinsi Lain", 
+      name: "Provinsi Lain",
       subcategories: []
     },
     {
@@ -95,7 +95,7 @@ export default function Tabel2A2({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
       if (a.updated_at && b.updated_at) {
         const dateA = new Date(a.updated_at);
@@ -104,7 +104,7 @@ export default function Tabel2A2({ role }) {
           return dateB.getTime() - dateA.getTime(); // Terbaru di atas
         }
       }
-      
+
       // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
       const idA = a.id || 0;
       const idB = b.id || 0;
@@ -116,14 +116,14 @@ export default function Tabel2A2({ role }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Build query parameters
       const params = new URLSearchParams();
       // Role kemahasiswaan tidak bisa melihat data yang dihapus
       if (showDeleted && userRole?.toLowerCase() !== 'kemahasiswaan') {
         params.append("include_deleted", "1");
       }
-      
+
       // Fetch data untuk semua tahun di yearOrder (jika tersedia) atau selectedTahun saja
       if (yearsToFetch && yearsToFetch.length > 0) {
         // Filter tahun yang valid (bukan null)
@@ -136,27 +136,27 @@ export default function Tabel2A2({ role }) {
         params.append("id_tahun", selectedTahun);
         console.log("📊 Fetching data for single year:", selectedTahun);
       }
-      
+
       const apiUrl = `/tabel2a2-keragaman-asal?${params}`;
       console.log("🔗 API URL:", apiUrl);
-      
+
       const result = await apiFetch(apiUrl);
       console.log("📦 Fetched data count:", result?.length || 0, "items");
-      
+
       // Apply filtering
       // Role kemahasiswaan tidak bisa melihat data yang dihapus
       const filteredData = (showDeleted && userRole?.toLowerCase() !== 'kemahasiswaan')
         ? result.filter((row) => row.deleted_at !== null)
         : result.filter((row) => row.deleted_at === null);
-      
+
       const rowsArray = Array.isArray(filteredData) ? filteredData : [];
       const sortedData = sortRowsByLatest(rowsArray);
       setData(sortedData);
-      
+
       // Set default selected year from data or maps
       if (!selectedTahun) {
         const years = result.map(x => Number(x?.id_tahun)).filter(Number.isFinite);
-        
+
         if (years.length > 0) {
           // Use latest year from API data
           const latest = Math.max(...years);
@@ -167,14 +167,14 @@ export default function Tabel2A2({ role }) {
             .map((t) => ({ id: t.id_tahun ?? t.id }))
             .filter((t) => t.id)
             .sort((a, b) => Number(a.id) - Number(b.id));
-          
+
           if (availableYearsList.length > 0) {
             // Use latest year (last in sorted array)
             setSelectedTahun(availableYearsList[availableYearsList.length - 1].id);
           }
         }
       }
-      
+
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
     } finally {
@@ -196,12 +196,12 @@ export default function Tabel2A2({ role }) {
     if (!selectedTahun || availableYears.length === 0) {
       return [];
     }
-    
+
     const idx = availableYears.findIndex((y) => String(y.id) === String(selectedTahun));
     if (idx === -1) {
       return [];
     }
-    
+
     const ts = availableYears[idx]?.id;
     const ts1 = idx > 0 ? availableYears[idx - 1]?.id : null;
     const ts2 = idx > 1 ? availableYears[idx - 2]?.id : null;
@@ -264,14 +264,14 @@ export default function Tabel2A2({ role }) {
       if (category.name === "Kota/Kab sama dengan PS") {
         dbCategory = "Sama Kota/Kab";
       }
-      
+
       // Filter by category and showDeleted status
       const categoryData = filteredData.filter(item => {
         const matchesCategory = item.kategori_geografis === dbCategory;
         const matchesDeleted = showDeleted ? item.deleted_at : !item.deleted_at;
         return matchesCategory && matchesDeleted;
       });
-      
+
       // Group by nama_daerah_input to create subcategories
       const subcategories = {};
       categoryData.forEach(item => {
@@ -293,7 +293,7 @@ export default function Tabel2A2({ role }) {
           }
         }
         subcategories[daerah].data.push(item);
-        
+
         // Calculate totals for each year dynamically
         const year = Number(item.id_tahun);
         if (!subcategories[daerah].totals[year]) {
@@ -301,7 +301,7 @@ export default function Tabel2A2({ role }) {
         }
         subcategories[daerah].totals[year] += Number(item.jumlah_mahasiswa) || 0;
       });
-      
+
       // Calculate category totals from subcategories
       // Always calculate for all years in yearOrder (even if null, to maintain column structure)
       const categoryTotals = {};
@@ -319,7 +319,7 @@ export default function Tabel2A2({ role }) {
           return sum + (sub.totals[Number(selectedTahun)] || 0);
         }, 0);
       }
-      
+
       return {
         ...category,
         subcategories: Object.values(subcategories),
@@ -327,7 +327,7 @@ export default function Tabel2A2({ role }) {
         linkBukti: categoryData.length > 0 ? categoryData[0].link_bukti : null
       };
     });
-    
+
     return organizedDataResult;
   }, [filteredData, yearOrder, selectedTahun, showDeleted]);
 
@@ -335,19 +335,19 @@ export default function Tabel2A2({ role }) {
   const exportToExcel = async () => {
     try {
       setLoading(true);
-      
+
       // Filter data berdasarkan showDeleted
-      const dataToExport = showDeleted 
-        ? filteredData.filter(r => r.deleted_at) 
+      const dataToExport = showDeleted
+        ? filteredData.filter(r => r.deleted_at)
         : filteredData.filter(r => !r.deleted_at);
-      
+
       if (dataToExport.length === 0) {
         throw new Error('Tidak ada data untuk diekspor.');
       }
 
       // Prepare data untuk export sesuai struktur tabel
       const exportData = [];
-      
+
       // Build header dynamically based on yearOrder
       const headerRow = { 'Asal Mahasiswa': 'Asal Mahasiswa' };
       yearOrder.forEach((y, idx) => {
@@ -358,7 +358,7 @@ export default function Tabel2A2({ role }) {
       });
       headerRow['Link Bukti'] = 'Link Bukti';
       exportData.push(headerRow);
-      
+
       // Tambahkan data dari organizedData
       organizedData.forEach((category) => {
         // Tambahkan baris kategori
@@ -371,7 +371,7 @@ export default function Tabel2A2({ role }) {
         });
         categoryRow['Link Bukti'] = category.linkBukti || '';
         exportData.push(categoryRow);
-        
+
         // Tambahkan baris subkategori
         category.subcategories.forEach((subcategory) => {
           const subcategoryRow = { 'Asal Mahasiswa': `  ${subcategory.name}` }; // Indent untuk menunjukkan subkategori
@@ -385,13 +385,14 @@ export default function Tabel2A2({ role }) {
           exportData.push(subcategoryRow);
         });
       });
-      
+
       // Tambahkan baris Jumlah
       const totalRow = { 'Asal Mahasiswa': 'Jumlah' };
       yearOrder.forEach((y, idx) => {
         if (y != null) {
           const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
-          totalRow[label] = organizedData.reduce((sum, cat) => sum + (cat.totals[y] || 0), 0);
+          // [UPDATED] Hanya hitung total dari 2 kategori pertama di Excel
+          totalRow[label] = organizedData.slice(0, 2).reduce((sum, cat) => sum + (cat.totals[y] || 0), 0);
         }
       });
       totalRow['Link Bukti'] = '';
@@ -412,17 +413,17 @@ export default function Tabel2A2({ role }) {
           }
           return strValue;
         };
-        
+
         // Get headers from first row
         const headers = Object.keys(exportData[0] || {});
         const csvRows = [
           headers.map(escapeCsv).join(','),
-          ...exportData.map(row => 
+          ...exportData.map(row =>
             headers.map(header => escapeCsv(row[header])).join(',')
           )
         ];
         const csvContent = '\ufeff' + csvRows.join('\n');
-        
+
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -432,7 +433,7 @@ export default function Tabel2A2({ role }) {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Berhasil!',
@@ -445,10 +446,10 @@ export default function Tabel2A2({ role }) {
 
       // Buat workbook baru
       const wb = XLSX.utils.book_new();
-      
+
       // Buat worksheet dari data
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 40 },  // Asal Mahasiswa
@@ -459,10 +460,10 @@ export default function Tabel2A2({ role }) {
         { wch: 12 },  // TS
         { wch: 50 }   // Link Bukti
       ];
-      
+
       // Tambahkan worksheet ke workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Keragaman Asal');
-      
+
       // Generate file dan download
       const fileName = `Tabel_2A2_Keragaman_Asal_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -588,21 +589,21 @@ export default function Tabel2A2({ role }) {
   const handleAddClick = () => {
     // Pastikan ada tahun yang dipilih sebelum membuka modal
     if (!selectedTahun) {
-      Swal.fire({ 
-        icon: 'warning', 
-        title: 'Peringatan!', 
-        text: 'Pilih tahun akademik terlebih dahulu sebelum menambah data' 
+      Swal.fire({
+        icon: 'warning',
+        title: 'Peringatan!',
+        text: 'Pilih tahun akademik terlebih dahulu sebelum menambah data'
       });
       return;
     }
-    
+
     // Debug authUser untuk troubleshooting
     console.log("🔍 Debug authUser di handleAddClick:", {
       authUser,
       unit: authUser?.unit,
       hasUnit: !!authUser?.unit
     });
-    
+
     setForm({
       id_unit_prodi: authUser?.unit || "",
       id_tahun: selectedTahun || "",
@@ -621,20 +622,20 @@ export default function Tabel2A2({ role }) {
   // Helper function untuk mencari provinsi dari nama daerah dan cek apakah ditemukan
   const cariProvinsiDariDaerah = (namaDaerah) => {
     if (!namaDaerah) return { provinsi: null, ditemukan: false };
-    
+
     const namaDaerahUpper = namaDaerah.toUpperCase().trim();
-    
+
     // 1. Coba exact match dulu (case insensitive)
-    let daerahFound = uniqueDaerahList.find(daerah => 
+    let daerahFound = uniqueDaerahList.find(daerah =>
       daerah.nama.toUpperCase().trim() === namaDaerahUpper
     );
-    
+
     // 2. Jika tidak ketemu exact match, coba match dengan menghilangkan prefix "KABUPATEN" atau "KOTA"
     if (!daerahFound) {
       const namaTanpaPrefix = namaDaerahUpper
         .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
         .trim();
-      
+
       if (namaTanpaPrefix !== namaDaerahUpper) {
         daerahFound = uniqueDaerahList.find(daerah => {
           const namaListUpper = daerah.nama.toUpperCase().trim();
@@ -645,13 +646,13 @@ export default function Tabel2A2({ role }) {
         });
       }
     }
-    
+
     // 3. Jika masih belum ketemu, coba match dengan nama tanpa prefix di kedua sisi
     if (!daerahFound) {
       const namaTanpaPrefix = namaDaerahUpper
         .replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '')
         .trim();
-      
+
       daerahFound = uniqueDaerahList.find(daerah => {
         const namaListUpper = daerah.nama.toUpperCase().trim();
         const namaListTanpaPrefix = namaListUpper
@@ -661,10 +662,10 @@ export default function Tabel2A2({ role }) {
         return namaListTanpaPrefix === namaTanpaPrefix;
       });
     }
-    
+
     // 4. Jangan gunakan partial match (includes) karena bisa salah match dengan daerah lain
     // Contoh: "BANYUWANGI" bisa match dengan "ACEH BANYUWANGI" atau nama lain yang mengandung "BANYUWANGI"
-    
+
     return {
       provinsi: daerahFound?.provinsi || null,
       ditemukan: !!daerahFound
@@ -676,30 +677,30 @@ export default function Tabel2A2({ role }) {
     if (!namaDaerah) {
       return "Kota/Kab Lain";
     }
-    
+
     const namaDaerahUpper = namaDaerah.toUpperCase().trim();
-    
+
     // Cari provinsi dari database jika tidak tersedia atau untuk memastikan
     const hasilPencarian = cariProvinsiDariDaerah(namaDaerah);
-    
+
     // Jika tidak ditemukan di database, maka Negara Lain
     if (!hasilPencarian.ditemukan) {
       return "Negara Lain";
     }
-    
+
     // Prioritas 1: Cek apakah ini Banyuwangi (lebih spesifik)
     // Cek dengan berbagai variasi nama Banyuwangi
     const namaTanpaPrefix = namaDaerahUpper.replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '').trim();
-    const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" || 
-                        namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
-                        namaDaerahUpper === "KAB. BANYUWANGI" ||
-                        namaDaerahUpper === "KABUPATEN BANYUWANGI";
-    
+    const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" ||
+      namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
+      namaDaerahUpper === "KAB. BANYUWANGI" ||
+      namaDaerahUpper === "KABUPATEN BANYUWANGI";
+
     // Jika ini Banyuwangi, maka Sama Kota/Kab
     if (isBanyuwangi) {
       return "Sama Kota/Kab";
     }
-    
+
     // Prioritas 2: Semua kota/kab lain (baik di Jawa Timur maupun di luar Jawa Timur) masuk ke Kota/Kab Lain
     // "Provinsi Lain" digunakan untuk data agregat provinsi, bukan kota/kab individual
     return "Kota/Kab Lain";
@@ -740,7 +741,7 @@ export default function Tabel2A2({ role }) {
     const value = e.target.value.toUpperCase();
     const kategoriGeografis = getKategoriGeografis(value);
     setForm({
-      ...form, 
+      ...form,
       nama_daerah_input: value,
       kategori_geografis: kategoriGeografis
     });
@@ -754,7 +755,7 @@ export default function Tabel2A2({ role }) {
     const provinsi = daerah.provinsi || null;
     const kategoriGeografis = getKategoriGeografis(upperValue, provinsi);
     setForm({
-      ...form, 
+      ...form,
       nama_daerah_input: upperValue,
       kategori_geografis: kategoriGeografis
     });
@@ -770,7 +771,7 @@ export default function Tabel2A2({ role }) {
     console.log("📋 Form data:", form);
     console.log("👤 Auth user:", authUser ? { id: authUser.id, role: authUser.role } : null);
     console.log("✏️ Editing row:", editingRow ? { id: editingRow.id, ...editingRow } : null);
-    
+
     try {
       // Validation
       console.log("🔍 Validating form data...");
@@ -778,17 +779,17 @@ export default function Tabel2A2({ role }) {
         console.log("❌ Validation failed: No unit selected");
         console.log("🔍 Debug form data:", form);
         console.log("🔍 Debug authUser:", authUser);
-        
+
         // Jika user tidak punya unit, kita bisa menggunakan unit default atau skip validasi ini
         // untuk role tertentu seperti WAKET yang bisa mengakses semua unit
         if (authUser?.role?.toLowerCase().includes('waket') || authUser?.role?.toLowerCase().includes('tpm')) {
           console.log("⚠️ User dengan role khusus, menggunakan unit default");
           form.id_unit_prodi = 1; // Default ke Ketua STIKOM
         } else {
-          Swal.fire({ 
-            icon: 'error', 
-            title: 'Error!', 
-            text: 'Unit program studi tidak ditemukan. Silakan logout dan login kembali.' 
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Unit program studi tidak ditemukan. Silakan logout dan login kembali.'
           });
           return;
         }
@@ -818,27 +819,27 @@ export default function Tabel2A2({ role }) {
         // Backend mengharapkan req.user.id_user, jadi kita tidak perlu kirim created_by/updated_by
         // karena middleware auth akan menangani ini
       };
-      
+
       console.log("📦 Prepared payload:", payload);
 
       if (editingRow) {
         console.log("✏️ Updating existing record:", editingRow.id);
         const updateUrl = `/tabel2a2-keragaman-asal/${editingRow.id}`;
         console.log("🌐 Update API URL:", updateUrl);
-        
+
         // Saat edit, pertahankan kategori_geografis yang sudah ada dari editingRow
         // Jangan hitung ulang karena bisa salah (misalnya nama provinsi tidak ditemukan sebagai kota/kab)
         const payloadUpdate = {
           ...payload,
           kategori_geografis: editingRow.kategori_geografis || form.kategori_geografis || payload.kategori_geografis
         };
-        
+
         console.log("📝 Update payload dengan kategori yang dipertahankan:", {
           kategori_geografis: payloadUpdate.kategori_geografis,
           nama_daerah_input: payloadUpdate.nama_daerah_input,
           jumlah_mahasiswa: payloadUpdate.jumlah_mahasiswa
         });
-        
+
         await apiFetch(updateUrl, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -850,13 +851,13 @@ export default function Tabel2A2({ role }) {
         console.log("➕ Creating new record(s)");
         const createUrl = "/tabel2a2-keragaman-asal";
         console.log("🌐 Create API URL:", createUrl);
-        
+
         // Cari provinsi dari nama daerah
         const hasilPencarian = cariProvinsiDariDaerah(form.nama_daerah_input);
         const provinsiDitemukan = hasilPencarian.provinsi;
         const daerahDitemukan = hasilPencarian.ditemukan;
         const namaDaerahUpper = (form.nama_daerah_input || "").toUpperCase().trim();
-        
+
         // Log untuk debugging
         console.log("🔍 Pencarian daerah:", {
           input: form.nama_daerah_input,
@@ -864,15 +865,15 @@ export default function Tabel2A2({ role }) {
           provinsi: provinsiDitemukan,
           hasilPencarian
         });
-        
+
         // Cek apakah Banyuwangi (case-insensitive, dengan atau tanpa prefix)
         const namaTanpaPrefix = namaDaerahUpper.replace(/^(KABUPATEN|KOTA|KAB\.?|KOT\.?)\s+/i, '').trim();
-        const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" || 
-                            namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
-                            namaDaerahUpper === "KAB. BANYUWANGI";
-        
+        const isBanyuwangi = namaTanpaPrefix === "BANYUWANGI" ||
+          namaDaerahUpper === "KABUPATEN BANYUWANGI" ||
+          namaDaerahUpper === "KAB. BANYUWANGI";
+
         const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase().trim() === "JAWA TIMUR";
-        
+
         // Jika tidak ditemukan di database, buat 1 record dengan kategori Negara Lain
         if (!daerahDitemukan) {
           const payloadNegaraLain = {
@@ -880,48 +881,48 @@ export default function Tabel2A2({ role }) {
             nama_daerah_input: form.nama_daerah_input.toUpperCase(),
             kategori_geografis: "Negara Lain"
           };
-          
+
           await apiFetch(createUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payloadNegaraLain)
           });
           console.log("✅ Create Negara Lain successful");
-          
-          await Swal.fire({ 
-            icon: 'success', 
-            title: 'Berhasil!', 
-            text: 'Data berhasil ditambahkan (Negara Lain)', 
-            timer: 2000 
+
+          await Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Data berhasil ditambahkan (Negara Lain)',
+            timer: 2000
           });
         } else {
           // Tentukan kategori geografis
           const kategoriGeografis = form.kategori_geografis || getKategoriGeografis(form.nama_daerah_input);
-          
+
           // Cek apakah ini kota/kab di luar Jawa Timur (bukan Banyuwangi)
           const isJawaTimur = provinsiDitemukan && provinsiDitemukan.toUpperCase().trim() === "JAWA TIMUR";
           const isLuarJawaTimur = daerahDitemukan && !isJawaTimur && !isBanyuwangi;
-          
+
           if (isLuarJawaTimur) {
             // Jika kota/kab di luar Jawa Timur, buat 2 record:
             // 1. Kota/Kab Lain (dengan nama kota/kab)
             // 2. Provinsi Lain (dengan nama provinsi)
-            
+
             const payloadKotaKabLain = {
               ...payload,
               nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
               kategori_geografis: "Kota/Kab Lain"
             };
-            
+
             // Untuk Provinsi Lain, gunakan nama provinsi, bukan nama kota/kab
             const namaProvinsi = provinsiDitemukan ? provinsiDitemukan.toUpperCase().trim() : form.nama_daerah_input.toUpperCase().trim();
-            
+
             const payloadProvinsiLain = {
               ...payload,
               nama_daerah_input: namaProvinsi,
               kategori_geografis: "Provinsi Lain"
             };
-            
+
             console.log("📝 Membuat 2 record untuk kota/kab di luar Jawa Timur:", {
               kota_kab: payloadKotaKabLain.nama_daerah_input,
               provinsi: payloadProvinsiLain.nama_daerah_input,
@@ -929,7 +930,7 @@ export default function Tabel2A2({ role }) {
               kategori_2: payloadProvinsiLain.kategori_geografis,
               jumlah_mahasiswa: payloadKotaKabLain.jumlah_mahasiswa
             });
-            
+
             // Buat record pertama: Kota/Kab Lain
             await apiFetch(createUrl, {
               method: "POST",
@@ -937,7 +938,7 @@ export default function Tabel2A2({ role }) {
               body: JSON.stringify(payloadKotaKabLain)
             });
             console.log("✅ Create Kota/Kab Lain successful");
-            
+
             // Buat record kedua: Provinsi Lain
             await apiFetch(createUrl, {
               method: "POST",
@@ -945,12 +946,12 @@ export default function Tabel2A2({ role }) {
               body: JSON.stringify(payloadProvinsiLain)
             });
             console.log("✅ Create Provinsi Lain successful");
-            
-            await Swal.fire({ 
-              icon: 'success', 
-              title: 'Berhasil!', 
-              text: 'Data berhasil ditambahkan (Kota/Kab Lain dan Provinsi Lain)', 
-              timer: 2000 
+
+            await Swal.fire({
+              icon: 'success',
+              title: 'Berhasil!',
+              text: 'Data berhasil ditambahkan (Kota/Kab Lain dan Provinsi Lain)',
+              timer: 2000
             });
           } else {
             // Untuk kota/kab di Jawa Timur (selain Banyuwangi) atau Banyuwangi, buat 1 record saja
@@ -959,30 +960,30 @@ export default function Tabel2A2({ role }) {
               nama_daerah_input: form.nama_daerah_input.toUpperCase().trim(),
               kategori_geografis: kategoriGeografis
             };
-            
+
             console.log("📝 Membuat 1 record dengan kategori:", {
               nama_daerah_input: payloadFinal.nama_daerah_input,
               kategori_geografis: payloadFinal.kategori_geografis,
               jumlah_mahasiswa: payloadFinal.jumlah_mahasiswa
             });
-            
+
             await apiFetch(createUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payloadFinal)
             });
             console.log("✅ Create successful");
-            
-            await Swal.fire({ 
-              icon: 'success', 
-              title: 'Berhasil!', 
-              text: 'Data berhasil ditambahkan', 
-              timer: 2000 
+
+            await Swal.fire({
+              icon: 'success',
+              title: 'Berhasil!',
+              text: 'Data berhasil ditambahkan',
+              timer: 2000
             });
           }
         }
       }
-      
+
       handleCloseModal();
       console.log("🔄 Refreshing data after submission");
       refresh();
@@ -999,7 +1000,7 @@ export default function Tabel2A2({ role }) {
 
   const handleDelete = async (id) => {
     console.log("🗑️ Tabel2A2 - Delete request for ID:", id);
-    
+
     const result = await Swal.fire({
       title: 'Konfirmasi',
       text: 'Yakin ingin menghapus data ini?',
@@ -1008,7 +1009,7 @@ export default function Tabel2A2({ role }) {
       confirmButtonText: 'Ya, Hapus',
       cancelButtonText: 'Batal'
     });
-    
+
     if (result.isConfirmed) {
       try {
         console.log("🌐 Making DELETE request to:", `/tabel2a2-keragaman-asal/${id}`);
@@ -1049,7 +1050,7 @@ export default function Tabel2A2({ role }) {
       cancelButtonText: 'Batal',
       confirmButtonColor: '#d33'
     });
-    
+
     if (result.isConfirmed) {
       try {
         await apiFetch(`/tabel2a2-keragaman-asal/${id}/hard-delete`, { method: "DELETE" });
@@ -1070,7 +1071,7 @@ export default function Tabel2A2({ role }) {
   };
 
   const handleSelectRow = (id) => {
-    setSelectedRows(prev => 
+    setSelectedRows(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
@@ -1085,7 +1086,7 @@ export default function Tabel2A2({ role }) {
       confirmButtonText: 'Ya, Pulihkan',
       cancelButtonText: 'Batal'
     });
-    
+
     if (result.isConfirmed) {
       try {
         await apiFetch(`/tabel2a2-keragaman-asal/restore-multiple`, {
@@ -1105,14 +1106,14 @@ export default function Tabel2A2({ role }) {
   // Handler untuk Edit Data TS - membuka modal untuk menambah/edit data untuk tahun TS
   const handleEditTS = () => {
     if (!selectedTahun) {
-      Swal.fire({ 
-        icon: 'warning', 
-        title: 'Peringatan!', 
-        text: 'Pilih tahun akademik terlebih dahulu' 
+      Swal.fire({
+        icon: 'warning',
+        title: 'Peringatan!',
+        text: 'Pilih tahun akademik terlebih dahulu'
       });
       return;
     }
-    
+
     // Buka modal dengan mode Edit TS (akan menampilkan dropdown untuk memilih data)
     setForm({
       id_unit_prodi: authUser?.unit || "",
@@ -1148,7 +1149,7 @@ export default function Tabel2A2({ role }) {
 
     const tsData = getTSData.active;
     const selectedData = tsData.find(item => Number(item.id) === Number(dataId));
-    
+
     if (selectedData) {
       const upperDaerah = (selectedData.nama_daerah_input || "").toUpperCase();
       const kategoriGeografis = getKategoriGeografis(upperDaerah);
@@ -1293,11 +1294,11 @@ export default function Tabel2A2({ role }) {
     filteredDataLength: filteredData.length,
     selectedTahun,
     showDeleted,
-    authUser: authUser ? { 
-      id: authUser.id, 
-      role: authUser.role, 
+    authUser: authUser ? {
+      id: authUser.id,
+      role: authUser.role,
       unit: authUser.unit,
-      username: authUser.username 
+      username: authUser.username
     } : null
   });
 
@@ -1330,21 +1331,21 @@ export default function Tabel2A2({ role }) {
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
-      
+
       {/* Loading State */}
       {mapsLoading && (
         <div className="flex justify-center items-center py-8">
           <div className="text-slate-600">Memuat data...</div>
         </div>
       )}
-      
+
       {/* Error Display */}
       {error && (
         <div className="mb-4 p-4 text-red-700 bg-red-100 border border-red-300 rounded-lg">
           {error}
         </div>
       )}
-      
+
       {/* Keragaman Asal Mahasiswa */}
       <section>
         <header className="pb-6 mb-6 border-b border-slate-200">
@@ -1377,33 +1378,31 @@ export default function Tabel2A2({ role }) {
                       }
                     }}
                     disabled={loading}
-                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                      selectedTahun 
-                        ? 'border-[#0384d6] bg-white text-black' 
+                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedTahun
+                        ? 'border-[#0384d6] bg-white text-black'
                         : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     aria-label="Pilih tahun"
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                       <span className={`truncate ${selectedTahun ? 'text-black' : 'text-gray-500'}`}>
-                        {selectedTahun 
+                        {selectedTahun
                           ? (() => {
-                              const found = Object.values(maps.tahun).find((t) => Number(t.id_tahun) === Number(selectedTahun));
-                              return found ? found.tahun : selectedTahun;
-                            })()
+                            const found = Object.values(maps.tahun).find((t) => Number(t.id_tahun) === Number(selectedTahun));
+                            return found ? found.tahun : selectedTahun;
+                          })()
                           : "Pilih Tahun"}
                       </span>
                     </div>
-                    <FiChevronDown 
-                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                        openYearFilterDropdown ? 'rotate-180' : ''
-                      }`} 
-                      size={16} 
+                    <FiChevronDown
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openYearFilterDropdown ? 'rotate-180' : ''
+                        }`}
+                      size={16}
                     />
                   </button>
                   {openYearFilterDropdown && !loading && (
-                    <div 
+                    <div
                       className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto year-filter-dropdown-menu mt-1 w-full"
                       style={{ minWidth: '200px' }}
                     >
@@ -1413,11 +1412,10 @@ export default function Tabel2A2({ role }) {
                           setSelectedTahun(null);
                           setOpenYearFilterDropdown(false);
                         }}
-                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                          !selectedTahun
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${!selectedTahun
                             ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                             : 'text-gray-700'
-                        }`}
+                          }`}
                       >
                         <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                         <span>Pilih Tahun</span>
@@ -1430,11 +1428,10 @@ export default function Tabel2A2({ role }) {
                             setSelectedTahun(Number(t.id_tahun));
                             setOpenYearFilterDropdown(false);
                           }}
-                          className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${
-                            selectedTahun === Number(t.id_tahun)
+                          className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedTahun === Number(t.id_tahun)
                               ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                               : 'text-gray-700'
-                          }`}
+                            }`}
                         >
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
                           <span>{t.tahun}</span>
@@ -1445,18 +1442,17 @@ export default function Tabel2A2({ role }) {
                 </div>
               </div>
             )}
-            
+
             {/* Show Deleted Toggle - Hidden untuk role kemahasiswaan */}
             {userRole?.toLowerCase() !== 'kemahasiswaan' && (
               <div className="inline-flex bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => { setShowDeleted(false); setSelectedRows([]); }}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    !showDeleted
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
                       ? "bg-white text-[#0384d6] shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   aria-label="Tampilkan data aktif"
                 >
                   Data
@@ -1464,11 +1460,10 @@ export default function Tabel2A2({ role }) {
                 <button
                   onClick={() => { setShowDeleted(true); setSelectedRows([]); }}
                   disabled={loading}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    showDeleted
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
                       ? "bg-white text-[#0384d6] shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   aria-label="Tampilkan data terhapus"
                 >
                   Data Terhapus
@@ -1487,7 +1482,7 @@ export default function Tabel2A2({ role }) {
               </button>
             )}
           </div>
-          
+
           {/* Action Buttons */}
           <div className="inline-flex items-center gap-2">
             <button
@@ -1511,7 +1506,7 @@ export default function Tabel2A2({ role }) {
             {canManageData && getTSData.hasActive && !showDeleted && (
               <>
                 {canUpdate && (
-                  <button 
+                  <button
                     onClick={handleEditTS}
                     className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] transition-colors"
                     disabled={!canUpdate}
@@ -1520,7 +1515,7 @@ export default function Tabel2A2({ role }) {
                   </button>
                 )}
                 {canDelete && (
-                  <button 
+                  <button
                     onClick={handleSoftDeleteTS}
                     className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition-colors"
                     disabled={!canDelete}
@@ -1532,14 +1527,14 @@ export default function Tabel2A2({ role }) {
             )}
             {canManageData && getTSData.hasDeleted && showDeleted && (
               <>
-                <button 
+                <button
                   onClick={handleRestoreTS}
                   className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors"
                   disabled={!canUpdate}
                 >
                   Pulihkan Data TS
                 </button>
-                <button 
+                <button
                   onClick={handleHardDeleteTS}
                   className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition-colors"
                   disabled={!canDelete}
@@ -1559,174 +1554,179 @@ export default function Tabel2A2({ role }) {
           <>
             {/* Table */}
             <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
-        <div className="relative transition-opacity duration-200 ease-in-out">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-              <tr className="sticky top-0">
-                {showDeleted && (
-                  <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
-                    <input
-                      type="checkbox"
-                      checked={isAllSelected}
-                      onChange={handleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                    />
-                  </th>
-                )}
-                <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Asal Mahasiswa</th>
-                <th colSpan={yearOrder.length || 5} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
-                <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
-              </tr>
-              <tr className="sticky top-0">
-                {yearOrder.length > 0 ? (
-                  yearOrder.map((y, idx) => {
-                    const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
-                    return (
-                      <th key={y ?? `null-${idx}`} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
-                        {y != null ? label : '-'}
-                      </th>
-                    );
-                  })
-                ) : (
-                  <>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
-                    <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
-              {(() => {
-                const rows = [];
-                
-                organizedData.forEach((category, categoryIndex) => {
-                  // Add category row
-                  rows.push(
-                    <tr key={`category-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}`} className="transition-all duration-200 ease-in-out bg-slate-100 hover:bg-slate-200">
+              <div className="relative transition-opacity duration-200 ease-in-out">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+                    <tr className="sticky top-0">
                       {showDeleted && (
-                        <td className="px-6 py-4 text-center border border-slate-200">
-                          {/* Checkbox for bulk operations if needed */}
-                        </td>
+                        <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20 w-16">
+                          <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            onChange={handleSelectAll}
+                            className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                          />
+                        </th>
                       )}
-                      <td className="px-6 py-4 text-slate-700 font-semibold border border-slate-200">
-                        {category.name}
-                      </td>
+                      <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Asal Mahasiswa</th>
+                      <th colSpan={yearOrder.length || 5} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Jumlah Mahasiswa Baru</th>
+                      <th rowSpan="2" className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">Link Bukti</th>
+                    </tr>
+                    <tr className="sticky top-0">
+                      {yearOrder.length > 0 ? (
+                        yearOrder.map((y, idx) => {
+                          const label = idx === yearOrder.length - 1 ? 'TS' : `TS-${yearOrder.length - 1 - idx}`;
+                          return (
+                            <th key={y ?? `null-${idx}`} className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">
+                              {y != null ? label : '-'}
+                            </th>
+                          );
+                        })
+                      ) : (
+                        <>
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-4</th>
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-3</th>
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-2</th>
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS-1</th>
+                          <th className="px-6 py-4 text-xs font-semibold tracking-wide uppercase text-center border border-white/20">TS</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
+                    {(() => {
+                      const rows = [];
+
+                      organizedData.forEach((category, categoryIndex) => {
+                        // Add category row
+                        rows.push(
+                          <tr key={`category-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}`} className="transition-all duration-200 ease-in-out bg-slate-100 hover:bg-slate-200">
+                            {showDeleted && (
+                              <td className="px-6 py-4 text-center border border-slate-200">
+                                {/* Checkbox for bulk operations if needed */}
+                              </td>
+                            )}
+                            <td className="px-6 py-4 text-slate-700 font-semibold border border-slate-200">
+                              {category.name}
+                            </td>
+                            {yearOrder.length > 0 ? (
+                              yearOrder.map((y, idx) => (
+                                <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
+                                  {y != null ? (category.totals[y] || 0) : '-'}
+                                </td>
+                              ))
+                            ) : selectedTahun ? (
+                              // Fallback: show only selectedTahun column if yearOrder is empty
+                              <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
+                                {category.totals[Number(selectedTahun)] || 0}
+                              </td>
+                            ) : (
+                              // No year selected, show empty
+                              <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">-</td>
+                            )}
+                            <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                              {category.linkBukti ? (
+                                <a href={category.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
+                                  Lihat Bukti
+                                </a>
+                              ) : '-'}
+                            </td>
+                          </tr>
+                        );
+
+                        // Add subcategory rows
+                        category.subcategories.forEach((subcategory, subIndex) => {
+                          // [UPDATED] Sembunyikan baris subkategori untuk "Kota/Kab sama dengan PS" (Banyuwangi)
+                          if (category.name === "Kota/Kab sama dengan PS") return;
+
+                          rows.push(
+                            <tr key={`subcategory-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}-${subIndex}`} className={`transition-all duration-200 ease-in-out ${subIndex % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
+                              {showDeleted && (
+                                <td className="px-6 py-4 text-center border border-slate-200">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedRows.includes(subcategory.data[0]?.id)}
+                                    onChange={() => handleSelectRow(subcategory.data[0]?.id)}
+                                    className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
+                                  />
+                                </td>
+                              )}
+                              <td className="px-6 py-4 text-slate-700 pl-12 border border-slate-200">
+                                {subcategory.name}
+                              </td>
+                              {yearOrder.length > 0 ? (
+                                yearOrder.map((y, idx) => (
+                                  <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                                    {y != null ? (subcategory.totals[y] || 0) : '-'}
+                                  </td>
+                                ))
+                              ) : selectedTahun ? (
+                                // Fallback: show only selectedTahun column if yearOrder is empty
+                                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                                  {subcategory.totals[Number(selectedTahun)] || 0}
+                                </td>
+                              ) : (
+                                // No year selected, show empty
+                                <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">-</td>
+                              )}
+                              <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
+                                {subcategory.linkBukti ? (
+                                  <a href={subcategory.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
+                                    Lihat Bukti
+                                  </a>
+                                ) : '-'}
+                              </td>
+                            </tr>
+                          );
+                        });
+                      });
+
+                      return rows;
+                    })()}
+
+                    {/* Total Row */}
+                    <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold">
+                      {showDeleted && <td className="px-6 py-4 text-center border border-white/20"></td>}
+                      <td className="px-6 py-4 font-bold border border-white/20">Jumlah</td>
                       {yearOrder.length > 0 ? (
                         yearOrder.map((y, idx) => (
-                          <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                            {y != null ? (category.totals[y] || 0) : '-'}
+                          <td key={y ?? `null-${idx}`} className="px-6 py-4 text-center font-bold border border-white/20">
+                            {/* [UPDATED] Hanya hitung total dari 2 kategori pertama (Kota/Kab sama PS & Kota/Kab Lain) */}
+                            {y != null ? organizedData.slice(0, 2).reduce((sum, cat) => sum + (cat.totals[y] || 0), 0) : '-'}
                           </td>
                         ))
                       ) : selectedTahun ? (
                         // Fallback: show only selectedTahun column if yearOrder is empty
-                        <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">
-                          {category.totals[Number(selectedTahun)] || 0}
+                        <td className="px-6 py-4 text-center font-bold border border-white/20">
+                          {/* [UPDATED] Hanya hitung total dari 2 kategori pertama */}
+                          {organizedData.slice(0, 2).reduce((sum, cat) => sum + (cat.totals[Number(selectedTahun)] || 0), 0)}
                         </td>
                       ) : (
                         // No year selected, show empty
-                        <td className="px-6 py-4 text-slate-700 text-center font-semibold border border-slate-200">-</td>
+                        <td className="px-6 py-4 text-center font-bold border border-white/20">-</td>
                       )}
-                      <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                        {category.linkBukti ? (
-                          <a href={category.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
-                            Lihat Bukti
-                          </a>
-                        ) : '-'}
-                      </td>
+                      <td className="px-6 py-4 text-center border border-white/20">-</td>
                     </tr>
-                  );
-                  
-                  // Add subcategory rows
-                  category.subcategories.forEach((subcategory, subIndex) => {
-                    rows.push(
-                      <tr key={`subcategory-${showDeleted ? 'deleted' : 'active'}-${categoryIndex}-${subIndex}`} className={`transition-all duration-200 ease-in-out ${subIndex % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}>
-                        {showDeleted && (
-                          <td className="px-6 py-4 text-center border border-slate-200">
-                            <input
-                              type="checkbox"
-                              checked={selectedRows.includes(subcategory.data[0]?.id)}
-                              onChange={() => handleSelectRow(subcategory.data[0]?.id)}
-                              className="h-4 w-4 rounded border-gray-300 text-[#0384d6] focus:ring-[#0384d6]"
-                            />
-                          </td>
-                        )}
-                        <td className="px-6 py-4 text-slate-700 pl-12 border border-slate-200">
-                          {subcategory.name}
-                        </td>
-                        {yearOrder.length > 0 ? (
-                          yearOrder.map((y, idx) => (
-                            <td key={y ?? `null-${idx}`} className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                              {y != null ? (subcategory.totals[y] || 0) : '-'}
-                            </td>
-                          ))
-                        ) : selectedTahun ? (
-                          // Fallback: show only selectedTahun column if yearOrder is empty
-                          <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                            {subcategory.totals[Number(selectedTahun)] || 0}
-                          </td>
-                        ) : (
-                          // No year selected, show empty
-                          <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">-</td>
-                        )}
-                        <td className="px-6 py-4 text-slate-700 text-center border border-slate-200">
-                          {subcategory.linkBukti ? (
-                            <a href={subcategory.linkBukti} target="_blank" rel="noopener noreferrer" className="text-[#0384d6] hover:underline">
-                              Lihat Bukti
-                            </a>
-                          ) : '-'}
+
+                    {organizedData.every(cat => cat.subcategories.length === 0) && (
+                      <tr>
+                        <td colSpan={showDeleted ? (yearOrder.length > 0 ? yearOrder.length + 2 : 7) : (yearOrder.length > 0 ? yearOrder.length + 1 : 6)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
+                          <p className="font-medium">Data tidak ditemukan</p>
+                          <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
                         </td>
                       </tr>
-                    );
-                  });
-                });
-                
-                return rows;
-              })()}
-              
-              {/* Total Row */}
-              <tr className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white font-semibold">
-                {showDeleted && <td className="px-6 py-4 text-center border border-white/20"></td>}
-                <td className="px-6 py-4 font-bold border border-white/20">Jumlah</td>
-                {yearOrder.length > 0 ? (
-                  yearOrder.map((y, idx) => (
-                    <td key={y ?? `null-${idx}`} className="px-6 py-4 text-center font-bold border border-white/20">
-                      {y != null ? organizedData.reduce((sum, cat) => sum + (cat.totals[y] || 0), 0) : '-'}
-                    </td>
-                  ))
-                ) : selectedTahun ? (
-                  // Fallback: show only selectedTahun column if yearOrder is empty
-                  <td className="px-6 py-4 text-center font-bold border border-white/20">
-                    {organizedData.reduce((sum, cat) => sum + (cat.totals[Number(selectedTahun)] || 0), 0)}
-                  </td>
-                ) : (
-                  // No year selected, show empty
-                  <td className="px-6 py-4 text-center font-bold border border-white/20">-</td>
-                )}
-                <td className="px-6 py-4 text-center border border-white/20">-</td>
-              </tr>
-              
-              {organizedData.every(cat => cat.subcategories.length === 0) && (
-                <tr>
-                  <td colSpan={showDeleted ? (yearOrder.length > 0 ? yearOrder.length + 2 : 7) : (yearOrder.length > 0 ? yearOrder.length + 1 : 6)} className="px-6 py-16 text-center text-slate-500 border border-slate-200">
-                    <p className="font-medium">Data tidak ditemukan</p>
-                    <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </>
         )}
       </section>
 
       {/* Modal */}
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
           style={{ zIndex: 9999, backdropFilter: 'blur(8px)' }}
           onClick={(e) => {
@@ -1736,22 +1736,22 @@ export default function Tabel2A2({ role }) {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] flex flex-col z-[10000] pointer-events-auto"
             style={{ zIndex: 10000 }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-8 py-6 rounded-t-2xl bg-gradient-to-r from-[#043975] to-[#0384d6] text-white flex-shrink-0">
               <h3 className="text-xl font-bold">
-                {editingRow 
-                  ? 'Edit Keragaman Asal' 
-                  : isEditTSMode 
-                    ? `Edit Data TS - ${getTahunName(selectedTahun)}` 
+                {editingRow
+                  ? 'Edit Keragaman Asal'
+                  : isEditTSMode
+                    ? `Edit Data TS - ${getTahunName(selectedTahun)}`
                     : 'Tambah Keragaman Asal'
                 }
               </h3>
               <p className="text-white/80 mt-1 text-sm">
-                {isEditTSMode && !editingRow 
+                {isEditTSMode && !editingRow
                   ? `Pilih data yang ingin diedit atau tambah data baru untuk tahun ${getTahunName(selectedTahun)}.`
                   : editingRow
                     ? 'Edit data keragaman asal mahasiswa yang dipilih.'
@@ -1776,39 +1776,37 @@ export default function Tabel2A2({ role }) {
                               e.preventDefault();
                               setOpenEditDataDropdown(!openEditDataDropdown);
                             }}
-                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                              editingRow?.id
-                                ? 'border-[#0384d6] bg-white' 
+                            className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${editingRow?.id
+                                ? 'border-[#0384d6] bg-white'
                                 : 'border-gray-300 bg-white hover:border-gray-400'
-                            }`}
+                              }`}
                             aria-label="Pilih data yang ingin diedit"
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                               <span className={`truncate ${editingRow?.id ? 'text-gray-900' : 'text-gray-500'}`}>
-                                {editingRow?.id 
+                                {editingRow?.id
                                   ? (() => {
-                                      const item = getTSData.active.find(i => Number(i.id) === Number(editingRow.id));
-                                      if (item) {
-                                        const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab" 
-                                          ? "Kota/Kab sama dengan PS"
-                                          : item.kategori_geografis;
-                                        return `${kategoriLabel} - ${item.nama_daerah_input} (${item.jumlah_mahasiswa} mahasiswa)`;
-                                      }
-                                      return "-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --";
-                                    })()
+                                    const item = getTSData.active.find(i => Number(i.id) === Number(editingRow.id));
+                                    if (item) {
+                                      const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab"
+                                        ? "Kota/Kab sama dengan PS"
+                                        : item.kategori_geografis;
+                                      return `${kategoriLabel} - ${item.nama_daerah_input} (${item.jumlah_mahasiswa} mahasiswa)`;
+                                    }
+                                    return "-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --";
+                                  })()
                                   : "-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --"}
                               </span>
                             </div>
-                            <FiChevronDown 
-                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                                openEditDataDropdown ? 'rotate-180' : ''
-                              }`} 
-                              size={18} 
+                            <FiChevronDown
+                              className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openEditDataDropdown ? 'rotate-180' : ''
+                                }`}
+                              size={18}
                             />
                           </button>
                           {openEditDataDropdown && (
-                            <div 
+                            <div
                               className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto edit-data-dropdown-menu mt-1 w-full"
                             >
                               <button
@@ -1817,17 +1815,16 @@ export default function Tabel2A2({ role }) {
                                   handleSelectDataToEdit("");
                                   setOpenEditDataDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  !editingRow?.id
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${!editingRow?.id
                                     ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                     : 'text-gray-700'
-                                }`}
+                                  }`}
                               >
                                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span>-- Pilih Data yang Ingin Diedit atau Kosongkan untuk Menambah Data Baru --</span>
                               </button>
                               {getTSData.active.map((item) => {
-                                const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab" 
+                                const kategoriLabel = item.kategori_geografis === "Sama Kota/Kab"
                                   ? "Kota/Kab sama dengan PS"
                                   : item.kategori_geografis;
                                 return (
@@ -1838,11 +1835,10 @@ export default function Tabel2A2({ role }) {
                                       handleSelectDataToEdit(String(item.id));
                                       setOpenEditDataDropdown(false);
                                     }}
-                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                      editingRow?.id === item.id
+                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${editingRow?.id === item.id
                                         ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                         : 'text-gray-700'
-                                    }`}
+                                      }`}
                                   >
                                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                                     <span>{kategoriLabel} - {item.nama_daerah_input} ({item.jumlah_mahasiswa} mahasiswa)</span>
@@ -1865,7 +1861,7 @@ export default function Tabel2A2({ role }) {
                     )}
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
@@ -1876,33 +1872,31 @@ export default function Tabel2A2({ role }) {
                           e.preventDefault();
                           setOpenTahunFormDropdown(!openTahunFormDropdown);
                         }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${
-                          form.id_tahun
-                            ? 'border-[#0384d6] bg-white' 
+                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
+                            ? 'border-[#0384d6] bg-white'
                             : 'border-gray-300 bg-white hover:border-gray-400'
-                        }`}
+                          }`}
                         aria-label="Pilih tahun akademik"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
                           <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {form.id_tahun 
+                            {form.id_tahun
                               ? (() => {
-                                  const found = maps?.tahun && Object.values(maps.tahun).find((t) => String(t.id_tahun) === String(form.id_tahun));
-                                  return found ? found.tahun : form.id_tahun;
-                                })()
+                                const found = maps?.tahun && Object.values(maps.tahun).find((t) => String(t.id_tahun) === String(form.id_tahun));
+                                return found ? found.tahun : form.id_tahun;
+                              })()
                               : "-- Pilih Tahun --"}
                           </span>
                         </div>
-                        <FiChevronDown 
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${
-                            openTahunFormDropdown ? 'rotate-180' : ''
-                          }`} 
-                          size={18} 
+                        <FiChevronDown
+                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunFormDropdown ? 'rotate-180' : ''
+                            }`}
+                          size={18}
                         />
                       </button>
                       {openTahunFormDropdown && (
-                        <div 
+                        <div
                           className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-form-dropdown-menu mt-1 w-full"
                         >
                           {maps?.tahun && Object.values(maps.tahun).length > 0 ? (
@@ -1911,14 +1905,13 @@ export default function Tabel2A2({ role }) {
                                 key={t.id_tahun}
                                 type="button"
                                 onClick={() => {
-                                  setForm({...form, id_tahun: String(t.id_tahun)});
+                                  setForm({ ...form, id_tahun: String(t.id_tahun) });
                                   setOpenTahunFormDropdown(false);
                                 }}
-                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${
-                                  form.id_tahun === String(t.id_tahun)
+                                className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === String(t.id_tahun)
                                     ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                                     : 'text-gray-700'
-                                }`}
+                                  }`}
                               >
                                 <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
                                 <span>{t.tahun}</span>
@@ -1933,7 +1926,7 @@ export default function Tabel2A2({ role }) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Nama Daerah <span className="text-red-500">*</span></label>
                     <div className="relative" ref={daerahInputRef}>
@@ -2034,7 +2027,7 @@ export default function Tabel2A2({ role }) {
                     <input
                       type="number"
                       value={form.jumlah_mahasiswa}
-                      onChange={(e) => setForm({...form, jumlah_mahasiswa: e.target.value})}
+                      onChange={(e) => setForm({ ...form, jumlah_mahasiswa: e.target.value })}
                       required
                       min="0"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
@@ -2047,33 +2040,33 @@ export default function Tabel2A2({ role }) {
                     <input
                       type="url"
                       value={form.link_bukti}
-                      onChange={(e) => setForm({...form, link_bukti: e.target.value})}
+                      onChange={(e) => setForm({ ...form, link_bukti: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
                       placeholder="https://..."
                     />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-                  <button 
-                      type="button" 
-                      onClick={handleCloseModal} 
-                      className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
-                      Batal
+                    Batal
                   </button>
-                  <button 
-                      type="submit" 
-                      className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-                      disabled={loading}
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+                    disabled={loading}
                   >
-                      {loading ? (
-                          <div className="flex items-center justify-center space-x-2">
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                              <span>Menyimpan...</span>
-                          </div>
-                      ) : (
-                          'Simpan'
-                      )}
+                    {loading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <span>Menyimpan...</span>
+                      </div>
+                    ) : (
+                      'Simpan'
+                    )}
                   </button>
                 </div>
               </form>

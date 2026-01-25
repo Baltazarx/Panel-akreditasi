@@ -80,6 +80,20 @@ export const createPendaftaran = async (req, res) => {
       return res.status(400).json({ error: "id_unit_prodi dan id_tahun wajib diisi" });
     }
 
+    // [FIX] Validasi duplikasi: Cek apakah sudah ada data pendaftaran untuk tahun yang sama
+    // Tabel 2A.1 bersifat UNIFIED, jadi hanya 1 data per tahun
+    const [existing] = await pool.query(
+      `SELECT id FROM tabel_2a1_pendaftaran WHERE id_tahun = ? AND deleted_at IS NULL`,
+      [data.id_tahun]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        error: `Data pendaftaran untuk tahun ${data.id_tahun} sudah ada. Silakan edit data yang sudah ada.`,
+        existingId: existing[0].id
+      });
+    }
+
     const [r] = await pool.query(`INSERT INTO tabel_2a1_pendaftaran SET ?`, [data]);
     const [row] = await pool.query(`SELECT * FROM tabel_2a1_pendaftaran WHERE id = ?`, [r.insertId]);
     res.status(201).json(row[0]);
@@ -165,5 +179,18 @@ export const hardDeletePendaftaran = async (req, res) => {
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
     res.status(500).json({ error: "Hard delete failed" });
+  }
+};
+export const hardDeleteMultiplePendaftaran = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid or empty array of IDs' });
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(`DELETE FROM tabel_2a1_pendaftaran WHERE id IN (${placeholders})`, ids);
+    res.json({ ok: true, hardDeleted: true, count: ids.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Hard delete multiple failed' });
   }
 };

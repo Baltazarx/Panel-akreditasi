@@ -16,7 +16,7 @@ const TABLE_KEY = "tabel_3a3_pengembangan_dtpr";
 const LABEL = "3.A.3 Pengembangan DTPR di Bidang Penelitian";
 
 /* ---------- Modal Form Summary ---------- */
-function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunList, authUser }) {
+function ModalFormSummary({ isOpen, onClose, onSave, onDelete, initialData, maps, tahunList, authUser }) {
   const [form, setForm] = useState({
     id_unit: "",
     id_tahun: "",
@@ -27,6 +27,8 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
   // Dropdown state
   const [openUnitDropdown, setOpenUnitDropdown] = useState(false);
   const [openTahunDropdown, setOpenTahunDropdown] = useState(false);
+
+  const isEditMode = !!initialData;
 
   useEffect(() => {
     if (initialData) {
@@ -86,6 +88,26 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
     onSave(form);
   };
 
+  const handleDeleteClick = () => {
+    if (onDelete && initialData) {
+      Swal.fire({
+        title: 'Hapus Data?',
+        text: 'Data Jumlah DTPR untuk tahun ini akan dihapus.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          onDelete(initialData);
+          onClose();
+        }
+      });
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-md flex justify-center items-center z-[9999] pointer-events-auto"
@@ -109,148 +131,89 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 gap-6">
-            {/* Unit */}
-            <div>
-              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-2">
-                Unit/Prodi <span className="text-red-500">*</span>
-              </label>
-              <div className="relative unit-dropdown-container">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (!initialData) {
-                      setOpenUnitDropdown(!openUnitDropdown);
-                      setOpenTahunDropdown(false);
-                    }
-                  }}
-                  disabled={!!initialData}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_unit
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                    } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  aria-label="Pilih unit/prodi"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                    <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_unit
-                        ? (() => {
-                          const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
-                          return found ? found.nama_unit : "Pilih Unit/Prodi...";
-                        })()
-                        : "Pilih Unit/Prodi"}
-                    </span>
-                  </div>
-                  <FiChevronDown
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitDropdown ? 'rotate-180' : ''
-                      }`}
-                    size={18}
-                  />
-                </button>
-                {openUnitDropdown && !initialData && (
-                  <div
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-dropdown-menu mt-1 w-full"
-                  >
-                    {unitOptions.length === 0 ? (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Tidak ada data unit
-                      </div>
-                    ) : (
-                      unitOptions.map((unit) => (
-                        <button
-                          key={unit.id_unit}
-                          type="button"
-                          onClick={() => {
-                            handleChange("id_unit", unit.id_unit.toString());
-                            setOpenUnitDropdown(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_unit === unit.id_unit.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                            }`}
-                        >
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                          <span className="truncate">{unit.nama_unit}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Tahun */}
             <div>
               <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-2">
                 Tahun Akademik <span className="text-red-500">*</span>
               </label>
-              <div className="relative tahun-dropdown-container">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenTahunDropdown(!openTahunDropdown);
-                    setOpenUnitDropdown(false);
-                  }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                  aria-label="Pilih tahun akademik"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
-                    <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_tahun
-                        ? (() => {
-                          const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
-                          return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
-                        })()
-                        : "Pilih Tahun"}
-                    </span>
-                  </div>
-                  <FiChevronDown
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+              {isEditMode ? (
+                /* Disabled view for Edit Mode */
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 flex items-center gap-3">
+                  <FiCalendar className="text-gray-400 flex-shrink-0" size={18} />
+                  <span>
+                    {form.id_tahun
+                      ? (() => {
+                        const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                        return found ? (found.tahun || found.nama || found.id_tahun) : form.id_tahun;
+                      })()
+                      : "-"}
+                  </span>
+                  <span className="ml-auto text-xs text-gray-400 italic">(Tidak dapat diubah)</span>
+                </div>
+              ) : (
+                /* Dropdown for Add Mode */
+                <div className="relative tahun-dropdown-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpenTahunDropdown(!openTahunDropdown);
+                      setOpenUnitDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_tahun
+                      ? 'border-[#0384d6] bg-white'
+                      : 'border-gray-300 bg-white hover:border-gray-400'
                       }`}
-                    size={18}
-                  />
-                </button>
-                {openTahunDropdown && (
-                  <div
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu mt-1 w-full"
-                    style={{ minWidth: '200px' }}
+                    aria-label="Pilih tahun akademik"
                   >
-                    {tahunList.length === 0 ? (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Tidak ada data tahun
-                      </div>
-                    ) : (
-                      tahunList.map((tahun) => (
-                        <button
-                          key={tahun.id_tahun}
-                          type="button"
-                          onClick={() => {
-                            handleChange("id_tahun", tahun.id_tahun.toString());
-                            setOpenTahunDropdown(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === tahun.id_tahun.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                            }`}
-                        >
-                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                          <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-              {initialData && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Pilih tahun yang ingin di-edit (TS, TS-1, TS-2, TS-3, atau TS-4)
-                </p>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FiCalendar className="text-[#0384d6] flex-shrink-0" size={18} />
+                      <span className={`truncate ${form.id_tahun ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {form.id_tahun
+                          ? (() => {
+                            const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun));
+                            return found ? (found.tahun || found.nama || found.id_tahun) : "Pilih Tahun...";
+                          })()
+                          : "Pilih Tahun"}
+                      </span>
+                    </div>
+                    <FiChevronDown
+                      className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openTahunDropdown ? 'rotate-180' : ''
+                        }`}
+                      size={18}
+                    />
+                  </button>
+                  {openTahunDropdown && (
+                    <div
+                      className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto tahun-dropdown-menu mt-1 w-full"
+                      style={{ minWidth: '200px' }}
+                    >
+                      {tahunList.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Tidak ada data tahun
+                        </div>
+                      ) : (
+                        tahunList.map((tahun) => (
+                          <button
+                            key={tahun.id_tahun}
+                            type="button"
+                            onClick={() => {
+                              handleChange("id_tahun", tahun.id_tahun.toString());
+                              setOpenTahunDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun === tahun.id_tahun.toString()
+                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                              : 'text-gray-700'
+                              }`}
+                          >
+                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                            <span className="truncate">{tahun.tahun || tahun.nama || tahun.id_tahun}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -287,23 +250,25 @@ function ModalFormSummary({ isOpen, onClose, onSave, initialData, maps, tahunLis
           </div>
 
           <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenUnitDropdown(false);
-                setOpenTahunDropdown(false);
-                onClose();
-              }}
-              className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-lg bg-blue-100 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
-            >
-              {initialData ? "Simpan Perubahan" : "Tambah Data"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenUnitDropdown(false);
+                  setOpenTahunDropdown(false);
+                  onClose();
+                }}
+                className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium shadow-sm hover:bg-gray-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-lg bg-[#0384d6] text-white text-sm font-semibold shadow-sm hover:bg-[#043975] hover:shadow-md active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:active:scale-100 focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-2"
+              >
+                {initialData ? "Simpan Perubahan" : "Tambah Data"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -457,209 +422,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 gap-6">
-            {/* Unit */}
-            <div>
-              <label htmlFor="id_unit" className="block text-sm font-medium text-slate-700 mb-2">
-                Unit/Prodi <span className="text-red-500">*</span>
-              </label>
-              <div className="relative unit-detail-dropdown-container">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (!initialData) {
-                      setOpenUnitDropdown(!openUnitDropdown);
-                      setOpenDosenDropdown(false);
-                      setOpenJenisDropdown(false);
-                      setOpenTahunDropdown(false);
-                    }
-                  }}
-                  disabled={!!initialData}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_unit
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                    } ${initialData ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  aria-label="Pilih unit/prodi"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                    <span className={`truncate ${form.id_unit ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_unit
-                        ? (() => {
-                          const found = unitOptions.find((u) => String(u.id_unit) === String(form.id_unit));
-                          return found ? found.nama_unit : "Pilih Unit/Prodi...";
-                        })()
-                        : "Pilih Unit/Prodi"}
-                    </span>
-                  </div>
-                  <FiChevronDown
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitDropdown ? 'rotate-180' : ''
-                      }`}
-                    size={18}
-                  />
-                </button>
-                {openUnitDropdown && !initialData && (
-                  <div
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-detail-dropdown-menu mt-1 w-full"
-                  >
-                    {unitOptions.length === 0 ? (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Tidak ada data unit
-                      </div>
-                    ) : (
-                      unitOptions.map((unit) => (
-                        <button
-                          key={unit.id_unit}
-                          type="button"
-                          onClick={() => {
-                            handleChange("id_unit", unit.id_unit.toString());
-                            setOpenUnitDropdown(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_unit === unit.id_unit.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                            }`}
-                        >
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                          <span className="truncate">{unit.nama_unit}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Dosen */}
-            <div>
-              <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-2">
-                Dosen DTPR <span className="text-red-500">*</span>
-              </label>
-              <div className="relative dosen-dropdown-container">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenDosenDropdown(!openDosenDropdown);
-                    setOpenUnitDropdown(false);
-                    setOpenJenisDropdown(false);
-                    setOpenTahunDropdown(false);
-                  }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                  aria-label="Pilih dosen DTPR"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
-                    <span className={`truncate ${form.id_dosen ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.id_dosen
-                        ? (() => {
-                          const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
-                          return found ? (found.nama || `Dosen ${d.id_dosen}`) : "Pilih Dosen...";
-                        })()
-                        : "Pilih Dosen"}
-                    </span>
-                  </div>
-                  <FiChevronDown
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openDosenDropdown ? 'rotate-180' : ''
-                      }`}
-                    size={18}
-                  />
-                </button>
-                {openDosenDropdown && (
-                  <div
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto dosen-dropdown-menu mt-1 w-full"
-                  >
-                    {dosenList.length === 0 ? (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Tidak ada data dosen
-                      </div>
-                    ) : (
-                      dosenList.map((dosen) => (
-                        <button
-                          key={dosen.id_dosen}
-                          type="button"
-                          onClick={() => {
-                            handleChange("id_dosen", dosen.id_dosen.toString());
-                            setOpenDosenDropdown(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === dosen.id_dosen.toString()
-                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                            : 'text-gray-700'
-                            }`}
-                        >
-                          <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
-                          <span className="truncate">{dosen.nama || `Dosen ${dosen.id_dosen}`}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Jenis Pengembangan */}
-            <div>
-              <label htmlFor="jenis_pengembangan" className="block text-sm font-medium text-slate-700 mb-2">
-                Jenis Pengembangan <span className="text-red-500">*</span>
-              </label>
-              <div className="relative jenis-dropdown-container">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenJenisDropdown(!openJenisDropdown);
-                    setOpenUnitDropdown(false);
-                    setOpenDosenDropdown(false);
-                    setOpenTahunDropdown(false);
-                  }}
-                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.jenis_pengembangan
-                    ? 'border-[#0384d6] bg-white'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                  aria-label="Pilih jenis pengembangan"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
-                    <span className={`truncate ${form.jenis_pengembangan ? 'text-gray-900' : 'text-gray-500'}`}>
-                      {form.jenis_pengembangan || "Pilih Jenis Pengembangan"}
-                    </span>
-                  </div>
-                  <FiChevronDown
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openJenisDropdown ? 'rotate-180' : ''
-                      }`}
-                    size={18}
-                  />
-                </button>
-                {openJenisDropdown && (
-                  <div
-                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto jenis-dropdown-menu mt-1 w-full"
-                  >
-                    {jenisPengembanganOptions.map((jenis) => (
-                      <button
-                        key={jenis}
-                        type="button"
-                        onClick={() => {
-                          handleChange("jenis_pengembangan", jenis);
-                          setOpenJenisDropdown(false);
-                        }}
-                        className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_pengembangan === jenis
-                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                          : 'text-gray-700'
-                          }`}
-                      >
-                        <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
-                        <span className="truncate">{jenis}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Tahun */}
+            {/* Tahun - Paling Atas */}
             <div>
               <label htmlFor="id_tahun" className="block text-sm font-medium text-slate-700 mb-2">
                 Tahun Akademik <span className="text-red-500">*</span>
@@ -671,9 +434,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
                     e.preventDefault();
                     if (!initialData) {
                       setOpenTahunDropdown(!openTahunDropdown);
-                      setOpenUnitDropdown(false);
                       setOpenDosenDropdown(false);
-                      setOpenJenisDropdown(false);
                     }
                   }}
                   disabled={!!initialData}
@@ -733,6 +494,90 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
               </div>
             </div>
 
+            {/* Dosen */}
+            <div>
+              <label htmlFor="id_dosen" className="block text-sm font-medium text-slate-700 mb-2">
+                Dosen DTPR <span className="text-red-500">*</span>
+              </label>
+              <div className="relative dosen-dropdown-container">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenDosenDropdown(!openDosenDropdown);
+                    setOpenTahunDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.id_dosen
+                    ? 'border-[#0384d6] bg-white'
+                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
+                  aria-label="Pilih dosen DTPR"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FiUser className="text-[#0384d6] flex-shrink-0" size={18} />
+                    <span className={`truncate ${form.id_dosen ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {form.id_dosen
+                        ? (() => {
+                          const found = dosenList.find((d) => String(d.id_dosen) === String(form.id_dosen));
+                          return found ? (found.nama || `Dosen ${found.id_dosen}`) : "Pilih Dosen...";
+                        })()
+                        : "Pilih Dosen"}
+                    </span>
+                  </div>
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openDosenDropdown ? 'rotate-180' : ''
+                      }`}
+                    size={18}
+                  />
+                </button>
+                {openDosenDropdown && (
+                  <div
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto dosen-dropdown-menu mt-1 w-full"
+                  >
+                    {dosenList.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Tidak ada data dosen
+                      </div>
+                    ) : (
+                      dosenList.map((dosen) => (
+                        <button
+                          key={dosen.id_dosen}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_dosen", dosen.id_dosen.toString());
+                            setOpenDosenDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_dosen === dosen.id_dosen.toString()
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
+                        >
+                          <FiUser className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{dosen.nama || `Dosen ${dosen.id_dosen}`}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Jenis Pengembangan - Diubah jadi Input Text */}
+            <div>
+              <label htmlFor="jenis_pengembangan" className="block text-sm font-medium text-slate-700 mb-1">
+                Jenis Pengembangan <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="jenis_pengembangan"
+                value={form.jenis_pengembangan}
+                onChange={(e) => handleChange("jenis_pengembangan", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+                placeholder="Contoh: Tugas Belajar, Pelatihan, Seminar, Workshop..."
+                required
+              />
+            </div>
+
             {/* Link Bukti */}
             <div>
               <label htmlFor="link_bukti" className="block text-sm font-medium text-slate-700 mb-1">
@@ -776,6 +621,7 @@ function ModalFormDetail({ isOpen, onClose, onSave, initialData, maps, tahunList
   );
 }
 
+
 /* ---------- Tabel Summary ---------- */
 function SummaryTable({
   summaryData,
@@ -784,6 +630,8 @@ function SummaryTable({
   canDelete,
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
   showDeleted,
   tahunTS,
   tahunTS1,
@@ -847,19 +695,13 @@ function SummaryTable({
           {/* Baris 1: Header utama - Tahun Akademik */}
           <tr>
             <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
-              Tahun Akademik
+              &nbsp;
             </th>
             <th colSpan={5} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">
               Tahun Akademik
             </th>
-            <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white align-middle">
-              Link Bukti
-            </th>
-            <th rowSpan={2} className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-20 align-middle">
-              Aksi
-            </th>
           </tr>
-          {/* Baris 2: Sub-header TS-4, TS-3, TS-2, TS-1, TS */}
+          {/* Baris 2: Sub-header TS-4 s/d TS */}
           <tr>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-4</th>
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-3</th>
@@ -870,113 +712,219 @@ function SummaryTable({
 
         </thead>
         <tbody>
-          <tr className="bg-white hover:bg-[#eaf4ff] transition-colors">
-            <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">
-              Jumlah Dosen DTPR
-            </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
-              {summaryData.jumlah_ts_4 || 0}
-            </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
-              {summaryData.jumlah_ts_3 || 0}
-            </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
-              {summaryData.jumlah_ts_2 || 0}
-            </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
-              {summaryData.jumlah_ts_1 || 0}
-            </td>
-            <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
-              {summaryData.jumlah_ts || 0}
-            </td>
-            <td className="px-4 py-3 border border-slate-200 text-slate-700">
-              {summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4 ? (
-                <a
-                  href={summaryData.link_bukti_ts || summaryData.link_bukti_ts_1 || summaryData.link_bukti_ts_2 || summaryData.link_bukti_ts_3 || summaryData.link_bukti_ts_4}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#0384d6] underline hover:text-[#043975]"
-                >
-                  Lihat Bukti
-                </a>
-              ) : (
-                <span className="text-slate-400">-</span>
-              )}
-            </td>
-            <td className="px-2 py-3 border border-slate-200 w-20">
-              <div className="flex items-center justify-center dropdown-container">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const rowId = getIdField(summaryData) ? summaryData[getIdField(summaryData)] : summaryData.id_tahunan || 'summary';
-                    if (openDropdownId !== rowId) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const dropdownWidth = 192;
-                      setDropdownPosition({
-                        top: rect.bottom + 4,
-                        left: Math.max(8, rect.right - dropdownWidth)
-                      });
-                      setOpenDropdownId(rowId);
-                    } else {
-                      setOpenDropdownId(null);
-                    }
-                  }}
-                  className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
-                  aria-label="Menu aksi"
-                  aria-expanded={openDropdownId === (getIdField(summaryData) ? summaryData[getIdField(summaryData)] : summaryData.id_tahunan || 'summary')}
-                >
-                  <FiMoreVertical size={18} />
-                </button>
-              </div>
-            </td>
+          {summaryData && (Array.isArray(summaryData) ? summaryData[0] : summaryData) ? (() => {
+            const data = Array.isArray(summaryData) ? summaryData[0] : summaryData;
+            return (
+              <tr className="bg-white hover:bg-slate-50 transition-colors">
+                <td className="px-4 py-3 border border-slate-200 font-medium text-slate-800 text-sm">
+                  Jumlah Dosen DTPR
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+                  {data.jumlah_ts_4 || 0}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+                  {data.jumlah_ts_3 || 0}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+                  {data.jumlah_ts_2 || 0}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+                  {data.jumlah_ts_1 || 0}
+                </td>
+                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700 font-medium">
+                  {data.jumlah_ts || 0}
+                </td>
+              </tr>
+            );
+          })() : (
+            <tr>
+              <td colSpan={6} className="px-4 py-8 text-center text-slate-500 bg-slate-50 font-medium">
+                Pilih tahun untuk melihat data summary.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------- Tabel Manajemen Data (CRUD Raw) ---------- */
+function SummaryManagementTable({
+  rows,
+  maps,
+  canUpdate,
+  canDelete,
+  onEdit,
+  onDelete,
+  onRestore,
+  onHardDelete,
+  showDeleted,
+  // Pagination props
+  currentPage,
+  itemsPerPage,
+  onPageChange,
+  onItemsPerPageChange
+}) {
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdownId && !event.target.closest('.dropdown-container') && !event.target.closest('.fixed')) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', () => setOpenDropdownId(null), true);
+    window.addEventListener('resize', () => setOpenDropdownId(null));
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', () => setOpenDropdownId(null), true);
+      window.removeEventListener('resize', () => setOpenDropdownId(null));
+    };
+  }, [openDropdownId]);
+
+  // Logic: Pagination
+  const sortedRows = [...rows].sort((a, b) => b.id_tahun - a.id_tahun);
+  const totalItems = sortedRows.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedRows = sortedRows.slice(startIndex, startIndex + itemsPerPage);
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md mb-8">
+      <table className="w-full text-sm text-left border-collapse">
+        <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
+          <tr>
+            <th className="px-4 py-3 uppercase tracking-wide text-xs font-semibold border border-white/20">Tahun Akademik</th>
+            <th className="px-4 py-3 uppercase tracking-wide text-xs font-semibold text-center border border-white/20">Jumlah Dosen DTPR</th>
+            <th className="px-4 py-3 uppercase tracking-wide text-xs font-semibold text-center border border-white/20">Link Bukti</th>
+            <th className="px-4 py-3 uppercase tracking-wide text-xs font-semibold text-center border border-white/20 w-20">Aksi</th>
           </tr>
+        </thead>
+        <tbody>
+          {paginatedRows.length > 0 ? paginatedRows.map((row) => (
+            <tr
+              key={row.id}
+              className="bg-white hover:bg-slate-50 border-b border-slate-100 transition-colors"
+            >
+              <td className="px-4 py-3.5 font-medium text-slate-800 border border-slate-200">
+                Tahun Akademik {maps.tahun[row.id_tahun]?.tahun || row.id_tahun}
+              </td>
+              <td className="px-4 py-3.5 text-center text-slate-700 border border-slate-200 font-medium">
+                {row.jumlah_dtpr || 0}
+              </td>
+              <td className="px-4 py-3.5 border border-slate-200 text-center text-slate-600 font-medium text-xs">
+                {row.link_bukti ? (
+                  <a href={row.link_bukti} target="_blank" rel="noreferrer" className="text-[#0384d6] underline hover:text-[#043975] transition-colors">Lihat Bukti</a>
+                ) : <span className="text-slate-400">-</span>}
+              </td>
+              <td className="px-2 py-3 border border-slate-200 text-center">
+                <div className="flex items-center justify-center dropdown-container">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (openDropdownId !== row.id) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setDropdownPosition({ top: rect.bottom + 4, left: Math.max(8, rect.right - 160) });
+                        setOpenDropdownId(row.id);
+                      } else {
+                        setOpenDropdownId(null);
+                      }
+                    }}
+                    className="p-1.5 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all duration-200 focus:outline-none"
+                    aria-label="Menu manajemen data"
+                  >
+                    <FiMoreVertical size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )) : (
+            <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-400 italic bg-slate-50">Belum ada data operasional tahun akademik. Silakan klik + Tambah Data.</td></tr>
+          )}
         </tbody>
       </table>
 
-      {/* Dropdown Menu - Fixed Position for SummaryTable */}
-      {openDropdownId !== null && summaryData && (() => {
-        const rowId = getIdField(summaryData) ? summaryData[getIdField(summaryData)] : summaryData.id_tahunan || 'summary';
-        if (openDropdownId !== rowId) return null;
-
-        return (
-          <div
-            className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`
-            }}
-          >
-            {!showDeleted && canUpdate && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(summaryData);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
-                aria-label="Edit data summary"
-              >
-                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
-                <span>Edit</span>
-              </button>
-            )}
-            {!showDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(summaryData);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                aria-label="Hapus data summary"
-              >
-                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
-                <span>Hapus</span>
-              </button>
-            )}
+      {/* Pagination Footer */}
+      {totalItems > 0 && (
+        <div className="px-4 py-3 bg-white border-t border-slate-200 flex items-center justify-between sm:flex-row flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 font-medium">Data per halaman:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                onItemsPerPageChange(Number(e.target.value));
+                onPageChange(1);
+              }}
+              className="px-2 py-1 text-sm border border-slate-300 rounded hover:border-[#0384d6] focus:outline-none focus:ring-1 focus:ring-[#0384d6] bg-white transition-all font-medium text-slate-700"
+            >
+              {[5, 10, 20, 50].map(val => <option key={val} value={val}>{val}</option>)}
+            </select>
           </div>
-        );
-      })()}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-500 font-medium">
+              Halaman <span className="text-slate-800 font-bold">{currentPage}</span> dari <span className="text-slate-800 font-bold">{totalPages || 1}</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-1.5 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {openDropdownId && (
+        <div
+          className="fixed w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-[100] overflow-hidden"
+          style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+        >
+          {!showDeleted ? (
+            <>
+              <button
+                onClick={() => { onEdit(rows.find(r => r.id === openDropdownId)); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-slate-50 text-left"
+              >
+                <FiEdit2 size={14} /> Edit
+              </button>
+              <button
+                onClick={() => { onDelete(rows.find(r => r.id === openDropdownId)); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 text-left"
+              >
+                <FiTrash2 size={14} /> Hapus
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => { onRestore(rows.find(r => r.id === openDropdownId)); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 text-left"
+              >
+                <FiRotateCw size={14} /> Pulihkan
+              </button>
+              <button
+                onClick={() => { onHardDelete(rows.find(r => r.id === openDropdownId)); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 text-left font-medium"
+              >
+                <FiXCircle size={14} /> Hapus Permanen
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -995,6 +943,7 @@ function DetailTable({
   selectedRows,
   setSelectedRows,
   isAllSelected,
+  yearsConfig,
 
   handleSelectAll,
   currentPage,
@@ -1003,6 +952,8 @@ function DetailTable({
   onPageChange,
   onItemsPerPageChange
 }) {
+
+
   // filteredRows is now just the rows passed (paginated)
   const filteredRows = rows;
 
@@ -1051,10 +1002,10 @@ function DetailTable({
     <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-md">
       <table className="w-full text-sm text-left border-collapse">
         <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
-          {/* Baris 1: Tahun Akademik */}
+          {/* Baris 1: Header Utama */}
           <tr>
             {showDeleted && (
-              <th rowSpan={3} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-16 align-middle">
+              <th rowSpan={2} className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white w-16 align-middle">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -1088,13 +1039,18 @@ function DetailTable({
             <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS</th>
           </tr>
         </thead>
+
+
+
         <tbody>
           {filteredRows.length === 0 ? (
             <tr>
               <td
-                colSpan={showDeleted ? 9 : 8}
+                colSpan={showDeleted ? 10 : 9}
                 className="px-6 py-16 text-center text-slate-500 border border-slate-200"
               >
+
+
                 <p className="font-medium">Data tidak ditemukan</p>
                 <p className="text-sm">Belum ada data yang ditambahkan atau data yang cocok dengan filter.</p>
               </td>
@@ -1102,12 +1058,11 @@ function DetailTable({
           ) : (
             filteredRows.map((r, i) => (
               <tr
-                key={r.id_pengembangan || i}
-                className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"
-                  } hover:bg-[#eaf4ff]`}
+                key={r.id_pengembangan || `row-${i}`}
+                className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-slate-50"} hover:bg-[#eaf4ff]`}
               >
                 {showDeleted && (
-                  <td className="px-4 py-3 text-center border border-slate-200">
+                  <td className="px-4 py-3.5 text-center border border-slate-200">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(r.id_pengembangan)}
@@ -1122,20 +1077,22 @@ function DetailTable({
                     />
                   </td>
                 )}
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">{r.jenis_pengembangan || "-"}</td>
-                <td className="px-4 py-3 border border-slate-200 font-semibold text-slate-800">{r.nama_dtpr || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_4 || 0}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_3 || 0}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_2 || 0}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts_1 || 0}</td>
-                <td className="px-4 py-3 text-center border border-slate-200 text-slate-700">{r.jumlah_ts || 0}</td>
-                <td className="px-4 py-3 border border-slate-200 text-slate-700">
+                <td className="px-4 py-3.5 border border-slate-200 text-slate-700 font-medium">
+                  {r.jenis_pengembangan || "-"}
+                </td>
+                <td className="px-4 py-3.5 border border-slate-200 font-medium text-slate-800">{r.nama_dtpr || "-"}</td>
+                <td className="px-4 py-3.5 text-center border border-slate-200 text-slate-700 font-medium">{r.jumlah_ts_4 || 0}</td>
+                <td className="px-4 py-3.5 text-center border border-slate-200 text-slate-700 font-medium">{r.jumlah_ts_3 || 0}</td>
+                <td className="px-4 py-3.5 text-center border border-slate-200 text-slate-700 font-medium">{r.jumlah_ts_2 || 0}</td>
+                <td className="px-4 py-3.5 text-center border border-slate-200 text-slate-700 font-medium">{r.jumlah_ts_1 || 0}</td>
+                <td className="px-4 py-3.5 text-center border border-slate-200 text-slate-700 font-medium">{r.jumlah_ts || 0}</td>
+                <td className="px-4 py-3.5 border border-slate-200 text-center text-slate-600 font-medium text-xs">
                   {r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2 || r.link_bukti_ts_3 || r.link_bukti_ts_4 ? (
                     <a
                       href={r.link_bukti || r.link_bukti_ts || r.link_bukti_ts_1 || r.link_bukti_ts_2 || r.link_bukti_ts_3 || r.link_bukti_ts_4}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#0384d6] underline hover:text-[#043975]"
+                      className="text-[#0384d6] underline hover:text-[#043975] transition-colors"
                     >
                       Lihat Bukti
                     </a>
@@ -1143,12 +1100,15 @@ function DetailTable({
                     <span className="text-slate-400">-</span>
                   )}
                 </td>
+
+
                 <td className="px-2 py-3 border border-slate-200 w-20">
                   <div className="flex items-center justify-center dropdown-container">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const rowId = getIdField(r) ? r[getIdField(r)] : r.id_pengembangan || i;
+                        // Gunakan composite key untuk pivot row
+                        const rowId = `${r.id_dosen}-${r.jenis_pengembangan}` || i;
                         if (openDropdownId !== rowId) {
                           const rect = e.currentTarget.getBoundingClientRect();
                           const dropdownWidth = 192;
@@ -1163,22 +1123,24 @@ function DetailTable({
                       }}
                       className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:ring-offset-1"
                       aria-label="Menu aksi"
-                      aria-expanded={openDropdownId === (getIdField(r) ? r[getIdField(r)] : r.id_pengembangan || i)}
+                      aria-expanded={openDropdownId === (`${r.id_dosen}-${r.jenis_pengembangan}` || i)}
                     >
                       <FiMoreVertical size={18} />
                     </button>
+
                   </div>
                 </td>
               </tr>
             ))
           )}
         </tbody>
+
       </table>
 
       {/* Dropdown Menu - Fixed Position for DetailTable */}
       {openDropdownId !== null && (() => {
         const currentRow = filteredRows.find((r, idx) => {
-          const rowId = getIdField(r) ? r[getIdField(r)] : r.id_pengembangan || idx;
+          const rowId = `${r.id_dosen}-${r.jenis_pengembangan}` || idx;
           return rowId === openDropdownId;
         });
         if (!currentRow) return null;
@@ -1308,6 +1270,7 @@ export default function Tabel3A3({ auth, role }) {
 
   // Summary state
   const [summaryData, setSummaryData] = useState(null);
+  const [summaryRawRows, setSummaryRawRows] = useState([]); // New state for CRUD raw table
   const [summaryLoading, setSummaryLoading] = useState(false);
 
   // Detail state
@@ -1324,11 +1287,20 @@ export default function Tabel3A3({ auth, role }) {
   const [detailCurrentPage, setDetailCurrentPage] = useState(1);
   const [detailItemsPerPage, setDetailItemsPerPage] = useState(5);
 
+  // Pagination State (Summary Management Table)
+  const [summaryCurrentPage, setSummaryCurrentPage] = useState(1);
+  const [summaryItemsPerPage, setSummaryItemsPerPage] = useState(5);
+
   // Modal state
   const [modalSummaryOpen, setModalSummaryOpen] = useState(false);
   const [modalDetailOpen, setModalDetailOpen] = useState(false);
   const [editingSummary, setEditingSummary] = useState(null);
   const [editingDetail, setEditingDetail] = useState(null);
+
+  // Modal Detail Records state (Hybrid mode - untuk lihat detail per dosen+jenis)
+  const [modalDetailRecordsOpen, setModalDetailRecordsOpen] = useState(false);
+  const [selectedDosenInfo, setSelectedDosenInfo] = useState(null); // { id_dosen, nama_dtpr, jenis_pengembangan }
+
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -1353,33 +1325,33 @@ export default function Tabel3A3({ auth, role }) {
     }
   }, [modalSummaryOpen, modalDetailOpen]);
 
+
+
   // Permission flags
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  // Helper function untuk sorting data berdasarkan terbaru
+  // Helper function untuk sorting data berdasarkan Nama DTPR (A-Z)
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
-      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      // 1. Prioritaskan Nama DTPR (A-Z) sesuai request terbaru
+      const namaA = (a.nama_dtpr || "").toLowerCase();
+      const namaB = (b.nama_dtpr || "").toLowerCase();
+      if (namaA !== namaB) {
+        return namaA.localeCompare(namaB);
+      }
+
+      // 2. Jika nama sama, urutkan berdasarkan created_at terbaru
       if (a.created_at && b.created_at) {
         const dateA = new Date(a.created_at);
         const dateB = new Date(b.created_at);
         if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+          return dateB.getTime() - dateA.getTime();
         }
       }
 
-      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
-      if (a.updated_at && b.updated_at) {
-        const dateA = new Date(a.updated_at);
-        const dateB = new Date(b.updated_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Fallback ke ID terbesar jika tidak ada timestamp
+      // 3. Fallback ke ID terbesar
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);
@@ -1414,27 +1386,6 @@ export default function Tabel3A3({ auth, role }) {
     return { tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 };
   }, [selectedTahun, tahunList]);
 
-  // Auto-select tahun TS
-  useEffect(() => {
-    if (tahunList.length > 0 && !selectedTahun) {
-      const tahun2025 = tahunList.find(t => {
-        const tahunStr = String(t.tahun || t.nama || "");
-        return tahunStr.includes("2025");
-      });
-
-      if (tahun2025) {
-        setSelectedTahun(tahun2025.id_tahun);
-      } else {
-        setSelectedTahun(tahunList[tahunList.length - 1]?.id_tahun);
-      }
-    }
-  }, [tahunList, selectedTahun]);
-
-  // Close tahun filter dropdown when selectedTahun changes
-  useEffect(() => {
-    setOpenTahunFilterDropdown(false);
-  }, [selectedTahun]);
-
   // Close tahun filter dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1451,36 +1402,36 @@ export default function Tabel3A3({ auth, role }) {
     }
   }, [openTahunFilterDropdown]);
 
-  // Fetch Summary data
+  // Unified Refresh Function for Summary
+  const refreshSummaryData = async () => {
+    if (!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4) return;
+
+    setSummaryLoading(true);
+    try {
+      // 1. Refresh Pivot Table
+      const pivotUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&is_deleted=1" : ""}`;
+      const pivotData = await apiFetch(pivotUrl);
+      setSummaryData(pivotData);
+
+      // 2. Refresh Raw Management Table (with 5-year filter)
+      const rawUrl = showDeletedSummary ? `${ENDPOINT_SUMMARY}?is_deleted=1` : ENDPOINT_SUMMARY;
+      const rawData = await apiFetch(rawUrl);
+      const currentYears = [tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4].map(Number);
+      const filteredData = (Array.isArray(rawData) ? rawData : []).filter(r => currentYears.includes(Number(r.id_tahun)));
+      setSummaryRawRows(filteredData);
+    } catch (err) {
+      console.error("Refresh summary error:", err);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // Fetch Summary data on TS/Filter change
   useEffect(() => {
-    const fetchSummary = async () => {
-      if (!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4) return;
-
-      setSummaryLoading(true);
-      try {
-        let url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}`;
-        if (showDeletedSummary) {
-          url += "&include_deleted=1";
-        }
-        const data = await apiFetch(url);
-        setSummaryData(data);
-      } catch (err) {
-        console.error("Error fetching summary:", err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal memuat data summary',
-          text: err.message || 'Terjadi kesalahan saat memuat data summary.'
-        });
-        setSummaryData(null);
-      } finally {
-        setSummaryLoading(false);
-      }
-    };
-
-    fetchSummary();
+    refreshSummaryData();
   }, [showDeletedSummary, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
 
-  // Fetch Detail data
+  // Fetch Detail data (Pivot Mode untuk tampilan 5 tahun)
   useEffect(() => {
     const fetchDetail = async () => {
       if (!tahunTS || !tahunTS1 || !tahunTS2 || !tahunTS3 || !tahunTS4) return;
@@ -1489,7 +1440,7 @@ export default function Tabel3A3({ auth, role }) {
       try {
         let url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}`;
         if (showDeleted) {
-          url += "&include_deleted=1";
+          url += "&is_deleted=1";
         }
         const data = await apiFetch(url);
         const rowsArray = Array.isArray(data) ? data : [];
@@ -1512,6 +1463,8 @@ export default function Tabel3A3({ auth, role }) {
     setSelectedRows([]);
     setDetailCurrentPage(1); // Reset page on filter change
   }, [showDeleted, tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4]);
+
+
 
   // Handle Save Summary
   const handleSaveSummary = async (form) => {
@@ -1563,10 +1516,8 @@ export default function Tabel3A3({ auth, role }) {
       setModalSummaryOpen(false);
       setEditingSummary(null);
 
-      // Refresh data
-      const url = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&include_deleted=1" : ""}`;
-      const data = await apiFetch(url);
-      setSummaryData(data);
+      // Refresh data using unified function
+      await refreshSummaryData();
     } catch (err) {
       console.error("Save summary error:", err);
       Swal.fire({
@@ -1640,12 +1591,13 @@ export default function Tabel3A3({ auth, role }) {
       setModalDetailOpen(false);
       setEditingDetail(null);
 
-      // Refresh data
+      // Refresh data (mode pivot)
       const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
       const data = await apiFetch(url);
       const rowsArray = Array.isArray(data) ? data : [];
       const sortedRows = sortRowsByLatest(rowsArray);
       setDetailRows(sortedRows);
+
     } catch (err) {
       console.error("Save detail error:", err);
       Swal.fire({
@@ -1657,24 +1609,31 @@ export default function Tabel3A3({ auth, role }) {
   };
 
   // Handle Edit Summary
-  const handleEditSummary = async (data) => {
-    // Untuk edit summary, kita buka modal dengan data yang sudah ada
-    // User bisa memilih tahun mana yang akan di-edit (TS, TS-1, TS-2, TS-3, atau TS-4)
-    // Pre-fill form dengan id_unit dari data yang ada
+  const handleEditSummary = (data) => {
     setEditingSummary({
-      id_unit: data.id_unit,
-      id_tahun: tahunTS, // Default ke TS
-      jumlah_dtpr: data.jumlah_ts || 0,
-      link_bukti: data.link_bukti_ts || "",
+      ...data,
+      id: data.id,
+      id_tahun: data.id_tahun,
+      jumlah_dtpr: data.jumlah_dtpr,
+      link_bukti: data.link_bukti,
     });
     setModalSummaryOpen(true);
   };
 
-  // Handle Delete Summary
+  // Handle Delete Summary - hapus 1 record spesifik
   const handleDeleteSummary = async (data) => {
+    // Ambil ID dan tahun dari data yang dikirim
+    const recordId = data.id;
+    const tahunLabel = tahunList.find(t => String(t.id_tahun) === String(data.id_tahun))?.tahun || data.id_tahun;
+
+    if (!recordId) {
+      Swal.fire('Error', 'ID record tidak ditemukan.', 'error');
+      return;
+    }
+
     Swal.fire({
       title: 'Anda yakin?',
-      text: `Data jumlah DTPR untuk unit ini akan dihapus (soft delete) untuk tahun TS, TS-1, TS-2, TS-3, dan TS-4.`,
+      text: `Data jumlah DTPR untuk tahun ${tahunLabel} akan dihapus (soft delete).`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -1684,49 +1643,128 @@ export default function Tabel3A3({ auth, role }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Ambil data RAW mode untuk mendapatkan ID per tahun
-          const rawUrl = `${ENDPOINT_SUMMARY}?id_unit=${data.id_unit}`;
-          const rawData = await apiFetch(rawUrl);
-
-          // Filter hanya tahun yang relevan (TS, TS-1, TS-2, TS-3, TS-4)
-          const tahunList = [tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4].filter(Boolean);
-          const relevantData = Array.isArray(rawData)
-            ? rawData.filter(item => tahunList.includes(item.id_tahun) && !item.deleted_at)
-            : [];
-
-          if (relevantData.length === 0) {
-            Swal.fire('Info', 'Tidak ada data yang bisa dihapus.', 'info');
-            return;
-          }
-
-          // Hapus setiap record
-          const deletePromises = relevantData.map(async (item) => {
-            if (item.id) {
-              await apiFetch(`${ENDPOINT_SUMMARY}/${item.id}`, { method: "DELETE" });
-            }
-          });
-
-          await Promise.all(deletePromises);
+          // Hapus hanya 1 record berdasarkan ID
+          await apiFetch(`${ENDPOINT_SUMMARY}/${recordId}`, { method: "DELETE" });
 
           // Refresh data
-          const refreshUrl = `${ENDPOINT_SUMMARY}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeletedSummary ? "&include_deleted=1" : ""}`;
-          const refreshedData = await apiFetch(refreshUrl);
-          setSummaryData(refreshedData);
+          await refreshSummaryData();
 
-          Swal.fire('Dihapus!', 'Data summary telah dihapus (soft delete).', 'success');
+          // Tutup modal jika masih terbuka
+          setModalSummaryOpen(false);
+          setEditingSummary(null);
+
+          Swal.fire('Dihapus!', `Data jumlah DTPR untuk tahun ${tahunLabel} telah dihapus.`, 'success');
         } catch (err) {
           console.error("Delete summary error:", err);
-          Swal.fire('Gagal!', `Gagal menghapus data summary: ${err.message}`, 'error');
+          Swal.fire('Gagal!', `Gagal menghapus data: ${err.message}`, 'error');
         }
       }
     });
   };
 
-  // Handle Edit Detail
+  // Handle Restore Summary
+  const handleRestoreSummary = async (data) => {
+    const recordId = data.id;
+    const tahunLabel = tahunList.find(t => String(t.id_tahun) === String(data.id_tahun))?.tahun || data.id_tahun;
+
+    if (!recordId) {
+      Swal.fire('Error', 'ID record tidak ditemukan.', 'error');
+      return;
+    }
+
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: `Data jumlah DTPR untuk tahun ${tahunLabel} akan dipulihkan.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await apiFetch(`${ENDPOINT_SUMMARY}/${recordId}/restore`, { method: "POST" });
+
+          // Refresh data
+          await refreshSummaryData();
+
+          Swal.fire('Dipulihkan!', `Data jumlah DTPR untuk tahun ${tahunLabel} telah dipulihkan.`, 'success');
+        } catch (err) {
+          console.error("Restore summary error:", err);
+          Swal.fire('Gagal!', `Gagal memulihkan data: ${err.message}`, 'error');
+        }
+      }
+    });
+  };
+
+  // Handle Hard Delete Summary
+  const handleHardDeleteSummary = async (data) => {
+    const recordId = data.id;
+    const tahunLabel = tahunList.find(t => String(t.id_tahun) === String(data.id_tahun))?.tahun || data.id_tahun;
+
+    if (!recordId) {
+      Swal.fire('Error', 'ID record tidak ditemukan.', 'error');
+      return;
+    }
+
+    Swal.fire({
+      title: 'Hapus Permanen?',
+      html: `Data jumlah DTPR untuk tahun <strong>${tahunLabel}</strong> akan dihapus <strong style="color: red;">PERMANEN</strong>.<br/><br/>Data yang dihapus permanen <strong>TIDAK DAPAT dipulihkan</strong>!`,
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, Hapus Permanen!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await apiFetch(`${ENDPOINT_SUMMARY}/${recordId}/hard`, { method: "DELETE" });
+
+          // Refresh data
+          await refreshSummaryData();
+
+          Swal.fire('Dihapus Permanen!', `Data jumlah DTPR untuk tahun ${tahunLabel} telah dihapus permanen.`, 'success');
+        } catch (err) {
+          console.error("Hard delete summary error:", err);
+          Swal.fire('Gagal!', `Gagal menghapus permanen: ${err.message}`, 'error');
+        }
+      }
+    });
+  };
+
+  // Handle View Detail Records (Hybrid mode - buka modal dengan record per dosen+jenis)
+  const handleViewDetailRecords = (row) => {
+    setSelectedDosenInfo({
+      id_dosen: row.id_dosen,
+      nama_dtpr: row.nama_dtpr || 'Dosen',
+      jenis_pengembangan: row.jenis_pengembangan || '-'
+    });
+    setModalDetailRecordsOpen(true);
+  };
+
+  // Handle Edit Detail (dipanggil dari ModalDetailRecords)
   const handleEditDetail = async (row) => {
+    // Cari ID dari tahun manapun yang ada datanya
+    const id = row.id_pengembangan
+      || row.id_pengembangan_ts
+      || row.id_pengembangan_ts_1
+      || row.id_pengembangan_ts_2
+      || row.id_pengembangan_ts_3
+      || row.id_pengembangan_ts_4;
+    if (!id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak ada data',
+        text: 'Tidak ada data pengembangan untuk dosen ini.'
+      });
+      return;
+    }
     try {
-      const detail = await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}`);
+      const detail = await apiFetch(`${ENDPOINT_DETAIL}/${id}`);
       setEditingDetail(detail);
+      setModalDetailRecordsOpen(false);
       setModalDetailOpen(true);
     } catch (err) {
       console.error("Error fetching detail:", err);
@@ -1752,9 +1790,10 @@ export default function Tabel3A3({ auth, role }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}`, { method: "DELETE" });
+          const deleteId = row.id_pengembangan || row.id_pengembangan_ts || row.id_pengembangan_ts_1 || row.id_pengembangan_ts_2 || row.id_pengembangan_ts_3 || row.id_pengembangan_ts_4;
+          await apiFetch(`${ENDPOINT_DETAIL}/${deleteId}`, { method: "DELETE" });
 
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&is_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1781,9 +1820,10 @@ export default function Tabel3A3({ auth, role }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/hard`, { method: "DELETE" });
+          const hardDeleteId = row.id_pengembangan || row.id_pengembangan_ts || row.id_pengembangan_ts_1 || row.id_pengembangan_ts_2 || row.id_pengembangan_ts_3 || row.id_pengembangan_ts_4;
+          await apiFetch(`${ENDPOINT_DETAIL}/${hardDeleteId}/hard`, { method: "DELETE" });
 
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&is_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1810,9 +1850,10 @@ export default function Tabel3A3({ auth, role }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await apiFetch(`${ENDPOINT_DETAIL}/${row.id_pengembangan}/restore`, { method: "POST" });
+          const restoreId = row.id_pengembangan || row.id_pengembangan_ts || row.id_pengembangan_ts_1 || row.id_pengembangan_ts_2 || row.id_pengembangan_ts_3 || row.id_pengembangan_ts_4;
+          await apiFetch(`${ENDPOINT_DETAIL}/${restoreId}/restore`, { method: "POST" });
 
-          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&include_deleted=1" : ""}`;
+          const url = `${ENDPOINT_DETAIL}?id_tahun_ts=${tahunTS}&id_tahun_ts_1=${tahunTS1}&id_tahun_ts_2=${tahunTS2}&id_tahun_ts_3=${tahunTS3}&id_tahun_ts_4=${tahunTS4}${showDeleted ? "&is_deleted=1" : ""}`;
           const data = await apiFetch(url);
           setDetailRows(Array.isArray(data) ? data : []);
 
@@ -1825,8 +1866,8 @@ export default function Tabel3A3({ auth, role }) {
     });
   };
 
-  // Select all logic
-  const filteredDetailRows = detailRows.filter(r => showDeleted ? r.deleted_at : !r.deleted_at);
+  // Select all logic - Backend already filters by is_deleted, so no need to filter again
+  const filteredDetailRows = detailRows;
   const isAllSelected = filteredDetailRows.length > 0 && selectedRows.length === filteredDetailRows.length;
 
   // Pagination Logic (Detail Table)
@@ -2215,6 +2256,8 @@ export default function Tabel3A3({ auth, role }) {
               canDelete={canDelete}
               onEdit={handleEditSummary}
               onDelete={handleDeleteSummary}
+              onRestore={handleRestoreSummary}
+              onHardDelete={handleHardDeleteSummary}
               showDeleted={showDeletedSummary}
               tahunTS={tahunTS}
               tahunTS1={tahunTS1}
@@ -2222,6 +2265,31 @@ export default function Tabel3A3({ auth, role }) {
               tahunTS3={tahunTS3}
               tahunTS4={tahunTS4}
             />
+          )}
+
+          {/* Manajemen Data Operasional (CRUD Raw) */}
+          {!summaryLoading && tahunTS && (
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              <div className="flex items-center gap-2 mb-5">
+                <h3 className="text-lg font-semibold text-slate-900">Manajemen Data Dosen DTPR ({showDeletedSummary ? "Terhapus" : "Aktif"})</h3>
+              </div>
+              <SummaryManagementTable
+                rows={summaryRawRows}
+                maps={maps}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                onEdit={handleEditSummary}
+                onDelete={handleDeleteSummary}
+                onRestore={handleRestoreSummary}
+                onHardDelete={handleHardDeleteSummary}
+                showDeleted={showDeletedSummary}
+                // Pagination props
+                currentPage={summaryCurrentPage}
+                itemsPerPage={summaryItemsPerPage}
+                onPageChange={setSummaryCurrentPage}
+                onItemsPerPageChange={setSummaryItemsPerPage}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -2301,6 +2369,8 @@ export default function Tabel3A3({ auth, role }) {
               setSelectedRows={setSelectedRows}
               isAllSelected={isAllSelected}
               handleSelectAll={handleSelectAll}
+              yearsConfig={{ tahunTS, tahunTS1, tahunTS2, tahunTS3, tahunTS4 }}
+
 
               // Pagination Props
               currentPage={detailCurrentPage}
@@ -2324,6 +2394,7 @@ export default function Tabel3A3({ auth, role }) {
           setEditingSummary(null);
         }}
         onSave={handleSaveSummary}
+        onDelete={handleDeleteSummary}
         initialData={editingSummary}
         maps={maps}
         tahunList={tahunList}
@@ -2342,7 +2413,9 @@ export default function Tabel3A3({ auth, role }) {
         tahunList={tahunList}
         authUser={authUser}
       />
+
     </div>
   );
 }
+
 

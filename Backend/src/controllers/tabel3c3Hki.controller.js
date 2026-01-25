@@ -150,6 +150,7 @@ export const listTabel3c3Hki = async (req, res) => {
         h.jenis_hki,
         h.id_unit,
         uk.nama_unit,
+        h.id_tahun_perolehan, -- [FIX] Tambahkan id_tahun_perolehan untuk auto-fill modal edit
         h.link_bukti,
         h.deleted_at, -- [FIX] Tambahkan deleted_at untuk frontend filtering
         
@@ -250,11 +251,17 @@ export const createTabel3c3Hki = async (req, res) => {
     }
 
     const id_user = req.user?.id_user;
-    // 3. Siapkan data
+    // 3. Siapkan data & Transformasi Title Case
+    const titleCaseJenisHki = jenis_hki
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
     const dataToInsert = {
       id_dosen,
       judul_hki,
-      jenis_hki,
+      jenis_hki: titleCaseJenisHki,
       id_tahun_perolehan,
       link_bukti,
       id_unit: final_id_unit // Otomatis dari user yang login
@@ -325,11 +332,17 @@ export const updateTabel3c3Hki = async (req, res) => {
     }
 
     const id_user = req.user?.id_user;
-    // 3. Siapkan data
+    // 3. Siapkan data & Transformasi Title Case
+    const titleCaseJenisHki = jenis_hki
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
     const dataToUpdate = {
       id_dosen,
       judul_hki,
-      jenis_hki,
+      jenis_hki: titleCaseJenisHki,
       id_tahun_perolehan,
       link_bukti,
       id_unit: final_id_unit // Update dengan unit dari user yang login

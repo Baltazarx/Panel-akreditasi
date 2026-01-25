@@ -29,7 +29,6 @@ export default function Tabel2B6({ role }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTahun, setSelectedTahun] = useState(null);
-  const [selectedUnit, setSelectedUnit] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -39,7 +38,6 @@ export default function Tabel2B6({ role }) {
 
   // Dropdown states for filters and forms
   const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
-  const [openUnitFilterDropdown, setOpenUnitFilterDropdown] = useState(false);
   const [openFormTahunDropdown, setOpenFormTahunDropdown] = useState(false);
   const [openFormJenisDropdown, setOpenFormJenisDropdown] = useState(false);
 
@@ -87,23 +85,15 @@ export default function Tabel2B6({ role }) {
     }
   }, [showAddModal]);
 
-  // Close filter dropdowns when values change
   useEffect(() => {
     setOpenYearFilterDropdown(false);
   }, [selectedTahun]);
-
-  useEffect(() => {
-    setOpenUnitFilterDropdown(false);
-  }, [selectedUnit]);
 
   // Close filter and form dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
         setOpenYearFilterDropdown(false);
-      }
-      if (openUnitFilterDropdown && !event.target.closest('.unit-filter-dropdown-container') && !event.target.closest('.unit-filter-dropdown-menu')) {
-        setOpenUnitFilterDropdown(false);
       }
       if (openFormTahunDropdown && !event.target.closest('.form-tahun-dropdown-container') && !event.target.closest('.form-tahun-dropdown-menu')) {
         setOpenFormTahunDropdown(false);
@@ -113,13 +103,13 @@ export default function Tabel2B6({ role }) {
       }
     };
 
-    if (openYearFilterDropdown || openUnitFilterDropdown || openFormTahunDropdown || openFormJenisDropdown) {
+    if (openYearFilterDropdown || openFormTahunDropdown || openFormJenisDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openYearFilterDropdown, openUnitFilterDropdown, openFormTahunDropdown, openFormJenisDropdown]);
+  }, [openYearFilterDropdown, openFormTahunDropdown, openFormJenisDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -181,22 +171,6 @@ export default function Tabel2B6({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
-  const availableUnits = useMemo(() => {
-    const allUnits = Object.values(maps?.units || {}).map(u => ({ id: u.id_unit || u.id, nama: u.nama_unit || u.nama }));
-    // Filter HANYA Teknik Informatika (ID 6) dan Manajemen Informatika (ID 7)
-    // Abaikan unit lain seperti TPM, LPM, Kemahasiswaan, dll.
-    const onlyTIMI = allUnits.filter(u => {
-      const id = Number(u.id);
-      return id === 6 || id === 7;
-    });
-
-    return onlyTIMI.sort((a, b) => {
-      // Prioritaskan Teknik Informatika (ID 6) agar muncul di paling atas
-      if (Number(a.id) === 6) return -1;
-      if (Number(b.id) === 6) return 1;
-      return String(a.nama).localeCompare(String(b.nama));
-    });
-  }, [maps?.units]);
 
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
@@ -232,25 +206,20 @@ export default function Tabel2B6({ role }) {
 
   const fetchData = useCallback(async () => {
     // Don't fetch if filters are not set
-    if (!selectedTahun || !selectedUnit) {
-      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun, selectedUnit });
+    if (!selectedTahun) {
+      console.log("Tabel2B6 - Skip fetch, waiting for filters:", { selectedTahun });
       return;
     }
 
     try {
       setLoading(true);
       let params = `?id_tahun=${selectedTahun}`;
-      // Always send unit filter when selectedUnit exists
-      if (selectedUnit) {
-        params += `&id_unit_prodi=${selectedUnit}`;
-      }
       if (showDeleted) params += "&include_deleted=1";
 
       const url = `/tabel2b6-kepuasan-pengguna${params}`;
-      console.log("Tabel2B6 - Fetching data:", {
+      console.log("Tabel2B6 - Fetching unified data:", {
         url,
         selectedTahun,
-        selectedUnit,
         showDeleted
       });
 
@@ -299,7 +268,7 @@ export default function Tabel2B6({ role }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedTahun, selectedUnit, showDeleted, sortRowsByLatest]);
+  }, [selectedTahun, showDeleted, sortRowsByLatest]);
 
   // Set selectedTahun saat availableYears tersedia
   useEffect(() => {
@@ -332,40 +301,19 @@ export default function Tabel2B6({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih Teknik Informatika (ID 6)
-  useEffect(() => {
-    if (!selectedUnit) {
-      if (!isSuperAdmin && userProdiId) {
-        // User prodi: gunakan prodi mereka
-        console.log("Tabel2B6 - Auto-selecting user prodi:", userProdiId);
-        setSelectedUnit(parseInt(userProdiId));
-      } else if (isSuperAdmin && Array.isArray(availableUnits) && availableUnits.length > 0) {
-        // Superadmin: prioritaskan Teknik Informatika (ID 6), jika tidak ada fallback ke pertama
-        const teknikInformatika = availableUnits.find(u => parseInt(u.id) === 6);
-        if (teknikInformatika) {
-          console.log("Tabel2B6 - Auto-selecting Teknik Informatika (ID 6)");
-          setSelectedUnit(6);
-        } else {
-          console.log("Tabel2B6 - Auto-selecting first unit:", availableUnits[0].id);
-          setSelectedUnit(parseInt(availableUnits[0].id));
-        }
-      }
-    }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits]);
 
   // Fetch data saat filter berubah
   useEffect(() => {
-    if (selectedTahun && selectedUnit) {
+    if (selectedTahun) {
       fetchData();
     }
-  }, [selectedTahun, selectedUnit, showDeleted, fetchData]);
+  }, [selectedTahun, showDeleted, fetchData]);
 
   // Helper function untuk transform data
   const transformTableData = useCallback((sourceData) => {
     console.log('🔍 transformTableData called with:', {
       sourceDataLength: sourceData.length,
       selectedTahun,
-      selectedUnit,
       firstSourceItem: sourceData[0]
     });
 
@@ -374,15 +322,10 @@ export default function Tabel2B6({ role }) {
     // Pastikan hanya tahun terpilih yang ditampilkan walau API mengembalikan lebih banyak
     const filteredByYear = sourceData.filter(d => parseInt(d.id_tahun) === parseInt(selectedTahun));
     console.log('📅 After year filter:', filteredByYear.length);
-
-    // Filter by unit if selected (removed kemahasiswaan check to align with other tables)
-    const filteredByUnit = selectedUnit ? filteredByYear.filter(d => parseInt(d.id_unit_prodi) === parseInt(selectedUnit)) : filteredByYear;
-    console.log('🏢 After unit filter:', filteredByUnit.length, 'First item:', filteredByUnit[0]);
-
     const byJenis = new Map();
-    for (const row of filteredByUnit) {
+    for (const row of filteredByYear) {
       const key = String(row.jenis_kemampuan || '').toLowerCase();
-      // Ambil yang pertama (seharusnya unik per tahun/unit)
+      // Ambil yang pertama (seharusnya unik per tahun/global)
       if (!byJenis.has(key)) byJenis.set(key, row);
     }
     console.log('🗺️ byJenis map size:', byJenis.size, 'Keys:', Array.from(byJenis.keys()));
@@ -407,7 +350,7 @@ export default function Tabel2B6({ role }) {
     });
     console.log('✅ transformTableData result:', result.length, 'items. First:', result[0]);
     return result;
-  }, [selectedTahun, selectedUnit]);
+  }, [selectedTahun, sortRowsByLatest]); // sortRowsByLatest instead of selectedUnit
 
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
@@ -485,13 +428,13 @@ export default function Tabel2B6({ role }) {
 
   // Statistik terpilih (backend bisa kirim object atau array)
   const statData = useMemo(() => {
-    if (!selectedTahun || !selectedUnit) return null;
+    if (!selectedTahun) return null;
     if (!statistik) return null;
     if (Array.isArray(statistik)) {
-      return statistik.find(s => parseInt(s?.unit_prodi) === parseInt(selectedUnit) && parseInt(s?.tahun_akademik) === parseInt(selectedTahun)) || statistik[0] || null;
+      return statistik.find(s => parseInt(s?.tahun_akademik) === parseInt(selectedTahun)) || statistik[0] || null;
     }
     return statistik;
-  }, [statistik, selectedTahun, selectedUnit]);
+  }, [statistik, selectedTahun]);
 
   // Helper untuk nama prodi dari maps
   const getUnitName = (id) => {
@@ -503,12 +446,8 @@ export default function Tabel2B6({ role }) {
       Swal.fire("Pilih Tahun", "Silakan pilih Tahun pada filter sebelum menambah data.", "info");
       return;
     }
-    if (!selectedUnit) {
-      Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter sebelum menambah data.", "info");
-      return;
-    }
     setFormState({
-      id_unit_prodi: selectedUnit,
+      id_unit_prodi: userProdiId,
       id_tahun: selectedTahun, // Selalu gunakan selectedTahun dari filter
       jenis_kemampuan: "",
       persen_sangat_baik: "",
@@ -653,16 +592,11 @@ export default function Tabel2B6({ role }) {
         setSaving(false);
         return;
       }
-      if (!selectedUnit) {
-        Swal.fire("Pilih Prodi", "Silakan pilih Prodi pada filter terlebih dahulu.", "error");
-        setSaving(false);
-        return;
-      }
 
       // Pastikan id_tahun selalu menggunakan selectedTahun dari filter
       const submitData = {
         ...formState,
-        id_unit_prodi: parseInt(selectedUnit),
+        id_unit_prodi: parseInt(userProdiId || 1), // Gunakan userProdiId atau default 1
         id_tahun: parseInt(selectedTahun), // Selalu gunakan selectedTahun dari filter
         jenis_kemampuan: formState.jenis_kemampuan.trim(),
         persen_sangat_baik: parseFloat(formState.persen_sangat_baik) || 0,
@@ -1166,69 +1100,6 @@ export default function Tabel2B6({ role }) {
     </div>
   );
 
-  const UnitSelector = () => (
-    <div className="flex items-center gap-2">
-      <label className="text-sm font-medium text-slate-700">Prodi:</label>
-      <div className="relative unit-filter-dropdown-container" style={{ minWidth: '200px' }}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            if (!loading) {
-              setOpenUnitFilterDropdown(!openUnitFilterDropdown);
-            }
-          }}
-          disabled={loading}
-          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedUnit
-            ? 'border-[#0384d6] bg-white text-black'
-            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          aria-label="Pilih prodi"
-        >
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-            <span className={`truncate ${selectedUnit ? 'text-black' : 'text-gray-500'}`}>
-              {selectedUnit
-                ? (() => {
-                  const found = availableUnits.find((u) => Number(u.id) === Number(selectedUnit));
-                  return found ? found.nama : selectedUnit;
-                })()
-                : "Pilih Prodi"}
-            </span>
-          </div>
-          <FiChevronDown
-            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitFilterDropdown ? 'rotate-180' : ''
-              }`}
-            size={16}
-          />
-        </button>
-        {openUnitFilterDropdown && !loading && (
-          <div
-            className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-filter-dropdown-menu mt-1 w-full"
-            style={{ minWidth: '200px' }}
-          >
-            {availableUnits.map(u => (
-              <button
-                key={u.id}
-                type="button"
-                onClick={() => {
-                  setSelectedUnit(parseInt(u.id));
-                  setOpenUnitFilterDropdown(false);
-                }}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedUnit === parseInt(u.id)
-                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                  : 'text-gray-700'
-                  }`}
-              >
-                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                <span>{u.nama}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
@@ -1257,7 +1128,6 @@ export default function Tabel2B6({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
@@ -1423,15 +1293,6 @@ export default function Tabel2B6({ role }) {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Unit Prodi</label>
-                    <input
-                      type="text"
-                      value={getUnitName(selectedUnit) || "(Pilih di filter atas)"}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg text-slate-700 bg-slate-50"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Akademik <span className="text-red-500">*</span></label>
                     <input
                       type="text"
@@ -1497,7 +1358,7 @@ export default function Tabel2B6({ role }) {
                                 !d.deleted_at &&
                                 String(d.jenis_kemampuan).toLowerCase() === jenis.toLowerCase() &&
                                 parseInt(d.id_tahun) === parseInt(selectedTahun) &&
-                                parseInt(d.id_unit_prodi) === parseInt(selectedUnit)
+                                parseInt(d.id_unit_prodi) === parseInt(userProdiId)
                               );
 
                               return (

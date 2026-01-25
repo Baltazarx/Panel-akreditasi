@@ -28,7 +28,6 @@ export default function Tabel2B5({ role }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedTahun, setSelectedTahun] = useState(null);
-  const [selectedUnit, setSelectedUnit] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -38,8 +37,6 @@ export default function Tabel2B5({ role }) {
 
   // Dropdown states for filters and forms
   const [openYearFilterDropdown, setOpenYearFilterDropdown] = useState(false);
-  const [openUnitFilterDropdown, setOpenUnitFilterDropdown] = useState(false);
-  const [openFormUnitDropdown, setOpenFormUnitDropdown] = useState(false);
   const [openFormTahunDropdown, setOpenFormTahunDropdown] = useState(false);
 
   // Close dropdown when clicking outside, scrolling, or resizing
@@ -81,19 +78,13 @@ export default function Tabel2B5({ role }) {
     }
     // Close form dropdowns when modal closes
     if (!showAddModal) {
-      setOpenFormUnitDropdown(false);
       setOpenFormTahunDropdown(false);
     }
   }, [showAddModal]);
 
-  // Close filter dropdowns when values change
   useEffect(() => {
     setOpenYearFilterDropdown(false);
   }, [selectedTahun]);
-
-  useEffect(() => {
-    setOpenUnitFilterDropdown(false);
-  }, [selectedUnit]);
 
   // Close filter and form dropdowns on outside click
   useEffect(() => {
@@ -101,24 +92,18 @@ export default function Tabel2B5({ role }) {
       if (openYearFilterDropdown && !event.target.closest('.year-filter-dropdown-container') && !event.target.closest('.year-filter-dropdown-menu')) {
         setOpenYearFilterDropdown(false);
       }
-      if (openUnitFilterDropdown && !event.target.closest('.unit-filter-dropdown-container') && !event.target.closest('.unit-filter-dropdown-menu')) {
-        setOpenUnitFilterDropdown(false);
-      }
-      if (openFormUnitDropdown && !event.target.closest('.form-unit-dropdown-container') && !event.target.closest('.form-unit-dropdown-menu')) {
-        setOpenFormUnitDropdown(false);
-      }
       if (openFormTahunDropdown && !event.target.closest('.form-tahun-dropdown-container') && !event.target.closest('.form-tahun-dropdown-menu')) {
         setOpenFormTahunDropdown(false);
       }
     };
 
-    if (openYearFilterDropdown || openUnitFilterDropdown || openFormUnitDropdown || openFormTahunDropdown) {
+    if (openYearFilterDropdown || openFormTahunDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [openYearFilterDropdown, openUnitFilterDropdown, openFormUnitDropdown, openFormTahunDropdown]);
+  }, [openYearFilterDropdown, openFormTahunDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -143,16 +128,40 @@ export default function Tabel2B5({ role }) {
     }
   }, [showAddModal]);
   const [formState, setFormState] = useState({
-    id_unit_prodi: "",
     id_tahun_lulus: "",
-    jumlah_lulusan: "",
-    jumlah_terlacak: "",
     jml_infokom: "",
     jml_non_infokom: "",
     jml_internasional: "",
     jml_nasional: "",
     jml_wirausaha: ""
   });
+  const [quotaInfo, setQuotaInfo] = useState({ lulusan: 0, terlacak: 0 });
+
+  // Fetch quota info (dari Tabel 2B.4) saat tahun di form berubah
+  useEffect(() => {
+    const fetchQuota = async () => {
+      if (showAddModal && formState.id_tahun_lulus) {
+        try {
+          const result = await apiFetch(`/tabel2b4-masa-tunggu/for-tabel2b5/data?id_tahun_lulus=${formState.id_tahun_lulus}`);
+          if (result && result.length > 0) {
+            setQuotaInfo({
+              lulusan: result[0].jumlah_lulusan || 0,
+              terlacak: result[0].jumlah_terlacak || 0
+            });
+          } else {
+            setQuotaInfo({ lulusan: 0, terlacak: 0 });
+          }
+        } catch (error) {
+          console.error("Error fetching quota info:", error);
+          setQuotaInfo({ lulusan: 0, terlacak: 0 });
+        }
+      } else {
+        setQuotaInfo({ lulusan: 0, terlacak: 0 });
+      }
+    };
+    fetchQuota();
+  }, [formState.id_tahun_lulus, showAddModal]);
+
   const [showDeleted, setShowDeleted] = useState(false);
 
   // Pastikan showDeleted selalu false untuk role kemahasiswaan
@@ -170,13 +179,6 @@ export default function Tabel2B5({ role }) {
     return years.sort((a, b) => a.id - b.id);
   }, [maps?.tahun]);
 
-  // Filter prodi yang tersedia (hanya TI dan MI)
-  const availableUnits = useMemo(() => {
-    return [
-      { id: 6, nama: "Teknik Informatika (TI)" },
-      { id: 7, nama: "Manajemen Informatika (MI)" }
-    ];
-  }, []);
 
   const canCreate = roleCan(role, tableKey, "C");
   const canUpdate = roleCan(role, tableKey, "U");
@@ -214,11 +216,8 @@ export default function Tabel2B5({ role }) {
     try {
       setLoading(true);
       let params = selectedTahun ? `?id_tahun_lulus=${selectedTahun}` : "";
-      // Untuk role kemahasiswaan, jangan kirim filter id_unit_prodi (bisa lihat semua data)
-      if (selectedUnit && !isKemahasiswaan) {
-        params += (params ? "&" : "?") + `id_unit_prodi=${selectedUnit}`;
-      }
       if (showDeleted) params += (params ? "&" : "?") + "include_deleted=1";
+      console.log('Fetching Tabel2B5 unified data with params:', params);
       const result = await apiFetch(`/tabel2b5-kesesuaian-kerja${params}`);
       const rowsArray = Array.isArray(result) ? result : [];
       const sortedData = sortRowsByLatest(rowsArray);
@@ -259,27 +258,10 @@ export default function Tabel2B5({ role }) {
     }
   }, [availableYears, selectedTahun]);
 
-  // Set selectedUnit: jika user prodi, gunakan prodi mereka; jika superadmin, pilih pertama
-  // Untuk role kemahasiswaan, tidak perlu set selectedUnit (bisa lihat semua data)
-  useEffect(() => {
-    if (!selectedUnit && !isKemahasiswaan) {
-      if (!isSuperAdmin && userProdiId) {
-        // User prodi: gunakan prodi mereka
-        setSelectedUnit(parseInt(userProdiId));
-      } else if (isSuperAdmin && availableUnits.length > 0) {
-        // Superadmin: pilih prodi pertama
-        setSelectedUnit(parseInt(availableUnits[0].id));
-      }
-    }
-  }, [selectedUnit, isSuperAdmin, userProdiId, availableUnits, isKemahasiswaan]);
 
   useEffect(() => {
-    // Untuk role kemahasiswaan, fetch data meskipun selectedUnit tidak ada
-    // Untuk role lain, fetch data hanya jika selectedTahun ada
-    if (isKemahasiswaan || selectedTahun) {
-      fetchData();
-    }
-  }, [selectedTahun, selectedUnit, showDeleted, isKemahasiswaan]);
+    fetchData();
+  }, [selectedTahun, showDeleted]);
 
   // Data untuk tabel aktif (tidak dihapus)
   const tableDataActive = useMemo(() => {
@@ -293,9 +275,7 @@ export default function Tabel2B5({ role }) {
       const yearMeta = availableYears[idxTarget];
       const dataItem = data.find(d => {
         const matchYear = parseInt(d.id_tahun_lulus) === yearMeta.id;
-        // Untuk role kemahasiswaan, jangan filter berdasarkan selectedUnit (bisa lihat semua)
-        const matchUnit = (selectedUnit && !isKemahasiswaan) ? parseInt(d.id_unit_prodi) === parseInt(selectedUnit) : true;
-        return matchYear && matchUnit && !d.deleted_at;
+        return matchYear && !d.deleted_at;
       });
       rows.push({
         tahun_lulus: i === 0 ? "TS" : `TS-${i}`,
@@ -324,7 +304,7 @@ export default function Tabel2B5({ role }) {
       data: null
     });
     return rows;
-  }, [data, selectedTahun, selectedUnit, availableYears, isKemahasiswaan]);
+  }, [data, selectedTahun, availableYears]);
 
   // Data untuk tabel terhapus
   const tableDataDeleted = useMemo(() => {
@@ -332,10 +312,6 @@ export default function Tabel2B5({ role }) {
 
     const idxSelected = availableYears.findIndex(y => y.id === selectedTahun);
     let filteredData = data.filter(item => item.deleted_at);
-    // Filter berdasarkan prodi yang dipilih (kecuali untuk role kemahasiswaan yang bisa lihat semua)
-    if (selectedUnit && !isKemahasiswaan) {
-      filteredData = filteredData.filter(item => parseInt(item.id_unit_prodi) === parseInt(selectedUnit));
-    }
     const deletedRows = filteredData.map(item => {
       const idxTarget = availableYears.findIndex(y => parseInt(item.id_tahun_lulus) === y.id);
       const tsIdx = idxSelected - idxTarget;
@@ -370,14 +346,11 @@ export default function Tabel2B5({ role }) {
       });
     }
     return deletedRows;
-  }, [data, selectedTahun, selectedUnit, availableYears, isKemahasiswaan]);
+  }, [data, selectedTahun, availableYears]);
 
   const handleAddClick = () => {
     setFormState({
-      id_unit_prodi: selectedUnit || authUser?.unit || "",
       id_tahun_lulus: selectedTahun || "",
-      jumlah_lulusan: "",
-      jumlah_terlacak: "",
       jml_infokom: "",
       jml_non_infokom: "",
       jml_internasional: "",
@@ -389,10 +362,7 @@ export default function Tabel2B5({ role }) {
   };
   const handleEditClick = (item) => {
     setFormState({
-      id_unit_prodi: item.id_unit_prodi,
       id_tahun_lulus: item.id_tahun_lulus,
-      jumlah_lulusan: item.jumlah_lulusan,
-      jumlah_terlacak: item.jumlah_terlacak,
       jml_infokom: item.jml_infokom,
       jml_non_infokom: item.jml_non_infokom,
       jml_internasional: item.jml_internasional,
@@ -486,22 +456,43 @@ export default function Tabel2B5({ role }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setOpenFormUnitDropdown(false);
     setOpenFormTahunDropdown(false);
     try {
       setSaving(true);
       const submitData = {
         ...formState,
-        id_unit_prodi: parseInt(formState.id_unit_prodi),
         id_tahun_lulus: parseInt(formState.id_tahun_lulus),
-        jumlah_lulusan: parseInt(formState.jumlah_lulusan) || 0,
-        jumlah_terlacak: parseInt(formState.jumlah_terlacak) || 0,
         jml_infokom: parseInt(formState.jml_infokom) || 0,
         jml_non_infokom: parseInt(formState.jml_non_infokom) || 0,
         jml_internasional: parseInt(formState.jml_internasional) || 0,
         jml_nasional: parseInt(formState.jml_nasional) || 0,
         jml_wirausaha: parseInt(formState.jml_wirausaha) || 0,
       };
+
+      // Validasi Logika: Total input per kategori tidak boleh > jumlah terlacak di 2B.4
+      const totalProfesi = submitData.jml_infokom + submitData.jml_non_infokom;
+      const totalLingkup = submitData.jml_internasional + submitData.jml_nasional + submitData.jml_wirausaha;
+
+      if (quotaInfo.terlacak > 0) {
+        if (totalProfesi > quotaInfo.terlacak) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Data Tidak Valid',
+            text: `Total Profesi (${totalProfesi}) tidak boleh melebihi jumlah terlacak dari Tabel 2.B.4 (${quotaInfo.terlacak}).`,
+          });
+          setSaving(false);
+          return;
+        }
+        if (totalLingkup > quotaInfo.terlacak) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Data Tidak Valid',
+            text: `Total Lingkup Kerja (${totalLingkup}) tidak boleh melebihi jumlah terlacak dari Tabel 2.B.4 (${quotaInfo.terlacak}).`,
+          });
+          setSaving(false);
+          return;
+        }
+      }
       if (editing) {
         await apiFetch(`/tabel2b5-kesesuaian-kerja/${editing.id}`, {
           method: "PUT",
@@ -667,15 +658,18 @@ export default function Tabel2B5({ role }) {
           <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-gradient-to-r from-[#043975] to-[#0384d6] text-white">
               <tr className="sticky top-0">
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Tahun Lulus</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan yang Terlacak</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Infokom</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Non Infokom</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Multinasional / Internasional</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Nasional</th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Wirausaha</th>
-                <th className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">Aksi</th>
+                <th rowSpan="2" className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Tahun Lulus</th>
+                <th rowSpan="2" className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan</th>
+                <th rowSpan="2" className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Jumlah Lulusan yang Terlacak</th>
+                <th rowSpan="2" className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Infokom</th>
+                <th rowSpan="2" className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white">Profesi Kerja Bidang Non Infokom</th>
+                <th colSpan="3" className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border border-white">Lingkup Tempat Kerja</th>
+                <th rowSpan="2" className="px-2 py-3 text-xs font-semibold tracking-wide uppercase text-center border border-white w-20">Aksi</th>
+              </tr>
+              <tr>
+                <th className="px-4 py-3 text-[10px] font-semibold tracking-wide uppercase text-center border border-white">Multinasional / Internasional</th>
+                <th className="px-4 py-3 text-[10px] font-semibold tracking-wide uppercase text-center border border-white">Nasional</th>
+                <th className="px-4 py-3 text-[10px] font-semibold tracking-wide uppercase text-center border border-white">Wirausaha</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 transition-opacity duration-200 ease-in-out">
@@ -817,70 +811,6 @@ export default function Tabel2B5({ role }) {
     </div>
   );
 
-  // Unit Selector Component
-  const UnitSelector = () => (
-    <div className="flex items-center gap-2">
-      <label className="text-sm font-medium text-slate-700">Prodi:</label>
-      <div className="relative unit-filter-dropdown-container" style={{ minWidth: '200px' }}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            if (!loading) {
-              setOpenUnitFilterDropdown(!openUnitFilterDropdown);
-            }
-          }}
-          disabled={loading}
-          className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedUnit
-            ? 'border-[#0384d6] bg-white text-black'
-            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          aria-label="Pilih prodi"
-        >
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-            <span className={`truncate ${selectedUnit ? 'text-black' : 'text-gray-500'}`}>
-              {selectedUnit
-                ? (() => {
-                  const found = availableUnits.find((u) => Number(u.id) === Number(selectedUnit));
-                  return found ? found.nama : selectedUnit;
-                })()
-                : "Pilih Prodi"}
-            </span>
-          </div>
-          <FiChevronDown
-            className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openUnitFilterDropdown ? 'rotate-180' : ''
-              }`}
-            size={16}
-          />
-        </button>
-        {openUnitFilterDropdown && !loading && (
-          <div
-            className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto unit-filter-dropdown-menu mt-1 w-full"
-            style={{ minWidth: '200px' }}
-          >
-            {availableUnits.map(u => (
-              <button
-                key={u.id}
-                type="button"
-                onClick={() => {
-                  setSelectedUnit(parseInt(u.id));
-                  setOpenUnitFilterDropdown(false);
-                }}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedUnit === parseInt(u.id)
-                  ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                  : 'text-gray-700'
-                  }`}
-              >
-                <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                <span>{u.nama}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-8 bg-gradient-to-br from-[#f5f9ff] via-white to-white rounded-2xl shadow-xl space-y-10">
@@ -909,7 +839,6 @@ export default function Tabel2B5({ role }) {
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <YearSelector />
-          {isSuperAdmin && <UnitSelector />}
           {canDelete && !isKemahasiswaan && (
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
@@ -1046,7 +975,6 @@ export default function Tabel2B5({ role }) {
           onClick={(e) => {
             // Close modal when clicking backdrop
             if (e.target === e.currentTarget) {
-              setOpenFormUnitDropdown(false);
               setOpenFormTahunDropdown(false);
               setShowAddModal(false);
               setEditing(null);
@@ -1065,69 +993,6 @@ export default function Tabel2B5({ role }) {
             <div className="p-8 overflow-y-auto flex-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Unit Prodi <span className="text-red-500">*</span></label>
-                    <div className="relative form-unit-dropdown-container">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setOpenFormUnitDropdown(!openFormUnitDropdown);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${formState.id_unit_prodi
-                          ? 'border-[#0384d6] bg-white'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                          }`}
-                        aria-label="Pilih unit prodi"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={18} />
-                          <span className={`truncate ${formState.id_unit_prodi ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {formState.id_unit_prodi === '4' ? 'Teknik Informatika (TI)' : formState.id_unit_prodi === '5' ? 'Manajemen Informatika (MI)' : '-- Pilih Unit Prodi --'}
-                          </span>
-                        </div>
-                        <FiChevronDown
-                          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openFormUnitDropdown ? 'rotate-180' : ''
-                            }`}
-                          size={18}
-                        />
-                      </button>
-                      {openFormUnitDropdown && (
-                        <div
-                          className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto form-unit-dropdown-menu mt-1 w-full"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormState({ ...formState, id_unit_prodi: "6" });
-                              setOpenFormUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_unit_prodi === "6"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Teknik Informatika (TI)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormState({ ...formState, id_unit_prodi: "7" });
-                              setOpenFormUnitDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${formState.id_unit_prodi === "7"
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span>Manajemen Informatika (MI)</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun Lulus <span className="text-red-500">*</span></label>
                     <div className="relative form-tahun-dropdown-container">
@@ -1191,28 +1056,21 @@ export default function Tabel2B5({ role }) {
                       )}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Jumlah Lulusan <span className="text-red-500">*</span></label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formState.jumlah_lulusan}
-                      onChange={e => setFormState({ ...formState, jumlah_lulusan: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">Jumlah Lulusan yang Terlacak <span className="text-red-500">*</span></label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formState.jumlah_terlacak}
-                      onChange={e => setFormState({ ...formState, jumlah_terlacak: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] bg-white"
-                      required
-                    />
-                  </div>
+                  {/* Info Kuota dari Tabel 2.B.4 */}
+                  {formState.id_tahun_lulus && (
+                    <div className="md:col-span-2 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-4 transition-all duration-300">
+                      <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">Total Lulusan (2B.4)</p>
+                          <p className="text-xl font-bold text-blue-900">{quotaInfo.lulusan}</p>
+                        </div>
+                        <div className="text-center border-l border-blue-200">
+                          <p className="text-xs text-blue-600 font-medium uppercase tracking-wider">Lulusan Terlacak (2B.4)</p>
+                          <p className="text-xl font-bold text-blue-900">{quotaInfo.terlacak}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">Profesi Kerja di Bidang Infokom <span className="text-red-500">*</span></label>
                     <input
@@ -1273,9 +1131,9 @@ export default function Tabel2B5({ role }) {
                   <button
                     type="button"
                     onClick={() => {
-                      setOpenFormUnitDropdown(false);
                       setOpenFormTahunDropdown(false);
                       setShowAddModal(false);
+                      setEditing(null);
                     }}
                     className="px-6 py-2.5 rounded-lg bg-red-100 text-red-600 text-sm font-medium shadow-sm hover:bg-red-200 hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >

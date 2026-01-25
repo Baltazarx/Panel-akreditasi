@@ -11,6 +11,7 @@ import {
   restorePendaftaran,
   hardDeletePendaftaran,
   restoreMultiplePendaftaran,
+  hardDeleteMultiplePendaftaran,
 } from '../controllers/tabel2a1Pendaftaran.controller.js';
 import { makeExportHandler, makeDocAlias, makePdfAlias } from '../utils/exporter.js';
 
@@ -45,6 +46,9 @@ router.post('/restore-multiple', requireAuth, permit('tabel_2a1_pendaftaran', 'U
 
 // HARD DELETE — hanya Superadmin (WAKET1/WAKET2)
 router.delete('/:id/hard-delete', requireAuth, permit('tabel_2a1_pendaftaran', 'H'), hardDeletePendaftaran);
+
+// HARD DELETE MULTIPLE — batch permanent delete
+router.delete('/hard-delete-multiple', requireAuth, permit('tabel_2a1_pendaftaran', 'H'), hardDeleteMultiplePendaftaran);
 
 /**
  * ==========================================

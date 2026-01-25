@@ -138,7 +138,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -151,22 +150,21 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
       return;
     }
 
+    // Transformasi Title Case: "hak cipta" -> "Hak Cipta"
+    const titleCaseJenisHki = form.jenis_hki
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+    const finalForm = { ...form, jenis_hki: titleCaseJenisHki };
+
     setOpenDosenDropdown(false);
     setOpenJenisDropdown(false);
     setOpenTahunDropdown(false);
-    onSave(form);
+    onSave(finalForm);
   };
 
-  const jenisHkiOptions = [
-    { value: "Paten", label: "Paten" },
-    { value: "Paten Sederhana", label: "Paten Sederhana" },
-    { value: "Hak Cipta", label: "Hak Cipta" },
-    { value: "Merek", label: "Merek" },
-    { value: "Desain Industri", label: "Desain Industri" },
-    { value: "Rahasia Dagang", label: "Rahasia Dagang" },
-    { value: "Indikasi Geografis", label: "Indikasi Geografis" },
-    { value: "Desain Tata Letak Sirkuit Terpadu", label: "Desain Tata Letak Sirkuit Terpadu" }
-  ];
 
   return (
     <div
@@ -288,67 +286,20 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
             />
           </div>
 
-          {/* Jenis HKI */}
+          {/* Jenis HKI - Diubah jadi Input Text */}
           <div>
-            <label htmlFor="jenis_hki" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="jenis_hki" className="block text-sm font-medium text-slate-700 mb-1">
               Jenis HKI <span className="text-red-500">*</span>
             </label>
-            <div className="relative jenis-dropdown-container">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpenJenisDropdown(!openJenisDropdown);
-                  setOpenDosenDropdown(false);
-                  setOpenTahunDropdown(false);
-                }}
-                className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${form.jenis_hki
-                  ? 'border-[#0384d6] bg-white'
-                  : 'border-gray-300 bg-white hover:border-gray-400'
-                  }`}
-                aria-label="Pilih jenis HKI"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FiShield className="text-[#0384d6] flex-shrink-0" size={18} />
-                  <span className={`truncate ${form.jenis_hki ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {form.jenis_hki
-                      ? (() => {
-                        const found = jenisHkiOptions.find((opt) => opt.value === form.jenis_hki);
-                        return found ? found.label : "Pilih Jenis HKI";
-                      })()
-                      : "Pilih Jenis HKI"}
-                  </span>
-                </div>
-                <FiChevronDown
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openJenisDropdown ? 'rotate-180' : ''
-                    }`}
-                  size={18}
-                />
-              </button>
-              {openJenisDropdown && (
-                <div
-                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto jenis-dropdown-menu mt-1 w-full"
-                >
-                  {jenisHkiOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => {
-                        handleChange("jenis_hki", opt.value);
-                        setOpenJenisDropdown(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.jenis_hki === opt.value
-                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                        : 'text-gray-700'
-                        }`}
-                    >
-                      <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
-                      <span className="truncate">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input
+              type="text"
+              id="jenis_hki"
+              value={form.jenis_hki}
+              onChange={(e) => handleChange("jenis_hki", e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
+              placeholder="Contoh: Hak Cipta, Paten, Merek..."
+              required
+            />
           </div>
 
           {/* Tahun Perolehan */}
@@ -747,10 +698,10 @@ function DataTable({
                   onEdit(currentRow);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] flex items-center gap-2"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0384d6] hover:bg-[#eaf3ff] hover:text-[#043975] transition-colors text-left"
               >
-                <FiEdit2 className="w-4 h-4 text-[#0384d6]" />
-                Edit
+                <FiEdit2 size={16} className="flex-shrink-0 text-[#0384d6]" />
+                <span>Edit</span>
               </button>
             )}
             {canDelete && !currentRow.deleted_at && (
@@ -760,10 +711,10 @@ function DataTable({
                   onDelete(currentRow.id);
                   setOpenDropdownId(null);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
               >
-                <FiTrash2 className="w-4 h-4" />
-                Hapus
+                <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
+                <span>Hapus</span>
               </button>
             )}
             {currentRow.deleted_at && (
@@ -774,10 +725,10 @@ function DataTable({
                     onRestore(currentRow.id);
                     setOpenDropdownId(null);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
                 >
-                  <FiRotateCw className="w-4 h-4" />
-                  Restore
+                  <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                  <span>Pulihkan</span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -785,10 +736,10 @@ function DataTable({
                     onHardDelete(currentRow.id);
                     setOpenDropdownId(null);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
                 >
-                  <FiXCircle className="w-4 h-4" />
-                  Hard Delete
+                  <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                  <span>Hapus Permanen</span>
                 </button>
               </>
             )}
@@ -868,28 +819,26 @@ export default function Tabel3C3({ auth, role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  // Helper function untuk sorting data berdasarkan terbaru
+  // Helper function untuk sorting data berdasarkan Nama DTPR (A-Z)
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
-      // Jika ada created_at, urutkan berdasarkan created_at terbaru
+      // 1. Prioritaskan Nama DTPR (A-Z)
+      const namaA = (a.nama_dtpr || "").toLowerCase();
+      const namaB = (b.nama_dtpr || "").toLowerCase();
+      if (namaA !== namaB) {
+        return namaA.localeCompare(namaB);
+      }
+
+      // 2. Jika nama sama, urutkan berdasarkan created_at terbaru
       if (a.created_at && b.created_at) {
         const dateA = new Date(a.created_at);
         const dateB = new Date(b.created_at);
         if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
+          return dateB.getTime() - dateA.getTime();
         }
       }
 
-      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
-      if (a.updated_at && b.updated_at) {
-        const dateA = new Date(a.updated_at);
-        const dateB = new Date(b.updated_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Fallback ke ID terbesar jika tidak ada timestamp
+      // 3. Fallback ke ID terbesar
       const idFieldA = getIdField(a);
       const idFieldB = getIdField(b);
       return (b[idFieldB] || 0) - (a[idFieldA] || 0);

@@ -15,7 +15,6 @@ const LABEL = "4.A.2 PkM DTPR";
 /* ---------- Modal Form Tambah/Edit ---------- */
 function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selectedTahun }) {
   const [form, setForm] = useState({
-    link_roadmap: "",
     id_dosen_ketua: "",
     judul_pkm: "",
     jml_mhs_terlibat: "",
@@ -96,7 +95,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       if (initialData) {
         // Load existing data
         setForm({
-          link_roadmap: initialData.link_roadmap || "",
           id_dosen_ketua: initialData.id_dosen_ketua || "",
           judul_pkm: initialData.judul_pkm || "",
           jml_mhs_terlibat: initialData.jml_mhs_terlibat || "",
@@ -121,7 +119,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
       } else {
         // Reset form for new data
         setForm({
-          link_roadmap: "",
           id_dosen_ketua: "",
           judul_pkm: "",
           jml_mhs_terlibat: "",
@@ -314,21 +311,6 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           <p className="text-white/80 mt-1 text-sm">Lengkapi data PkM DTPR sesuai dengan format LKPS.</p>
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
-          {/* Link Roadmap */}
-          <div>
-            <label htmlFor="link_roadmap" className="block text-sm font-medium text-slate-700 mb-1">
-              Link Roadmap
-            </label>
-            <input
-              type="url"
-              id="link_roadmap"
-              value={form.link_roadmap}
-              onChange={(e) => handleChange("link_roadmap", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6]"
-              placeholder="https://..."
-            />
-          </div>
-
           {/* Dosen Ketua */}
           <div>
             <label htmlFor="id_dosen_ketua" className="block text-sm font-medium text-slate-700 mb-2">
@@ -771,6 +753,31 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
 
+  // [PERBAIKAN] Hitung tahun awal periode 5 tahun untuk roadmap
+  const tahunAwalPeriode = useMemo(() => {
+    if (!selectedTahun) return null;
+    const ts = parseInt(selectedTahun);
+    if (isNaN(ts)) return null;
+    const sisa = ts % 5;
+    if (sisa === 4) return ts; // Contoh: 2024 -> 2024
+    if (sisa === 0) return ts - 1; // Contoh: 2025 -> 2024
+    return ts - sisa - 1; // Contoh: 2026 -> 2024, 2027 -> 2024, 2028 -> 2024
+  }, [selectedTahun]);
+
+  // [PERBAIKAN] Load roadmap berdasarkan periode 5 tahun
+  useEffect(() => {
+    if (tahunAwalPeriode) {
+      const storageKey = `roadmap_4a2_${authUser?.id_unit || 'global'}_${tahunAwalPeriode}`;
+      const saved = localStorage.getItem(storageKey);
+
+      if (saved) {
+        setLinkRoadmap(saved);
+      } else {
+        setLinkRoadmap("");
+      }
+    }
+  }, [tahunAwalPeriode, authUser?.id_unit]);
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -815,12 +822,13 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
         const sorted = filtered.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)); // Urut dari terkecil ke terbesar
         setTahunList(sorted);
         if (sorted.length > 0 && !selectedTahun) {
-          // Prioritaskan tahun 2020/2021, jika tidak ada gunakan tahun terkecil
-          const tahun2020 = sorted.find(t => {
+          // Prioritaskan tahun 2024/2025 (ID 2024 atau mulai dengan "2024")
+          const tahun2024 = sorted.find(t => {
             const tahunStr = String(t.tahun || t.nama || "");
-            return tahunStr.includes("2020") || parseInt(t.id_tahun) === 2020;
+            const idTahun = parseInt(t.id_tahun);
+            return idTahun === 2024 || tahunStr.startsWith("2024");
           });
-          setSelectedTahun(tahun2020 ? tahun2020.id_tahun : sorted[0].id_tahun);
+          setSelectedTahun(tahun2024 ? tahun2024.id_tahun : sorted[sorted.length - 1].id_tahun);
         }
       } catch (err) {
         console.error("Error fetching tahun:", err);
@@ -926,9 +934,11 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
         });
         Swal.fire('Berhasil!', 'Data PkM berhasil diperbarui.', 'success');
       } else {
+        // [PERBAIKAN] Sisipkan linkRoadmap otomatis saat tambah data baru
+        const finalData = { ...formData, link_roadmap: linkRoadmap };
         await apiFetch(ENDPOINT, {
           method: 'POST',
-          body: JSON.stringify(formData)
+          body: JSON.stringify(finalData)
         });
         Swal.fire('Berhasil!', 'Data PkM berhasil ditambahkan.', 'success');
       }
@@ -1271,11 +1281,49 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             />
             <button
-              onClick={() => {
-                // TODO: Implement save roadmap functionality
-                Swal.fire('Info', 'Fitur simpan roadmap akan segera tersedia.', 'info');
+              onClick={async () => {
+                if (!selectedTahun) {
+                  Swal.fire('Peringatan', 'Silakan pilih tahun terlebih dahulu.', 'warning');
+                  return;
+                }
+
+                try {
+                  setLoading(true);
+                  // 1. Simpan ke Database secara global (untuk semua record unit ini)
+                  await apiFetch(`${ENDPOINT}/roadmap-global`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      link_roadmap: linkRoadmap,
+                      ts_id: selectedTahun
+                    })
+                  });
+
+                  // 2. Simpan ke LocalStorage agar persisten di browser
+                  if (tahunAwalPeriode) {
+                    const storageKey = `roadmap_4a2_${authUser?.id_unit || 'global'}_${tahunAwalPeriode}`;
+                    localStorage.setItem(storageKey, linkRoadmap);
+                  }
+
+                  // 3. Notifikasi Sukses
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Roadmap Disimpan',
+                    text: `Link roadmap untuk periode ${tahunAwalPeriode}-${tahunAwalPeriode + 4} berhasil diperbarui.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                  });
+
+                  // 4. Refresh data agar roadmap di tabel (jika ada kolomnya) terupdate
+                  fetchRows();
+                } catch (err) {
+                  console.error("Error saving roadmap:", err);
+                  Swal.fire('Error', 'Gagal menyimpan roadmap ke database.', 'error');
+                } finally {
+                  setLoading(false);
+                }
               }}
-              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+              className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap disabled:opacity-50"
+              disabled={loading}
             >
               Simpan
             </button>
@@ -1357,8 +1405,10 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
 
                   // Format pendanaan ke juta rupiah
                   const formatPendanaan = (value) => {
-                    if (!value || value === 0) return "-";
-                    return (value / 1000000).toFixed(2);
+                    const num = parseFloat(value || 0) / 1000000;
+                    if (num === 0) return 0; // Return number 0 agar konsisten tanpa tanda kutip kalau mau
+                    // Format 2 desimal, lalu convert ke Number untuk hilangkan trailing zeros (7.50 -> 7.5, 0.00 -> 0)
+                    return Number(num.toFixed(2));
                   };
 
                   return (
@@ -1442,19 +1492,39 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
                       {tahunLaporan && (
                         <>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
-                            {(summary.totalDanaTS4 / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = summary.totalDanaTS4 / 1000000;
+                              const formatted = val.toFixed(2);
+                              return parseFloat(formatted) === 0 ? "0" : Number(formatted);
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
-                            {(summary.totalDanaTS3 / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = summary.totalDanaTS3 / 1000000;
+                              const formatted = val.toFixed(2);
+                              return parseFloat(formatted) === 0 ? "0" : Number(formatted);
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
-                            {(summary.totalDanaTS2 / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = summary.totalDanaTS2 / 1000000;
+                              const formatted = val.toFixed(2);
+                              return parseFloat(formatted) === 0 ? "0" : Number(formatted);
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
-                            {(summary.totalDanaTS1 / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = summary.totalDanaTS1 / 1000000;
+                              const formatted = val.toFixed(2);
+                              return parseFloat(formatted) === 0 ? "0" : Number(formatted);
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-white">
-                            {(summary.totalDanaTS / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = summary.totalDanaTS / 1000000;
+                              const formatted = val.toFixed(2);
+                              return parseFloat(formatted) === 0 ? "0" : Number(formatted);
+                            })()}
                           </td>
                         </>
                       )}

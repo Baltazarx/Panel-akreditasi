@@ -561,9 +561,11 @@ function DataTable({
 
   // Format untuk display di tabel (dalam juta)
   const formatJuta = (value) => {
-    if (!value || value === 0) return "-";
-    const juta = value / 1000000;
-    return `${juta.toFixed(2)} juta`;
+    const val = parseFloat(value) || 0;
+    const juta = val / 1000000;
+    // Tampilkan Rp dan juta, tapi desimal dihilangkan jika bulat sesuai request sebelumnya
+    const displayValue = Number.isInteger(juta) ? juta.toString() : juta.toFixed(2);
+    return `Rp ${displayValue} juta`;
   };
 
   return (
@@ -585,11 +587,11 @@ function DataTable({
           </tr>
           {/* Header Level 2 - Tahun */}
           <tr>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-4</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-3</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-2</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS-1</th>
-            <th className="px-4 py-2 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white">TS</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white whitespace-nowrap bg-[#0384d6]/50 min-w-[100px]">TS-4</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white whitespace-nowrap bg-[#0384d6]/50 min-w-[100px]">TS-3</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white whitespace-nowrap bg-[#0384d6]/50 min-w-[100px]">TS-2</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white whitespace-nowrap bg-[#0384d6]/50 min-w-[100px]">TS-1</th>
+            <th className="px-4 py-3 text-xs font-semibold tracking-wide uppercase text-center border-[0.5px] border-white whitespace-nowrap bg-[#0384d6]/50 min-w-[100px]">TS</th>
           </tr>
         </thead>
         <tbody>
@@ -610,9 +612,9 @@ function DataTable({
                 className={`transition-colors ${i % 2 === 0 ? "bg-white" : "bg-white"
                   } hover:bg-[#eaf4ff]`}
               >
-                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800">{(currentPage - 1) * itemsPerPage + i + 1}</td>
-                <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 max-w-xs">
-                  <div className="truncate" title={r.judul_kerjasama || ""}>
+                <td className="px-4 py-3 text-center border border-slate-300 font-medium text-slate-800 w-12">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+                <td className="px-4 py-3 border border-slate-300 font-semibold text-slate-800 min-w-[200px]">
+                  <div className="leading-relaxed">
                     {r.judul_kerjasama || "-"}
                   </div>
                 </td>
@@ -621,11 +623,11 @@ function DataTable({
                   {r.sumber === "L" ? "L" : r.sumber === "N" ? "N" : r.sumber === "I" ? "I" : "-"}
                 </td>
                 <td className="px-4 py-3 text-center border border-slate-300 text-slate-700">{r.durasi_tahun || "-"}</td>
-                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts4 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts3 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts2 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts1 || 0)}</td>
-                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white">{formatJuta(r.pendanaan_ts || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white font-medium whitespace-nowrap">{formatJuta(r.pendanaan_ts4 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white font-medium whitespace-nowrap">{formatJuta(r.pendanaan_ts3 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white font-medium whitespace-nowrap">{formatJuta(r.pendanaan_ts2 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white font-medium whitespace-nowrap">{formatJuta(r.pendanaan_ts1 || 0)}</td>
+                <td className="px-4 py-3 text-center border border-slate-300 text-slate-700 bg-white font-medium whitespace-nowrap">{formatJuta(r.pendanaan_ts || 0)}</td>
                 <td className="px-4 py-3 border border-slate-300 text-slate-700">
                   {r.link_bukti ? (
                     <a
@@ -680,19 +682,19 @@ function DataTable({
                 >
                   Jumlah Dana
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white whitespace-nowrap">
                   {formatJuta(summaryData.total_ts4 || 0)}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white whitespace-nowrap">
                   {formatJuta(summaryData.total_ts3 || 0)}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white whitespace-nowrap">
                   {formatJuta(summaryData.total_ts2 || 0)}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white whitespace-nowrap">
                   {formatJuta(summaryData.total_ts1 || 0)}
                 </td>
-                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white">
+                <td className="px-4 py-3 text-center border border-slate-300 font-semibold text-slate-800 bg-white whitespace-nowrap">
                   {formatJuta(summaryData.total_ts || 0)}
                 </td>
                 <td className="px-4 py-3 border border-slate-300 bg-white"></td>

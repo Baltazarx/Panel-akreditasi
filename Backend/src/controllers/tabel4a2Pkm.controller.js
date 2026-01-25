@@ -138,7 +138,16 @@ export const listTabel4a2Pkm = async (req, res) => {
       return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
     }
 
-    // 3. Buat SQL
+    // 3. Tambahkan Filter Masal: Hanya tampilkan PkM yang memiliki pendanaan dalam rentang TS s.d TS-4
+    const tahunFilterIds = [tahunIds.id_ts, tahunIds.id_ts1, tahunIds.id_ts2, tahunIds.id_ts3, tahunIds.id_ts4];
+    where.push(`EXISTS (
+      SELECT 1 FROM tabel_4a2_pendanaan_pkm p2 
+      WHERE p2.id_pkm = pkm.id 
+      AND p2.id_tahun IN (?, ?, ?, ?, ?)
+    )`);
+    params.push(...tahunFilterIds);
+
+    // 4. Buat SQL
     const sql = `
       SELECT
         pkm.id, pkm.id_unit, uk.nama_unit,
@@ -383,10 +392,9 @@ export const updateTabel4a2Pkm = async (req, res) => {
       return res.status(400).json({ error: 'Unit kerja (LPPM) tidak ditemukan dari data user.' });
     }
 
-    // 4. Siapkan data Induk
+    // 4. Siapkan data Induk (Eksklusikan link_roadmap karena sudah global)
     const dataParent = {
       id_unit: id_unit,
-      link_roadmap,
       id_dosen_ketua,
       judul_pkm,
       jml_mhs_terlibat,
@@ -439,6 +447,53 @@ export const updateTabel4a2Pkm = async (req, res) => {
     res.status(500).json({ error: 'Gagal memperbarui data PkM', details: err.sqlMessage || err.message });
   } finally {
     if (connection) connection.release();
+  }
+};
+
+/*
+================================
+ UPDATE ROADMAP GLOBAL (Unit-wide)
+================================
+*/
+export const updateRoadmapGlobal = async (req, res) => {
+  try {
+    const { link_roadmap, ts_id } = req.body;
+    const id_unit = req.user?.id_unit || req.user?.id_unit_prodi;
+
+    if (!id_unit) {
+      return res.status(400).json({ error: 'Unit kerja tidak ditemukan dari data user.' });
+    }
+
+    if (!ts_id) {
+      return res.status(400).json({ error: 'ts_id wajib disertakan untuk menentukan periode 5 tahun.' });
+    }
+
+    // Hitung range 5 tahun (TS s.d TS-4)
+    const ts = parseInt(ts_id, 10);
+    const tahunIds = [ts - 4, ts - 3, ts - 2, ts - 1, ts];
+
+    // Update link_roadmap HANYA untuk record PkM milik unit ini
+    // yang memiliki data pendanaan dalam rentang 5 tahun tersebut (TS-4 s.d TS)
+    const [result] = await pool.query(
+      `UPDATE tabel_4a2_pkm pkm
+       SET pkm.link_roadmap = ? 
+       WHERE pkm.id_unit = ? 
+       AND pkm.deleted_at IS NULL
+       AND EXISTS (
+         SELECT 1 FROM tabel_4a2_pendanaan_pkm p
+         WHERE p.id_pkm = pkm.id AND p.id_tahun IN (?)
+       )`,
+      [link_roadmap, id_unit, tahunIds]
+    );
+
+    res.json({
+      message: `Roadmap periode ${ts - 4}-${ts} berhasil diperbarui`,
+      affectedRows: result.affectedRows
+    });
+
+  } catch (err) {
+    console.error("Error updateRoadmapGlobal:", err);
+    res.status(500).json({ error: 'Gagal memperbarui roadmap global', details: err.message });
   }
 };
 
@@ -583,7 +638,16 @@ export const exportTabel4a2Pkm = async (req, res) => {
       return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
     }
 
-    // 3. Buat SQL (Sama persis seperti list)
+    // 3. Tambahkan Filter Masal: Hanya tampilkan PkM yang memiliki pendanaan dalam rentang TS s.d TS-4
+    const tahunFilterIds = [tahunIds.id_ts, tahunIds.id_ts1, tahunIds.id_ts2, tahunIds.id_ts3, tahunIds.id_ts4];
+    where.push(`EXISTS (
+              SELECT 1 FROM tabel_4a2_pendanaan_pkm p2 
+              WHERE p2.id_pkm = pkm.id 
+              AND p2.id_tahun IN (?, ?, ?, ?, ?)
+            )`);
+    params.push(...tahunFilterIds);
+
+    // 4. Buat SQL (Sama persis seperti list)
     const sql = `
             SELECT
               pg.nama_lengkap AS nama_dtpr,

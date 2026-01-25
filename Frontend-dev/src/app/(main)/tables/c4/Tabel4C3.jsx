@@ -55,59 +55,23 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   }, [isOpen]);
 
   // Fetch tahun akademik (5 tahun: TS-4, TS-3, TS-2, TS-1, TS)
+  // Fetch tahun akademik (Semua Tahun - Unlimited)
   useEffect(() => {
     const fetchTahun = async () => {
       try {
-        let tahunIds = [];
-        let order = [];
-
-        if (tahunLaporan && tahunLaporan.id_ts && tahunLaporan.id_ts1 && tahunLaporan.id_ts2 && tahunLaporan.id_ts3 && tahunLaporan.id_ts4) {
-          // Gunakan tahunLaporan jika semua 5 tahun tersedia
-          tahunIds = [
-            tahunLaporan.id_ts4,
-            tahunLaporan.id_ts3,
-            tahunLaporan.id_ts2,
-            tahunLaporan.id_ts1,
-            tahunLaporan.id_ts
-          ];
-          order = [
-            tahunLaporan.id_ts,
-            tahunLaporan.id_ts1,
-            tahunLaporan.id_ts2,
-            tahunLaporan.id_ts3,
-            tahunLaporan.id_ts4
-          ];
-        } else if (selectedTahun) {
-          // Fallback: hitung dari selectedTahun jika tahunLaporan belum lengkap atau belum ada
-          const ts = parseInt(selectedTahun, 10);
-          if (!isNaN(ts)) {
-            tahunIds = [ts - 4, ts - 3, ts - 2, ts - 1, ts];
-            order = [ts, ts - 1, ts - 2, ts - 3, ts - 4];
-          }
-        }
-
-        if (tahunIds.length > 0) {
-          const data = await apiFetch("/tahun-akademik");
-          const list = Array.isArray(data) ? data : [];
-          const filtered = list.filter(t => tahunIds.includes(t.id_tahun));
-          // Urutkan dari TS ke TS-4 (dari terbaru ke terlama)
-          setTahunList(filtered.sort((a, b) => {
-            const indexA = order.indexOf(a.id_tahun);
-            const indexB = order.indexOf(b.id_tahun);
-            return indexA - indexB;
-          }));
-        } else {
-          setTahunList([]);
-        }
+        const data = await apiFetch("/tahun-akademik");
+        const list = Array.isArray(data) ? data : [];
+        // Urutkan dari tahun terlama ke terbaru (Ascending)
+        setTahunList(list.sort((a, b) => (a.id_tahun || 0) - (b.id_tahun || 0)));
       } catch (err) {
         console.error("Error fetching tahun:", err);
         setTahunList([]);
       }
     };
-    if (isOpen && (tahunLaporan || selectedTahun)) {
+    if (isOpen) {
       fetchTahun();
     }
-  }, [isOpen, tahunLaporan, selectedTahun]);
+  }, [isOpen]);
 
   // Initialize form data
   useEffect(() => {
@@ -125,7 +89,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
           id_dosen: "",
           judul_hki: "",
           jenis_hki: "",
-          id_tahun_perolehan: "",
+          id_tahun_perolehan: selectedTahun ? selectedTahun.toString() : "",
           link_bukti: ""
         });
       }
@@ -171,7 +135,13 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   if (!isOpen) return null;
 
   const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    // Apply Title Case to 'jenis_hki' before updating state
+    if (field === 'jenis_hki') {
+      const titleCasedValue = value.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      setForm((prev) => ({ ...prev, [field]: titleCasedValue }));
+    } else {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleSubmit = (e) => {
@@ -330,28 +300,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                       {form.id_tahun_perolehan
                         ? (() => {
                           const found = tahunList.find((t) => String(t.id_tahun) === String(form.id_tahun_perolehan));
-                          if (found) {
-                            let label = found.tahun || found.nama || found.id_tahun;
-                            if (tahunLaporan) {
-                              if (found.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
-                              else if (found.id_tahun === tahunLaporan.id_ts3) label = `TS-3 (${label})`;
-                              else if (found.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
-                              else if (found.id_tahun === tahunLaporan.id_ts1) label = `TS-1 (${label})`;
-                              else if (found.id_tahun === tahunLaporan.id_ts) label = `TS (${label})`;
-                            } else if (selectedTahun) {
-                              const ts = parseInt(selectedTahun, 10);
-                              if (!isNaN(ts)) {
-                                const tId = parseInt(found.id_tahun, 10);
-                                if (tId === ts) label = `TS (${label})`;
-                                else if (tId === ts - 1) label = `TS-1 (${label})`;
-                                else if (tId === ts - 2) label = `TS-2 (${label})`;
-                                else if (tId === ts - 3) label = `TS-3 (${label})`;
-                                else if (tId === ts - 4) label = `TS-4 (${label})`;
-                              }
-                            }
-                            return label;
-                          }
-                          return "-- Pilih Tahun --";
+                          return found ? (found.tahun || found.nama || found.id_tahun) : "-- Pilih Tahun --";
                         })()
                         : "-- Pilih Tahun --"}
                     </span>
@@ -372,47 +321,23 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
                         Tidak ada data tahun
                       </div>
                     ) : (
-                      tahunList.map((t) => {
-                        let label = t.tahun || t.nama || t.id_tahun;
-
-                        // Tentukan label TS berdasarkan tahunLaporan atau selectedTahun
-                        if (tahunLaporan) {
-                          if (t.id_tahun === tahunLaporan.id_ts4) label = `TS-4 (${label})`;
-                          else if (t.id_tahun === tahunLaporan.id_ts3) label = `TS-3 (${label})`;
-                          else if (t.id_tahun === tahunLaporan.id_ts2) label = `TS-2 (${label})`;
-                          else if (t.id_tahun === tahunLaporan.id_ts1) label = `TS-1 (${label})`;
-                          else if (t.id_tahun === tahunLaporan.id_ts) label = `TS (${label})`;
-                        } else if (selectedTahun) {
-                          // Fallback: hitung dari selectedTahun
-                          const ts = parseInt(selectedTahun, 10);
-                          if (!isNaN(ts)) {
-                            const tId = parseInt(t.id_tahun, 10);
-                            if (tId === ts) label = `TS (${label})`;
-                            else if (tId === ts - 1) label = `TS-1 (${label})`;
-                            else if (tId === ts - 2) label = `TS-2 (${label})`;
-                            else if (tId === ts - 3) label = `TS-3 (${label})`;
-                            else if (tId === ts - 4) label = `TS-4 (${label})`;
-                          }
-                        }
-
-                        return (
-                          <button
-                            key={t.id_tahun}
-                            type="button"
-                            onClick={() => {
-                              handleChange("id_tahun_perolehan", t.id_tahun.toString());
-                              setOpenTahunDropdown(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${form.id_tahun_perolehan === t.id_tahun.toString()
-                              ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                              : 'text-gray-700'
-                              }`}
-                          >
-                            <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
-                            <span className="truncate">{label}</span>
-                          </button>
-                        );
-                      })
+                      tahunList.map((t) => (
+                        <button
+                          key={t.id_tahun}
+                          type="button"
+                          onClick={() => {
+                            handleChange("id_tahun_perolehan", t.id_tahun.toString());
+                            setOpenTahunDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${String(form.id_tahun_perolehan) === String(t.id_tahun)
+                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                            : 'text-gray-700'
+                            }`}
+                        >
+                          <FiCalendar className="text-[#0384d6] flex-shrink-0" size={16} />
+                          <span className="truncate">{t.tahun || t.nama || t.id_tahun}</span>
+                        </button>
+                      ))
                     )}
                   </div>
                 )}
@@ -490,33 +415,7 @@ export default function Tabel4C3({ auth, role: propRole }) {
   const canDelete = roleCan(role, TABLE_KEY, "D");
   const canHardDelete = roleCan(role, TABLE_KEY, "H");
 
-  // Helper function untuk sorting data berdasarkan terbaru
-  const sortRowsByLatest = (rowsArray) => {
-    return [...rowsArray].sort((a, b) => {
-      // Jika ada created_at, urutkan berdasarkan created_at terbaru
-      if (a.created_at && b.created_at) {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
 
-      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
-      if (a.updated_at && b.updated_at) {
-        const dateA = new Date(a.updated_at);
-        const dateB = new Date(b.updated_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Fallback ke ID jika tidak ada timestamp
-      const idFieldA = getIdField(a);
-      const idFieldB = getIdField(b);
-      return (b[idFieldB] || 0) - (a[idFieldA] || 0);
-    });
-  };
 
   // Fetch tahun akademik
   useEffect(() => {
@@ -567,8 +466,8 @@ export default function Tabel4C3({ auth, role: propRole }) {
       }
 
       const data = Array.isArray(response.data) ? response.data : (response.items || []);
-      const sortedRows = sortRowsByLatest(data);
-      setRows(sortedRows);
+      // Urutan A-Z dari backend (Tanpa sorting ulang di frontend)
+      setRows(data);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
       Swal.fire('Error!', e?.message || "Gagal memuat data", 'error');
@@ -639,22 +538,30 @@ export default function Tabel4C3({ auth, role: propRole }) {
   // Handle save (create/update)
   const handleSave = async (formData) => {
     try {
+      const payload = {
+        ...formData,
+        id_tahun_laporan: selectedTahun
+      };
+
       if (editData) {
         await apiFetch(`${ENDPOINT}/${editData.id}`, {
           method: 'PUT',
-          body: JSON.stringify(formData)
+          body: JSON.stringify({ ...payload, id: editData.id })
         });
-        Swal.fire('Berhasil!', 'Data Perolehan HKI PKM berhasil diperbarui.', 'success');
+        Swal.fire('Berhasil!', 'Data berhasil diperbarui.', 'success');
       } else {
         await apiFetch(ENDPOINT, {
           method: 'POST',
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload)
         });
-        Swal.fire('Berhasil!', 'Data Perolehan HKI PKM berhasil ditambahkan.', 'success');
+        Swal.fire('Berhasil!', 'Data berhasil ditambahkan.', 'success');
       }
+
       setShowForm(false);
       setEditData(null);
-      fetchRows();
+
+      // Refresh Data (Tanpa sorting ulang di frontend agar A-Z tetap terjaga)
+      await fetchRows();
     } catch (e) {
       Swal.fire('Error!', e?.message || "Gagal menyimpan data", 'error');
     }
@@ -677,17 +584,7 @@ export default function Tabel4C3({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}`, { method: 'DELETE' });
         Swal.fire('Berhasil!', 'Data berhasil dihapus.', 'success');
-        // Refresh dengan parameter yang sesuai dengan state showDeleted
-        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
-        if (showDeleted) {
-          url += "&include_deleted=1";
-        }
-        const response = await apiFetch(url);
-        if (response.tahun_laporan) {
-          setTahunLaporan(response.tahun_laporan);
-        }
-        const data = Array.isArray(response.data) ? response.data : (response.items || []);
-        setRows(data);
+        await fetchRows();
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }
@@ -696,15 +593,27 @@ export default function Tabel4C3({ auth, role: propRole }) {
 
   // Handle restore
   const handleRestore = async (row) => {
-    try {
-      await apiFetch(`${ENDPOINT}/${row.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...row, deleted_at: null })
-      });
-      Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
-      fetchRows();
-    } catch (e) {
-      Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
+    const result = await Swal.fire({
+      title: 'Pulihkan Data?',
+      text: "Data akan dipulihkan dan muncul kembali di tabel utama.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await apiFetch(`${ENDPOINT}/${row.id}/restore`, {
+          method: 'POST'
+        });
+        Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
+        await fetchRows();
+      } catch (e) {
+        Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
+      }
     }
   };
 
@@ -725,17 +634,7 @@ export default function Tabel4C3({ auth, role: propRole }) {
       try {
         await apiFetch(`${ENDPOINT}/${row.id}/hard`, { method: 'DELETE' });
         Swal.fire('Terhapus!', 'Data telah dihapus secara permanen.', 'success');
-        // Refresh dengan parameter yang sesuai dengan state showDeleted
-        let url = `${ENDPOINT}?ts_id=${selectedTahun}`;
-        if (showDeleted) {
-          url += "&include_deleted=1";
-        }
-        const response = await apiFetch(url);
-        if (response.tahun_laporan) {
-          setTahunLaporan(response.tahun_laporan);
-        }
-        const data = Array.isArray(response.data) ? response.data : (response.items || []);
-        setRows(data);
+        await fetchRows();
       } catch (e) {
         Swal.fire('Error!', e?.message || "Gagal menghapus data", 'error');
       }

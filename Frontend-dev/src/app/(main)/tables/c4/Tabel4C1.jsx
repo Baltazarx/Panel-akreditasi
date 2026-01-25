@@ -859,16 +859,50 @@ export default function Tabel4C1({ auth, role: propRole }) {
 
   // Handle restore
   const handleRestore = async (row) => {
-    try {
-      await apiFetch(`${ENDPOINT}/${row.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...row, deleted_at: null })
-      });
-      Swal.fire('Berhasil!', 'Data berhasil dipulihkan.', 'success');
-      fetchRows();
-    } catch (e) {
-      Swal.fire('Error!', e?.message || "Gagal memulihkan data", 'error');
-    }
+    Swal.fire({
+      title: 'Pulihkan Data?',
+      text: `Data "${row.judul_kerjasama || 'data ini'}" akan dipulihkan.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, pulihkan!',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const idField = getIdField(row);
+          const rowId = idField ? row[idField] : row.id;
+
+          if (!rowId) {
+            throw new Error('ID data tidak valid. Silakan refresh halaman dan coba lagi.');
+          }
+
+          // Gunakan endpoint restore yang terpisah (POST /:id/restore)
+          await apiFetch(`${ENDPOINT}/${rowId}/restore`, {
+            method: "POST",
+          });
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Dipulihkan!',
+            text: 'Data telah berhasil dipulihkan.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+
+          fetchRows();
+        } catch (e) {
+          console.error("Restore error:", e);
+          const errorMessage = e.message || e.error || 'Terjadi kesalahan saat memulihkan data';
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal memulihkan data',
+            text: errorMessage
+          });
+        }
+      }
+    });
   };
 
   // Handle hard delete
@@ -1190,9 +1224,11 @@ export default function Tabel4C1({ auth, role: propRole }) {
                   const isDeleted = r.deleted_at;
 
                   // Format pendanaan ke juta rupiah
+                  // Format pendanaan ke juta rupiah
                   const formatPendanaan = (value) => {
-                    if (!value || value === 0) return "-";
-                    return (value / 1000000).toFixed(2);
+                    const num = parseFloat(value || 0) / 1000000;
+                    if (num === 0) return 0;
+                    return Number(num.toFixed(2));
                   };
 
                   return (
@@ -1291,10 +1327,15 @@ export default function Tabel4C1({ auth, role: propRole }) {
                           );
                         }
                         // totalsByPosition sesuai urutan [TS-4, TS-3, TS-2, TS-1, TS]
+                        // totalsByPosition sesuai urutan [TS-4, TS-3, TS-2, TS-1, TS]
                         const totalDana = summary.totalsByPosition[idx] || 0;
                         return (
                           <td key={yearId} className="px-6 py-4 text-center border border-slate-200 text-slate-800 bg-slate-100">
-                            {(totalDana / 1000000).toFixed(2)}
+                            {(() => {
+                              const val = totalDana / 1000000;
+                              if (val === 0) return 0;
+                              return Number(val.toFixed(2));
+                            })()}
                           </td>
                         );
                       })}

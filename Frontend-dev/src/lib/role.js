@@ -141,6 +141,10 @@ export const ACCESS_MATRIX = {
     'tabel_2b4_masa_tunggu': { c: true, r: true, u: true, d: true },
     'tabel_2b5_kesesuaian_kerja': { c: true, r: true, u: true, d: true },
     'tabel_2b6_kepuasan_pengguna': { c: true, r: true, u: true, d: true },
+
+    // [NEW] Tabel 2.D
+    'rekognisi_lulusan': { c: true, r: true, u: true, d: true },
+
     // === MASTER DATA: Izin Baca untuk useMaps hook dan dropdown ===
     //  'unit_kerja': { r: true },
     //  'pegawai': { r: true },

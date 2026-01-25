@@ -79,7 +79,7 @@ export const buildWhere = async (req, table, alias = 'm') => {
     // Definisikan role yang filternya per-unit (bukan prodi)
     // (SESUAIKAN DAFTAR INI dengan role unit Anda)
     const isUnitLevelUser =
-      ['lppm', 'kerjasama'].includes(req.user?.role?.toLowerCase()); // <-- GANTI INI JIKA PERLU
+      ['lppm', 'kerjasama'].includes(req.user?.role?.toLowerCase()); // <-- Revert: prodi dihapus agar global
 
     // Jika ada query param id_unit_in (untuk filter multiple unit)
     if (req.query?.id_unit_in) {
@@ -109,7 +109,11 @@ export const buildWhere = async (req, table, alias = 'm') => {
   // ===== Soft Delete Handling =====
   if (await hasColumn(table, 'deleted_at')) {
     const includeDeleted = req.query?.include_deleted;
-    if (String(includeDeleted) !== '1') {
+    const isDeleted = req.query?.is_deleted;
+
+    if (isDeleted === 'true' || isDeleted === '1') {
+      where.push(`${alias}.deleted_at IS NOT NULL`);
+    } else if (String(includeDeleted) !== '1') {
       where.push(`${alias}.deleted_at IS NULL`);
     }
   }

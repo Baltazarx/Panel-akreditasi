@@ -154,6 +154,18 @@ export const listTabel3c1Kerjasama = async (req, res) => {
       return res.status(500).json({ error: `Gagal mengambil data 5 tahun akademik untuk TS=${ts_id}.` });
     }
 
+    // Ambil tahun-tahun untuk parameter subquery filter
+    const tahunIdsList = [
+      tahunIds.id_ts4,
+      tahunIds.id_ts3,
+      tahunIds.id_ts2,
+      tahunIds.id_ts1,
+      tahunIds.id_ts
+    ];
+
+    // Gabungkan params: original (unit/deleted) + tahunIdsList (5)
+    const finalParams = [...params, ...tahunIdsList];
+
     const sql = `SELECT
         k.id, k.id_unit, uk.nama_unit,
         k.judul_kerjasama, k.mitra_kerja_sama, k.sumber, k.durasi_tahun, k.link_bukti,
@@ -163,13 +175,14 @@ export const listTabel3c1Kerjasama = async (req, res) => {
       LEFT JOIN unit_kerja uk ON k.id_unit = uk.id_unit
       LEFT JOIN tabel_3c1_pendanaan_kerjasama p ON k.id = p.id_kerjasama
       LEFT JOIN tahun_akademik t ON p.id_tahun = t.id_tahun
-      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      WHERE ${where.length ? `${where.join(' AND ')} AND ` : ''} 
+      k.id IN (SELECT id_kerjasama FROM tabel_3c1_pendanaan_kerjasama WHERE id_tahun IN (?, ?, ?, ?, ?))
       GROUP BY 
         k.id, k.id_unit, uk.nama_unit, k.judul_kerjasama, 
         k.mitra_kerja_sama, k.sumber, k.durasi_tahun, k.link_bukti, k.deleted_at
       ORDER BY ${orderBy}`;
 
-    const [rows] = await pool.query(sql, params);
+    const [rows] = await pool.query(sql, finalParams);
     res.json(rows);
 
   } catch (err) {
@@ -524,13 +537,15 @@ export const exportTabel3c1Kerjasama = async (req, res) => {
           LEFT JOIN unit_kerja uk ON k.id_unit = uk.id_unit
           LEFT JOIN tabel_3c1_pendanaan_kerjasama p ON k.id = p.id_kerjasama
           LEFT JOIN tahun_akademik t ON p.id_tahun = t.id_tahun
-          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+          WHERE ${where.length ? `${where.join(' AND ')} AND ` : ''} 
+          k.id IN (SELECT id_kerjasama FROM tabel_3c1_pendanaan_kerjasama WHERE id_tahun IN (?, ?, ?, ?, ?))
           GROUP BY 
             k.id, k.id_unit, uk.nama_unit, k.judul_kerjasama, 
             k.mitra_kerja_sama, k.sumber, k.durasi_tahun, k.link_bukti, k.deleted_at
           ORDER BY ${orderBy}`;
 
-    const [rows] = await pool.query(sql, params);
+    const finalParams = [...params, ...tahunIdsList];
+    const [rows] = await pool.query(sql, finalParams);
 
     const tahun = tahunIds;
 
@@ -582,7 +597,7 @@ export const exportTabel3c1Kerjasama = async (req, res) => {
         pendanaanKeys.forEach(key => {
           const cell = row.getCell(key);
           cell.alignment = { vertical: 'middle', horizontal: 'right' };
-          cell.numFmt = '#,##0.00';
+          cell.numFmt = '#,##0';
         });
       }
     });

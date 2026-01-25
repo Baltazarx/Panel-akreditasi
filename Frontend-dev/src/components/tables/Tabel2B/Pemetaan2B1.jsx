@@ -289,17 +289,9 @@ export default function Pemetaan2B1({ role, refreshTrigger, maps }) {
   }, [refreshTrigger, canRead, selectedProdi, isSuperAdmin, userProdiId]);
 
   // === BARU: useEffect khusus untuk memastikan refresh ketika refreshTrigger berubah ===
-  // Ini memastikan bahwa ketika data di 2B.2 disimpan, 2B.1 langsung refresh
   useEffect(() => {
     if (refreshTrigger > 0 && canRead) {
-      // Hanya fetch jika kondisi terpenuhi
-      if ((!isSuperAdmin && userProdiId) || isSuperAdmin) {
-        // Force refresh dengan sedikit delay untuk memastikan backend selesai memproses
-        const timer = setTimeout(() => {
-          fetchData();
-        }, 100);
-        return () => clearTimeout(timer);
-      }
+      fetchData();
     }
   }, [refreshTrigger]);
 

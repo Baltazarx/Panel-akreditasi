@@ -99,8 +99,15 @@ export default function Tabel2D({ role }) {
     const [detailsToSubmit, setDetailsToSubmit] = useState([]); // Daftar rincian yang akan di-submit
 
     const isProdiUser = ['prodi'].includes(role?.toLowerCase());
-    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm'].includes(role?.toLowerCase());
-    const canManageData = isProdiUser || isSuperAdmin; // Akses untuk prodi dan superadmin
+    const isSuperAdmin = ['superadmin', 'waket1', 'waket2', 'tpm', 'ketua'].includes(role?.toLowerCase());
+
+    // [FIX] Cek permission create/update agar role kemahasiswaan bisa kelola data
+    // Definisi permission ditaruh di sini agar bisa dipakai untuk logic canManageData
+    const canRead = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "r");
+    const canCreate = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "C");
+    const canUpdate = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "U");
+    const canDelete = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "D");
+    const canManageData = isProdiUser || isSuperAdmin || canCreate || canUpdate;
 
     // Cek apakah user adalah prodi TI atau MI berdasarkan id_unit_prodi
     const userProdiId = authUser?.id_unit_prodi || authUser?.unit;
@@ -433,11 +440,7 @@ export default function Tabel2D({ role }) {
     }, [totalsByYear, dataByYear, yearOrder]);
 
     // --- Izin Akses ---
-    // Superadmin otomatis memiliki semua akses CRUD
-    const canRead = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "r");
-    const canUpdate = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "U");
-    const canCreate = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "C");
-    const canDelete = isSuperAdmin || roleCan(role, "rekognisi_lulusan", "D");
+    // Superadmin otomatis memiliki semua akses CRUD (variabel sudah didefinisikan di atas)
 
     const getTahunName = (id) => {
         return availableYears.find(y => String(y.id) === String(id))?.text || id;
@@ -682,6 +685,24 @@ export default function Tabel2D({ role }) {
     // Handler untuk menghapus rincian dari daftar detailsToSubmit
     const handleDeleteDetail = (tempId) => {
         setDetailsToSubmit(prev => prev.filter(d => d.tempId !== tempId));
+    };
+
+    // Confirm delete helper
+    const confirmDeleteDetail = (tempId) => {
+        Swal.fire({
+            title: 'Hapus Rincian?',
+            text: "Rincian ini akan dihapus dari daftar (perubahan disimpan saat Anda klik Simpan).",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                handleDeleteDetail(tempId);
+            }
+        });
     };
 
     // Handler untuk submit Data TS (Mengirim semua data di detailsToSubmit)
@@ -962,8 +983,8 @@ export default function Tabel2D({ role }) {
                                 setOpenYearFilterDropdown(!openYearFilterDropdown);
                             }}
                             className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedYear
-                                    ? 'border-[#0384d6] bg-white text-black'
-                                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                                ? 'border-[#0384d6] bg-white text-black'
+                                : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
                                 }`}
                             aria-label="Pilih tahun"
                         >
@@ -998,8 +1019,8 @@ export default function Tabel2D({ role }) {
                                         setOpenYearFilterDropdown(false);
                                     }}
                                     className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedYear === "all"
-                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                            : 'text-gray-700'
+                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                        : 'text-gray-700'
                                         }`}
                                 >
                                     <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1015,8 +1036,8 @@ export default function Tabel2D({ role }) {
                                                 setOpenYearFilterDropdown(false);
                                             }}
                                             className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedYear === String(y.id)
-                                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                                    : 'text-gray-700'
+                                                ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                : 'text-gray-700'
                                                 }`}
                                         >
                                             <FiCalendar className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1044,8 +1065,8 @@ export default function Tabel2D({ role }) {
                                         setOpenProdiFilterDropdown(!openProdiFilterDropdown);
                                     }}
                                     className={`w-full px-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
-                                            ? 'border-[#0384d6] bg-white text-black'
-                                            : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                                        ? 'border-[#0384d6] bg-white text-black'
+                                        : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
                                         }`}
                                     aria-label="Pilih prodi"
                                 >
@@ -1080,8 +1101,8 @@ export default function Tabel2D({ role }) {
                                                     setOpenProdiFilterDropdown(false);
                                                 }}
                                                 className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(p.id)
-                                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                                        : 'text-gray-700'
+                                                    ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                    : 'text-gray-700'
                                                     }`}
                                             >
                                                 <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
@@ -1100,8 +1121,8 @@ export default function Tabel2D({ role }) {
                                 onClick={() => setShowDeleted(false)}
                                 disabled={loading}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
-                                        ? "bg-white text-[#0384d6] shadow-sm"
-                                        : "text-gray-600 hover:text-gray-900"
+                                    ? "bg-white text-[#0384d6] shadow-sm"
+                                    : "text-gray-600 hover:text-gray-900"
                                     } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                                 aria-label="Tampilkan data aktif"
                             >
@@ -1111,8 +1132,8 @@ export default function Tabel2D({ role }) {
                                 onClick={() => setShowDeleted(true)}
                                 disabled={loading}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
-                                        ? "bg-white text-[#0384d6] shadow-sm"
-                                        : "text-gray-600 hover:text-gray-900"
+                                    ? "bg-white text-[#0384d6] shadow-sm"
+                                    : "text-gray-600 hover:text-gray-900"
                                     } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                                 aria-label="Tampilkan data terhapus"
                             >
@@ -1385,8 +1406,8 @@ export default function Tabel2D({ role }) {
                                                         setOpenFormSumberDropdown(!openFormSumberDropdown);
                                                     }}
                                                     className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${singleInput.id_sumber
-                                                            ? 'border-[#0384d6] bg-white'
-                                                            : 'border-gray-300 bg-white hover:border-gray-400'
+                                                        ? 'border-[#0384d6] bg-white'
+                                                        : 'border-gray-300 bg-white hover:border-gray-400'
                                                         }`}
                                                     aria-label="Pilih sumber rekognisi"
                                                 >
@@ -1421,8 +1442,8 @@ export default function Tabel2D({ role }) {
                                                                         setOpenFormSumberDropdown(false);
                                                                     }}
                                                                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${singleInput.id_sumber === String(s.id_sumber)
-                                                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                                                            : 'text-gray-700'
+                                                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                                        : 'text-gray-700'
                                                                         }`}
                                                                 >
                                                                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1529,8 +1550,8 @@ export default function Tabel2D({ role }) {
                                                         setOpenFormSumberDropdown(!openFormSumberDropdown);
                                                     }}
                                                     className={`w-full px-4 py-3 border rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${singleInput.id_sumber
-                                                            ? 'border-[#0384d6] bg-white'
-                                                            : 'border-gray-300 bg-white hover:border-gray-400'
+                                                        ? 'border-[#0384d6] bg-white'
+                                                        : 'border-gray-300 bg-white hover:border-gray-400'
                                                         }`}
                                                     aria-label="Pilih sumber rekognisi"
                                                 >
@@ -1565,8 +1586,8 @@ export default function Tabel2D({ role }) {
                                                                         setOpenFormSumberDropdown(false);
                                                                     }}
                                                                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#eaf4ff] transition-colors ${singleInput.id_sumber === String(s.id_sumber)
-                                                                            ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                                                                            : 'text-gray-700'
+                                                                        ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                                                                        : 'text-gray-700'
                                                                         }`}
                                                                 >
                                                                     <FiShield className="text-[#0384d6] flex-shrink-0" size={16} />
@@ -1675,16 +1696,26 @@ export default function Tabel2D({ role }) {
                                                                 ) : '-'}
                                                             </td>
                                                             <td className="px-4 py-3 text-center border border-slate-200">
-                                                                {isEditMode && (
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    {isEditMode && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleEditDetail(detail)}
+                                                                            className="text-[#0384d6] hover:text-[#043975] font-medium"
+                                                                            title="Edit rincian ini"
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleEditDetail(detail)}
-                                                                        className="text-[#0384d6] hover:text-[#043975] font-medium"
-                                                                        title="Edit rincian ini"
+                                                                        onClick={() => confirmDeleteDetail(detail.tempId)}
+                                                                        className="text-red-500 hover:text-red-700 font-medium"
+                                                                        title="Hapus rincian ini"
                                                                     >
-                                                                        Edit
+                                                                        Hapus
                                                                     </button>
-                                                                )}
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     );

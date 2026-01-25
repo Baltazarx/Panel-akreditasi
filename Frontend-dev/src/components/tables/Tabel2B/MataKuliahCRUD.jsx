@@ -5,7 +5,7 @@ import { apiFetch, getIdField } from "../../../lib/api"; // Path disesuaikan
 import { roleCan } from "../../../lib/role"; // Path disesuaikan
 import { useAuth } from "../../../context/AuthContext";
 import Swal from 'sweetalert2';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiChevronDown, FiBriefcase, FiDownload, FiChevronLeft, FiChevronRight, FiRotateCw, FiXCircle } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 // ============================================================
@@ -21,6 +21,8 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
   // Dropdown menu state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Cek apakah user adalah superadmin (bisa melihat semua prodi)
   const userRole = authUser?.role || role;
@@ -93,8 +95,15 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
 
   // === PERBAIKAN: Logika filter disederhanakan ===
   // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
+  // === PERBAIKAN: Logika filter disederhanakan dan disesuaikan mapping ===
   const filteredRows = selectedProdi
-    ? rows.filter(row => String(row.id_unit_prodi) === selectedProdi)
+    ? rows.filter(row => {
+      let rowId = String(row.id_unit_prodi);
+      // Map data ID ke user ID untuk comparison (Jika backend masih pakai 4, 5)
+      if (rowId === '4') rowId = '6';
+      if (rowId === '5') rowId = '7';
+      return rowId == selectedProdi;
+    })
     : rows;
 
   // Pagination Logic
@@ -110,14 +119,16 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
   const fetchRows = async () => {
     setLoading(true);
     try {
-      // Jika user prodi, filter berdasarkan prodi mereka
       let url = "/mata-kuliah";
 
-      // Database sudah menggunakan ID yang benar (6=TI, 7=MI), tidak perlu mapping
+      if (showDeleted) {
+        url += "?is_deleted=true";
+      }
+
       if (!isSuperAdmin && userProdiId) {
-        url += `?id_unit_prodi=${String(userProdiId)}`;
+        url += `${url.includes('?') ? '&' : '?'}id_unit_prodi=${String(userProdiId)}`;
       } else if (selectedProdi) {
-        url += `?id_unit_prodi=${selectedProdi}`;
+        url += `${url.includes('?') ? '&' : '?'}id_unit_prodi=${selectedProdi}`;
       }
       const result = await apiFetch(url);
       const rowsArray = Array.isArray(result) ? result : [];
@@ -206,6 +217,51 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
     }
   };
 
+  const handleRestore = async (row) => {
+    const result = await Swal.fire({
+      title: 'Pulihkan Data?',
+      text: `Mata Kuliah ${row.kode_mk} akan dikembalikan ke daftar aktif.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Pulihkan',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await apiFetch(`/mata-kuliah/${row.id_mk}/restore`, { method: "POST" });
+        Swal.fire('Berhasil!', 'Data telah dipulihkan.', 'success');
+        fetchRows();
+        if (onDataChange) onDataChange();
+      } catch (err) {
+        Swal.fire('Gagal!', err.message, 'error');
+      }
+    }
+  };
+
+  const handleHardDelete = async (row) => {
+    const result = await Swal.fire({
+      title: 'Hapus Permanen?',
+      text: `Mata Kuliah ${row.kode_mk} akan dihapus selamanya. Tindakan ini tidak bisa dibatalkan!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Ya, Hapus Permanen',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await apiFetch(`/mata-kuliah/${row.id_mk}/hard-delete`, { method: "DELETE" });
+        Swal.fire('Dihapus!', 'Data telah dihapus permanen.', 'success');
+        fetchRows();
+        if (onDataChange) onDataChange();
+      } catch (err) {
+        Swal.fire('Gagal!', err.message, 'error');
+      }
+    }
+  };
+
   // === Helper fungsi untuk form CPMK dinamis ===
   const addCpmk = () => {
     setFormState({
@@ -235,7 +291,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
     if ((!isSuperAdmin && userProdiId) || (isSuperAdmin && selectedProdi !== null && selectedProdi !== undefined)) {
       fetchRows();
     }
-  }, [selectedProdi, isSuperAdmin, userProdiId, refreshTrigger]);
+  }, [selectedProdi, isSuperAdmin, userProdiId, refreshTrigger, showDeleted]);
 
   // Close dropdown when clicking outside, scrolling, or resizing
   useEffect(() => {
@@ -508,100 +564,127 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-800">Mata Kuliah</h2>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleExport}
-            disabled={loading || (!rows || rows.length === 0) && (!filteredRows || filteredRows.length === 0)}
-            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            title="Export ke Excel"
-          >
-            <FiDownload size={18} />
-            <span>Export Excel</span>
-          </button>
-
-          {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
-          {isSuperAdmin && (
-            <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpenProdiFilterDropdown(!openProdiFilterDropdown);
-                }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
-                  ? 'border-[#0384d6] bg-white text-black'
-                  : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
-                  }`}
-                aria-label="Pilih prodi"
+                onClick={() => setShowDeleted(false)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${!showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
-                  <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
-                    {selectedProdi
-                      ? (() => {
-                        const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
-                        return found ? found.nama_unit : selectedProdi;
-                      })()
-                      : "Semua Prodi"}
-                  </span>
-                </div>
-                <FiChevronDown
-                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
-                    }`}
-                  size={16}
-                />
+                Data
               </button>
-              {openProdiFilterDropdown && (
-                <div
-                  className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
-                  style={{ minWidth: '200px' }}
+              <button
+                onClick={() => setShowDeleted(true)}
+                disabled={loading}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${showDeleted
+                  ? "bg-white text-[#0384d6] shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                Data Terhapus
+              </button>
+            </div>
+
+            <button
+              onClick={handleExport}
+              disabled={loading || (!rows || rows.length === 0) && (!filteredRows || filteredRows.length === 0)}
+              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export ke Excel"
+            >
+              <FiDownload size={18} />
+              <span>Export Excel</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* === PERBAIKAN: Dropdown filter hanya untuk superadmin === */}
+            {isSuperAdmin && (
+              <div className="relative prodi-filter-dropdown-container" style={{ minWidth: '200px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenProdiFilterDropdown(!openProdiFilterDropdown);
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[#0384d6] focus:border-[#0384d6] flex items-center justify-between transition-all duration-200 ${selectedProdi
+                    ? 'border-[#0384d6] bg-white text-black'
+                    : 'border-gray-300 bg-white text-slate-700 hover:border-gray-400'
+                    }`}
+                  aria-label="Pilih prodi"
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProdi("");
-                      setOpenProdiFilterDropdown(false);
-                    }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
-                      ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
-                      : 'text-gray-700'
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={16} />
+                    <span className={`truncate ${selectedProdi ? 'text-black' : 'text-gray-500'}`}>
+                      {selectedProdi
+                        ? (() => {
+                          const found = prodiList.find((p) => String(p.id_unit) === String(selectedProdi));
+                          return found ? found.nama_unit : selectedProdi;
+                        })()
+                        : "Semua Prodi"}
+                    </span>
+                  </div>
+                  <FiChevronDown
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${openProdiFilterDropdown ? 'rotate-180' : ''
                       }`}
+                    size={16}
+                  />
+                </button>
+                {openProdiFilterDropdown && (
+                  <div
+                    className="absolute z-[100] bg-white rounded-lg shadow-xl border border-gray-200 max-h-60 overflow-y-auto prodi-filter-dropdown-menu mt-1 w-full"
+                    style={{ minWidth: '200px' }}
                   >
-                    <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                    <span>Semua Prodi</span>
-                  </button>
-                  {prodiList.map(prodi => (
                     <button
-                      key={prodi.id_unit}
                       type="button"
                       onClick={() => {
-                        setSelectedProdi(String(prodi.id_unit));
+                        setSelectedProdi("");
                         setOpenProdiFilterDropdown(false);
                       }}
-                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(prodi.id_unit)
+                      className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === ""
                         ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
                         : 'text-gray-700'
                         }`}
                     >
                       <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
-                      <span>{prodi.nama_unit}</span>
+                      <span>Semua Prodi</span>
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    {prodiList.map(prodi => (
+                      <button
+                        key={prodi.id_unit}
+                        type="button"
+                        onClick={() => {
+                          setSelectedProdi(String(prodi.id_unit));
+                          setOpenProdiFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-[#eaf4ff] transition-colors ${selectedProdi === String(prodi.id_unit)
+                          ? 'bg-[#eaf4ff] text-[#0384d6] font-medium'
+                          : 'text-gray-700'
+                          }`}
+                      >
+                        <FiBriefcase className="text-[#0384d6] flex-shrink-0" size={14} />
+                        <span>{prodi.nama_unit}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          {canCreate && (
-            <button
-              onClick={() => {
-                setShowModal(true);
-                setEditing(null);
-              }}
-              className="px-4 py-2 bg-[#0384d6] text-white rounded-lg hover:bg-[#043975] transition-colors"
-            >
-              + Tambah Mata Kuliah
-            </button>
-          )}
+            {canCreate && !showDeleted && (
+              <button
+                onClick={() => {
+                  setShowModal(true);
+                  setEditing(null);
+                }}
+                className="px-4 py-2 bg-[#0384d6] text-white rounded-lg hover:bg-[#043975] transition-colors"
+              >
+                + Tambah Mata Kuliah
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -733,7 +816,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
               left: `${dropdownPosition.left}px`
             }}
           >
-            {canUpdate && (
+            {!showDeleted && canUpdate && (
               <button
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -766,7 +849,7 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
                 <span>Edit</span>
               </button>
             )}
-            {canDelete && (
+            {!showDeleted && canDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -778,6 +861,34 @@ export default function MataKuliahCRUD({ role, maps, onDataChange, readOnly = fa
               >
                 <FiTrash2 size={16} className="flex-shrink-0 text-red-600" />
                 <span>Hapus</span>
+              </button>
+            )}
+            {showDeleted && canUpdate && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestore(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors text-left"
+                aria-label={`Pulihkan data ${currentRow.kode_mk}`}
+              >
+                <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
+                <span>Pulihkan</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.kode_mk}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
               </button>
             )}
           </div>
