@@ -322,33 +322,24 @@ export const deletePegawai = async (req, res) => {
       if (await hasColumn('pegawai', 'deleted_by')) payload.deleted_by = req.user?.id_user || null;
       await pool.query(`UPDATE pegawai SET ? WHERE id_pegawai=?`, [payload, req.params.id]);
 
-      // [NEW] Soft delete juga pegawai_unit
-      await pool.query(
-        `UPDATE pegawai_unit SET deleted_at = NOW() WHERE id_pegawai = ?`,
-        [req.params.id]
-      );
-
       return res.json({ ok: true, softDeleted: true });
     }
     await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
     res.json({ ok: true, hardDeleted: true });
   } catch (err) {
-    res.status(500).json({ error: 'Delete failed' });
+    console.error("Error deletePegawai:", err);
+    res.status(500).json({ error: 'Delete failed', details: err.message });
   }
 };
 
 export const restorePegawai = async (req, res) => {
   try {
     await pool.query(`UPDATE pegawai SET deleted_at=NULL WHERE id_pegawai=?`, [req.params.id]);
-
-    // [NEW] Restore juga pegawai_unit
-    await pool.query(
-      `UPDATE pegawai_unit SET deleted_at=NULL WHERE id_pegawai=?`,
-      [req.params.id]
-    );
-
     res.json({ ok: true, restored: true });
-  } catch (err) { res.status(500).json({ error: 'Restore failed' }); }
+  } catch (err) {
+    console.error("Error restorePegawai:", err);
+    res.status(500).json({ error: 'Restore failed', details: err.message });
+  }
 };
 
 export const hardDeletePegawai = async (req, res) => {
@@ -356,5 +347,8 @@ export const hardDeletePegawai = async (req, res) => {
     // pegawai_unit akan auto-delete karena foreign key CASCADE
     await pool.query(`DELETE FROM pegawai WHERE id_pegawai=?`, [req.params.id]);
     res.json({ ok: true, hardDeleted: true });
-  } catch (err) { res.status(500).json({ error: 'Hard delete failed' }); }
+  } catch (err) {
+    console.error("Error hardDeletePegawai:", err);
+    res.status(500).json({ error: 'Hard delete failed', details: err.message });
+  }
 };
