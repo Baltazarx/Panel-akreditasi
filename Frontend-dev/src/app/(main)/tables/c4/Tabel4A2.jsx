@@ -89,7 +89,8 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, authUser, selec
   useEffect(() => {
     if (isOpen) {
       // Reset input pendanaan setiap kali form dibuka
-      setSelectedTahunPendanaan("");
+      // Pre-fill selected tahun from filter if available
+      setSelectedTahunPendanaan(selectedTahun || "");
       setJumlahDanaPendanaan("");
 
       if (initialData) {
@@ -855,7 +856,16 @@ export default function Tabel4A2({ auth, role: propRole, selectedTahun: propSele
       }
 
       const data = Array.isArray(response.data) ? response.data : (response.items || []);
-      const sortedRows = sortRowsByLatest(data);
+      // Primary sort: Nama DTPR (A-Z), Secondary: Latest (if names same)
+      const sortedRows = [...data].sort((a, b) => {
+        const nameA = a.nama_dtpr || "";
+        const nameB = b.nama_dtpr || "";
+        const nameCompare = nameA.localeCompare(nameB);
+        if (nameCompare !== 0) return nameCompare;
+
+        // Fallback to latest timestamp if names are equal
+        return sortRowsByLatest([a, b])[0] === a ? -1 : 1;
+      });
       setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");

@@ -257,6 +257,19 @@ export default function Tabel2A1({ role }) {
     }
   }, [role]);
 
+  // Auto-fill tahun saat modal tambah dibuka sesuai filter yang aktif
+  useEffect(() => {
+    if (showModalPend && selectedYear && !editingPend) {
+      setFormPend(prev => ({ ...prev, id_tahun: selectedYear }));
+    }
+  }, [showModalPend, selectedYear, editingPend]);
+
+  useEffect(() => {
+    if (showModalMaba && selectedYear && !editingMaba) {
+      setFormMaba(prev => ({ ...prev, id_tahun: selectedYear }));
+    }
+  }, [showModalMaba, selectedYear, editingMaba]);
+
   // Helper function untuk sorting data berdasarkan terbaru
   const sortRowsByLatest = useCallback((rowsArray) => {
     return [...rowsArray].sort((a, b) => {
@@ -2968,7 +2981,12 @@ export default function Tabel2A1({ role }) {
                 onClick={() => {
                   setEditingPend(null);
                   setFormPend({
-                    id_unit_prodi: "", id_tahun: "", daya_tampung: "", pendaftar: "", pendaftar_afirmasi: "", pendaftar_kebutuhan_khusus: ""
+                    id_unit_prodi: "",
+                    id_tahun: selectedYear || "",
+                    daya_tampung: "",
+                    pendaftar: "",
+                    pendaftar_afirmasi: "",
+                    pendaftar_kebutuhan_khusus: ""
                   });
                   setShowModalPend(true);
                 }}
@@ -3148,7 +3166,13 @@ export default function Tabel2A1({ role }) {
                   onClick={() => {
                     setEditingMaba(null);
                     setFormMaba({
-                      id_unit_prodi: "", id_tahun: "", jenis: "baru", jalur: "reguler", jumlah_total: "", jumlah_afirmasi: "", jumlah_kebutuhan_khusus: ""
+                      id_unit_prodi: "",
+                      id_tahun: selectedYear || "",
+                      jenis: "baru",
+                      jalur: "reguler",
+                      jumlah_total: "",
+                      jumlah_afirmasi: "",
+                      jumlah_kebutuhan_khusus: ""
                     });
                     setShowModalMaba(true);
                   }}

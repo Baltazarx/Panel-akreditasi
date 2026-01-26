@@ -604,6 +604,13 @@ export default function Tabel1A3({ role }) {
   const [editJumlah, setEditJumlah] = useState("");
   const [editLink, setEditLink] = useState("");
 
+  // Auto-fill tahun saat modal tambah dibuka sesuai filter yang aktif
+  useEffect(() => {
+    if (showCreateModal && activeYear) {
+      setNewIdTahun(activeYear);
+    }
+  }, [showCreateModal, activeYear]);
+
   const canCreate = roleCan(role, TABLE_KEY, "C");
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
@@ -1207,20 +1214,6 @@ export default function Tabel1A3({ role }) {
                 <span>Hapus</span>
               </button>
             )}
-            {showDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  doHardDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label={`Hapus permanen data ${currentRow.jenis_penggunaan || 'penggunaan dana'}`}
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
             {showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
@@ -1233,6 +1226,20 @@ export default function Tabel1A3({ role }) {
               >
                 <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
                 <span>Pulihkan</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.jenis_penggunaan || 'penggunaan dana'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
               </button>
             )}
           </div>

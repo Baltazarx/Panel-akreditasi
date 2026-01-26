@@ -358,36 +358,12 @@ export default function Tabel1A4({ role }) {
   const canUpdate = roleCan(role, TABLE_KEY, "U");
   const canDelete = roleCan(role, TABLE_KEY, "D");
 
-  // Helper function untuk sorting data berdasarkan terbaru
-  const sortRowsByLatest = (rowsArray) => {
+  // Helper function untuk sorting data berdasarkan Nama Dosen (A-Z)
+  const sortRowsByName = (rowsArray) => {
     return [...rowsArray].sort((a, b) => {
-      // Jika ada created_at, urutkan berdasarkan created_at terbaru
-      if (a.created_at && b.created_at) {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Jika ada updated_at, urutkan berdasarkan updated_at terbaru
-      if (a.updated_at && b.updated_at) {
-        const dateA = new Date(a.updated_at);
-        const dateB = new Date(b.updated_at);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB.getTime() - dateA.getTime(); // Terbaru di atas
-        }
-      }
-
-      // Fallback: urutkan berdasarkan ID terbesar (asumsi auto-increment)
-      const idField = getIdField(a) || getIdField(b);
-      if (idField) {
-        const idA = a[idField] || 0;
-        const idB = b[idField] || 0;
-        return idB - idA; // ID terbesar di atas
-      }
-
-      return 0;
+      const nameA = maps.pegawai[a.id_dosen]?.nama_lengkap || '';
+      const nameB = maps.pegawai[b.id_dosen]?.nama_lengkap || '';
+      return nameA.localeCompare(nameB, 'id', { sensitivity: 'base' });
     });
   };
 
@@ -405,7 +381,7 @@ export default function Tabel1A4({ role }) {
         ? data.filter((row) => row.deleted_at !== null)
         : data.filter((row) => row.deleted_at === null);
       const rowsArray = Array.isArray(filteredData) ? filteredData : filteredData?.items || [];
-      const sortedRows = sortRowsByLatest(rowsArray);
+      const sortedRows = sortRowsByName(rowsArray);
       setRows(sortedRows);
     } catch (e) {
       setError(e?.message || "Gagal memuat data");
@@ -940,7 +916,10 @@ export default function Tabel1A4({ role }) {
           </div>
           {canCreate && (
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                setNewIdTahun(selectedYear || "");
+                setShowCreateModal(true);
+              }}
               className="px-4 py-2 bg-[#0384d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#043975] focus:outline-none focus:ring-2 focus:ring-[#0384d6]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
@@ -1023,20 +1002,6 @@ export default function Tabel1A4({ role }) {
                 <span>Hapus</span>
               </button>
             )}
-            {showDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  doHardDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label={`Hapus permanen data ${maps.pegawai[currentRow.id_dosen]?.nama_lengkap || 'beban kerja dosen'}`}
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
             {showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
@@ -1049,6 +1014,20 @@ export default function Tabel1A4({ role }) {
               >
                 <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
                 <span>Pulihkan</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${maps.pegawai[currentRow.id_dosen]?.nama_lengkap || 'beban kerja dosen'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
               </button>
             )}
           </div>

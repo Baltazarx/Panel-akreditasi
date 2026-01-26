@@ -14,7 +14,7 @@ const TABLE_KEY = "tabel_3c3_hki";
 const LABEL = "3.C.3 Perolehan HKI (Granted)";
 
 /* ---------- Modal Form Tambah/Edit ---------- */
-function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, authUser }) {
+function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, authUser, selectedTahun }) {
   const [form, setForm] = useState({
     id_dosen: "",
     judul_hki: "",
@@ -85,7 +85,7 @@ function ModalForm({ isOpen, onClose, onSave, initialData, maps, tahunList, auth
           id_dosen: "",
           judul_hki: "",
           jenis_hki: "",
-          id_tahun_perolehan: "",
+          id_tahun_perolehan: selectedTahun || "",
           link_bukti: ""
         });
       }
@@ -1533,6 +1533,7 @@ export default function Tabel3C3({ auth, role }) {
         maps={maps}
         tahunList={tahunList}
         authUser={auth?.user || authUserFromContext}
+        selectedTahun={selectedTahun}
       />
     </div>
   );

@@ -691,20 +691,6 @@ export default function TabelPegawai({ role }) {
                 <span>Hapus</span>
               </button>
             )}
-            {showDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  doHardDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label={`Hapus permanen data ${currentRow.nama_lengkap || 'pegawai'}`}
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
             {showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
@@ -717,6 +703,20 @@ export default function TabelPegawai({ role }) {
               >
                 <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
                 <span>Pulihkan</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  doHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.nama_lengkap || 'pegawai'}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
               </button>
             )}
           </div>

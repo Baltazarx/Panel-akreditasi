@@ -1013,17 +1013,15 @@ export default function Tabel1A2({ role }) {
       setModalOpen(false);
       setEditingRow(null);
 
-      // Setelah simpan, tampilkan "Semua Tahun"
-      setActiveYear("");
+      // Refresh data (tetap menggunakan activeYear yang sedang dipilih)
+      await fetchData();
 
-      // Refresh data semua tahun
-      const dataAll = await apiFetch(`/sumber-pendanaan`);
-      const rowsArrayAll = Array.isArray(dataAll) ? dataAll : dataAll?.items || [];
-      const sortedRowsAll = sortRowsByLatest(rowsArrayAll);
-      setRows(sortedRowsAll);
-
-      // Refresh ringkasan (karena activeYear sudah di-set ke "", gunakan fetchSummaryAll)
-      await fetchSummaryAll();
+      // Refresh ringkasan
+      if (activeYear) {
+        await computeSummaryFromBaseYear(activeYear);
+      } else {
+        await fetchSummaryAll();
+      }
 
       // SweetAlert notification
       Swal.fire({
@@ -1497,20 +1495,6 @@ export default function Tabel1A2({ role }) {
                 <span>Hapus</span>
               </button>
             )}
-            {showDeleted && canDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleHardDelete(currentRow);
-                  setOpenDropdownId(null);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
-                aria-label={`Hapus permanen data ${currentRow.sumber_dana}`}
-              >
-                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
-                <span>Hapus Permanen</span>
-              </button>
-            )}
             {showDeleted && canUpdate && (
               <button
                 onClick={(e) => {
@@ -1523,6 +1507,20 @@ export default function Tabel1A2({ role }) {
               >
                 <FiRotateCw size={16} className="flex-shrink-0 text-green-600" />
                 <span>Pulihkan</span>
+              </button>
+            )}
+            {showDeleted && canDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHardDelete(currentRow);
+                  setOpenDropdownId(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 hover:text-red-800 transition-colors text-left font-medium"
+                aria-label={`Hapus permanen data ${currentRow.sumber_dana}`}
+              >
+                <FiXCircle size={16} className="flex-shrink-0 text-red-700" />
+                <span>Hapus Permanen</span>
               </button>
             )}
           </div>
@@ -1669,6 +1667,10 @@ export default function Tabel1A2({ role }) {
       </div>
       <TableSummary
         rows={summaryRows}
+        currentPage={currentSummaryPage}
+        itemsPerPage={itemsSummaryPerPage}
+        setCurrentPage={setCurrentSummaryPage}
+        setItemsPerPage={setItemsSummaryPerPage}
       />
 
       {/* Modal */}
