@@ -10,7 +10,7 @@ export const ACCESS_MATRIX = {
   'waket1': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'waket2': { '*': { c: true, r: true, u: true, d: true, h: true } },
   'tpm': { '*': { c: true, r: true, u: true, d: true, h: true } },
-  'ketua': { '*': { c: true, r: true, u: true, d: true, h: true } }, // Full access like other superadmins
+  'ketua': { '*': { r: true } }, // Full access like other superadmins
 
   // ========== PRODI (sesuai aturan baru C1 + aturan Tabel 2B) ==========
   'prodi': {
